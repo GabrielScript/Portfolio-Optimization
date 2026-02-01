@@ -6,7 +6,13 @@ Autor: Gabriel Estrela Lopes
 Lista expandida com ~100 ativos das principais empresas listadas na B3.
 """
 
-# Lista de ativos extraída para o motor do TCC (~100 principais)
+# Top 30 ativos mais líquidos/importantes para otimização rápida (Cloud)
+ATIVOS_TOP30_TICKERS = [
+    "PETR4", "VALE3", "ITUB4", "BBDC4", "BBAS3", "WEGE3", "ABEV3", "JBSS3",
+    "RENT3", "B3SA3", "EQTL3", "ELET3", "SUZB3", "RADL3", "RAIL3", "GGBR4",
+    "SBSP3", "ITSA4", "BPAC11", "RDOR3", "CSAN3", "VBBR3", "HAPV3", "LREN3",
+    "VIVT3", "TOTS3", "CPFE3", "EMBR3", "UGPA3", "KLBN11"
+]
 ATIVOS_B3 = [
     # === FINANCEIRO ===
     {"ticker": "ITUB4", "nome": "Banco Itaú", "setor": "Financeiro"},
@@ -184,3 +190,12 @@ def get_all_tickers() -> list:
         Lista de todos os tickers com sufixo .SA
     """
     return [f"{a['ticker']}.SA" for a in ATIVOS_B3]
+
+def get_top30_tickers() -> list:
+    """
+    Retorna os 30 tickers mais líquidos (otimizado para Cloud).
+    
+    Returns:
+        Lista dos 30 principais tickers com sufixo .SA
+    """
+    return [f"{t}.SA" for t in ATIVOS_TOP30_TICKERS]

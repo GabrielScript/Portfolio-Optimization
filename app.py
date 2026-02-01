@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers
+from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top30_tickers
 from risk_profiles import PERFIS_RISCO, get_perfil, get_nomes_perfis, TAXA_SELIC
 from data_loader import carregar_dados_completos, baixar_dados_historicos
 from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
@@ -190,7 +190,14 @@ def main():
             "Filtrar por setores:",
             options=SETORES,
             default=[],
-            help="Deixe vazio para incluir todos"
+            help="Deixe vazio para usar ativos padrão"
+        )
+        
+        # Toggle para usar todos os ativos (mais lento)
+        usar_todos_ativos = st.checkbox(
+            "🔓 Usar todos os ativos (96)",
+            value=False,
+            help="⚠️ Mais lento no Cloud. Use apenas se necessário."
         )
         
         st.markdown("---")
@@ -239,9 +246,17 @@ def main():
             help="Limite máximo de alocação em um único ativo"
         ) / 100  # Converte para decimal
         
+        # Info de ativos selecionados
+        if setores_selecionados:
+            n_disponiveis = len(get_tickers_by_setor(setores_selecionados))
+        elif usar_todos_ativos:
+            n_disponiveis = len(ATIVOS_B3)
+        else:
+            n_disponiveis = 30
+        
         st.markdown(f"""
         <div style="background: #1E213022; padding: 10px; border-radius: 8px; margin-top: 10px;">
-            <small>📊 <b>Ativos disponíveis:</b> {len(ATIVOS_B3)}</small>
+            <small>📊 <b>Ativos para análise:</b> {n_disponiveis}</small>
         </div>
         """, unsafe_allow_html=True)
     
@@ -251,8 +266,12 @@ def main():
     if setores_selecionados:
         tickers = get_tickers_by_setor(setores_selecionados)
         st.info(f"🔍 Filtrando {len(tickers)} ativos dos setores: {', '.join(setores_selecionados)}")
-    else:
+    elif usar_todos_ativos:
         tickers = get_all_tickers()
+        st.warning(f"⚠️ Usando todos os {len(tickers)} ativos. Pode demorar mais.")
+    else:
+        tickers = get_top30_tickers()
+        st.success(f"🚀 Usando TOP 30 ativos (otimizado para Cloud)")
     
     if len(tickers) < 3:
         st.error("❌ Selecione setores com pelo menos 3 ativos disponíveis.")
@@ -299,7 +318,7 @@ def main():
                 dados['retornos_medios'],
                 dados['matriz_cov'],
                 taxa_selic,
-                n_pontos=30,  # Reduzido para performance
+                n_pontos=20,  # Reduzido para performance no Cloud
                 peso_maximo=peso_maximo
             )
             

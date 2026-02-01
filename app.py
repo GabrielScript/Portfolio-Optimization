@@ -225,7 +225,7 @@ def main():
             "Taxa Selic (% a.a.):",
             min_value=0.0,
             max_value=30.0,
-            value=13.25,
+            value=15.0,
             step=0.25,
             format="%.2f",
             help="Taxa livre de risco para cálculo do Sharpe"
@@ -275,7 +275,16 @@ def main():
     st.markdown("---")
     
     # ============== OTIMIZAÇÃO ==============
-    if otimizar or 'resultado' not in st.session_state:
+    # Chave única para detectar mudança de parâmetros
+    params_key = f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_{dados['n_ativos']}"
+    
+    needs_optimization = (
+        otimizar or 
+        'resultado' not in st.session_state or
+        st.session_state.get('params_key') != params_key
+    )
+    
+    if needs_optimization:
         with st.spinner(f"🔄 Otimizando carteira ({perfil_nome})..."):
             resultado = otimizar_por_perfil(
                 perfil=perfil_nome,
@@ -290,12 +299,13 @@ def main():
                 dados['retornos_medios'],
                 dados['matriz_cov'],
                 taxa_selic,
-                n_pontos=50,
+                n_pontos=30,  # Reduzido para performance
                 peso_maximo=peso_maximo
             )
             
             st.session_state['resultado'] = resultado
             st.session_state['fronteira'] = fronteira
+            st.session_state['params_key'] = params_key
     else:
         resultado = st.session_state['resultado']
         fronteira = st.session_state['fronteira']

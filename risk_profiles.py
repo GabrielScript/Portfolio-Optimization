@@ -28,7 +28,7 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
     "Conservador": PerfilRisco(
         nome="Conservador",
         descricao="Prioriza segurança e estabilidade. Aceita retornos menores em troca de menor volatilidade.",
-        volatilidade_maxima=0.15,  # 15% a.a.
+        volatilidade_maxima=0.20,  # 15% a.a.
         objetivo="min_volatility",
         cor_primaria="#00D4AA",  # Verde água
         cor_secundaria="#004D40",
@@ -37,7 +37,7 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
     "Moderado": PerfilRisco(
         nome="Moderado",
         descricao="Equilibra risco e retorno. Busca o melhor índice de Sharpe possível.",
-        volatilidade_maxima=0.25,  # 25% a.a.
+        volatilidade_maxima=0.35,  # 25% a.a.
         objetivo="max_sharpe",
         cor_primaria="#FFB74D",  # Laranja
         cor_secundaria="#E65100",
@@ -46,7 +46,7 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
     "Agressivo": PerfilRisco(
         nome="Agressivo",
         descricao="Prioriza maximizar retornos. Tolera alta volatilidade em busca de ganhos maiores.",
-        volatilidade_maxima=0.40,  # 40% a.a.
+        volatilidade_maxima=0.50,  # 40% a.a.
         objetivo="max_return",
         cor_primaria="#FF5252",  # Vermelho
         cor_secundaria="#B71C1C",

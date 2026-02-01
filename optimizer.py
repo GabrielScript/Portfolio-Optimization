@@ -59,7 +59,8 @@ def otimizar_max_sharpe(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
     
     res = minimize(neg_sharpe, [1/n]*n, method='SLSQP',
                    bounds=[(0, peso_maximo)]*n,
-                   constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+                   constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+                   options={'maxiter': 1000, 'ftol': 1e-9})
     
     pesos = res.x
     if n_ativos_max and n_ativos_max < n:
@@ -85,7 +86,8 @@ def otimizar_min_volatilidade(retornos_medios: pd.Series, matriz_cov: pd.DataFra
     
     res = minimize(vol, [1/n]*n, method='SLSQP',
                    bounds=[(0, peso_maximo)]*n,
-                   constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+                   constraints={'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
+                   options={'maxiter': 1000, 'ftol': 1e-9})
     
     pesos = res.x
     if n_ativos_max and n_ativos_max < n:
@@ -114,7 +116,8 @@ def otimizar_max_retorno(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
                    constraints=[
                        {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
                        {'type': 'ineq', 'fun': lambda x: vol_maxima - calcular_volatilidade_portfolio(x, cov_matrix)}
-                   ])
+                   ],
+                   options={'maxiter': 1000, 'ftol': 1e-9})
     
     pesos = res.x
     if n_ativos_max and n_ativos_max < n:
@@ -143,7 +146,8 @@ def gerar_fronteira_eficiente(retornos_medios: pd.Series, matriz_cov: pd.DataFra
                           constraints=[
                               {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},
                               {'type': 'eq', 'fun': lambda x, r=ret_alvo: calcular_retorno_portfolio(x, ret_medio) - r}
-                          ])
+                          ],
+                          options={'maxiter': 500, 'ftol': 1e-8})
             if res.success:
                 vol = res.fun
                 fronteira.append({'retorno': ret_alvo, 'volatilidade': vol,

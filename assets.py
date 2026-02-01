@@ -6,12 +6,24 @@ Autor: Gabriel Estrela Lopes
 Lista expandida com ~100 ativos das principais empresas listadas na B3.
 """
 
-# Top 30 ativos mais líquidos/importantes para otimização rápida (Cloud)
-ATIVOS_TOP30_TICKERS = [
-    "PETR4", "VALE3", "ITUB4", "BBDC4", "BBAS3", "WEGE3", "ABEV3", "JBSS3",
-    "RENT3", "B3SA3", "EQTL3", "ELET3", "SUZB3", "RADL3", "RAIL3", "GGBR4",
-    "SBSP3", "ITSA4", "BPAC11", "RDOR3", "CSAN3", "VBBR3", "HAPV3", "LREN3",
-    "VIVT3", "TOTS3", "CPFE3", "EMBR3", "UGPA3", "KLBN11"
+# Top 50 ativos mais líquidos/importantes para otimização (Cloud)
+ATIVOS_TOP50_TICKERS = [
+    # Financeiro
+    "ITUB4", "BBDC4", "BBAS3", "SANB11", "BPAC11", "ITSA4", "B3SA3", "BBSE3",
+    # Petróleo/Energia
+    "PETR4", "PETR3", "PRIO3", "VBBR3", "UGPA3", "CSAN3",
+    # Materiais Básicos
+    "VALE3", "SUZB3", "GGBR4", "CSNA3", "KLBN11", "GOAU4",
+    # Utilidade Pública
+    "ELET3", "SBSP3", "CPFE3", "EQTL3", "ENEV3", "CMIG4", "TAEE11",
+    # Bens Industriais
+    "WEGE3", "EMBR3", "RAIL3", "CCRO3",
+    # Consumo
+    "ABEV3", "JBSS3", "BRFS3", "RENT3", "LREN3", "MGLU3", "ASAI3",
+    # Saúde
+    "RDOR3", "RADL3", "HAPV3", "HYPE3", "FLRY3",
+    # Telecomunicações/TI
+    "VIVT3", "TIMS3", "TOTS3", "LWSA3", "INTB3"
 ]
 ATIVOS_B3 = [
     # === FINANCEIRO ===
@@ -191,11 +203,11 @@ def get_all_tickers() -> list:
     """
     return [f"{a['ticker']}.SA" for a in ATIVOS_B3]
 
-def get_top30_tickers() -> list:
+def get_top50_tickers() -> list:
     """
-    Retorna os 30 tickers mais líquidos (otimizado para Cloud).
+    Retorna os 50 tickers mais líquidos (otimizado para Cloud).
     
     Returns:
-        Lista dos 30 principais tickers com sufixo .SA
+        Lista dos 50 principais tickers com sufixo .SA
     """
-    return [f"{t}.SA" for t in ATIVOS_TOP30_TICKERS]
+    return [f"{t}.SA" for t in ATIVOS_TOP50_TICKERS]

@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top50_tickers
+from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top75_tickers
 from risk_profiles import PERFIS_RISCO, get_perfil, get_nomes_perfis, TAXA_SELIC
 from data_loader import carregar_dados_completos, baixar_dados_historicos
 from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
@@ -252,7 +252,7 @@ def main():
         elif usar_todos_ativos:
             n_disponiveis = len(ATIVOS_B3)
         else:
-            n_disponiveis = 50
+            n_disponiveis = 75
         
         st.markdown(f"""
         <div style="background: #1E213022; padding: 10px; border-radius: 8px; margin-top: 10px;">
@@ -270,8 +270,8 @@ def main():
         tickers = get_all_tickers()
         st.warning(f"⚠️ Usando todos os {len(tickers)} ativos. Pode demorar mais.")
     else:
-        tickers = get_top50_tickers()
-        st.success(f"🚀 Usando TOP 50 ativos (otimizado para Cloud)")
+        tickers = get_top75_tickers()
+        st.success(f"🚀 Usando TOP 75 ativos (otimizado para Cloud)")
     
     if len(tickers) < 3:
         st.error("❌ Selecione setores com pelo menos 3 ativos disponíveis.")

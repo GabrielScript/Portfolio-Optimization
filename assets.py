@@ -6,15 +6,20 @@ Autor: Gabriel Estrela Lopes
 Lista atualizada com as ações mais negociadas na B3.
 """
 
-# Top 50 ativos mais líquidos para otimização rápida (Cloud)
-ATIVOS_TOP50_TICKERS = [
+# Top 75 ativos mais líquidos para otimização rápida (Cloud)
+ATIVOS_TOP75_TICKERS = [
     "CVCB3", "B3SA3", "RAIZ4", "CSAN3", "PETR4", "VALE3", "ABEV3", "ITUB4",
     "ITSA4", "COGN3", "BBAS3", "CBAV3", "BBDC4", "USIM5", "VAMO3", "ASAI3",
     "CMIG4", "MGLU3", "CPLE3", "LREN3", "PETR3", "ENEV3", "CSNA3", "GOAU4",
     "GGBR4", "BBDC3", "RAIL3", "SUZB3", "GMAT3", "RENT3", "PRIO3", "CMIN3",
     "POMO4", "HAPV3", "RADL3", "TIMS3", "VBBR3", "UGPA3", "RDOR3", "DIRR3",
     "PCAR3", "EQTL3", "BPAC11", "KLBN11", "MRVE3", "WEGE3", "VIVT3", "BRAV3",
-    "ALOS3", "SMFT3"
+    "ALOS3", "SMFT3",
+    # Adicionados para TOP 75
+    "JHSF3", "CEAB3", "BEEF3", "SIMH3", "ANIM3", "AURE3", "NEOE3", "MULT3",
+    "HBSA3", "VIVA3", "CYRE3", "CXSE3", "DXCO3", "ECOR3", "TOTS3", "GGPS3",
+    "BBSE3", "EMBR3", "SBSP3", "LWSA3", "MOVI3", "YDUQ3", "BRAP4", "CSMG3",
+    "BRKM5"
 ]
 
 # Lista completa de ativos da B3
@@ -261,11 +266,11 @@ def get_all_tickers() -> list:
     """
     return [f"{a['ticker']}.SA" for a in ATIVOS_B3]
 
-def get_top50_tickers() -> list:
+def get_top75_tickers() -> list:
     """
-    Retorna os 50 tickers mais líquidos (otimizado para Cloud).
+    Retorna os 75 tickers mais líquidos (otimizado para Cloud).
     
     Returns:
-        Lista dos 50 principais tickers com sufixo .SA
+        Lista dos 75 principais tickers com sufixo .SA
     """
-    return [f"{t}.SA" for t in ATIVOS_TOP50_TICKERS]
+    return [f"{t}.SA" for t in ATIVOS_TOP75_TICKERS]

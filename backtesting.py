@@ -13,8 +13,12 @@ Este módulo implementa:
 
 import numpy as np
 import pandas as pd
+import logging
 from typing import Tuple, Dict, Optional
 from scipy import stats
+
+# Configuração de logging para debug
+logger = logging.getLogger(__name__)
 
 
 def calcular_var(retornos: np.ndarray, confianca: float = 0.95) -> float:
@@ -153,7 +157,8 @@ def backtesting_walk_forward(
     precos: pd.DataFrame,
     pesos: Dict[str, float],
     janela_rebalanceamento: int = 63,  # Trimestral (~63 dias úteis)
-    capital_inicial: float = 100000
+    capital_inicial: float = 100000,
+    taxa_livre_risco: float = 0.1325  # Taxa Selic - agora como parâmetro!
 ) -> Dict:
     """
     Realiza backtesting com rebalanceamento periódico.
@@ -222,8 +227,8 @@ def backtesting_walk_forward(
     cvar_95 = calcular_cvar(retornos_carteira.values, 0.95)
     sortino = calcular_sortino(retornos_carteira.values)
     
-    # Sharpe
-    sharpe = (retorno_anualizado - 0.1325) / volatilidade if volatilidade > 0 else 0
+    # Sharpe (usando taxa livre de risco passada como parâmetro)
+    sharpe = (retorno_anualizado - taxa_livre_risco) / volatilidade if volatilidade > 0 else 0
     
     return {
         'serie_carteira': serie_carteira,
@@ -251,7 +256,8 @@ def backtesting_walk_forward(
 def comparar_com_benchmark(
     serie_carteira: pd.Series,
     precos_benchmark: pd.Series,
-    nome_benchmark: str = "IBOV"
+    nome_benchmark: str = "IBOV",
+    taxa_livre_risco: float = 0.1325  # Taxa Selic - agora como parâmetro!
 ) -> Dict:
     """
     Compara performance da carteira com um benchmark.
@@ -293,7 +299,7 @@ def comparar_com_benchmark(
     # Alpha e Beta (CAPM)
     cov_matrix = np.cov(ret_carteira.values, ret_benchmark.values)
     beta = cov_matrix[0, 1] / cov_matrix[1, 1] if cov_matrix[1, 1] != 0 else 1
-    alpha = ret_anual_carteira - (0.1325 + beta * (ret_anual_benchmark - 0.1325))
+    alpha = ret_anual_carteira - (taxa_livre_risco + beta * (ret_anual_benchmark - taxa_livre_risco))
     
     # Correlação
     correlacao = ret_carteira.corr(ret_benchmark)

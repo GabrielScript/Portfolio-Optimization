@@ -223,7 +223,7 @@ def main():
         periodo_anos = st.slider(
             "Período de análise (anos):",
             min_value=1,
-            max_value=10,
+            max_value=5,
             value=5,
             help="Quantidade de anos de dados históricos"
         )
@@ -453,7 +453,8 @@ def main():
             precos=dados['precos'],
             pesos=pesos_dict,
             janela_rebalanceamento=63,  # Trimestral
-            capital_inicial=orcamento
+            capital_inicial=orcamento,
+            taxa_livre_risco=taxa_selic  # Passa a taxa configurada pelo usuário!
         )
         
         # Calcula métricas de risco

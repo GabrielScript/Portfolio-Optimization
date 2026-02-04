@@ -28,7 +28,7 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
     "Conservador": PerfilRisco(
         nome="Conservador",
         descricao="Prioriza segurança e estabilidade. Aceita retornos menores em troca de menor volatilidade.",
-        volatilidade_maxima=0.20,  # 15% a.a.
+        volatilidade_maxima=0.20,  # 20% a.a.
         objetivo="min_volatility",
         cor_primaria="#00D4AA",  # Verde água
         cor_secundaria="#004D40",

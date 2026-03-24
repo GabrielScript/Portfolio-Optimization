@@ -26,13 +26,35 @@ from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
 from visualizations import (
     grafico_fronteira_eficiente, grafico_composicao_pizza,
     grafico_barras_alocacao, grafico_matriz_correlacao,
-    grafico_evolucao_precos, grafico_setores,
+    grafico_evolucao_precos,
     grafico_backtesting, grafico_drawdown, grafico_metricas_risco
 )
 from backtesting import (
-    backtesting_walk_forward, calcular_metricas_risco_portfolio,
+    backtesting_walk_forward, backtesting_pesos_fixos, calcular_metricas_risco_portfolio,
     comparar_com_benchmark
 )
+
+@st.cache_data(show_spinner=False)
+def cached_backtest_oos(_precos, perfil, orcamento, taxa_selic, n_ativos_max):
+    return backtesting_walk_forward(
+        precos=_precos,
+        perfil=perfil,
+        janela_treino=252 * 2,
+        janela_teste=63,
+        capital_inicial=orcamento,
+        taxa_livre_risco=taxa_selic,
+        n_ativos_max=n_ativos_max
+    )
+
+@st.cache_data(show_spinner=False)
+def cached_backtest_is(_precos, pesos_dict, orcamento, taxa_selic):
+    return backtesting_pesos_fixos(
+        precos=_precos,
+        pesos=pesos_dict,
+        janela_rebalanceamento=63,
+        capital_inicial=orcamento,
+        taxa_livre_risco=taxa_selic
+    )
 
 # ============== CSS PERSONALIZADO (TEMA ESCURO) ==============
 st.markdown("""
@@ -177,7 +199,7 @@ def main():
             "Valor para investir (R$):",
             min_value=1000.0,
             max_value=10000000.0,
-            value=100000.0,
+            value=10000.0,
             step=10000.0,
             format="%.2f"
         )
@@ -385,7 +407,8 @@ def main():
         fig_fronteira = grafico_fronteira_eficiente(
             fronteira,
             {'retorno': resultado.retorno_esperado, 'volatilidade': resultado.volatilidade},
-            perfil_nome
+            perfil_nome,
+            taxa_selic
         )
         st.plotly_chart(fig_fronteira, use_container_width=True)
     
@@ -393,16 +416,9 @@ def main():
         fig_pizza = grafico_composicao_pizza(pesos_dict, orcamento)
         st.plotly_chart(fig_pizza, use_container_width=True)
     
-    # Linha 2: Barras + Setores
-    col1, col2 = st.columns([1.3, 1])
-    
-    with col1:
-        fig_barras = grafico_barras_alocacao(pesos_dict, orcamento, info_tickers)
-        st.plotly_chart(fig_barras, use_container_width=True)
-    
-    with col2:
-        fig_setores = grafico_setores(pesos_dict, info_tickers)
-        st.plotly_chart(fig_setores, use_container_width=True)
+    # Linha 2: Barras
+    fig_barras = grafico_barras_alocacao(pesos_dict, orcamento, info_tickers)
+    st.plotly_chart(fig_barras, use_container_width=True)
     
     st.markdown("---")
     
@@ -445,19 +461,44 @@ def main():
     # ============== BACKTESTING E ANÁLISE DE RISCO ==============
     st.markdown("---")
     st.markdown("## 📈 Backtesting e Análise de Risco")
-    st.markdown("*Simulação histórica da carteira otimizada*")
+    st.markdown("*Simulação histórica da carteira*")
     
-    with st.spinner('🔄 Executando backtesting...'):
-        # Executa backtesting
-        backtest = backtesting_walk_forward(
-            precos=dados['precos'],
-            pesos=pesos_dict,
-            janela_rebalanceamento=63,  # Trimestral
-            capital_inicial=orcamento,
-            taxa_livre_risco=taxa_selic  # Passa a taxa configurada pelo usuário!
-        )
+    tipo_backtest = st.radio(
+        "Metodologia de Backtesting:",
+        options=["Walk-Forward (Out-of-Sample / Realista)", "Pesos Fixos (In-Sample / Teórico)"],
+        horizontal=True,
+        help="O Walk-Forward re-otimiza a carteira periodicamente s/ ver o futuro. 'Pesos Fixos' aplica os pesos de hoje no passado (look-ahead bias)."
+    )
+    
+    with st.spinner('🔄 Executando backtesting... (Walk-Forward pode demorar um pouco mais)'):
+        if "Walk-Forward" in tipo_backtest:
+            # Walk-Forward OOS
+            try:
+                backtest = cached_backtest_oos(
+                    _precos=dados['precos'],
+                    perfil=perfil_nome,
+                    orcamento=orcamento,
+                    taxa_selic=taxa_selic,
+                    n_ativos_max=n_ativos_max
+                )
+            except Exception as e:
+                st.error(f"Erro no Walk-Forward: {e}. Usando fallback para Pesos Fixos.")
+                backtest = cached_backtest_is(
+                    _precos=dados['precos'],
+                    pesos_dict=pesos_dict,
+                    orcamento=orcamento,
+                    taxa_selic=taxa_selic
+                )
+        else:
+            # In Sample
+            backtest = cached_backtest_is(
+                _precos=dados['precos'],
+                pesos_dict=pesos_dict,
+                orcamento=orcamento,
+                taxa_selic=taxa_selic
+            )
         
-        # Calcula métricas de risco
+        # Calcula métricas de risco da carteira otimizada
         metricas_risco = calcular_metricas_risco_portfolio(
             retornos=dados['retornos'],
             pesos=pesos_dict,
@@ -532,11 +573,11 @@ def main():
     # Interpretação das Métricas
     with st.expander("📖 Entenda as Métricas de Risco", expanded=False):
         st.markdown(f"""
-        ### 📊 Value at Risk (VaR) - {metricas_risco['var_95_anual']*100:.2f}% anual
-        {metricas_risco['interpretacao_var']}
+        ### 📊 Value at Risk (VaR) - {metricas_risco.get('var_95_anual', 0)*100:.2f}% anual
+        {metricas_risco.get('interpretacao_var', '')}
         
-        ### ⚠️ Conditional VaR (CVaR) - {metricas_risco['cvar_95_anual']*100:.2f}% anual
-        {metricas_risco['interpretacao_cvar']}
+        ### ⚠️ Conditional VaR (CVaR) - {metricas_risco.get('cvar_95_anual', 0)*100:.2f}% anual
+        {metricas_risco.get('interpretacao_cvar', '')}
         
         ### 📉 Drawdown Máximo - {backtest['max_drawdown']*100:.1f}%
         A maior queda do pico ao vale durante o período analisado.
@@ -548,11 +589,21 @@ def main():
         - **> 2**: Excelente
         - **< 0**: Retorno abaixo da taxa livre de risco
         
-        ### 📈 Curtose - {metricas_risco['curtose']:.2f}
+        ### 📈 Curtose - {metricas_risco.get('curtose', 0):.2f}
         Mede a probabilidade de eventos extremos (caudas pesadas).
         - **> 3**: Mais eventos extremos que uma distribuição normal
         - **< 3**: Menos eventos extremos
         """)
+        
+    # ============== LIMITAÇÕES ==============
+    st.markdown("---")
+    st.markdown("## 🔬 Limitações e Vieses do Estudo")
+    st.info("""
+    **Viés de Sobrevivência (Survivor Bias):** A lista de ativos analisados neste projeto é composta pelos componentes atuais 
+    (ou recentes) da B3. Empresas que faliram, fecharam capital, ou entregaram péssimos resultados nas últimas décadas 
+    podem ter saído das listas de ativos acompanhados. Como resultado, o backtesting foca numa seleção de empresas 
+    que sabidamente sobreviveram até a data final, o que pode enviesar as simulações positivamente.
+    """)
     
     # ============== FOOTER ==============
     st.markdown("---")

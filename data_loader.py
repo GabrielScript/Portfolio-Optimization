@@ -16,6 +16,8 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from typing import Tuple, List, Optional
 import streamlit as st
+import risk_profiles
+from sklearn.covariance import LedoitWolf
 
 # Período de análise: 5 anos
 ANOS_HISTORICO = 5
@@ -84,7 +86,7 @@ def calcular_estatisticas(retornos: pd.DataFrame) -> Tuple[pd.Series, pd.DataFra
     
     Baseado na Teoria de Markowitz:
     - Retorno esperado: média dos retornos * 252 (dias úteis)
-    - Covariância: cov(r_i, r_j) * 252
+    - Covariância: usando encolhimento Ledoit-Wolf para robustez * 252
     
     Args:
         retornos: DataFrame com retornos logarítmicos
@@ -94,21 +96,36 @@ def calcular_estatisticas(retornos: pd.DataFrame) -> Tuple[pd.Series, pd.DataFra
     """
     # 252 dias úteis por ano
     retornos_medios = retornos.mean() * 252
-    matriz_cov = retornos.cov() * 252
+    
+    # Aplicação de Shrinkage (Ledoit-Wolf) na Matriz de Covariância
+    # Corrige a sensibilidade ao erro de estimação da matriz amostral
+    try:
+        lw = LedoitWolf()
+        cov_estimada = lw.fit(retornos).covariance_
+        matriz_cov = pd.DataFrame(cov_estimada, index=retornos.columns, columns=retornos.columns)
+    except Exception as e:
+        import logging
+        logging.warning(f"Falha ao usar Ledoit-Wolf ({e}). Usando covariância amostral.")
+        matriz_cov = retornos.cov()
+        
+    matriz_cov = matriz_cov * 252
     
     return retornos_medios, matriz_cov
 
-def calcular_metricas_ativo(retornos: pd.DataFrame, taxa_livre_risco: float = 0.1325) -> pd.DataFrame:
+def calcular_metricas_ativo(retornos: pd.DataFrame, taxa_livre_risco: float = None) -> pd.DataFrame:
     """
     Calcula métricas individuais para cada ativo.
     
     Args:
         retornos: DataFrame com retornos logarítmicos
-        taxa_livre_risco: Taxa Selic anual
+        taxa_livre_risco: Taxa Selic anual. Se None, usa taxa dinâmica do BCB.
         
     Returns:
         DataFrame com métricas por ativo
     """
+    if taxa_livre_risco is None:
+        taxa_livre_risco = risk_profiles.TAXA_SELIC
+        
     retornos_anuais = retornos.mean() * 252
     volatilidade_anual = retornos.std() * np.sqrt(252)
     sharpe = (retornos_anuais - taxa_livre_risco) / volatilidade_anual

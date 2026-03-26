@@ -97,4 +97,4 @@ Esta ferramenta foi desenvolvida para fins **acadêmicos e educacionais** como p
 
 ---
 
-© 2024 Gabriel Estrela Lopes
+© 2026 Gabriel Estrela Lopes

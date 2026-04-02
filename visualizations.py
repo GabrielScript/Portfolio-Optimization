@@ -60,7 +60,7 @@ def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict,
                   annotation_text=f"Taxa Sem Risco ({taxa_pct:.2f}%)", annotation_position="bottom right")
     
     fig.update_layout(
-        title=dict(text='📈 Fronteira Eficiente & Convexidade', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Fronteira Eficiente de Markowitz', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='Risco / Volatilidade (% a.a.)',
         yaxis_title='Retorno Esperado (% a.a.)',
         template='plotly_dark',
@@ -97,7 +97,7 @@ def grafico_composicao_pizza(pesos: dict, orcamento: float) -> go.Figure:
     )])
     
     fig.update_layout(
-        title=dict(text='🥧 Alocação Terminal do Modelo', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Composicao da Carteira', font=dict(size=18, color=CORES['texto'])),
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
         font=dict(color=CORES['texto']),
@@ -134,7 +134,7 @@ def grafico_barras_alocacao(pesos: dict, orcamento: float, info_tickers: dict) -
     ))
     
     fig.update_layout(
-        title=dict(text='📊 Exposição Transversal por Ativo', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Alocacao por Ativo (%)', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='Peso (%)',
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
@@ -174,7 +174,7 @@ def grafico_matriz_correlacao(matriz_cov: pd.DataFrame) -> go.Figure:
     ))
     
     fig.update_layout(
-        title=dict(text='🔗 Estrutura de Correlação Robusta', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Matriz de Correlacao', font=dict(size=18, color=CORES['texto'])),
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
         height=650,
@@ -204,9 +204,9 @@ def grafico_evolucao_precos(precos: pd.DataFrame, tickers_selecionados: list) ->
         ))
     
     fig.update_layout(
-        title=dict(text='📉 Dinâmica de Preços Normalizados (Base 100)', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Evolucao de Precos Normalizados (Base 100)', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',
-        yaxis_title='Índice (Unidades Monetárias)',
+        yaxis_title='Indice (Base 100)',
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
         plot_bgcolor=CORES['card'],
@@ -233,7 +233,7 @@ def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = 
         x=carteira_norm.index,
         y=carteira_norm.values,
         mode='lines',
-        name='Capital OOS Otimizado',
+        name='Carteira Otimizada',
         line=dict(color=CORES['azul'], width=2.5),
         fill='tozeroy',
         fillcolor='rgba(102, 126, 234, 0.15)',
@@ -259,9 +259,9 @@ def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = 
     fig.add_hline(y=100, line_dash="solid", line_color="#444", line_width=1)
     
     fig.update_layout(
-        title=dict(text='📈 Ensaio Empírico Walk-Forward (Curva de Capital)', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Curva de Capital (Backtesting)', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',
-        yaxis_title='Drawup Indexado',
+        yaxis_title='Capital Indexado (Base 100)',
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
         plot_bgcolor=CORES['card'],
@@ -273,14 +273,14 @@ def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = 
     return fig
 
 def grafico_drawdown(drawdown_serie: pd.Series) -> go.Figure:
-    """Monitorização do Risco de Ruína Institucional (Drawdown Relativo)."""
+    """Grafico de drawdowns (quedas de pico a vale)."""
     fig = go.Figure()
     
     fig.add_trace(go.Scatter(
         x=drawdown_serie.index,
         y=drawdown_serie.values * 100,
         mode='lines',
-        name='Compressão de Capital',
+        name='Drawdown',
         line=dict(color=CORES['alerta'], width=1.5),
         fill='tozeroy',
         fillcolor='rgba(255, 51, 102, 0.25)',
@@ -293,7 +293,7 @@ def grafico_drawdown(drawdown_serie: pd.Series) -> go.Figure:
     fig.add_annotation(
         x=min_idx,
         y=min_val,
-        text=f"Risco Máximo: {min_val:.1f}%",
+        text=f"Max Drawdown: {min_val:.1f}%",
         showarrow=True,
         arrowhead=2,
         arrowcolor=CORES['texto'],
@@ -303,15 +303,15 @@ def grafico_drawdown(drawdown_serie: pd.Series) -> go.Figure:
     )
     
     fig.update_layout(
-        title=dict(text='📉 Análise de Quedas de Pico a Vale (Drawdowns)', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Drawdowns (Quedas de Pico a Vale)', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',
-        yaxis_title='Perda Relativa do Pico (%)',
+        yaxis_title='Queda do Pico (%)',
         template='plotly_dark',
         paper_bgcolor=CORES['fundo'],
         plot_bgcolor=CORES['card'],
         font=dict(color=CORES['texto']),
         height=350,
-        yaxis=dict(autorange='reversed') # Drawdowns convencionalmente descem visualmente para gerar percepção de perigo
+        yaxis=dict(autorange='reversed')
     )
     return fig
 

@@ -263,14 +263,14 @@ def otimizar_max_sharpe(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
             p_max_ret = cp.Problem(cp.Maximize(mu.T @ w_tmp), [cp.sum(w_tmp) == 1, w_tmp >= 0, w_tmp <= p_max])
             _resolver_problema(p_max_ret)
             r_max = float(p_max_ret.value)
-        except: 
+        except Exception:
             r_max = float(np.max(mu))
-            
+
         try:
             p_min_vol = cp.Problem(cp.Minimize(cp.quad_form(w_tmp, cov)), [cp.sum(w_tmp) == 1, w_tmp >= 0, w_tmp <= p_max])
             _resolver_problema(p_min_vol)
             r_min = float(mu.T @ w_tmp.value)
-        except: 
+        except Exception:
             r_min = float(np.min(mu))
         
         if r_max is None or r_min is None or r_min >= r_max or np.isnan(r_min) or np.isnan(r_max):
@@ -306,9 +306,9 @@ def otimizar_max_sharpe(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
                     best_sharpe = sharpe
                     best_pesos = p.copy()
                     sucesso_encontrado = True
-        except: 
+        except Exception:
             continue
-            
+
     if not sucesso_encontrado:
         logger.warning("Falha a maximizar Sharpe ao longo da fronteira. Fallback analítico para min_vol.")
         return otimizar_min_volatilidade(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, n_ativos_max)
@@ -350,9 +350,9 @@ def otimizar_max_sharpe(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
                         best_sharpe_filt = sharpe
                         best_pesos_filt = p.copy()
                         sucesso_filt = True
-            except: 
+            except Exception:
                 continue
-                
+
         if sucesso_filt and best_pesos_filt is not None:
             pesos_finais = np.zeros(n)
             for i, idx in enumerate(indices_top):
@@ -394,14 +394,14 @@ def gerar_fronteira_eficiente(retornos_medios: pd.Series, matriz_cov: pd.DataFra
         p_min = cp.Problem(cp.Minimize(cp.quad_form(w, cov_matrix)), [cp.sum(w) == 1, w >= 0, w <= peso_maximo])
         _resolver_problema(p_min)
         ret_min = float(ret_medio.T @ w.value)
-    except: 
+    except Exception:
         ret_min = float(np.min(ret_medio))
-        
+
     try:
         p_max = cp.Problem(cp.Maximize(ret_medio.T @ w), [cp.sum(w) == 1, w >= 0, w <= peso_maximo])
         _resolver_problema(p_max)
         ret_max = float(p_max.value)
-    except: 
+    except Exception:
         ret_max = float(np.max(ret_medio))
         
     if ret_min is None or ret_max is None or np.isnan(ret_min) or np.isnan(ret_max) or ret_min >= ret_max:
@@ -441,9 +441,11 @@ def otimizar_por_perfil(perfil: str, retornos_medios: pd.Series, matriz_cov: pd.
     """Orquestrador base que delega a lógica dependendo do risco do perfil selecionado."""
     if taxa_livre_risco is None:
         taxa_livre_risco = risk_profiles.TAXA_SELIC
-        
+
+    perfil_config = risk_profiles.get_perfil(perfil)
+
     if perfil == "Conservador":
         return otimizar_min_volatilidade(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, n_ativos_max)
     elif perfil == "Agressivo":
-        return otimizar_max_retorno(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, 0.40, n_ativos_max)
+        return otimizar_max_retorno(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, perfil_config.volatilidade_maxima, n_ativos_max)
     return otimizar_max_sharpe(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, n_ativos_max)

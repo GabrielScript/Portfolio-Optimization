@@ -307,7 +307,8 @@ def backtesting_walk_forward(
     janela_teste: int = 63,        # 1 trimestre out-of-sample
     capital_inicial: float = 100000,
     taxa_livre_risco: float = None,
-    n_ativos_max: Optional[int] = None
+    n_ativos_max: Optional[int] = None,
+    peso_maximo: float = 0.20
 ) -> Dict:
     """
     Realiza o VERDADEIRO backtesting Walk-Forward (Out-of-Sample).
@@ -320,28 +321,32 @@ def backtesting_walk_forward(
     """
     if taxa_livre_risco is None:
         taxa_livre_risco = risk_profiles.TAXA_SELIC
-        
-    retornos = precos.pct_change().dropna()
-    total_dias = len(retornos)
-    
+
+    # Retornos simples para simulação de capital (compounding correto)
+    retornos_simples = precos.pct_change().dropna()
+    # Retornos logarítmicos para otimização (consistente com o dashboard principal)
+    retornos_log = np.log(precos / precos.shift(1)).dropna()
+
+    total_dias = len(retornos_simples)
+
     if total_dias <= janela_treino + janela_teste:
         raise ValueError("Dados insuficientes para Walk-Forward com estas janelas.")
-        
+
     valor_carteira = [capital_inicial]
     datas = []
     valor_atual = capital_inicial
-    
+
     # Prepara o primeiro dia para alinhar array
-    datas.append(retornos.index[janela_treino - 1])
-    
+    datas.append(retornos_simples.index[janela_treino - 1])
+
     inicio_teste = janela_treino
-    
+
     while inicio_teste < total_dias:
         fim_teste = min(inicio_teste + janela_teste, total_dias)
-        
-        # 1. Isola os dados de "treino" in-sample
-        retornos_treino = retornos.iloc[inicio_teste - janela_treino : inicio_teste]
-        
+
+        # 1. Isola os dados de "treino" in-sample (log returns para otimização)
+        retornos_treino = retornos_log.iloc[inicio_teste - janela_treino : inicio_teste]
+
         # 2. Otimiza apenas olhando pro passado para não ter look-ahead bias
         ret_medios, cov_matrix = data_loader.calcular_estatisticas(retornos_treino)
         
@@ -351,7 +356,7 @@ def backtesting_walk_forward(
                 retornos_medios=ret_medios,
                 matriz_cov=cov_matrix,
                 taxa_livre_risco=taxa_livre_risco,
-                peso_maximo=0.20,
+                peso_maximo=peso_maximo,
                 n_ativos_max=n_ativos_max
             )
             if not res_opt.sucesso:
@@ -365,7 +370,8 @@ def backtesting_walk_forward(
         pesos_dict = dict(zip(precos.columns, pesos_opt))
         
         # 3. Executa do dia inicio_teste até fim_teste usando pesos_dict (Out-Of-Sample)
-        retornos_teste = retornos.iloc[inicio_teste : fim_teste]
+        # Usa retornos SIMPLES para simulação de capital (compounding correto)
+        retornos_teste = retornos_simples.iloc[inicio_teste : fim_teste]
         pesos_atuais = pesos_dict.copy()
         
         for data, ret_dia in retornos_teste.iterrows():
@@ -388,17 +394,18 @@ def backtesting_walk_forward(
     # Remove duplicidade de data inicial caso exista
     serie_carteira = serie_carteira.groupby(serie_carteira.index).first()
     retornos_carteira = serie_carteira.pct_change().dropna()
-    
+
     retorno_total = (serie_carteira.iloc[-1] / serie_carteira.iloc[0]) - 1
-    retorno_anualizado = (1 + retorno_total) ** (252 / len(retornos_carteira)) - 1
+    n_dias_bt = len(retornos_carteira)
+    retorno_anualizado = (1 + retorno_total) ** (252 / max(n_dias_bt, 1)) - 1
     volatilidade = retornos_carteira.std() * np.sqrt(252)
     drawdown_serie, max_drawdown, duracao_dd = calcular_drawdown(serie_carteira)
-    
+
     var_95 = calcular_var_cornish_fisher(retornos_carteira.values, 0.95)
     cvar_95 = calcular_cvar(retornos_carteira.values, 0.95)
     sortino = calcular_sortino(retornos_carteira.values, taxa_livre_risco)
     sharpe = (retorno_anualizado - taxa_livre_risco) / volatilidade if volatilidade > 0 else 0
-    
+
     return {
         'serie_carteira': serie_carteira,
         'retornos_carteira': retornos_carteira,
@@ -416,7 +423,7 @@ def backtesting_walk_forward(
         'cvar_95': cvar_95,
         'var_95_anual': var_95 * np.sqrt(252),
         'cvar_95_anual': cvar_95 * np.sqrt(252),
-        'n_dias': len(retornos_carteira),
+        'n_dias': n_dias_bt,
         'periodo_inicio': serie_carteira.index[0],
         'periodo_fim': serie_carteira.index[-1]
     }

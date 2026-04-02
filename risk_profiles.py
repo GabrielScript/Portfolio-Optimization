@@ -80,7 +80,7 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
     "Agressivo": PerfilRisco(
         nome="Agressivo",
         descricao="Prioriza maximizar retornos. Tolera alta volatilidade em busca de ganhos maiores.",
-        volatilidade_maxima=0.50,
+        volatilidade_maxima=0.40,
         objetivo="max_return",
         cor_primaria="#FF5252",
         cor_secundaria="#B71C1C",

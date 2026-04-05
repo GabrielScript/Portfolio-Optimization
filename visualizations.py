@@ -24,10 +24,12 @@ CORES = {
 }
 
 def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict, 
-                                 perfil: str, taxa_livre_risco: float = 0.1075) -> go.Figure:
+                                 perfil: str, taxa_livre_risco: float = 0.1075,
+                                 benchmark_1n: dict = None) -> go.Figure:
     """
     Gráfico da Fronteira Eficiente.
     Corrigido para aceitar a taxa livre de risco dinamicamente e evitar distorções de escala.
+    Inclui ponto de benchmark 1/N (carteira equiponderada) quando fornecido.
     """
     cor_perfil = CORES.get(perfil.lower(), CORES['moderado'])
     fig = go.Figure()
@@ -53,6 +55,19 @@ def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict,
         hovertemplate=f'<b>{perfil}</b><br>' +
                       'Risco (Vol): %{x:.2f}%<br>Retorno Esp.: %{y:.2f}%<extra></extra>'
     ))
+    
+    # Benchmark 1/N (carteira equiponderada ingénua)
+    if benchmark_1n is not None:
+        fig.add_trace(go.Scatter(
+            x=[benchmark_1n['volatilidade'] * 100],
+            y=[benchmark_1n['retorno'] * 100],
+            mode='markers',
+            name='Benchmark 1/N',
+            marker=dict(size=14, color=CORES['moderado'], symbol='x-thin',
+                       line=dict(width=3, color=CORES['moderado'])),
+            hovertemplate='<b>1/N (Equiponderado)</b><br>' +
+                          'Risco (Vol): %{x:.2f}%<br>Retorno Esp.: %{y:.2f}%<extra></extra>'
+        ))
     
     # Linha base dinâmica (Taxa Livre de Risco real do momento)
     taxa_pct = taxa_livre_risco * 100
@@ -218,17 +233,15 @@ def grafico_evolucao_precos(precos: pd.DataFrame, tickers_selecionados: list) ->
     return fig
 
 def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = None,
-                        nome_benchmark: str = "IBOV") -> go.Figure:
+                        nome_benchmark: str = "IBOV", serie_1n: pd.Series = None) -> go.Figure:
     """
     A prova visual empírica do motor Out-of-Sample.
-    Alinha estritamente as janelas temporais dinâmicas (Prevenção de Bias OOS).
+    Inclui comparação com Ibovespa e carteira 1/N (equiponderada) conforme Q1 do TCC.
     """
     fig = go.Figure()
-    
-    # Capital já em formato absoluto da nossa lógica true_walk_forward
-    # Contudo, transformar a base 100 ajuda à leitura percentual transversal
+
     carteira_norm = serie_carteira / serie_carteira.iloc[0] * 100
-    
+
     fig.add_trace(go.Scatter(
         x=carteira_norm.index,
         y=carteira_norm.values,
@@ -237,27 +250,40 @@ def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = 
         line=dict(color=CORES['azul'], width=2.5),
         fill='tozeroy',
         fillcolor='rgba(102, 126, 234, 0.15)',
-        hovertemplate='Valor Indexado: %{y:.2f}<extra></extra>'
+        hovertemplate='Otimizada: %{y:.2f}<extra></extra>'
     ))
-    
+
     if serie_benchmark is not None and not serie_benchmark.empty:
-        # Cruza as datas com precisão algorítmica. O benchmark no Streamlit não deve ver o treino.
         datas_comuns = carteira_norm.index.intersection(serie_benchmark.index)
         if len(datas_comuns) > 5:
             benchmark_norm = serie_benchmark.loc[datas_comuns]
             benchmark_norm = benchmark_norm / benchmark_norm.iloc[0] * 100
-            
+
             fig.add_trace(go.Scatter(
                 x=benchmark_norm.index,
                 y=benchmark_norm.values,
                 mode='lines',
                 name=f'Mercado ({nome_benchmark})',
                 line=dict(color=CORES['alerta'], width=1.5, dash='dashdot'),
-                hovertemplate='Retorno Mercado: %{y:.2f}<extra></extra>'
+                hovertemplate='Mercado: %{y:.2f}<extra></extra>'
             ))
-    
+
+    if serie_1n is not None:
+        serie_1n_norm = serie_1n / serie_1n.iloc[0] * 100
+        datas_comuns_1n = carteira_norm.index.intersection(serie_1n_norm.index)
+        if len(datas_comuns_1n) > 5:
+            serie_1n_plot = serie_1n_norm.loc[datas_comuns_1n]
+            fig.add_trace(go.Scatter(
+                x=serie_1n_plot.index,
+                y=serie_1n_plot.values,
+                mode='lines',
+                name='Carteira 1/N',
+                line=dict(color=CORES['moderado'], width=1.5, dash='dot'),
+                hovertemplate='1/N: %{y:.2f}<extra></extra>'
+            ))
+
     fig.add_hline(y=100, line_dash="solid", line_color="#444", line_width=1)
-    
+
     fig.update_layout(
         title=dict(text='Curva de Capital (Backtesting)', font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',

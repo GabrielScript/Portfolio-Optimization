@@ -24,6 +24,60 @@ import data_loader
 logger = logging.getLogger(__name__)
 
 
+def _alinhar_cdi(retornos_serie: pd.Series, cdi_serie: pd.Series):
+    """
+    Alinha temporalmente a série de retornos do portfólio com a série CDI diária.
+    Trata diferenças de timezone e gaps via forward-fill.
+    
+    Returns:
+        Tuple (retornos_alinhados, cdi_alinhado) com mesmo índice.
+    """
+    ret = retornos_serie.copy()
+    rf = cdi_serie.copy()
+    
+    # Remove timezone se presente (yfinance pode retornar tz-aware)
+    if hasattr(ret.index, 'tz') and ret.index.tz is not None:
+        ret.index = ret.index.tz_localize(None)
+    if hasattr(rf.index, 'tz') and rf.index.tz is not None:
+        rf.index = rf.index.tz_localize(None)
+    
+    # Forward-fill CDI para cobrir eventuais gaps de feriados
+    rf_alinhado = rf.reindex(ret.index, method='ffill')
+    mask = rf_alinhado.notna()
+    
+    return ret[mask], rf_alinhado[mask]
+
+
+def _calcular_sharpe_sortino_variavel(retornos_carteira, serie_cdi_diario, retorno_anualizado, volatilidade, taxa_livre_risco):
+    """
+    Calcula Sharpe e Sortino usando CDI diário variável quando disponível.
+    Fallback para taxa constante quando CDI não disponível.
+    
+    Fórmula correta: SR = E[r_p - r_f] / σ(r_p - r_f) × √252
+    """
+    if serie_cdi_diario is not None and not serie_cdi_diario.empty:
+        ret_alinhado, rf_alinhado = _alinhar_cdi(retornos_carteira, serie_cdi_diario)
+        if len(ret_alinhado) > 20:
+            excesso = ret_alinhado - rf_alinhado
+            
+            # Sharpe com excesso de retorno diário
+            sharpe = (excesso.mean() / excesso.std()) * np.sqrt(252) if excesso.std() > 0 else 0
+            
+            # Sortino: downside deviation do excesso de retorno
+            excesso_neg = excesso[excesso < 0]
+            if len(excesso_neg) > 0 and excesso_neg.std() > 0:
+                sortino = (excesso.mean() * 252) / (excesso_neg.std() * np.sqrt(252))
+            else:
+                sortino = float('inf')
+            
+            return sharpe, sortino
+    
+    # Fallback: taxa constante (comportamento original)
+    sharpe = (retorno_anualizado - taxa_livre_risco) / volatilidade if volatilidade > 0 else 0
+    sortino = calcular_sortino(retornos_carteira.values, taxa_livre_risco)
+    return sharpe, sortino
+
+
 def calcular_var(retornos: np.ndarray, confianca: float = 0.95) -> float:
     """
     Calcula o Value at Risk (VaR) paramétrico.
@@ -197,19 +251,18 @@ def backtesting_pesos_fixos(
     pesos: Dict[str, float],
     janela_rebalanceamento: int = 63,  # Trimestral (~63 dias úteis)
     capital_inicial: float = 100000,
-    taxa_livre_risco: float = None
+    taxa_livre_risco: float = None,
+    serie_cdi_diario: pd.Series = None
 ) -> Dict:
     """
     Realiza backtesting com rebalanceamento periódico usando pesos fixos.
-    
-    Simula como a carteira teria performado no passado com
-    rebalanceamento periódico para os pesos alvo. Estratégia in-sample.
     
     Args:
         precos: DataFrame com preços históricos
         pesos: Dicionário {ticker: peso}
         janela_rebalanceamento: Dias entre rebalanceamentos
         capital_inicial: Valor inicial investido
+        serie_cdi_diario: Série CDI diária para Sharpe/Sortino variável no tempo
         
     Returns:
         Dict com resultados do backtesting
@@ -272,10 +325,12 @@ def backtesting_pesos_fixos(
     
     var_95 = calcular_var_cornish_fisher(retornos_carteira.values, 0.95)
     cvar_95 = calcular_cvar(retornos_carteira.values, 0.95)
-    sortino = calcular_sortino(retornos_carteira.values)
     
-    # Sharpe (usando taxa livre de risco passada como parâmetro)
-    sharpe = (retorno_anualizado - taxa_livre_risco) / volatilidade if volatilidade > 0 else 0
+    # Sharpe e Sortino com CDI diário variável (correção metodológica)
+    sharpe, sortino = _calcular_sharpe_sortino_variavel(
+        retornos_carteira, serie_cdi_diario,
+        retorno_anualizado, volatilidade, taxa_livre_risco
+    )
     
     return {
         'serie_carteira': serie_carteira,
@@ -308,7 +363,8 @@ def backtesting_walk_forward(
     capital_inicial: float = 100000,
     taxa_livre_risco: float = None,
     n_ativos_max: Optional[int] = None,
-    peso_maximo: float = 0.20
+    peso_maximo: float = 0.20,
+    serie_cdi_diario: pd.Series = None
 ) -> Dict:
     """
     Realiza o VERDADEIRO backtesting Walk-Forward (Out-of-Sample).
@@ -403,8 +459,12 @@ def backtesting_walk_forward(
 
     var_95 = calcular_var_cornish_fisher(retornos_carteira.values, 0.95)
     cvar_95 = calcular_cvar(retornos_carteira.values, 0.95)
-    sortino = calcular_sortino(retornos_carteira.values, taxa_livre_risco)
-    sharpe = (retorno_anualizado - taxa_livre_risco) / volatilidade if volatilidade > 0 else 0
+    
+    # Sharpe e Sortino com CDI diário variável (correção metodológica)
+    sharpe, sortino = _calcular_sharpe_sortino_variavel(
+        retornos_carteira, serie_cdi_diario,
+        retorno_anualizado, volatilidade, taxa_livre_risco
+    )
 
     return {
         'serie_carteira': serie_carteira,
@@ -530,8 +590,9 @@ def calcular_metricas_risco_portfolio(
     pesos_arr = np.array([pesos[t] for t in tickers])
     pesos_arr = pesos_arr / pesos_arr.sum()  # Normaliza
     
-    # Retornos do portfólio
-    ret_portfolio = (retornos[tickers] * pesos_arr).sum(axis=1)
+    # Retornos do portfólio (converte log returns para simples antes de ponderar)
+    retornos_simples = np.exp(retornos[tickers]) - 1
+    ret_portfolio = (retornos_simples * pesos_arr).sum(axis=1)
     
     # Métricas básicas
     ret_anual = ret_portfolio.mean() * 252

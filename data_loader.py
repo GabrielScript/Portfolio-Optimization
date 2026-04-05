@@ -16,6 +16,8 @@ import yfinance as yf
 from datetime import datetime, timedelta
 from typing import Tuple, List, Optional
 import streamlit as st
+import requests
+import logging
 import risk_profiles
 from sklearn.covariance import LedoitWolf
 
@@ -64,6 +66,55 @@ def baixar_dados_historicos(tickers: List[str], anos: int = ANOS_HISTORICO) -> p
     except Exception as e:
         st.error(f"Erro ao baixar dados: {e}")
         return pd.DataFrame()
+
+
+@st.cache_data(ttl=86400)  # Cache de 24h
+def baixar_cdi_historico(anos: int = ANOS_HISTORICO) -> pd.Series:
+    """
+    Busca a série histórica do CDI diário via API do Banco Central (SGS série 12).
+
+    Permite calcular o excesso de retorno do portfólio dia a dia, corrigindo
+    a distorção de usar uma taxa Selic constante em backtests multi-anuais.
+    Referência: https://dadosabertos.bcb.gov.br/dataset/12-taxa-de-juros---cdi
+
+    Returns:
+        pd.Series com a taxa CDI diária em decimal, indexada por data.
+    """
+    data_fim = datetime.now()
+    data_inicio = data_fim - timedelta(days=anos * 365 + 60)
+
+    try:
+        url = (
+            "https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados?"
+            f"formato=json&"
+            f"dataInicial={data_inicio.strftime('%d/%m/%Y')}&"
+            f"dataFinal={data_fim.strftime('%d/%m/%Y')}"
+        )
+        resp = requests.get(url, timeout=15)
+        resp.raise_for_status()
+        dados = resp.json()
+
+        datas = []
+        taxas = []
+        for d in dados:
+            datas.append(pd.to_datetime(d['data'], dayfirst=True))
+            # SGS série 12 retorna CDI diário em % a.d.
+            # Ex: 0.0527 significa 0.0527% ao dia → 0.000527 em decimal
+            valor = float(d['valor'].replace(',', '.'))
+            taxas.append(valor / 100)
+
+        serie = pd.Series(taxas, index=pd.DatetimeIndex(datas), name='cdi_diario')
+        serie = serie.sort_index()
+
+        logging.info(
+            f"CDI histórico carregado: {len(serie)} obs "
+            f"({serie.index[0]:%Y-%m} a {serie.index[-1]:%Y-%m})"
+        )
+        return serie
+
+    except Exception as e:
+        logging.warning(f"Falha ao buscar CDI histórico via BCB: {e}")
+        return pd.Series(dtype=float)
 
 def calcular_retornos(precos: pd.DataFrame) -> pd.DataFrame:
     """

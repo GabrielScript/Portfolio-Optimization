@@ -376,20 +376,23 @@ def otimizar_max_sharpe(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
 
 def gerar_fronteira_eficiente(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
                                taxa_livre_risco: float = None, n_pontos: int = 50,
-                               peso_maximo: float = 0.20) -> pd.DataFrame:
+                               peso_maximo: float = 0.20,
+                               n_ativos_max: Optional[int] = None) -> pd.DataFrame:
     """
     Constrói a fronteira eficiente dinamicamente através de warm-start no solver convexo.
-    Isto reduz exponencialmente o tempo de processamento das iterações consecutivas.
+    Quando n_ativos_max é fornecido, aplica a heurística de cardinalidade em duas etapas
+    para que a fronteira reflita as mesmas restrições da otimização real.
     """
     if taxa_livre_risco is None:
         taxa_livre_risco = risk_profiles.TAXA_SELIC
-                               
+
     n = len(retornos_medios)
     ret_medio = retornos_medios.values
     cov_matrix = _preparar_matriz_covariancia(matriz_cov)
-    
+    aplicar_card = n_ativos_max is not None and n_ativos_max < n
+
     w = cp.Variable(n)
-    
+
     try:
         p_min = cp.Problem(cp.Minimize(cp.quad_form(w, cov_matrix)), [cp.sum(w) == 1, w >= 0, w <= peso_maximo])
         _resolver_problema(p_min)
@@ -403,35 +406,68 @@ def gerar_fronteira_eficiente(retornos_medios: pd.Series, matriz_cov: pd.DataFra
         ret_max = float(p_max.value)
     except Exception:
         ret_max = float(np.max(ret_medio))
-        
+
     if ret_min is None or ret_max is None or np.isnan(ret_min) or np.isnan(ret_max) or ret_min >= ret_max:
         ret_min, ret_max = float(np.min(ret_medio)), float(np.max(ret_medio))
 
     retornos_alvo = np.linspace(ret_min, ret_max, n_pontos)
     fronteira = []
-    
+
     param_retorno = cp.Parameter()
     prob = cp.Problem(
         cp.Minimize(cp.quad_form(w, cov_matrix)),
         [cp.sum(w) == 1, w >= 0, w <= peso_maximo, ret_medio.T @ w >= param_retorno]
     )
-    
+
     for ret_alvo in retornos_alvo:
         param_retorno.value = ret_alvo
         try:
             _resolver_problema(prob, warm_start=True)
             if prob.status in ["optimal", "optimal_inaccurate"] and w.value is not None:
                 p = np.clip(w.value, 0, 1)
-                if np.sum(p) > 0: 
+                if np.sum(p) > 0:
                     p /= np.sum(p)
+
+                # Etapa 2: heurística de cardinalidade (mesmas restrições da otimização real)
+                if aplicar_card:
+                    indices_top = _selecionar_melhores_ativos(p, n_ativos_max)
+                    n_filt = len(indices_top)
+                    cov_filt = cov_matrix[np.ix_(indices_top, indices_top)]
+                    ret_filt = ret_medio[indices_top]
+
+                    w_filt = cp.Variable(n_filt)
+                    prob_filt = cp.Problem(
+                        cp.Minimize(cp.quad_form(w_filt, cov_filt)),
+                        [cp.sum(w_filt) == 1, w_filt >= 0, w_filt <= peso_maximo,
+                         ret_filt.T @ w_filt >= ret_alvo]
+                    )
+                    try:
+                        _resolver_problema(prob_filt)
+                        if prob_filt.status in ["optimal", "optimal_inaccurate"] and w_filt.value is not None:
+                            p2 = np.clip(w_filt.value, 0, 1)
+                            if np.sum(p2) > 0: p2 /= np.sum(p2)
+
+                            pesos_finais = np.zeros(n)
+                            for i, idx in enumerate(indices_top):
+                                pesos_finais[idx] = p2[i]
+
+                            vol = np.sqrt(pesos_finais.T @ cov_matrix @ pesos_finais)
+                            ret = pesos_finais.T @ ret_medio
+                            sharpe = (ret - taxa_livre_risco) / vol if vol > 0 else 0
+                            fronteira.append({'retorno': float(ret), 'volatilidade': float(vol), 'sharpe': float(sharpe)})
+                    except Exception:
+                        pass  # Ponto inviável com cardinalidade
+                    # CORREÇÃO: Sempre avança quando cardinalidade está ativa.
+                    # Impede fallthrough para ponto sem restrição de cardinalidade.
+                    continue
+
                 vol = np.sqrt(p.T @ cov_matrix @ p)
                 ret = p.T @ ret_medio
                 sharpe = (ret - taxa_livre_risco) / vol if vol > 0 else 0
-                
                 fronteira.append({'retorno': float(ret), 'volatilidade': float(vol), 'sharpe': float(sharpe)})
         except Exception:
             continue
-            
+
     return pd.DataFrame(fronteira)
 
 

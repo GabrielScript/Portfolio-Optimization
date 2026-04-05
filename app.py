@@ -21,7 +21,7 @@ st.set_page_config(
 
 from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top75_tickers
 from risk_profiles import PERFIS_RISCO, get_perfil, get_nomes_perfis, TAXA_SELIC
-from data_loader import carregar_dados_completos, baixar_dados_historicos
+from data_loader import carregar_dados_completos, baixar_dados_historicos, baixar_cdi_historico
 from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
 from visualizations import (
     grafico_fronteira_eficiente, grafico_composicao_pizza,
@@ -39,7 +39,7 @@ taxa_selic = TAXA_SELIC
 
 
 @st.cache_data(show_spinner=False)
-def cached_backtest_oos(_precos, perfil, orcamento, n_ativos_max, peso_maximo, _taxa):
+def cached_backtest_oos(_precos, perfil, orcamento, n_ativos_max, peso_maximo, _taxa, _serie_cdi):
     return backtesting_walk_forward(
         precos=_precos,
         perfil=perfil,
@@ -48,18 +48,20 @@ def cached_backtest_oos(_precos, perfil, orcamento, n_ativos_max, peso_maximo, _
         capital_inicial=orcamento,
         taxa_livre_risco=_taxa,
         n_ativos_max=n_ativos_max,
-        peso_maximo=peso_maximo
+        peso_maximo=peso_maximo,
+        serie_cdi_diario=_serie_cdi
     )
 
 
 @st.cache_data(show_spinner=False)
-def cached_backtest_is(_precos, pesos_dict, orcamento, _taxa):
+def cached_backtest_is(_precos, pesos_dict, orcamento, _taxa, _serie_cdi):
     return backtesting_pesos_fixos(
         precos=_precos,
         pesos=pesos_dict,
         janela_rebalanceamento=63,
         capital_inicial=orcamento,
-        taxa_livre_risco=_taxa
+        taxa_livre_risco=_taxa,
+        serie_cdi_diario=_serie_cdi
     )
 
 
@@ -355,7 +357,7 @@ def main():
     st.markdown("---")
 
     # ============== OTIMIZACAO ==============
-    params_key = f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_{dados['n_ativos']}"
+    params_key = f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_{dados['n_ativos']}_{periodo_anos}"
 
     needs_optimization = (
         otimizar or
@@ -378,8 +380,9 @@ def main():
                 dados['retornos_medios'],
                 dados['matriz_cov'],
                 taxa_selic,
-                n_pontos=20,
-                peso_maximo=peso_maximo
+                n_pontos=30,
+                peso_maximo=peso_maximo,
+                n_ativos_max=n_ativos_max
             )
 
             st.session_state['resultado'] = resultado
@@ -438,6 +441,14 @@ def main():
     pesos_dict = {t: p for t, p in zip(resultado.tickers, resultado.pesos) if p > 0.001}
     info_tickers = get_ticker_info()
 
+    # Benchmark 1/N: retorno e volatilidade esperados (espaço média-variância)
+    n_all = dados['n_ativos']
+    pesos_1n_arr = np.ones(n_all) / n_all
+    ret_1n_frontier = float(np.dot(pesos_1n_arr, dados['retornos_medios'].values))
+    cov_vals = dados['matriz_cov'].values
+    vol_1n_frontier = float(np.sqrt(pesos_1n_arr.T @ cov_vals @ pesos_1n_arr))
+    benchmark_1n = {'retorno': ret_1n_frontier, 'volatilidade': vol_1n_frontier}
+
     # Linha 1: Fronteira + Composicao
     col1, col2 = st.columns([1.2, 1])
 
@@ -446,7 +457,8 @@ def main():
             fronteira,
             {'retorno': resultado.retorno_esperado, 'volatilidade': resultado.volatilidade},
             perfil_nome,
-            taxa_selic
+            taxa_selic,
+            benchmark_1n=benchmark_1n
         )
         st.plotly_chart(fig_fronteira, use_container_width=True)
 
@@ -510,6 +522,11 @@ def main():
     )
 
     with st.spinner('Executando backtesting...'):
+        # Busca série histórica do CDI diário para Sharpe/Sortino corretos
+        serie_cdi = baixar_cdi_historico(anos=periodo_anos)
+        if serie_cdi.empty:
+            st.warning("CDI histórico indisponível. Sharpe/Sortino usarão Selic constante como fallback.")
+
         if "Walk-Forward" in tipo_backtest:
             try:
                 backtest = cached_backtest_oos(
@@ -518,7 +535,8 @@ def main():
                     orcamento=orcamento,
                     n_ativos_max=n_ativos_max,
                     peso_maximo=peso_maximo,
-                    _taxa=taxa_selic
+                    _taxa=taxa_selic,
+                    _serie_cdi=serie_cdi
                 )
             except Exception as e:
                 st.error(f"Erro no Walk-Forward: {e}. Usando Pesos Fixos como fallback.")
@@ -526,20 +544,32 @@ def main():
                     _precos=dados['precos'],
                     pesos_dict=pesos_dict,
                     orcamento=orcamento,
-                    _taxa=taxa_selic
+                    _taxa=taxa_selic,
+                    _serie_cdi=serie_cdi
                 )
         else:
             backtest = cached_backtest_is(
                 _precos=dados['precos'],
                 pesos_dict=pesos_dict,
                 orcamento=orcamento,
-                _taxa=taxa_selic
+                _taxa=taxa_selic,
+                _serie_cdi=serie_cdi
             )
 
         metricas_risco = calcular_metricas_risco_portfolio(
             retornos=dados['retornos'],
             pesos=pesos_dict,
             taxa_livre_risco=taxa_selic
+        )
+
+        # Benchmark 1/N (carteira equiponderada) — exigido pela Q1 do TCC
+        pesos_1n = {t: 1.0 / dados['n_ativos'] for t in dados['tickers']}
+        backtest_1n = cached_backtest_is(
+            _precos=dados['precos'],
+            pesos_dict=pesos_1n,
+            orcamento=orcamento,
+            _taxa=taxa_selic,
+            _serie_cdi=serie_cdi
         )
 
         # Dados do Ibovespa para comparacao
@@ -596,7 +626,8 @@ def main():
         fig_backtest = grafico_backtesting(
             serie_carteira=backtest['serie_carteira'],
             serie_benchmark=ibov_serie,
-            nome_benchmark="Ibovespa"
+            nome_benchmark="Ibovespa",
+            serie_1n=backtest_1n['serie_carteira']
         )
         st.plotly_chart(fig_backtest, use_container_width=True)
 
@@ -607,6 +638,45 @@ def main():
     # Grafico de Drawdown
     fig_dd = grafico_drawdown(backtest['drawdown_serie'])
     st.plotly_chart(fig_dd, use_container_width=True)
+
+    # ============== TABELA COMPARATIVA: Otimizada vs 1/N vs Ibovespa ==============
+    st.markdown("### Comparacao: Otimizada vs Benchmark 1/N")
+
+    comparacao_data = {
+        'Metrica': [
+            'Retorno Total',
+            'Retorno Anualizado',
+            'Volatilidade',
+            'Sharpe',
+            'Sortino',
+            'Max Drawdown',
+            'VaR 95% (anual)',
+            'CVaR 95% (anual)'
+        ],
+        f'Carteira Otimizada ({perfil_nome})': [
+            f"{backtest['retorno_total']*100:.2f}%",
+            f"{backtest['retorno_anualizado']*100:.2f}%",
+            f"{backtest['volatilidade']*100:.2f}%",
+            f"{backtest['sharpe']:.3f}",
+            f"{backtest['sortino']:.3f}",
+            f"{backtest['max_drawdown']*100:.2f}%",
+            f"{backtest.get('var_95_anual', 0)*100:.2f}%",
+            f"{backtest.get('cvar_95_anual', 0)*100:.2f}%"
+        ],
+        'Benchmark 1/N': [
+            f"{backtest_1n['retorno_total']*100:.2f}%",
+            f"{backtest_1n['retorno_anualizado']*100:.2f}%",
+            f"{backtest_1n['volatilidade']*100:.2f}%",
+            f"{backtest_1n['sharpe']:.3f}",
+            f"{backtest_1n['sortino']:.3f}",
+            f"{backtest_1n['max_drawdown']*100:.2f}%",
+            f"{backtest_1n.get('var_95_anual', 0)*100:.2f}%",
+            f"{backtest_1n.get('cvar_95_anual', 0)*100:.2f}%"
+        ]
+    }
+
+    df_comparacao = pd.DataFrame(comparacao_data)
+    st.dataframe(df_comparacao, use_container_width=True, hide_index=True)
 
     # Interpretacao das Metricas
     with st.expander("Entenda as Metricas de Risco", expanded=False):
@@ -641,11 +711,11 @@ def main():
     o que pode enviesar as simulacoes positivamente.
     """)
 
-    st.warning(f"""
-    **Taxa Selic Constante no Backtest:** A taxa Selic atual ({taxa_selic*100:.2f}% a.a.) e utilizada como
-    taxa livre de risco para todo o periodo historico. Na realidade, a Selic variou significativamente
-    (ex: ~2% em 2020 a ~15% em 2026), o que pode distorcer metricas como Sharpe e Sortino
-    calculadas retroativamente. Esta e uma limitacao conhecida do modelo.
+    st.success("""
+    **Taxa de Risco Variável (CDI Diário):** Os índices de Sharpe e Sortino do backtest utilizam
+    a série histórica do CDI diário (BCB SGS série 12) como taxa livre de risco,
+    calculando o excesso de retorno dia a dia. Isso corrige a distorção de usar
+    uma Selic constante sobre períodos onde a taxa variou de ~2% (2020) a ~15% (2026).
     """)
 
     st.info("""

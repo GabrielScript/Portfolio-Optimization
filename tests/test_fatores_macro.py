@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core import fatores_macro, tesouro
+from core import bcb, fatores_macro, focus, market_data, tesouro
 from core.fatores_macro import DadosMacro
 
 HOJE = date(2006, 4, 15)
@@ -176,3 +176,44 @@ def test_gama_recusa_painel_sem_mercado_ou_curto(cortar):
     entrada = fatores.drop(columns=["mercado"]) if cortar == "mercado" else fatores.iloc[:7]
     with pytest.raises(ValueError):
         fatores_macro.estimar_gama(entrada)
+
+
+# ---------------------------------------------------------------------------
+# Download: erros de fonte viram None + motivo; bugs não são engolidos
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def fontes_falsas(monkeypatch):
+    def serie_bcb(codigo, inicio, hoje):
+        return pd.Series([float(codigo)], index=pd.to_datetime([hoje]))
+    monkeypatch.setattr(tesouro, "baixar_prefixados", lambda hoje: _titulos({"2026-10-09": (13.0, 12.5)}))
+    monkeypatch.setattr(focus, "baixar_focus_ipca_12m",
+                        lambda hoje: pd.DataFrame({"data": [pd.Timestamp("2026-10-09")],
+                                                   "mediana": [4.48], "desvio": [0.5]}))
+    monkeypatch.setattr(focus, "baixar_focus_anual",
+                        lambda indicador, hoje: _focus_anual([("2026-10-09", 2026, 1.0), ("2026-10-09", 2027, 2.0)]))
+    monkeypatch.setattr(bcb, "baixar_ptax", lambda inicio, hoje: pd.Series([5.0], index=pd.to_datetime(["2026-10-09"])))
+    monkeypatch.setattr(bcb, "baixar_serie", serie_bcb)
+    monkeypatch.setattr(market_data, "carregar_precos_mensais",
+                        lambda tickers, inicio, hoje: pd.DataFrame(
+                            {"^BVSP": [100.0]}, index=pd.PeriodIndex(["2026-09"], freq="M", name="mes")))
+
+
+def test_baixar_dados_macro_guarda_o_erro_da_fonte_e_segue(fontes_falsas, monkeypatch):
+    def falha(hoje):
+        raise tesouro.ErroTesouro("HTTP 503")
+    monkeypatch.setattr(tesouro, "baixar_prefixados", falha)
+
+    dados = fatores_macro.baixar_dados_macro(date(2026, 10, 13))
+
+    assert dados.titulos is None and dados.erros == {"tesouro": "HTTP 503"}
+    assert dados.focus_pib is not None and dados.ptax is not None
+    assert dados.cdi_diario.iloc[0] == pytest.approx(bcb.SERIE_CDI / 100.0)
+
+
+def test_baixar_dados_macro_nao_engole_bug(fontes_falsas, monkeypatch):
+    def bug(hoje):
+        raise KeyError("coluna")
+    monkeypatch.setattr(focus, "baixar_focus_ipca_12m", bug)
+    with pytest.raises(KeyError):
+        fatores_macro.baixar_dados_macro(date(2026, 10, 13))

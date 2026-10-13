@@ -24,13 +24,16 @@ Uma fonte que falha tira só os fatores que dependem dela; o motivo vai para
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
+from typing import TypeVar
 
 import numpy as np
 import pandas as pd
 
-from core import focus, tesouro
+from core import bcb, focus, market_data, tesouro
 
 FATORES = ("juros", "inflacao", "cambio", "atividade", "premio", "mercado")
 FATORES_MACRO = FATORES[:5]
@@ -39,6 +42,11 @@ _FONTES_DO_FATOR = {
     "juros": ("tesouro",), "inflacao": ("focus_ipca",), "cambio": ("ptax",),
     "atividade": ("focus_pib",), "premio": ("tesouro",), "mercado": ("bvsp", "cdi"),
 }
+INICIO_DOWNLOAD = date(2005, 10, 1)      # o nível de 2005-11 entra na primeira variação
+TICKER_MERCADO = "^BVSP"
+_ERROS_DE_FONTE = (bcb.ErroBcb, focus.ErroFocus, tesouro.ErroTesouro, market_data.ErroDadosMercado)
+
+T = TypeVar("T")
 
 
 @dataclass(frozen=True)
@@ -170,3 +178,67 @@ def mercado_residual(fatores: pd.DataFrame, gama: pd.Series) -> pd.Series:
     macro = [nome for nome in gama.index if nome != "const"]
     explicado = gama["const"] + fatores[macro].mul(gama[macro], axis=1).sum(axis=1, min_count=len(macro))
     return (fatores["mercado"] - explicado).rename("mercado")
+
+
+# ---------------------------------------------------------------------------
+# Download (único trecho com rede)
+# ---------------------------------------------------------------------------
+
+def _tentar(obter: Callable[[], T]) -> tuple[T | None, str | None]:
+    """(valor, None) ou (None, motivo) para erros de fonte. Qualquer outra exceção é bug e sobe."""
+    try:
+        return obter(), None
+    except _ERROS_DE_FONTE as erro:
+        return None, str(erro)
+
+
+def _serie_bcb(codigo: int, inicio: date, hoje: date) -> pd.Series:
+    serie = bcb.baixar_serie(codigo, inicio, hoje)
+    if serie.empty:
+        raise bcb.ErroBcb(f"BCB SGS {codigo} sem observações entre {inicio} e {hoje}.")
+    return serie
+
+
+def _bvsp_mensal(hoje: date) -> pd.Series:
+    precos = market_data.carregar_precos_mensais([TICKER_MERCADO], INICIO_DOWNLOAD, hoje)
+    serie = precos[TICKER_MERCADO].dropna()
+    if serie.empty:
+        raise market_data.ErroDadosMercado(f"Yahoo sem preços mensais de {TICKER_MERCADO}.")
+    return serie
+
+
+def _tarefas_de_download(hoje: date) -> dict[str, tuple[str, Callable[[], object]]]:
+    """Campo de DadosMacro -> (chave da fonte em ``erros``, função que baixa)."""
+    return {
+        "titulos": ("tesouro", lambda: tesouro.baixar_prefixados(hoje)),
+        "focus_ipca_12m": ("focus_ipca", lambda: focus.baixar_focus_ipca_12m(hoje)),
+        "focus_selic": ("focus_selic", lambda: focus.baixar_focus_anual(focus.INDICADOR_SELIC, hoje)),
+        "focus_cambio": ("focus_cambio", lambda: focus.baixar_focus_anual(focus.INDICADOR_CAMBIO, hoje)),
+        "focus_pib": ("focus_pib", lambda: focus.baixar_focus_anual(focus.INDICADOR_PIB, hoje)),
+        "ptax": ("ptax", lambda: bcb.baixar_ptax(INICIO_DOWNLOAD, hoje)),
+        "bvsp_mensal": ("bvsp", lambda: _bvsp_mensal(hoje)),
+        "cdi_diario": ("cdi", lambda: _serie_bcb(bcb.SERIE_CDI, INICIO_DOWNLOAD, hoje) / 100.0),
+        "selic_meta": ("selic_meta",
+                       lambda: _serie_bcb(bcb.SERIE_SELIC_META, hoje - timedelta(days=120), hoje)),
+        "ipca_12m": ("ipca_12m",
+                     lambda: _serie_bcb(bcb.SERIE_IPCA_12M, hoje - timedelta(days=400), hoje)),
+    }
+
+
+def baixar_dados_macro(hoje: date) -> DadosMacro:
+    """
+    Baixa todas as fontes em paralelo (são independentes; em série levava ~160 s
+    porque o SGS responde devagar). Fonte que falha vira None + motivo em
+    ``erros``; erro que não é de fonte (bug) sobe.
+    """
+    tarefas = _tarefas_de_download(hoje)
+    with ThreadPoolExecutor(max_workers=len(tarefas)) as executor:
+        futuros = {campo: executor.submit(_tentar, obter) for campo, (_, obter) in tarefas.items()}
+    valores: dict[str, object] = {}
+    erros: dict[str, str] = {}
+    for campo, futuro in futuros.items():
+        valor, motivo = futuro.result()
+        valores[campo] = valor
+        if motivo is not None:
+            erros[tarefas[campo][0]] = motivo
+    return DadosMacro(**valores, erros=erros)

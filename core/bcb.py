@@ -34,6 +34,7 @@ import requests
 SERIE_PTAX_VENDA = 1        # R$ por US$, PTAX de venda
 SERIE_CDI = 12              # CDI, % ao dia (o backtest usa decimal/dia x 252)
 SERIE_SELIC_META = 432      # Selic meta, % a.a.
+SERIE_IPCA_12M = 13522      # IPCA acumulado em 12 meses, %; mensal, datado do dia 1 do mês
 
 _URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados"
 _TIMEOUT_HTTP = 30

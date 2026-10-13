@@ -291,7 +291,7 @@ tem como ser testado.
 Regras:
 - O estimador é o mesmo do app (seção 6).
 - O conjunto de fatores é fixo: fator que falhar não é removido.
-- O t de cada fator é um achado do TCC, não uma entrada do modelo.
+- O t de cada fator é um achado da pesquisa, não uma entrada do modelo.
 - Os limiares abaixo são definidos antes de qualquer resultado.
 
 Amostra: o painel começa em 2005-12, então as previsões fora da amostra vão de **2008-12**
@@ -457,7 +457,7 @@ do Focus de 2026-10-02 (IPCA 12m 4,59; Selic 2026 13,50; 2027 12,00). O
   (medidos no AppTest com dublês).
 - O app ao vivo abre sem exceção, e o relatório de validação real foi gerado uma vez.
 
-## 14. Limitações conhecidas (vão para o TCC)
+## 14. Limitações conhecidas
 
 - **μ inflado:** o μ de hoje vem de 5 anos de Selic subindo de 2% para 15% e de rerating por
   privatização. As células Focus herdam esse μ. A correção é o D.
@@ -496,7 +496,7 @@ isso o horizonte entra **só na exibição**.
 μ e σ anuais aritméticos da carteira (`ResultadoOtimizacao.retorno_esperado` e
 `.volatilidade`), CDI anual composto, H em meses, T = "Histórico (anos)" (3 a 10) e
 `kappa: float = 1.0`. O app sempre usa o padrão κ = 1; κ = 0 existe só para os testes e para
-a comparação no TCC.
+a comparação na pesquisa.
 
 ```
 h   = H / 12

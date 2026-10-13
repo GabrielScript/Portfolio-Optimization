@@ -1,6 +1,5 @@
 """
 assets.py - Universo de ações da B3 (lista curada)
-TCC: Otimização de Carteiras de Investimentos
 Autor: Gabriel Estrela Lopes
 
 Revisão 2026-10 (tickers checados no Yahoo):

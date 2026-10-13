@@ -140,7 +140,7 @@ cython_debug/
 # Backups locais da revisão (WIP original + arquivos apagados)
 .backup/
 
-# Livros e PDFs locais (direitos autorais; até 23 MB cada). Para versionar o TCC: !TCC.pdf
+# Livros e PDFs locais (direitos autorais; até 23 MB cada). Para versionar um PDF: !nome.pdf
 *.pdf
 *.epub
 

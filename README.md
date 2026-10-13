@@ -1,6 +1,5 @@
 # 📊 Otimizador de Carteiras B3
 
-> **TCC - Ciência de Dados para Negócios - UFPB**  
 > **Autor:** Gabriel Estrela Lopes
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
@@ -152,7 +151,7 @@ Portfolio-Optimization/
 
 ## 📝 Isenção de Responsabilidade (Disclaimer)
 
-Esta ferramenta foi desenvolvida para fins **acadêmicos e educacionais** como parte do Trabalho de Conclusão de Curso (TCC). 
+Esta ferramenta foi desenvolvida para fins **educacionais**.
 
 > ⚠️ **Não representa recomendação de investimento.** As decisões financeiras devem ser tomadas com base em análise própria ou orientação profissional. Retornos passados não garantem retornos futuros.
 

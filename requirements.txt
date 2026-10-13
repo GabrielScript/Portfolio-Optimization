@@ -1,5 +1,4 @@
-# TCC - Otimização de Carteiras de Investimentos
-# Dependências do Projeto
+# Otimizador de Carteiras B3 - Dependências do Projeto
 # Testado em 2026-10 com: streamlit 1.65, yfinance 1.7, pandas 3.0.6, numpy 2.5.4,
 # scipy 1.18.1, plotly 7.1, cvxpy 1.9.3, scikit-learn 1.9.1, requests 2.34
 

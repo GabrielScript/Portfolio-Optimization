@@ -1,6 +1,5 @@
 """
 visualizations.py - Gráficos Plotly para o Dashboard (Rigor Quantitativo)
-TCC: Otimização de Carteiras de Investimentos
 """
 
 import plotly.express as px

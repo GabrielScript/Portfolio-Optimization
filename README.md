@@ -71,7 +71,6 @@ Portfolio-Optimization/
 ├── app.py                    # Orquestrador Streamlit (camada fina)
 ├── assets.py                 # Universo de ativos e setores da B3
 ├── visualizations.py         # Gráficos Plotly
-├── analise_top_portfolio.py  # Script de análise (com aviso de data snooping)
 ├── core/                     # Lógica pura, sem Streamlit
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
 │   ├── market_data.py        #   Preços, calendário B3, CDI, Selic

@@ -1,5 +1,5 @@
 """
-assets.py - Universo de ações da B3 (lista curada e startups listadas na B3)
+assets.py - Universo de ações da B3 (lista curada)
 TCC: Otimização de Carteiras de Investimentos
 Autor: Gabriel Estrela Lopes
 
@@ -220,34 +220,6 @@ ATIVOS_B3 = [
     {"ticker": "COCE5", "nome": "Coelce", "setor": "Utilidade Pública"},
     {"ticker": "MBRF3", "nome": "MBRF (Marfrig + BRF)", "setor": "Consumo não Cíclico"},
 ]
-
-# Startups / IPOs recentes listadas na B3 (2020-2021) — máx ~5 anos de história
-STARTUPS_BR = [
-    {"ticker": "CASH3.SA", "nome": "Méliuz", "setor": "Tecnologia da Informação"},
-    {"ticker": "PETZ3.SA", "nome": "Petz", "setor": "Consumo Cíclico"},
-    {"ticker": "ENJU3.SA", "nome": "Enjoei", "setor": "Consumo Cíclico"},
-    {"ticker": "INTB3.SA", "nome": "Intelbras", "setor": "Tecnologia da Informação"},
-    {"ticker": "TTEN3.SA", "nome": "3tentos", "setor": "Consumo não Cíclico"},
-    {"ticker": "GGPS3.SA", "nome": "GPS", "setor": "Bens Industriais"},
-    {"ticker": "SOJA3.SA", "nome": "Boa Safra Sementes", "setor": "Consumo não Cíclico"},
-    {"ticker": "VITT3.SA", "nome": "Vittia", "setor": "Consumo não Cíclico"},
-    {"ticker": "ARML3.SA", "nome": "Armac", "setor": "Bens Industriais"},
-    {"ticker": "BRBI11.SA", "nome": "BR Partners", "setor": "Financeiro"},
-    {"ticker": "MLAS3.SA", "nome": "Multilaser", "setor": "Tecnologia da Informação"},
-    {"ticker": "RECV3.SA", "nome": "PetroRecôncavo", "setor": "Petróleo, Gás e Biocombustíveis"},
-    {"ticker": "ONCO3.SA", "nome": "Oncoclínicas", "setor": "Saúde"},
-    {"ticker": "MATD3.SA", "nome": "Mater Dei", "setor": "Saúde"},
-    {"ticker": "DESK3.SA", "nome": "Desktop", "setor": "Tecnologia da Informação"},
-    {"ticker": "FIQE3.SA", "nome": "Unifique", "setor": "Telecomunicações"},
-]
-
-def get_startup_tickers() -> list:
-    """Tickers das startups listadas na B3, no formato yfinance."""
-    return [s["ticker"] for s in STARTUPS_BR]
-
-def get_startup_info() -> dict:
-    """Dict ticker -> {nome, setor} das startups listadas na B3."""
-    return {s["ticker"]: {"nome": s["nome"], "setor": s["setor"]} for s in STARTUPS_BR}
 
 # Lista de setores únicos
 SETORES = list(set([ativo["setor"] for ativo in ATIVOS_B3]))

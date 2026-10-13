@@ -217,3 +217,43 @@ def test_baixar_dados_macro_nao_engole_bug(fontes_falsas, monkeypatch):
     monkeypatch.setattr(focus, "baixar_focus_ipca_12m", bug)
     with pytest.raises(KeyError):
         fatores_macro.baixar_dados_macro(date(2026, 10, 13))
+
+
+# ---------------------------------------------------------------------------
+# Retrato de hoje
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def dados_hoje() -> DadosMacro:
+    anual = _focus_anual([("2026-10-09", 2026, 13.25), ("2026-10-09", 2027, 12.00)])
+    return DadosMacro(
+        titulos=_titulos({"2026-10-09": (13.0, 12.5)}),
+        focus_ipca_12m=pd.DataFrame({"data": pd.to_datetime(["2026-10-08", "2026-10-09"]),
+                                     "mediana": [4.52, 4.48], "desvio": [0.49, 0.50]}),
+        focus_selic=anual, focus_cambio=anual, focus_pib=anual,
+        ptax=pd.Series([5.10, 4.99], index=pd.to_datetime(["2026-10-08", "2026-10-09"])),
+        selic_meta=pd.Series([13.75], index=pd.to_datetime(["2026-10-13"])),
+        ipca_12m=pd.Series([4.58], index=pd.to_datetime(["2026-09-01"])),
+    )
+
+
+def test_retrato_tem_oito_indicadores_com_data_e_fonte(dados_hoje):
+    retrato = fatores_macro.montar_retrato(dados_hoje, date(2026, 10, 13))
+    por_nome = {i.nome: i for i in retrato.indicadores}
+    assert len(por_nome) == 8 and retrato.indisponiveis == {}
+    assert por_nome["Selic meta"].valor == 13.75
+    assert por_nome["Selic em 12 meses (Focus)"].valor == pytest.approx(0.25 * 13.25 + 0.75 * 12.00)
+    assert por_nome["IPCA 12 meses à frente (Focus)"].valor == 4.48
+    assert por_nome["Câmbio (PTAX venda)"].data == pd.Timestamp("2026-10-09")
+    assert por_nome["Inclinação 5a − 1a"].valor == pytest.approx(-0.5)
+    assert por_nome["IPCA acumulado em 12 meses"].dias_maximos > por_nome["Selic meta"].dias_maximos
+    assert retrato.expectativas.ipca.desvio == 0.50
+
+
+def test_retrato_registra_o_motivo_de_cada_indicador_que_falta(dados_hoje):
+    dados = DadosMacro(**{**dados_hoje.__dict__, "ptax": None, "erros": {"ptax": "HTTP 500"},
+                          "titulos": _titulos({"2026-10-09": (13.0, 12.5)}).iloc[:1]})
+    retrato = fatores_macro.montar_retrato(dados, date(2026, 10, 13))
+    assert retrato.indisponiveis["Câmbio (PTAX venda)"] == "HTTP 500"
+    assert "1 e 5 anos" in retrato.indisponiveis["Inclinação 5a − 1a"]
+    assert len(retrato.indicadores) == 6

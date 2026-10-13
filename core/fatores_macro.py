@@ -28,7 +28,7 @@ from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from typing import TypeVar
+from typing import NamedTuple, TypeVar
 
 import numpy as np
 import pandas as pd
@@ -45,6 +45,8 @@ _FONTES_DO_FATOR = {
 INICIO_DOWNLOAD = date(2005, 10, 1)      # o nível de 2005-11 entra na primeira variação
 TICKER_MERCADO = "^BVSP"
 _ERROS_DE_FONTE = (bcb.ErroBcb, focus.ErroFocus, tesouro.ErroTesouro, market_data.ErroDadosMercado)
+_DIAS_FONTE_DIARIA = 7
+_DIAS_FONTE_MENSAL = 75     # o IPCA do mês m sai por volta do dia 10 de m+1, datado do dia 1 de m
 
 T = TypeVar("T")
 
@@ -72,6 +74,32 @@ class PainelMacro:
     cdi_mensal: pd.Series                  # decimal no mês, PeriodIndex "mes"; vazia sem CDI
     fatores_indisponiveis: dict[str, str]  # fator -> motivo
     avisos: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Indicador:
+    nome: str
+    valor: float
+    unidade: str
+    data: pd.Timestamp
+    fonte: str
+    dias_maximos: int      # idade acima da qual a interface avisa que o dado está velho
+
+
+class ExpectativasFocus(NamedTuple):
+    """Focus 12 meses à frente; None quando a fonte ou a pesquisa falhou."""
+
+    selic: focus.Expectativa12m | None
+    ipca: focus.Expectativa12m | None
+    cambio: focus.Expectativa12m | None
+    pib: focus.Expectativa12m | None
+
+
+@dataclass(frozen=True)
+class RetratoMacro:
+    indicadores: tuple[Indicador, ...]
+    expectativas: ExpectativasFocus
+    indisponiveis: dict[str, str]          # nome do indicador -> motivo
 
 
 # ---------------------------------------------------------------------------
@@ -242,3 +270,92 @@ def baixar_dados_macro(hoje: date) -> DadosMacro:
         if motivo is not None:
             erros[tarefas[campo][0]] = motivo
     return DadosMacro(**valores, erros=erros)
+
+
+# ---------------------------------------------------------------------------
+# Retrato de hoje (funções puras)
+# ---------------------------------------------------------------------------
+
+class _SemDado(Exception):
+    """Indicador do retrato sem valor; a mensagem é o motivo."""
+
+
+def _expectativas(dados: DadosMacro, hoje: date) -> tuple[ExpectativasFocus, dict[str, str]]:
+    ate = pd.Timestamp(hoje)
+    falhas: dict[str, str] = {}
+
+    def anual(chave: str, tabela: pd.DataFrame | None) -> focus.Expectativa12m | None:
+        if tabela is None:
+            falhas[chave] = dados.erros.get(chave, "fonte sem dados")
+            return None
+        try:
+            return focus.expectativa_12m(tabela, ate)
+        except focus.ErroFocus as erro:
+            falhas[chave] = str(erro)
+            return None
+
+    ipca = None
+    if dados.focus_ipca_12m is None:
+        falhas["focus_ipca"] = dados.erros.get("focus_ipca", "fonte sem dados")
+    else:
+        ultima = dados.focus_ipca_12m.iloc[-1]
+        ipca = focus.Expectativa12m(float(ultima["mediana"]), float(ultima["desvio"]), ultima["data"])
+    expectativas = ExpectativasFocus(selic=anual("focus_selic", dados.focus_selic), ipca=ipca,
+                                     cambio=anual("focus_cambio", dados.focus_cambio),
+                                     pib=anual("focus_pib", dados.focus_pib))
+    return expectativas, falhas
+
+
+def _ultimo(serie: pd.Series | None) -> tuple[float, pd.Timestamp]:
+    if serie is None or serie.empty:
+        raise _SemDado("fonte sem dados")
+    return float(serie.iloc[-1]), pd.Timestamp(serie.index[-1])
+
+
+def _da_expectativa(expectativa: focus.Expectativa12m | None) -> tuple[float, pd.Timestamp]:
+    if expectativa is None:
+        raise _SemDado("pesquisa Focus indisponível")
+    return expectativa.mediana, expectativa.data
+
+
+def _inclinacao(titulos: pd.DataFrame | None) -> tuple[float, pd.Timestamp]:
+    if titulos is None:
+        raise _SemDado("fonte sem dados")
+    curva = tesouro.curva_mais_recente(titulos)
+    inclinacao = curva.juros_5a - curva.juros_1a
+    if np.isnan(inclinacao):
+        raise _SemDado(f"prazos de 1 e 5 anos indisponíveis em {curva.data_base:%Y-%m-%d}")
+    return float(inclinacao), curva.data_base
+
+
+def montar_retrato(dados: DadosMacro, hoje: date) -> RetratoMacro:
+    """Retrato macro de hoje, com a data e a fonte de cada número."""
+    expectativas, falhas = _expectativas(dados, hoje)
+    candidatos: list[tuple[str, str, str, str, int, Callable[[], tuple[float, pd.Timestamp]]]] = [
+        # (nome, unidade, fonte exibida, chave em dados.erros, dias máximos, leitura)
+        ("Selic meta", "% a.a.", "BCB SGS 432", "selic_meta", _DIAS_FONTE_DIARIA,
+         lambda: _ultimo(dados.selic_meta)),
+        ("Selic em 12 meses (Focus)", "% a.a.", "Focus", "focus_selic", _DIAS_FONTE_DIARIA,
+         lambda: _da_expectativa(expectativas.selic)),
+        ("IPCA acumulado em 12 meses", "%", "BCB SGS 13522", "ipca_12m", _DIAS_FONTE_MENSAL,
+         lambda: _ultimo(dados.ipca_12m)),
+        ("IPCA 12 meses à frente (Focus)", "%", "Focus", "focus_ipca", _DIAS_FONTE_DIARIA,
+         lambda: _da_expectativa(expectativas.ipca)),
+        ("Câmbio (PTAX venda)", "R$/US$", "BCB SGS 1", "ptax", _DIAS_FONTE_DIARIA,
+         lambda: _ultimo(dados.ptax)),
+        ("Câmbio em 12 meses (Focus)", "R$/US$", "Focus", "focus_cambio", _DIAS_FONTE_DIARIA,
+         lambda: _da_expectativa(expectativas.cambio)),
+        ("PIB 12 meses à frente (Focus)", "%", "Focus", "focus_pib", _DIAS_FONTE_DIARIA,
+         lambda: _da_expectativa(expectativas.pib)),
+        ("Inclinação 5a − 1a", "p.p.", "Tesouro Direto", "tesouro", _DIAS_FONTE_DIARIA,
+         lambda: _inclinacao(dados.titulos)),
+    ]
+    indicadores, indisponiveis = [], {}
+    for nome, unidade, fonte, chave, dias, ler in candidatos:
+        try:
+            valor, data = ler()
+        except _SemDado as motivo:
+            indisponiveis[nome] = dados.erros.get(chave) or falhas.get(chave) or str(motivo)
+            continue
+        indicadores.append(Indicador(nome, valor, unidade, data, fonte, dias))
+    return RetratoMacro(tuple(indicadores), expectativas, indisponiveis)

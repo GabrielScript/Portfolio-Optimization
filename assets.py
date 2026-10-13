@@ -1,26 +1,46 @@
 """
-assets.py - Lista completa das ações da B3
+assets.py - Universo de ativos (B3, cripto, startups)
 TCC: Otimização de Carteiras de Investimentos
 Autor: Gabriel Estrela Lopes
 
-Lista atualizada com as ações mais negociadas na B3.
+Revisão 2026-10 (tickers checados no Yahoo):
+- Renomeados: CCRO3->MOTV3, EMBR3->EMBJ3, ELET3->AXIA3, NTCO3->NATU3,
+  MRFG3+BRFS3->MBRF3, JBSS3->JBSS32 (BDR).
+- Removidos sem dados: AZUL4, GOLL4, BPAN4, CRFB3, NEOE3, ODPV3, GUAR3, ELET6,
+  CPLE6. TRPL4 era duplicata de ISAE4.
+- Uma classe por emissor (PETR3, BBDC3 e POMO3 removidas): duas classes da
+  mesma empresa têm correlação ~0,95+, o que inflava a concentração disfarçada
+  e mal-condicionava Sigma.
+
+VIÉS DE SOBREVIVÊNCIA: esta é a lista de HOJE. Empresas que quebraram ou
+fecharam capital no período não estão aqui (AZUL4/GOLL4 acabaram de sair).
+O backtest herda esse viés positivo. A correção exige composição histórica
+point-in-time (ex.: carteiras teóricas do IBrX por quadrimestre).
 """
 
-# Top 75 ativos mais líquidos para otimização rápida (Cloud)
-ATIVOS_TOP75_TICKERS = [
+# Ações mais líquidas (otimização rápida). Holdings e controladas (ITSA4/ITUB4,
+# BRAP4/VALE3, GOAU4/GGBR4) são empresas distintas e ficam.
+ATIVOS_LIQUIDOS_TICKERS = [
     "CVCB3", "B3SA3", "RAIZ4", "CSAN3", "PETR4", "VALE3", "ABEV3", "ITUB4",
     "ITSA4", "COGN3", "BBAS3", "CBAV3", "BBDC4", "USIM5", "VAMO3", "ASAI3",
-    "CMIG4", "MGLU3", "CPLE3", "LREN3", "PETR3", "ENEV3", "CSNA3", "GOAU4",
-    "GGBR4", "BBDC3", "RAIL3", "SUZB3", "GMAT3", "RENT3", "PRIO3", "CMIN3",
+    "CMIG4", "MGLU3", "CPLE3", "LREN3", "ENEV3", "CSNA3", "GOAU4",
+    "GGBR4", "RAIL3", "SUZB3", "GMAT3", "RENT3", "PRIO3", "CMIN3",
     "POMO4", "HAPV3", "RADL3", "TIMS3", "VBBR3", "UGPA3", "RDOR3", "DIRR3",
     "PCAR3", "EQTL3", "BPAC11", "KLBN11", "MRVE3", "WEGE3", "VIVT3", "BRAV3",
-    "ALOS3", "SMFT3",
-    # Adicionados para TOP 75
-    "JHSF3", "CEAB3", "BEEF3", "SIMH3", "ANIM3", "AURE3", "NEOE3", "MULT3",
-    "HBSA3", "VIVA3", "CYRE3", "CXSE3", "DXCO3", "ECOR3", "TOTS3", "GGPS3",
-    "BBSE3", "EMBR3", "SBSP3", "LWSA3", "MOVI3", "YDUQ3", "BRAP4", "CSMG3",
-    "BRKM5"
+    "ALOS3", "SMFT3", "JHSF3", "CEAB3", "BEEF3", "SIMH3", "ANIM3", "AURE3",
+    "MULT3", "HBSA3", "VIVA3", "CYRE3", "CXSE3", "DXCO3", "ECOR3", "TOTS3",
+    "GGPS3", "BBSE3", "EMBJ3", "SBSP3", "LWSA3", "MOVI3", "YDUQ3", "BRAP4",
+    "CSMG3", "BRKM5", "AXIA3", "MOTV3",
 ]
+
+# Cripto cotada em USD no Yahoo: convertida para BRL e reamostrada no
+# calendário B3 (o fim de semana entra no retorno de segunda).
+CRIPTO = [
+    {"ticker": "BTC-USD", "nome": "Bitcoin", "setor": "Cripto"},
+    {"ticker": "ETH-USD", "nome": "Ethereum", "setor": "Cripto"},
+]
+
+BENCHMARK_ACOES = "BOVA11.SA"   # ETF do Ibovespa: investível e de retorno total (ao contrário do ^BVSP)
 
 # Lista completa de ativos da B3
 ATIVOS_B3 = [
@@ -45,12 +65,10 @@ ATIVOS_B3 = [
     {"ticker": "MGLU3", "nome": "Magazine Luiza", "setor": "Consumo Cíclico"},
     {"ticker": "CPLE3", "nome": "Copel", "setor": "Utilidade Pública"},
     {"ticker": "LREN3", "nome": "Lojas Renner", "setor": "Consumo Cíclico"},
-    {"ticker": "PETR3", "nome": "Petrobras", "setor": "Petróleo, Gás e Biocombustíveis"},
     {"ticker": "ENEV3", "nome": "Eneva", "setor": "Utilidade Pública"},
     {"ticker": "CSNA3", "nome": "Siderúrgica Nacional", "setor": "Materiais Básicos"},
     {"ticker": "GOAU4", "nome": "Metalúrgica Gerdau", "setor": "Materiais Básicos"},
     {"ticker": "GGBR4", "nome": "Gerdau", "setor": "Materiais Básicos"},
-    {"ticker": "BBDC3", "nome": "Banco Bradesco", "setor": "Financeiro"},
     {"ticker": "RAIL3", "nome": "Rumo", "setor": "Bens Industriais"},
     {"ticker": "SUZB3", "nome": "Suzano", "setor": "Materiais Básicos"},
     {"ticker": "GMAT3", "nome": "Grupo Mateus", "setor": "Consumo não Cíclico"},
@@ -81,7 +99,6 @@ ATIVOS_B3 = [
     {"ticker": "ALOS3", "nome": "Allos", "setor": "Financeiro"},
     {"ticker": "SMFT3", "nome": "Smart Fit", "setor": "Consumo Cíclico"},
     {"ticker": "AURE3", "nome": "Auren Energia", "setor": "Utilidade Pública"},
-    {"ticker": "NEOE3", "nome": "Neoenergia", "setor": "Utilidade Pública"},
     {"ticker": "MULT3", "nome": "Multiplan", "setor": "Financeiro"},
     {"ticker": "HBSA3", "nome": "Hidrovias do Brasil", "setor": "Bens Industriais"},
     {"ticker": "VIVA3", "nome": "Vivara", "setor": "Consumo Cíclico"},
@@ -92,7 +109,7 @@ ATIVOS_B3 = [
     {"ticker": "TOTS3", "nome": "Totvs", "setor": "Tecnologia da Informação"},
     {"ticker": "GGPS3", "nome": "GPS", "setor": "Bens Industriais"},
     {"ticker": "BBSE3", "nome": "BB Seguridade", "setor": "Financeiro"},
-    {"ticker": "EMBR3", "nome": "Embraer", "setor": "Bens Industriais"},
+    {"ticker": "EMBJ3", "nome": "Embraer", "setor": "Bens Industriais"},
     {"ticker": "SBSP3", "nome": "Sabesp", "setor": "Utilidade Pública"},
     {"ticker": "LWSA3", "nome": "Locaweb", "setor": "Tecnologia da Informação"},
     {"ticker": "MOVI3", "nome": "Movida", "setor": "Consumo Cíclico"},
@@ -121,13 +138,11 @@ ATIVOS_B3 = [
     {"ticker": "FLRY3", "nome": "Fleury", "setor": "Saúde"},
     {"ticker": "TAEE11", "nome": "Taesa", "setor": "Utilidade Pública"},
     {"ticker": "BRSR6", "nome": "Banrisul", "setor": "Financeiro"},
-    {"ticker": "ODPV3", "nome": "Odontoprev", "setor": "Saúde"},
     {"ticker": "SBFG3", "nome": "Grupo SBF", "setor": "Consumo Cíclico"},
     {"ticker": "AMER3", "nome": "Americanas", "setor": "Consumo Cíclico"},
     {"ticker": "IGTI11", "nome": "Iguatemi", "setor": "Financeiro"},
     {"ticker": "JALL3", "nome": "Jalles Machado", "setor": "Consumo não Cíclico"},
     {"ticker": "HYPE3", "nome": "Hypera", "setor": "Saúde"},
-    {"ticker": "GUAR3", "nome": "Guararapes", "setor": "Consumo Cíclico"},
     {"ticker": "ENGI11", "nome": "Energisa", "setor": "Utilidade Pública"},
     {"ticker": "QUAL3", "nome": "Qualicorp", "setor": "Saúde"},
     {"ticker": "EGIE3", "nome": "Engie", "setor": "Utilidade Pública"},
@@ -149,7 +164,6 @@ ATIVOS_B3 = [
     {"ticker": "TUPY3", "nome": "Tupy", "setor": "Bens Industriais"},
     {"ticker": "BMGB4", "nome": "Banco BMG", "setor": "Financeiro"},
     {"ticker": "CAML3", "nome": "Camil Alimentos", "setor": "Consumo não Cíclico"},
-    {"ticker": "POMO3", "nome": "Marcopolo", "setor": "Bens Industriais"},
     {"ticker": "CSED3", "nome": "Cruzeiro do Sul Educacional", "setor": "Consumo Cíclico"},
     {"ticker": "ALUP11", "nome": "Alupar", "setor": "Utilidade Pública"},
     {"ticker": "RANI3", "nome": "Irani", "setor": "Materiais Básicos"},
@@ -205,21 +219,13 @@ ATIVOS_B3 = [
     {"ticker": "SHOW3", "nome": "Time For Fun", "setor": "Consumo Cíclico"},
     {"ticker": "LOGN3", "nome": "Log-In", "setor": "Bens Industriais"},
     {"ticker": "TECN3", "nome": "Technos", "setor": "Consumo Cíclico"},
-    {"ticker": "CCRO3", "nome": "CCR", "setor": "Bens Industriais"},
-    {"ticker": "JBSS3", "nome": "JBS", "setor": "Consumo não Cíclico"},
-    {"ticker": "BRFS3", "nome": "BRF", "setor": "Consumo não Cíclico"},
-    {"ticker": "NTCO3", "nome": "Natura", "setor": "Consumo não Cíclico"},
-    {"ticker": "AZUL4", "nome": "Azul", "setor": "Bens Industriais"},
-    {"ticker": "GOLL4", "nome": "Gol", "setor": "Bens Industriais"},
-    {"ticker": "ELET3", "nome": "Eletrobras ON", "setor": "Utilidade Pública"},
-    {"ticker": "ELET6", "nome": "Eletrobras PNB", "setor": "Utilidade Pública"},
-    {"ticker": "BPAN4", "nome": "Banco Pan", "setor": "Financeiro"},
+    {"ticker": "MOTV3", "nome": "Motiva (ex-CCR)", "setor": "Bens Industriais"},
+    {"ticker": "JBSS32", "nome": "JBS (BDR)", "setor": "Consumo não Cíclico"},
+    {"ticker": "NATU3", "nome": "Natura", "setor": "Consumo não Cíclico"},
+    {"ticker": "AXIA3", "nome": "Axia Energia (ex-Eletrobras)", "setor": "Utilidade Pública"},
     {"ticker": "BNBR3", "nome": "Banco do Nordeste", "setor": "Financeiro"},
-    {"ticker": "TRPL4", "nome": "Transmissão Paulista", "setor": "Utilidade Pública"},
-    {"ticker": "CPLE6", "nome": "Copel PNB", "setor": "Utilidade Pública"},
     {"ticker": "COCE5", "nome": "Coelce", "setor": "Utilidade Pública"},
-    {"ticker": "MRFG3", "nome": "Marfrig", "setor": "Consumo não Cíclico"},
-    {"ticker": "CRFB3", "nome": "Carrefour Brasil", "setor": "Consumo não Cíclico"},
+    {"ticker": "MBRF3", "nome": "MBRF (Marfrig + BRF)", "setor": "Consumo não Cíclico"},
 ]
 
 # Startups / IPOs recentes listadas na B3 (2020-2021) — máx ~5 anos de história
@@ -300,16 +306,14 @@ def get_tickers_by_setor(setores_selecionados: list) -> list:
     ]
 
 def get_ticker_info() -> dict:
-    """
-    Retorna dicionário com informações de cada ticker.
-    
-    Returns:
-        Dict com ticker como chave e dict com nome/setor como valor
-    """
-    return {
-        f"{a['ticker']}.SA": {"nome": a["nome"], "setor": a["setor"]}
-        for a in ATIVOS_B3
-    }
+    """Dict ticker (formato Yahoo) -> {nome, setor}, para ações B3 e cripto."""
+    info = {f"{a['ticker']}.SA": {"nome": a["nome"], "setor": a["setor"]} for a in ATIVOS_B3}
+    info.update({c["ticker"]: {"nome": c["nome"], "setor": c["setor"]} for c in CRIPTO})
+    return info
+
+
+def get_cripto_tickers() -> list:
+    return [c["ticker"] for c in CRIPTO]
 
 def get_all_tickers() -> list:
     """
@@ -320,11 +324,6 @@ def get_all_tickers() -> list:
     """
     return [f"{a['ticker']}.SA" for a in ATIVOS_B3]
 
-def get_top75_tickers() -> list:
-    """
-    Retorna os 75 tickers mais líquidos (otimizado para Cloud).
-    
-    Returns:
-        Lista dos 75 principais tickers com sufixo .SA
-    """
-    return [f"{t}.SA" for t in ATIVOS_TOP75_TICKERS]
+def get_tickers_liquidos() -> list:
+    """Tickers da lista líquida, com sufixo .SA."""
+    return [f"{t}.SA" for t in ATIVOS_LIQUIDOS_TICKERS]

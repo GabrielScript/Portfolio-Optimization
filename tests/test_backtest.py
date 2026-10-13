@@ -1,0 +1,89 @@
+import numpy as np
+import pandas as pd
+import pytest
+
+from core.backtest import (backtest_pesos_fixos, estrategia_equiponderada, estrategia_hrp,
+                           estrategia_otimizada, walk_forward)
+from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
+from core.optimization import ErroOtimizacao
+
+CFG_BT = ConfigBacktest(janela_treino=252, janela_teste=63, capital_inicial=1000.0, custo_bps=0.0)
+CFG_OPT = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.5, n_ativos_max=None,
+                           vol_maxima=None)
+
+
+def test_sem_look_ahead_perturbando_o_futuro(retornos_sinteticos):
+    """Os pesos do rebalanceamento t não podem mudar se alteramos retornos a partir de t."""
+    estrategia = estrategia_otimizada(CFG_OPT, shrink_mu=True)
+    original = walk_forward(retornos_sinteticos, estrategia, CFG_BT, "orig")
+    corte = CFG_BT.janela_treino + 2 * CFG_BT.janela_teste
+    perturbado = retornos_sinteticos.copy()
+    perturbado.iloc[corte:] *= -3.0
+    alterado = walk_forward(perturbado, estrategia, CFG_BT, "pert")
+    data_corte = retornos_sinteticos.index[corte]
+    antes = original.pesos_alvo.index <= data_corte
+    pd.testing.assert_frame_equal(original.pesos_alvo[antes], alterado.pesos_alvo[antes])
+    pd.testing.assert_series_equal(original.valores.loc[:retornos_sinteticos.index[corte - 1]],
+                                   alterado.valores.loc[:retornos_sinteticos.index[corte - 1]])
+
+
+def test_custos_reduzem_valor_final(retornos_sinteticos):
+    estrategia = estrategia_hrp()
+    sem = walk_forward(retornos_sinteticos, estrategia, CFG_BT, "sem")
+    com = walk_forward(retornos_sinteticos, estrategia,
+                       ConfigBacktest(janela_treino=252, janela_teste=63, capital_inicial=1000.0,
+                                      custo_bps=25.0), "com")
+    assert com.valores.iloc[-1] < sem.valores.iloc[-1]
+    assert com.custos_totais > 0
+    # montagem inicial a partir do caixa: giro = 1 (100% comprado)
+    assert com.turnover.iloc[0] == pytest.approx(1.0)
+
+
+def test_equiponderada_bate_calculo_manual(retornos_sinteticos):
+    """Buy-and-hold entre rebalanceamentos: valor = V0 * mean(prod(1+r)) em cada bloco."""
+    r = retornos_sinteticos
+    res = walk_forward(r, estrategia_equiponderada(), CFG_BT, "1/N")
+    valor = 1000.0
+    for inicio in range(252, len(r), 63):
+        bloco = r.iloc[inicio:inicio + 63]
+        valor *= float((1 + bloco).prod().mean())
+    assert res.valores.iloc[-1] == pytest.approx(valor, rel=1e-10)
+    assert res.valores.index[0] == r.index[251]
+    assert len(res.valores) == len(r) - 252 + 1
+
+
+def test_falha_mantem_carteira_e_registra(retornos_sinteticos):
+    chamadas = {"n": 0}
+
+    def estrategia_instavel(treino):
+        chamadas["n"] += 1
+        if chamadas["n"] == 2:
+            raise ErroOtimizacao("solver caiu")
+        return pd.Series(1.0 / treino.shape[1], index=treino.columns)
+
+    res = walk_forward(retornos_sinteticos, estrategia_instavel, CFG_BT, "x")
+    assert len(res.falhas) == 1 and "solver caiu" in res.falhas[0]
+    # carteira mantida: giro zero no rebalanceamento que falhou
+    assert res.turnover.iloc[1] == pytest.approx(0.0)
+
+
+def test_pesos_fixos_rotulado_in_sample(retornos_sinteticos):
+    pesos = pd.Series(1.0 / 6, index=retornos_sinteticos.columns)
+    res = backtest_pesos_fixos(retornos_sinteticos, pesos, CFG_BT, "fixo")
+    assert res.metodologia == "in-sample"
+    assert len(res.valores) == len(retornos_sinteticos) + 1
+
+
+def test_rf_point_in_time_muda_max_sharpe(retornos_sinteticos):
+    """Com CDI histórico, a rf usada em cada rebalanceamento é a vigente na data."""
+    cfg = ConfigOtimizacao(objetivo=Objetivo.MAX_SHARPE, peso_maximo=0.5, n_ativos_max=None,
+                           vol_maxima=None, taxa_livre_risco=0.0)
+    rf_alta = pd.Series(0.0009, index=retornos_sinteticos.index)   # ~25% a.a.
+    baixa = walk_forward(retornos_sinteticos, estrategia_otimizada(cfg, True), CFG_BT, "rf0")
+    alta = walk_forward(retornos_sinteticos, estrategia_otimizada(cfg, True, rf_alta), CFG_BT, "rf25")
+    assert not np.allclose(baixa.pesos_alvo.values, alta.pesos_alvo.values)
+
+
+def test_historico_curto_rejeitado(retornos_sinteticos):
+    with pytest.raises(ValueError):
+        walk_forward(retornos_sinteticos.iloc[:200], estrategia_equiponderada(), CFG_BT, "x")

@@ -136,3 +136,13 @@ cython_debug/
 .idea/
 .vscode/
 *.swp
+
+# Backups locais da revisão (WIP original + arquivos apagados)
+.backup/
+
+# Livros e PDFs locais (direitos autorais; até 23 MB cada). Para versionar o TCC: !TCC.pdf
+*.pdf
+*.epub
+
+# Diário de sessão (notas internas)
+session_state.md

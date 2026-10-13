@@ -23,15 +23,15 @@ CORES = {
     'alerta': '#FF3366'
 }
 
-def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict, 
-                                 perfil: str, taxa_livre_risco: float = 0.1075,
+def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict,
+                                 perfil: str, taxa_livre_risco: float,
                                  benchmark_1n: dict = None) -> go.Figure:
     """
-    Gráfico da Fronteira Eficiente.
-    Corrigido para aceitar a taxa livre de risco dinamicamente e evitar distorções de escala.
-    Inclui ponto de benchmark 1/N (carteira equiponderada) quando fornecido.
+    Fronteira eficiente (sem cardinalidade), carteira escolhida e 1/N.
+    ``taxa_livre_risco`` na convenção aritmética 252 x diária, a mesma de mu.
+    A carteira com limite de nº de ativos pode ficar ABAIXO da fronteira.
     """
-    cor_perfil = CORES.get(perfil.lower(), CORES['moderado'])
+    cor_perfil = CORES['agressivo']
     fig = go.Figure()
     
     if not fronteira.empty:
@@ -232,60 +232,35 @@ def grafico_evolucao_precos(precos: pd.DataFrame, tickers_selecionados: list) ->
     )
     return fig
 
-def grafico_backtesting(serie_carteira: pd.Series, serie_benchmark: pd.Series = None,
-                        nome_benchmark: str = "IBOV", serie_1n: pd.Series = None) -> go.Figure:
+def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str] = None) -> go.Figure:
     """
-    A prova visual empírica do motor Out-of-Sample.
-    Inclui comparação com Ibovespa e carteira 1/N (equiponderada) conforme Q1 do TCC.
+    Curvas de capital em base 100, na janela comum a todas. Todas as curvas
+    vêm do mesmo walk-forward (mesmas datas, mesmos custos), então a
+    comparação é justa.
     """
+    paleta = [CORES['azul'], CORES['moderado'], CORES['conservador'], CORES['roxo'],
+              CORES['alerta'], '#AAAAAA']
+    estilos = ['solid', 'dot', 'dash', 'dashdot', 'longdash', 'dot']
     fig = go.Figure()
-
-    carteira_norm = serie_carteira / serie_carteira.iloc[0] * 100
-
-    fig.add_trace(go.Scatter(
-        x=carteira_norm.index,
-        y=carteira_norm.values,
-        mode='lines',
-        name='Carteira Otimizada',
-        line=dict(color=CORES['azul'], width=2.5),
-        fill='tozeroy',
-        fillcolor='rgba(102, 126, 234, 0.15)',
-        hovertemplate='Otimizada: %{y:.2f}<extra></extra>'
-    ))
-
-    if serie_benchmark is not None and not serie_benchmark.empty:
-        datas_comuns = carteira_norm.index.intersection(serie_benchmark.index)
-        if len(datas_comuns) > 5:
-            benchmark_norm = serie_benchmark.loc[datas_comuns]
-            benchmark_norm = benchmark_norm / benchmark_norm.iloc[0] * 100
-
-            fig.add_trace(go.Scatter(
-                x=benchmark_norm.index,
-                y=benchmark_norm.values,
-                mode='lines',
-                name=f'Mercado ({nome_benchmark})',
-                line=dict(color=CORES['alerta'], width=1.5, dash='dashdot'),
-                hovertemplate='Mercado: %{y:.2f}<extra></extra>'
-            ))
-
-    if serie_1n is not None:
-        serie_1n_norm = serie_1n / serie_1n.iloc[0] * 100
-        datas_comuns_1n = carteira_norm.index.intersection(serie_1n_norm.index)
-        if len(datas_comuns_1n) > 5:
-            serie_1n_plot = serie_1n_norm.loc[datas_comuns_1n]
-            fig.add_trace(go.Scatter(
-                x=serie_1n_plot.index,
-                y=serie_1n_plot.values,
-                mode='lines',
-                name='Carteira 1/N',
-                line=dict(color=CORES['moderado'], width=1.5, dash='dot'),
-                hovertemplate='1/N: %{y:.2f}<extra></extra>'
-            ))
+    datas_comuns = None
+    for serie in curvas.values():
+        datas_comuns = serie.index if datas_comuns is None else datas_comuns.intersection(serie.index)
+    for i, (nome, serie) in enumerate(curvas.items()):
+        recorte = serie.loc[datas_comuns]
+        base100 = recorte / recorte.iloc[0] * 100
+        principal = nome == destaque
+        fig.add_trace(go.Scatter(
+            x=base100.index, y=base100.values, mode='lines', name=nome,
+            line=dict(color=paleta[i % len(paleta)], width=2.8 if principal else 1.5,
+                      dash='solid' if principal else estilos[i % len(estilos)]),
+            hovertemplate=f'{nome}: ' + '%{y:.1f}<extra></extra>'
+        ))
 
     fig.add_hline(y=100, line_dash="solid", line_color="#444", line_width=1)
 
     fig.update_layout(
-        title=dict(text='Curva de Capital (Backtesting)', font=dict(size=18, color=CORES['texto'])),
+        title=dict(text='Curva de Capital — Walk-Forward fora da amostra, líquido de custos',
+                   font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',
         yaxis_title='Capital Indexado (Base 100)',
         template='plotly_dark',
@@ -364,46 +339,6 @@ def grafico_pesos_historicos(df_pesos: pd.DataFrame) -> go.Figure:
     # Formata y axis em percentagem
     fig.update_yaxes(tickformat=".0%")
     return fig
-
-def grafico_metricas_risco(metricas: dict) -> go.Figure:
-    """
-    Bar plot que respeita a escala correta de métricas de Cauda (Cornish-Fisher) vs Gaussianas.
-    A tua versão misturava taxas normalizadas.
-    """
-    categorias = ['Value at Risk (Cauda)', 'Cond. VaR (Stress Extremo)', 'Volatilidade Anual']
-    
-    # Busca a versão robusta primeiro, fallback para standard
-    var_95 = metricas.get('var_95_anual', 0) * 100
-    cvar_95 = metricas.get('cvar_95_anual', 0) * 100
-    vol_anual = metricas.get('volatilidade_anual', 0) * 100
-    
-    valores = [var_95, cvar_95, vol_anual]
-    cores = [CORES['moderado'], CORES['alerta'], CORES['azul']]
-    
-    fig = go.Figure()
-    fig.add_trace(go.Bar(
-        x=valores,
-        y=categorias,
-        orientation='h',
-        marker=dict(color=cores, line=dict(width=0)),
-        text=[f'{v:.2f}%' for v in valores],
-        textposition='auto',
-        hovertemplate='%{y}<br>Risco de Proteção: %{x:.2f}%<extra></extra>'
-    ))
-    
-    fig.update_layout(
-        title=dict(text='⚠️ Risco Não-Linear (Painel de Stress Test)', font=dict(size=18, color=CORES['texto'])),
-        xaxis_title='Vulnerabilidade do Capital (%)',
-        yaxis_title='',
-        template='plotly_dark',
-        paper_bgcolor=CORES['fundo'],
-        plot_bgcolor=CORES['card'],
-        font=dict(color=CORES['texto']),
-        height=350,
-        showlegend=False
-    )
-    return fig
-
 
 def grafico_contribuicao_risco(contrib: pd.Series, pesos: dict = None) -> go.Figure:
     """

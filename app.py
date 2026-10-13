@@ -1,894 +1,269 @@
 """
-app.py - Dashboard Streamlit Principal
-Otimizador Growth Agressivo B3 (evolução do TCC)
+app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``).
+Otimizador de Carteiras B3 + Cripto para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-Dashboard interativo para o investidor arrojado: otimização Markowitz
-max-retorno com filtro e tilt por Growth Score (lente VC aplicada a
-ações públicas B3) e benchmarks HRP/HERC.
+Fluxo: sidebar -> dados (B3 + cripto em BRL) -> momentos (Ledoit-Wolf +
+Jorion) -> [growth: filtro + tilt, só na carteira de hoje] -> otimização ->
+walk-forward de todas as estratégias no universo pré-filtro.
 """
 
-import streamlit as st
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import date
+
 import pandas as pd
-import numpy as np
+import streamlit as st
 
-# Configuração da página (DEVE ser a primeira chamada Streamlit)
-st.set_page_config(
-    page_title="Otimizador Growth Agressivo B3",
-    page_icon="🚀",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout="wide")
 
-from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top75_tickers
-from risk_profiles import PERFIS_RISCO, get_perfil, TAXA_SELIC
-from data_loader import (
-    carregar_dados_completos, baixar_dados_historicos, baixar_cdi_historico,
-    filtrar_universo_growth, aplicar_tilt_growth
-)
-from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
-from growth_score import calcular_growth_scores
-from hrp import otimizar_hrp, otimizar_herc
-from visualizations import (
-    grafico_fronteira_eficiente, grafico_composicao_pizza,
-    grafico_barras_alocacao, grafico_matriz_correlacao,
-    grafico_evolucao_precos,
-    grafico_backtesting, grafico_drawdown, grafico_metricas_risco,
-    grafico_contribuicao_risco, grafico_metricas_rolling
-)
-from backtesting import (
-    backtesting_walk_forward, backtesting_pesos_fixos, calcular_metricas_risco_portfolio,
-    comparar_com_benchmark, calcular_contribuicao_risco, calcular_metricas_rolling
-)
+from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_cripto_tickers,  # noqa: E402
+                    get_ticker_info, get_tickers_by_setor, get_tickers_liquidos)
+from core.backtest import estrategia_equiponderada, walk_forward  # noqa: E402
+from core.config import ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
+from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simples  # noqa: E402
+from core.growth import filtrar_por_percentil  # noqa: E402
+from core import market_data  # noqa: E402
+from core.market_data import eh_ticker_b3, serie_rf_diaria  # noqa: E402
+from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
+from core.optimization import ErroOtimizacao, fronteira_eficiente, otimizar  # noqa: E402
+from ui import secoes, servicos  # noqa: E402
+from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
+                            grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
+                            grafico_fronteira_eficiente, grafico_matriz_correlacao,
+                            grafico_metricas_rolling, grafico_pesos_historicos)
 
-# Taxa Selic obtida automaticamente via API do BCB (risk_profiles.py)
-taxa_selic = TAXA_SELIC
+ROTULOS_OBJETIVO = {
+    Objetivo.KELLY.value: "Crescimento máximo (Kelly) — recomendado p/ arrojado",
+    Objetivo.MAX_SHARPE.value: "Máximo Sharpe (exato)",
+    Objetivo.MIN_VOL.value: "Mínima variância",
+    Objetivo.HRP.value: "HRP (hierárquico, ignora retorno esperado)",
+    Objetivo.MAX_RETORNO.value: "Máximo retorno c/ teto de vol (legado, concentra no erro)",
+}
 
 
-@st.cache_data(show_spinner=False)
-def cached_backtest_oos(_precos, perfil, orcamento, n_ativos_max, peso_maximo, _taxa, _serie_cdi):
-    return backtesting_walk_forward(
-        precos=_precos,
-        perfil=perfil,
-        janela_treino=252 * 2,
-        janela_teste=63,
-        capital_inicial=orcamento,
-        taxa_livre_risco=_taxa,
-        n_ativos_max=n_ativos_max,
-        peso_maximo=peso_maximo,
-        serie_cdi_diario=_serie_cdi
-    )
+@dataclass(frozen=True)
+class Entradas:
+    params: servicos.ParametrosOtimizacao
+    tickers_acoes: tuple[str, ...]
+    anos: int
+    orcamento: float
+    usar_growth: bool
+    percentil_growth: int
+    peso_tilt: float
+    usar_cvm: bool
+    shrink_mu: bool
+    custo_bps: float
 
 
-@st.cache_data(show_spinner=False)
-def cached_backtest_is(_precos, pesos_dict, orcamento, _taxa, _serie_cdi):
-    return backtesting_pesos_fixos(
-        precos=_precos,
-        pesos=pesos_dict,
-        janela_rebalanceamento=63,
-        capital_inicial=orcamento,
-        taxa_livre_risco=_taxa,
-        serie_cdi_diario=_serie_cdi
-    )
-
-
-# ============== CSS PERSONALIZADO (TEMA ESCURO) ==============
-st.markdown("""
-<style>
-    /* Fundo principal */
-    .stApp {
-        background: linear-gradient(135deg, #0E1117 0%, #1a1f2e 100%);
-    }
-
-    /* Cards de métricas */
-    .metric-card {
-        background: linear-gradient(145deg, #1E2130, #2D3250);
-        border-radius: 16px;
-        padding: 24px;
-        border: 1px solid rgba(102, 126, 234, 0.2);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        text-align: center;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-    .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
-    }
-    .metric-value {
-        font-size: 2.2rem;
-        font-weight: 700;
-        background: linear-gradient(90deg, #667EEA, #764BA2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .metric-value-green {
-        font-size: 2.2rem;
-        font-weight: 700;
-        background: #00D4AA;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .metric-value-red {
-        font-size: 2.2rem;
-        font-weight: 700;
-        background: #FF5252;
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .metric-label {
-        font-size: 0.85rem;
-        color: #888;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-top: 8px;
-    }
-
-    /* Titulo principal */
-    .main-title {
-        font-size: 2.8rem;
-        font-weight: 800;
-        text-align: center;
-        background: linear-gradient(90deg, #667EEA, #764BA2, #FF6B6B);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        margin-bottom: 0.3rem;
-    }
-    .subtitle {
-        text-align: center;
-        color: #888;
-        font-size: 1.05rem;
-        margin-bottom: 2rem;
-    }
-
-    /* Sidebar */
-    section[data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1E2130 0%, #0E1117 100%);
-    }
-
-    /* Divisores */
-    hr {
-        border: none;
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #667EEA, transparent);
-        margin: 2rem 0;
-    }
-
-    /* Tabelas */
-    .dataframe {
-        background: #1E2130 !important;
-        border-radius: 8px;
-    }
-
-    /* Botoes */
-    .stButton > button {
-        background: linear-gradient(90deg, #667EEA, #764BA2);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    }
-
-    /* Selic badge */
-    .selic-badge {
-        background: linear-gradient(145deg, #1a2332, #1E2130);
-        border: 1px solid #667EEA44;
-        border-radius: 10px;
-        padding: 14px;
-        text-align: center;
-        margin: 8px 0;
-    }
-    .selic-valor {
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #667EEA;
-    }
-    .selic-fonte {
-        font-size: 0.7rem;
-        color: #888;
-        margin-top: 4px;
-    }
-
-    /* Perfil info card */
-    .perfil-info {
-        border-radius: 10px;
-        padding: 14px;
-        margin: 8px 0;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-
-def main():
-    # ============== HEADER ==============
-    st.markdown('<h1 class="main-title">Otimizador Growth Agressivo B3</h1>', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="subtitle">Markowitz Max-Retorno + Growth Score (lente VC) | '
-        'Exclusivo para o investidor arrojado<br>'
-        '<small>Por Gabriel Estrela Lopes</small></p>',
-        unsafe_allow_html=True
-    )
-
-    # ============== SIDEBAR ==============
+def ler_sidebar() -> Entradas:
     with st.sidebar:
-        st.markdown("## Parametros")
-        st.markdown("---")
+        st.markdown("## Parâmetros")
+        objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get)
+        aversao = st.slider("Aversão a risco λ (1 = Kelly pleno)", 0.5, 5.0, 2.0, 0.5,
+                            disabled=objetivo != Objetivo.KELLY.value,
+                            help="λ=1 aproxima a carteira de maior crescimento geométrico. Como μ tem "
+                                 "erro de estimação, λ≈2 é mais robusto. Sem caixa no conjunto "
+                                 "viável, λ=2 NÃO equivale a 'meio Kelly'.")
+        vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, 80, 40, 5,
+                            disabled=objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value)) / 100
+        orcamento = st.number_input("Valor a investir (R$)", 1000.0, 10_000_000.0, 10_000.0, 1000.0)
 
-        # ---------- Perfil fixo: Agressivo ----------
-        perfil_nome = "Agressivo"
-        perfil = get_perfil(perfil_nome)
-        cor = "#FF5252"
+        st.markdown("### Universo")
+        setores = st.multiselect("Setores (vazio = lista líquida)", SETORES)
+        todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
+        incluir_cripto = st.checkbox("Incluir cripto (BTC, ETH em R$)", value=True)
+        teto_cripto = st.slider("Teto total em cripto (%)", 0, 30, 10, 1,
+                                disabled=not incluir_cripto) / 100
 
-        st.markdown(f"""
-        <div class="perfil-info" style="background: {cor}15; border-left: 4px solid {cor};">
-            <b>{perfil.icone} {perfil.nome}</b><br>
-            <small>{perfil.descricao}</small><br>
-            <small style="color: {cor};">Objetivo: Maximiza Retorno (teto de volatilidade {perfil.volatilidade_maxima*100:.0f}%)</small>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("### Growth Score (só carteira de hoje)")
+        usar_growth = st.checkbox("Filtro + tilt growth", value=True)
+        percentil = st.slider("Percentil mínimo", 0, 80, 40, 5, disabled=not usar_growth)
+        tilt = st.slider("Tilt (× vol)", 0.0, 1.0, 0.30, 0.05, disabled=not usar_growth)
+        usar_cvm = st.checkbox("Receita 10 anos via CVM (lento)", value=False, disabled=not usar_growth)
 
-        st.markdown("---")
+        with st.expander("Avançado"):
+            n_max = st.slider("Máximo de ativos", 3, 30, 10)
+            peso_max = st.slider("Peso máximo por ativo (%)", 5, 50, 20) / 100
+            anos = st.slider("Histórico (anos)", 3, 10, 5,
+                             help="Walk-forward precisa de ≥ 2 anos de treino + teste.")
+            shrink = st.checkbox("Shrinkage de μ (Jorion)", value=True)
+            custo = st.slider("Custo de transação (bps por lado)", 0, 50, 10)
 
-        # ---------- Growth Score (lente VC) ----------
-        st.markdown("### Growth Score (Lente VC)")
-        usar_growth = st.checkbox(
-            "Ativar filtro + tilt growth",
-            value=True,
-            help=(
-                "Score 0-100 por ativo: crescimento de receita, qualidade do FCF, "
-                "intensidade de P&D, momentum/linearidade e proxy de TAM (percentil "
-                "de market cap no setor). Filtra ativos fracos e inclina o retorno "
-                "esperado a favor dos mais fortes."
-            )
-        )
-
-        percentil_growth = st.slider(
-            "Percentil minimo de Growth Score:",
-            min_value=0, max_value=80, value=40, step=5,
-            help="40 = descarta os 40% piores ativos por score antes de otimizar",
-            disabled=not usar_growth
-        )
-
-        peso_tilt = st.slider(
-            "Intensidade do tilt growth (x vol):",
-            min_value=0.0, max_value=1.0, value=0.30, step=0.05,
-            help=(
-                "Desloca o retorno esperado em unidades da vol do ativo "
-                "(estilo Black-Litterman). 0.3 = ativo no topo do ranking "
-                "ganha +0.3 sigma de retorno esperado."
-            ),
-            disabled=not usar_growth
-        )
-
-        st.markdown("---")
-
-        # ---------- Orcamento ----------
-        st.markdown("### Orcamento")
-        orcamento = st.number_input(
-            "Valor para investir (R$):",
-            min_value=1000.0,
-            max_value=10000000.0,
-            value=10000.0,
-            step=1000.0,
-            format="%.2f"
-        )
-
-        st.markdown("---")
-
-        # ---------- Botao de otimizacao ----------
-        otimizar = st.button("OTIMIZAR CARTEIRA", use_container_width=True)
-
-        st.markdown("---")
-
-        # ---------- Taxa Selic (automatica, read-only) ----------
-        st.markdown(f"""
-        <div class="selic-badge">
-            <div class="selic-valor">{taxa_selic*100:.2f}% a.a.</div>
-            <div style="color: #aaa; font-size: 0.85rem;">Taxa Selic (Rf)</div>
-            <div class="selic-fonte">Obtida via API do Banco Central (SGS 432)</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        # ---------- Configuracoes Avancadas ----------
-        with st.expander("Configuracoes Avancadas", expanded=False):
-            # Setores
-            setores_selecionados = st.multiselect(
-                "Filtrar por setores:",
-                options=SETORES,
-                default=[],
-                help="Deixe vazio para usar ativos padrao"
-            )
-
-            usar_todos_ativos = st.checkbox(
-                "Usar todos os ativos (96)",
-                value=False,
-                help="Mais lento no Cloud. Use apenas se necessario."
-            )
-
-            n_ativos_max = st.slider(
-                "Maximo de ativos na carteira:",
-                min_value=3,
-                max_value=30,
-                value=10,
-                help="Limita o numero de ativos no portfolio"
-            )
-
-            periodo_anos = st.slider(
-                "Periodo de analise (anos):",
-                min_value=1,
-                max_value=5,
-                value=5,
-                help="Quantidade de anos de dados historicos"
-            )
-
-            peso_maximo = st.slider(
-                "Peso maximo por ativo (%):",
-                min_value=5,
-                max_value=50,
-                value=20,
-                help="Limite maximo de alocacao em um unico ativo"
-            ) / 100
-
-        # Info de ativos selecionados
-        if setores_selecionados:
-            n_disponiveis = len(get_tickers_by_setor(setores_selecionados))
-        elif usar_todos_ativos:
-            n_disponiveis = len(ATIVOS_B3)
-        else:
-            n_disponiveis = 75
-
-        st.markdown(f"""
-        <div style="background: #1E213033; padding: 10px; border-radius: 8px; margin-top: 10px; text-align: center;">
-            <small>Ativos disponiveis: <b>{n_disponiveis}</b></small>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # ============== MAIN CONTENT ==============
-
-    # Obtem tickers filtrados
-    if setores_selecionados:
-        tickers = get_tickers_by_setor(setores_selecionados)
-        st.info(f"Filtrando {len(tickers)} ativos dos setores: {', '.join(setores_selecionados)}")
-    elif usar_todos_ativos:
-        tickers = get_all_tickers()
-        st.warning(f"Usando todos os {len(tickers)} ativos. Pode demorar mais.")
+    if setores:
+        acoes = get_tickers_by_setor(setores)
+    elif todos:
+        acoes = get_all_tickers()
     else:
-        tickers = get_top75_tickers()
+        acoes = get_tickers_liquidos()
+    cripto = tuple(get_cripto_tickers()) if incluir_cripto else ()
+    params = servicos.ParametrosOtimizacao(
+        objetivo=objetivo, peso_maximo=peso_max, n_ativos_max=n_max,
+        vol_maxima=None if objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value) else vol_max,
+        aversao_risco=aversao, tickers_cripto=cripto, teto_cripto=teto_cripto,
+    )
+    return Entradas(params, tuple(acoes), anos, orcamento, usar_growth, percentil, tilt,
+                    usar_cvm, shrink, float(custo))
 
-    if len(tickers) < 3:
-        st.error("Selecione setores com pelo menos 3 ativos disponiveis.")
+
+def validar(entradas: Entradas) -> str | None:
+    p = entradas.params
+    if p.n_ativos_max * p.peso_maximo < 1.0:
+        return (f"Inviável: {p.n_ativos_max} ativos × {p.peso_maximo:.0%} = "
+                f"{p.n_ativos_max * p.peso_maximo:.0%} < 100%. Aumente um dos dois.")
+    if len(entradas.tickers_acoes) < 3:
+        return "Selecione setores com pelo menos 3 ativos."
+    return None
+
+
+def main() -> None:
+    st.markdown(secoes.CSS, unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">Otimizador Arrojado B3 + Cripto</h1>'
+                '<p class="subtitle">Kelly/Markowitz robusto · Ledoit-Wolf + Jorion · '
+                'Walk-forward com custos · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
+    entradas = ler_sidebar()
+    erro = validar(entradas)
+    if erro:
+        st.error(erro)
         return
 
-    # Guarda de viabilidade: n_max ativos com teto de peso precisa somar >= 100%
-    if n_ativos_max * peso_maximo < 1.0:
-        st.error(
-            f"Combinacao inviavel: {n_ativos_max} ativos x peso maximo "
-            f"{peso_maximo*100:.0f}% = {n_ativos_max*peso_maximo*100:.0f}% < 100%. "
-            f"Aumente o numero de ativos ou o peso maximo."
-        )
-        return
+    hoje = date.today()
+    universo = entradas.tickers_acoes + entradas.params.tickers_cripto
+    with st.spinner("Baixando preços, CDI e Selic..."):
+        dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje)
+        cdi = servicos.carregar_cdi(entradas.anos, hoje)
+        selic = servicos.carregar_selic(hoje)
+    descartados = dados.descartados_sem_dados + dados.descartados_cobertura
+    if descartados:
+        st.warning(f"Descartados por falta de dados/cobertura: {', '.join(descartados)}")
+    if cdi.empty:
+        st.warning("CDI histórico indisponível: Sharpe/Sortino usam a Selic atual constante.")
+    if dados.fonte_cambio == market_data.FONTE_YAHOO_CAMBIO:
+        st.warning("PTAX indisponível no BCB: cripto convertida para R$ pelo câmbio do Yahoo.")
+    elif dados.fonte_cambio:
+        st.caption(f"Câmbio USD→R$: {dados.fonte_cambio}.")
 
-    # Carrega dados
-    dados = carregar_dados_completos(tickers, anos=periodo_anos)
+    precos = dados.precos
+    benchmark_disponivel = BENCHMARK_ACOES in precos.columns
+    colunas = [t for t in universo if t in precos.columns]
+    retornos = retornos_simples(precos[colunas])
+    rf_aritmetica = taxa_anual_para_aritmetica(selic.valor)
+    rf_diaria = serie_rf_diaria(retornos.index, cdi, selic.valor)
 
-    if dados is None:
-        st.error("Erro ao carregar dados. Verifique sua conexao.")
-        return
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Amostra comum", f"{retornos.index[0]:%m/%Y} a {retornos.index[-1]:%m/%Y}",
+              f"{len(retornos)} pregões")
+    c2.metric("Ativos válidos", len(colunas))
+    c3.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off")
 
-    # ============== GROWTH SCORE (LENTE VC) ==============
-    growth_scores = None
-    if usar_growth:
-        with st.spinner('🔬 Calculando Growth Scores (fundamentals via Yahoo Finance)...'):
-            info_setores = {t: get_ticker_info().get(t, {}).get('setor', 'Desconhecido')
-                            for t in dados['tickers']}
-            growth_scores = calcular_growth_scores(
-                tuple(dados['tickers']), dados['precos'], info_setores
-            )
-
-        n_antes = dados['n_ativos']
-        # 1) Filtro (hard gate): corta ativos abaixo do percentil de score
-        dados = filtrar_universo_growth(dados, growth_scores, percentil_growth)
-        # 2) Tilt: inclina o retorno esperado a favor dos scores altos
-        dados['retornos_medios'] = aplicar_tilt_growth(
-            dados['retornos_medios'], dados['matriz_cov'], growth_scores, peso_tilt
-        )
-        st.info(
-            f"🔬 Filtro growth: {n_antes} → {dados['n_ativos']} ativos "
-            f"(corte no score {dados.get('corte_growth', 0):.1f}) | "
-            f"Tilt de {peso_tilt:.2f}σ aplicado ao retorno esperado"
-        )
-
-    # Info dos dados
-    col_info1, col_info2, col_info3 = st.columns(3)
-    with col_info1:
-        st.metric("Periodo Analisado", f"{dados['periodo_inicio']} a {dados['periodo_fim']}")
-    with col_info2:
-        st.metric("Ativos Validos", f"{dados['n_ativos']} ativos")
-    with col_info3:
-        st.metric("Taxa Selic (Rf)", f"{taxa_selic*100:.2f}% a.a.")
-
+    carteira_hoje(entradas, precos, retornos, rf_aritmetica)
+    secao_backtest(entradas, precos, retornos, rf_diaria, rf_aritmetica, cdi, benchmark_disponivel)
     st.markdown("---")
+    st.markdown(secoes.LIMITACOES)
 
-    # ============== OTIMIZACAO ==============
-    params_key = (
-        f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_"
-        f"{dados['n_ativos']}_{periodo_anos}_{usar_growth}_{percentil_growth}_{peso_tilt:.2f}"
-    )
 
-    needs_optimization = (
-        otimizar or
-        'resultado' not in st.session_state or
-        st.session_state.get('params_key') != params_key
-    )
+def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
+                  rf_aritmetica: float) -> None:
+    st.markdown("## Carteira de hoje")
+    momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
+    mu, cov, growth = momentos.mu, momentos.cov, None
+    info = get_ticker_info()
 
-    if needs_optimization:
-        with st.spinner(f"Otimizando carteira ({perfil_nome})..."):
-            resultado = otimizar_por_perfil(
-                perfil=perfil_nome,
-                retornos_medios=dados['retornos_medios'],
-                matriz_cov=dados['matriz_cov'],
-                taxa_livre_risco=taxa_selic,
-                peso_maximo=peso_maximo,
-                n_ativos_max=n_ativos_max
-            )
+    if entradas.usar_growth:
+        acoes = [t for t in retornos.columns if eh_ticker_b3(t)]
+        setores = tuple((t, info.get(t, {}).get("setor", "?")) for t in acoes)
+        with st.spinner("Growth Score (fundamentos Yahoo/CVM)..."):
+            growth = servicos.carregar_growth(tuple(acoes), precos[acoes], setores,
+                                              entradas.usar_cvm, date.today())
+        aprovados = filtrar_por_percentil(growth["score"], entradas.percentil_growth,
+                                          minimo_ativos=entradas.params.n_ativos_max)
+        mantidos = aprovados + [t for t in retornos.columns if not eh_ticker_b3(t)]
+        mu, cov = mu[mantidos], cov.loc[mantidos, mantidos]
+        mu = aplicar_tilt_growth(mu, cov, growth["score"], entradas.peso_tilt)
+        st.info(f"Filtro growth: {len(acoes)} → {len(aprovados)} ações "
+                f"(+{len(mantidos) - len(aprovados)} cripto, isentas do filtro). Tilt {entradas.peso_tilt:.2f}σ.")
 
-            fronteira = gerar_fronteira_eficiente(
-                dados['retornos_medios'],
-                dados['matriz_cov'],
-                taxa_selic,
-                n_pontos=30,
-                peso_maximo=peso_maximo,
-                n_ativos_max=n_ativos_max
-            )
-
-            st.session_state['resultado'] = resultado
-            st.session_state['fronteira'] = fronteira
-            st.session_state['params_key'] = params_key
+    cfg = entradas.params.para_config(rf_aritmetica)
+    try:
+        resultado = otimizar(mu, cov, cfg)
+        fronteira = fronteira_eficiente(mu, cov, cfg)
+    except ErroOtimizacao as erro:
+        st.error(f"Otimização falhou: {erro}")
+        st.stop()
+    if resultado.tem_aviso:
+        st.warning(resultado.mensagem)
     else:
-        resultado = st.session_state['resultado']
-        fronteira = st.session_state['fronteira']
+        st.caption(resultado.mensagem)
 
-    if not resultado.sucesso:
-        st.warning(f"Otimizacao com aviso: {resultado.mensagem}")
-
-    # ============== METRICAS PRINCIPAIS ==============
-    st.markdown("## Resultados da Otimizacao")
-
-    col1, col2, col3, col4 = st.columns(4)
-
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{resultado.retorno_esperado*100:.2f}%</div>
-            <div class="metric-label">Retorno Esperado (a.a.)</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">{resultado.volatilidade*100:.2f}%</div>
-            <div class="metric-label">Volatilidade (a.a.)</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        sharpe_class = "metric-value-green" if resultado.sharpe > 0 else "metric-value-red"
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="{sharpe_class}">{resultado.sharpe:.3f}</div>
-            <div class="metric-label">Indice de Sharpe</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        retorno_reais = orcamento * resultado.retorno_esperado
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">R$ {retorno_reais:,.0f}</div>
-            <div class="metric-label">Retorno Anual Estimado</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-
-    # ============== GRAFICOS ==============
-
-    pesos_dict = {t: p for t, p in zip(resultado.tickers, resultado.pesos) if p > 0.001}
-    info_tickers = get_ticker_info()
-
-    # Benchmark 1/N: retorno e volatilidade esperados (espaço média-variância)
-    n_all = dados['n_ativos']
-    pesos_1n_arr = np.ones(n_all) / n_all
-    ret_1n_frontier = float(np.dot(pesos_1n_arr, dados['retornos_medios'].values))
-    cov_vals = dados['matriz_cov'].values
-    vol_1n_frontier = float(np.sqrt(pesos_1n_arr.T @ cov_vals @ pesos_1n_arr))
-    benchmark_1n = {'retorno': ret_1n_frontier, 'volatilidade': vol_1n_frontier}
-
-    # Linha 1: Fronteira + Composicao
+    secoes.cards_otimizacao(resultado, entradas.orcamento, momentos.intensidade_shrinkage)
+    pesos = resultado.pesos[resultado.pesos > 0]
+    n = len(mu)
+    ponto_1n = {"retorno": float(mu.mean()), "volatilidade": float((cov.values.sum() / n**2) ** 0.5)}
     col1, col2 = st.columns([1.2, 1])
+    col1.plotly_chart(grafico_fronteira_eficiente(
+        fronteira, {"retorno": resultado.retorno_esperado, "volatilidade": resultado.volatilidade},
+        resultado.objetivo.value, rf_aritmetica, benchmark_1n=ponto_1n), width="stretch")
+    col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
+    st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
+    secoes.tabela_carteira(resultado.pesos, entradas.orcamento, info, growth)
 
-    with col1:
-        fig_fronteira = grafico_fronteira_eficiente(
-            fronteira,
-            {'retorno': resultado.retorno_esperado, 'volatilidade': resultado.volatilidade},
-            perfil_nome,
-            taxa_selic,
-            benchmark_1n=benchmark_1n
-        )
-        st.plotly_chart(fig_fronteira, use_container_width=True)
+    col_rc, col_corr = st.columns(2)
+    col_rc.plotly_chart(grafico_contribuicao_risco(contribuicao_risco(pesos, cov), pesos.to_dict()),
+                        width="stretch")
+    if len(pesos) > 1:
+        col_corr.plotly_chart(grafico_matriz_correlacao(cov.loc[pesos.index, pesos.index]), width="stretch")
+    if growth is not None:
+        with st.expander("Componentes do Growth Score"):
+            st.dataframe(growth, width="stretch")
 
-    with col2:
-        fig_pizza = grafico_composicao_pizza(pesos_dict, orcamento)
-        st.plotly_chart(fig_pizza, use_container_width=True)
 
-    # Linha 2: Barras
-    fig_barras = grafico_barras_alocacao(pesos_dict, orcamento, info_tickers)
-    st.plotly_chart(fig_barras, use_container_width=True)
-
+def secao_backtest(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
+                   rf_diaria: pd.Series, rf_aritmetica: float, cdi: pd.Series,
+                   benchmark_disponivel: bool) -> None:
     st.markdown("---")
-
-    # ============== TABELA DE ALOCACAO ==============
-    st.markdown("## Detalhamento da Carteira")
-
-    ativos_carteira = []
-    for ticker, peso in sorted(pesos_dict.items(), key=lambda x: -x[1]):
-        info = info_tickers.get(ticker, {})
-        linha = {
-            'Ticker': ticker.replace('.SA', ''),
-            'Nome': info.get('nome', '-'),
-            'Setor': info.get('setor', '-'),
-            'Peso (%)': f"{peso*100:.2f}%",
-            'Valor (R$)': f"R$ {peso*orcamento:,.2f}"
-        }
-        if growth_scores is not None and ticker in growth_scores.index:
-            gs = growth_scores.loc[ticker]
-            linha['Growth Score'] = f"{gs['score']:.0f}/100"
-            linha['🔥 Burn'] = '⚠️ Sim' if gs['burn_flag'] else '—'
-        ativos_carteira.append(linha)
-
-    df_carteira = pd.DataFrame(ativos_carteira)
-    st.dataframe(df_carteira, use_container_width=True, hide_index=True)
-
-    # Detalhe dos componentes do Growth Score
-    if growth_scores is not None:
-        with st.expander("Ver Componentes do Growth Score", expanded=False):
-            st.markdown("""
-            **Componentes (lente VC aplicada a ações públicas B3):**
-            `s_receita` crescimento de receita (30%) | `s_fcf` qualidade FCF (20%) |
-            `s_pd` intensidade P&D (15%) | `s_momentum` momentum + linearidade R² (20%) |
-            `s_tam` proxy TAM: percentil de market cap no setor (15%)
-            """)
-            gs_view = growth_scores.copy()
-            gs_view.index = [t.replace('.SA', '') for t in gs_view.index]
-            st.dataframe(gs_view, use_container_width=True)
-
-    # ============== ANALISES ADICIONAIS ==============
-    with st.expander("Ver Matriz de Correlacao", expanded=False):
-        tickers_carteira = [t for t, p in pesos_dict.items() if p > 0.01]
-        if len(tickers_carteira) > 1:
-            matriz_filtrada = dados['matriz_cov'].loc[tickers_carteira, tickers_carteira]
-            fig_corr = grafico_matriz_correlacao(matriz_filtrada)
-            st.plotly_chart(fig_corr, use_container_width=True)
-
-    with st.expander("Ver Evolucao Historica dos Precos", expanded=False):
-        tickers_carteira = [t for t, p in pesos_dict.items() if p > 0.02][:10]
-        if tickers_carteira:
-            fig_evolucao = grafico_evolucao_precos(dados['precos'], tickers_carteira)
-            st.plotly_chart(fig_evolucao, use_container_width=True)
-
-    with st.expander("Ver Metricas Individuais dos Ativos", expanded=False):
-        st.dataframe(dados['metricas'], use_container_width=True)
-
-    # ============== BACKTESTING E ANALISE DE RISCO ==============
-    st.markdown("---")
-    st.markdown("## Backtesting e Analise de Risco")
-    st.markdown("*Simulacao historica da carteira otimizada*")
-
-    tipo_backtest = st.radio(
-        "Metodologia de Backtesting:",
-        options=["Walk-Forward (Out-of-Sample)", "Pesos Fixos (In-Sample)"],
-        horizontal=True,
-        help=(
-            "Walk-Forward: re-otimiza a cada trimestre usando apenas dados passados (sem vies de antecipacao). "
-            "Pesos Fixos: aplica os pesos atuais retroativamente (contem look-ahead bias)."
-        )
-    )
-
-    with st.spinner('Executando backtesting...'):
-        # Busca série histórica do CDI diário para Sharpe/Sortino corretos
-        serie_cdi = baixar_cdi_historico(anos=periodo_anos)
-        if serie_cdi.empty:
-            st.warning("CDI histórico indisponível. Sharpe/Sortino usarão Selic constante como fallback.")
-
-        if "Walk-Forward" in tipo_backtest:
-            try:
-                backtest = cached_backtest_oos(
-                    _precos=dados['precos'],
-                    perfil=perfil_nome,
-                    orcamento=orcamento,
-                    n_ativos_max=n_ativos_max,
-                    peso_maximo=peso_maximo,
-                    _taxa=taxa_selic,
-                    _serie_cdi=serie_cdi
-                )
-            except Exception as e:
-                st.error(f"Erro no Walk-Forward: {e}. Usando Pesos Fixos como fallback.")
-                backtest = cached_backtest_is(
-                    _precos=dados['precos'],
-                    pesos_dict=pesos_dict,
-                    orcamento=orcamento,
-                    _taxa=taxa_selic,
-                    _serie_cdi=serie_cdi
-                )
-        else:
-            backtest = cached_backtest_is(
-                _precos=dados['precos'],
-                pesos_dict=pesos_dict,
-                orcamento=orcamento,
-                _taxa=taxa_selic,
-                _serie_cdi=serie_cdi
-            )
-
-        metricas_risco = calcular_metricas_risco_portfolio(
-            retornos=dados['retornos'],
-            pesos=pesos_dict,
-            taxa_livre_risco=taxa_selic
-        )
-
-        # Benchmark 1/N (carteira equiponderada)
-        pesos_1n = {t: 1.0 / dados['n_ativos'] for t in dados['tickers']}
-        backtest_1n = cached_backtest_is(
-            _precos=dados['precos'],
-            pesos_dict=pesos_1n,
-            orcamento=orcamento,
-            _taxa=taxa_selic,
-            _serie_cdi=serie_cdi
-        )
-
-        # Benchmarks hierárquicos (risk-based, ignoram mu): HRP e HERC
-        # sobre o MESMO universo growth-filtrado -> híbrido "seleção
-        # agressiva + alocação robusta". Se a carteira max-retorno não
-        # os bate em Calmar/Sortino, é sinal de alerta honesto.
+    st.markdown("## Walk-forward fora da amostra (universo pré-filtro, líquido de custos)")
+    with st.spinner("Rodando walk-forward de 4 estratégias..."):
         try:
-            pesos_hrp = otimizar_hrp(dados['matriz_cov'])
-            backtest_hrp = cached_backtest_is(
-                _precos=dados['precos'], pesos_dict=pesos_hrp,
-                orcamento=orcamento, _taxa=taxa_selic, _serie_cdi=serie_cdi
-            )
-        except Exception as e:
-            st.warning(f"HRP indisponível: {e}")
-            backtest_hrp = None
+            resultados = servicos.rodar_walk_forward(
+                retornos, entradas.params, entradas.shrink_mu, entradas.custo_bps,
+                entradas.orcamento, cdi, rf_aritmetica)
+        except ValueError as erro:
+            st.info(f"Walk-forward indisponível: {erro}")
+            return
 
-        try:
-            pesos_herc = otimizar_herc(dados['matriz_cov'])
-            backtest_herc = cached_backtest_is(
-                _precos=dados['precos'], pesos_dict=pesos_herc,
-                orcamento=orcamento, _taxa=taxa_selic, _serie_cdi=serie_cdi
-            )
-        except Exception as e:
-            st.warning(f"HERC indisponível: {e}")
-            backtest_herc = None
+    nome_otimizada = next(iter(resultados))
+    benchmark = None
+    if benchmark_disponivel:
+        ret_bova = retornos_simples(precos[[BENCHMARK_ACOES]]).reindex(retornos.index).dropna()
+        cfg_bt = ConfigBacktest(capital_inicial=entradas.orcamento, custo_bps=entradas.custo_bps)
+        if len(ret_bova) > cfg_bt.janela_treino + 1:
+            benchmark = walk_forward(ret_bova, estrategia_equiponderada(), cfg_bt, "BOVA11")
 
-        # Dados do Ibovespa para comparacao
-        try:
-            ibov = baixar_dados_historicos(['^BVSP'], anos=periodo_anos)
-            if not ibov.empty:
-                ibov_serie = ibov['^BVSP'] if '^BVSP' in ibov.columns else ibov.iloc[:, 0]
-            else:
-                ibov_serie = None
-        except Exception:
-            ibov_serie = None
+    otimizada = resultados[nome_otimizada]
+    if otimizada.falhas:
+        st.warning(f"{len(otimizada.falhas)} rebalanceamento(s) mantiveram a carteira por falha: "
+                   + "; ".join(otimizada.falhas[:3]))
+    secoes.tabela_comparativa(resultados, rf_diaria, benchmark)
+    if benchmark is not None:
+        secoes.bloco_alfa(otimizada, benchmark, rf_diaria)
 
-    # Metricas de Backtesting
-    col1, col2, col3, col4 = st.columns(4)
+    curvas = {nome: bt.valores for nome, bt in resultados.items()}
+    if benchmark is not None:
+        curvas["BOVA11"] = benchmark.valores
+    datas = otimizada.valores.index
+    curvas["CDI"] = entradas.orcamento * (1 + rf_diaria.reindex(datas).fillna(0.0).iloc[1:]).cumprod()
+    curvas["CDI"] = pd.concat([pd.Series([entradas.orcamento], index=datas[:1]), curvas["CDI"]])
+    st.plotly_chart(grafico_curvas_capital(curvas, destaque=nome_otimizada), width="stretch")
 
-    with col1:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value">R$ {backtest['capital_final']:,.0f}</div>
-            <div class="metric-label">Capital Final</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col2:
-        ret_class = "metric-value-green" if backtest['retorno_total'] > 0 else "metric-value-red"
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="{ret_class}">{backtest['retorno_total']*100:.1f}%</div>
-            <div class="metric-label">Retorno Total</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col3:
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-value-red">{backtest['max_drawdown']*100:.1f}%</div>
-            <div class="metric-label">Drawdown Maximo</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with col4:
-        sortino_class = "metric-value-green" if backtest['sortino'] > 1 else "metric-value"
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="{sortino_class}">{backtest['sortino']:.2f}</div>
-            <div class="metric-label">Indice Sortino</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-    # Grafico de Backtesting
-    col1, col2 = st.columns([1.5, 1])
-
-    with col1:
-        fig_backtest = grafico_backtesting(
-            serie_carteira=backtest['serie_carteira'],
-            serie_benchmark=ibov_serie,
-            nome_benchmark="Ibovespa",
-            serie_1n=backtest_1n['serie_carteira']
-        )
-        st.plotly_chart(fig_backtest, use_container_width=True)
-
-    with col2:
-        fig_risco = grafico_metricas_risco(metricas_risco)
-        st.plotly_chart(fig_risco, use_container_width=True)
-
-    # Grafico de Drawdown
-    fig_dd = grafico_drawdown(backtest['drawdown_serie'])
-    st.plotly_chart(fig_dd, use_container_width=True)
-
-    # ============== TABELA COMPARATIVA: Otimizada vs 1/N vs HRP vs HERC ==============
-    st.markdown("### Comparacao: Otimizada vs Benchmarks (1/N, HRP, HERC)")
-
-    def _coluna_metricas(bt: dict) -> list:
-        """Formata a coluna de métricas de um backtest para a tabela comparativa."""
-        def _fmt_ratio(v):
-            return "∞" if np.isinf(v) else f"{v:.3f}"
-        return [
-            f"{bt['retorno_total']*100:.2f}%",
-            f"{bt['retorno_anualizado']*100:.2f}%",
-            f"{bt['volatilidade']*100:.2f}%",
-            _fmt_ratio(bt['sharpe']),
-            _fmt_ratio(bt['sortino']),
-            _fmt_ratio(bt.get('calmar', 0)),
-            _fmt_ratio(bt.get('omega', 0)),
-            f"{bt['max_drawdown']*100:.2f}%",
-            f"{bt.get('var_95_anual', 0)*100:.2f}%",
-            f"{bt.get('cvar_95_anual', 0)*100:.2f}%"
-        ]
-
-    comparacao_data = {
-        'Metrica': [
-            'Retorno Total',
-            'Retorno Anualizado',
-            'Volatilidade',
-            'Sharpe',
-            'Sortino',
-            'Calmar',
-            'Omega',
-            'Max Drawdown',
-            'VaR 95% (anual)',
-            'CVaR 95% (anual)'
-        ],
-        f'Carteira Otimizada ({perfil_nome})': _coluna_metricas(backtest),
-        'Benchmark 1/N': _coluna_metricas(backtest_1n),
-    }
-    if backtest_hrp is not None:
-        comparacao_data['HRP'] = _coluna_metricas(backtest_hrp)
-    if backtest_herc is not None:
-        comparacao_data['HERC'] = _coluna_metricas(backtest_herc)
-
-    df_comparacao = pd.DataFrame(comparacao_data)
-    st.dataframe(df_comparacao, use_container_width=True, hide_index=True)
-
-    st.caption(
-        "HRP (López de Prado) e HERC (Raffinot) são alocações hierárquicas risk-based "
-        "calculadas sobre o mesmo universo growth-filtrado — benchmarks honestos: "
-        "se a carteira max-retorno não os supera em Calmar/Sortino, o tilt agressivo "
-        "não está pagando o risco extra."
-    )
-
-    # ============== CONTRIBUICAO DE RISCO E ROLLING (Fase B) ==============
-    st.markdown("### Raio-X do Risco")
-
-    col_rc, col_roll = st.columns(2)
-
-    with col_rc:
-        try:
-            contrib = calcular_contribuicao_risco(pesos_dict, dados['matriz_cov'])
-            fig_contrib = grafico_contribuicao_risco(contrib, pesos_dict)
-            st.plotly_chart(fig_contrib, use_container_width=True)
-        except Exception as e:
-            st.warning(f"Contribuição de risco indisponível: {e}")
-
-    with col_roll:
-        try:
-            df_rolling = calcular_metricas_rolling(
-                backtest['retornos_carteira'], janela=63, taxa_livre_risco=taxa_selic
-            )
-            if not df_rolling.empty:
-                fig_rolling = grafico_metricas_rolling(df_rolling, janela=63)
-                st.plotly_chart(fig_rolling, use_container_width=True)
-            else:
-                st.info("Histórico insuficiente para métricas rolling (janela de 63 dias).")
-        except Exception as e:
-            st.warning(f"Métricas rolling indisponíveis: {e}")
-
-    # Interpretacao das Metricas
-    with st.expander("Entenda as Metricas de Risco", expanded=False):
-        st.markdown(f"""
-        ### Value at Risk (VaR) - {metricas_risco.get('var_95_anual', 0)*100:.2f}% anual
-        {metricas_risco.get('interpretacao_var', '')}
-
-        ### Conditional VaR (CVaR) - {metricas_risco.get('cvar_95_anual', 0)*100:.2f}% anual
-        {metricas_risco.get('interpretacao_cvar', '')}
-
-        ### Drawdown Maximo - {backtest['max_drawdown']*100:.1f}%
-        A maior queda do pico ao vale durante o periodo analisado.
-        Durou aproximadamente **{backtest['duracao_max_drawdown']} dias**.
-
-        ### Indice de Sortino - {backtest['sortino']:.2f}
-        Similar ao Sharpe, mas considera apenas volatilidade negativa (risco de perda).
-        - **> 1**: Bom | **> 2**: Excelente | **< 0**: Retorno abaixo da taxa livre de risco
-
-        ### Indice de Calmar - {backtest.get('calmar', 0):.2f}
-        Retorno anualizado (excesso sobre Selic) dividido pelo drawdown maximo.
-        Mede quanto retorno voce ganha por unidade da PIOR queda historica —
-        metrica-chave para o investidor agressivo que tolera volatilidade
-        mas precisa sobreviver aos vales.
-        - **> 0.5**: Razoavel | **> 1**: Bom | **> 3**: Excelente
-
-        ### Indice Omega - {backtest.get('omega', 0):.2f}
-        Razao entre todos os ganhos e todas as perdas relativos a taxa livre
-        de risco. Captura a distribuicao INTEIRA (assimetria e caudas), nao so
-        media e variancia.
-        - **> 1**: Ganhos superam perdas | **quanto maior, melhor**
-
-        ### Curtose - {metricas_risco.get('curtose', 0):.2f}
-        Mede a probabilidade de eventos extremos (caudas pesadas).
-        - **> 3**: Mais eventos extremos que uma distribuicao normal
-        - **< 3**: Menos eventos extremos
-        """)
-
-    # ============== LIMITACOES ==============
-    st.markdown("---")
-    st.markdown("## Limitacoes e Vieses do Estudo")
-
-    st.info("""
-    **Vies de Sobrevivencia (Survivor Bias):** A lista de ativos analisados e composta pelos componentes atuais
-    (ou recentes) da B3. Empresas que faliram ou fecharam capital podem ter saido das listas,
-    o que pode enviesar as simulacoes positivamente.
-    """)
-
-    st.success("""
-    **Taxa de Risco Variável (CDI Diário):** Os índices de Sharpe e Sortino do backtest utilizam
-    a série histórica do CDI diário (BCB SGS série 12) como taxa livre de risco,
-    calculando o excesso de retorno dia a dia. Isso corrige a distorção de usar
-    uma Selic constante sobre períodos onde a taxa variou de ~2% (2020) a ~15% (2026).
-    """)
-
-    st.info("""
-    **Custos Transacionais:** Corretagem, emolumentos e impostos nao sao deduzidos nas simulacoes.
-    O rendimento liquido real seria inferior aos retornos brutos reportados.
-    """)
-
-    # ============== FOOTER ==============
-    st.markdown("---")
-    st.markdown(f"""
-    <div style="text-align: center; color: #666; padding: 20px;">
-        <p><b>TCC - Otimizacao de Carteiras de Investimentos</b></p>
-        <p>Teoria Moderna do Portfolio de Markowitz</p>
-        <p><b>Gabriel Estrela Lopes</b> | Ciencia de Dados para Negocios - UFPB | 2026</p>
-        <p style="font-size: 0.75rem; color: #555;">
-            Taxa Selic obtida em tempo real via API do Banco Central do Brasil (SGS serie 432)
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    serie_dd, _, _ = drawdown(otimizada.valores)
+    st.plotly_chart(grafico_drawdown(serie_dd), width="stretch")
+    col1, col2 = st.columns(2)
+    pesos_hist = otimizada.pesos_alvo.loc[:, otimizada.pesos_alvo.max() > 0.01]
+    col1.plotly_chart(grafico_pesos_historicos(pesos_hist), width="stretch")
+    rolantes = metricas_rolantes(otimizada.valores.pct_change().dropna(), rf_diaria)
+    if not rolantes.empty:
+        col2.plotly_chart(grafico_metricas_rolling(rolantes), width="stretch")
 
 
 if __name__ == "__main__":

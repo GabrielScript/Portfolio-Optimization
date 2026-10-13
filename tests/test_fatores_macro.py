@@ -130,3 +130,49 @@ def test_sem_cdi_nao_ha_fator_mercado(dados):
 def test_revisao_pib_nan_quando_falta_o_ano_seguinte():
     medianas = pd.DataFrame({2026: [3.0, 3.1]}, index=pd.PeriodIndex(["2026-09", "2026-10"], freq="M"))
     assert np.isnan(fatores_macro.revisao_pib_12m(medianas)[_mes("2026-10")])
+
+
+def _fatores_sinteticos(n: int = 120, semente: int = 7) -> tuple[pd.DataFrame, np.ndarray]:
+    gerador = np.random.default_rng(semente)
+    meses = pd.period_range("2010-01", periods=n, freq="M", name="mes")
+    macro = pd.DataFrame(gerador.normal(size=(n, 5)), index=meses, columns=list(fatores_macro.FATORES_MACRO))
+    verdadeiro = np.array([0.01, 0.5, -0.3, -0.2, 0.1, 0.4])
+    ruido = gerador.normal(scale=0.05, size=n)
+    mercado = verdadeiro[0] + macro.to_numpy() @ verdadeiro[1:] + ruido
+    return macro.assign(mercado=mercado), verdadeiro
+
+
+def test_mercado_residual_e_ortogonal_aos_fatores_macro_na_janela():
+    fatores, verdadeiro = _fatores_sinteticos()
+    gama = fatores_macro.estimar_gama(fatores)
+    residuo = fatores_macro.mercado_residual(fatores, gama)
+    regressores = np.column_stack([np.ones(len(fatores)), fatores[list(fatores_macro.FATORES_MACRO)]])
+    np.testing.assert_allclose(regressores.T @ residuo.to_numpy(), 0.0, atol=1e-9)
+    np.testing.assert_allclose(gama.to_numpy(), verdadeiro, atol=0.03)
+    assert list(gama.index) == ["const", *fatores_macro.FATORES_MACRO]
+
+
+def test_gama_de_uma_janela_aplicado_em_outra_e_nan_onde_falta_fator():
+    fatores, _ = _fatores_sinteticos()
+    gama = fatores_macro.estimar_gama(fatores.iloc[:60])
+    fora = fatores.iloc[60:].copy()
+    fora.iloc[0, 0] = np.nan
+    residuo = fatores_macro.mercado_residual(fora, gama)
+    linha = fora.iloc[1]
+    esperado = linha["mercado"] - gama["const"] - sum(gama[f] * linha[f] for f in fatores_macro.FATORES_MACRO)
+    assert residuo.iloc[1] == pytest.approx(esperado)
+    assert np.isnan(residuo.iloc[0])
+
+
+def test_gama_so_com_os_fatores_macro_presentes():
+    fatores, _ = _fatores_sinteticos()
+    gama = fatores_macro.estimar_gama(fatores.drop(columns=["juros", "premio"]))
+    assert list(gama.index) == ["const", "inflacao", "cambio", "atividade"]
+
+
+@pytest.mark.parametrize("cortar", ["mercado", "linhas"])
+def test_gama_recusa_painel_sem_mercado_ou_curto(cortar):
+    fatores, _ = _fatores_sinteticos()
+    entrada = fatores.drop(columns=["mercado"]) if cortar == "mercado" else fatores.iloc[:7]
+    with pytest.raises(ValueError):
+        fatores_macro.estimar_gama(entrada)

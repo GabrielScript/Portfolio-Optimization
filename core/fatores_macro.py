@@ -140,3 +140,33 @@ def montar_painel(dados: DadosMacro, hoje: date) -> PainelMacro:
                            index=meses)
     avisos = tuple(f"Fator '{f}' indisponível ({motivo})." for f, motivo in indisponiveis.items())
     return PainelMacro(fatores, cdi_m, indisponiveis, avisos)
+
+
+def estimar_gama(fatores: pd.DataFrame) -> pd.Series:
+    """
+    MQO de ``mercado`` em constante + fatores macro presentes, nos meses com
+    todas as colunas preenchidas. Índice do resultado: "const" e os fatores.
+    Quem chama escolhe a janela (o modelo usa a mesma janela das regressões).
+
+    Levanta ValueError sem a coluna ``mercado`` ou com menos meses completos
+    que coeficientes + 2.
+    """
+    if "mercado" not in fatores.columns:
+        raise ValueError("Painel sem o fator 'mercado': não há o que ortogonalizar.")
+    macro = [f for f in FATORES_MACRO if f in fatores.columns]
+    completos = fatores[macro + ["mercado"]].dropna()
+    if len(completos) < len(macro) + 3:
+        raise ValueError(f"{len(completos)} meses completos para {len(macro) + 1} coeficientes.")
+    regressores = np.column_stack([np.ones(len(completos)), completos[macro].to_numpy()])
+    coeficientes, *_ = np.linalg.lstsq(regressores, completos["mercado"].to_numpy(), rcond=None)
+    return pd.Series(coeficientes, index=["const", *macro])
+
+
+def mercado_residual(fatores: pd.DataFrame, gama: pd.Series) -> pd.Series:
+    """
+    Fator 6: ``mercado - (const + Σ γ_k·f_k)``. ``gama`` pode vir de outra janela
+    (na validação, γ estimado até t-1 e aplicado em t). NaN onde faltar algum termo.
+    """
+    macro = [nome for nome in gama.index if nome != "const"]
+    explicado = gama["const"] + fatores[macro].mul(gama[macro], axis=1).sum(axis=1, min_count=len(macro))
+    return (fatores["mercado"] - explicado).rename("mercado")

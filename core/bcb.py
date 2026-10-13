@@ -12,6 +12,8 @@ Peculiaridades da API (sondadas ao vivo em 2026-09-23 e 2026-10-11):
 - A série 432 (Selic meta) vem pré-preenchida até a próxima reunião do Copom,
   com linhas de data futura. Toda leitura corta em ``data <= hoje``.
 - Datas em dd/mm/aaaa; valores em string decimal.
+- Responde devagar (20–26 s por década em 2026-10-13) e devolve 502 intermitente.
+  Timeout, falha de conexão e HTTP 5xx ganham uma nova tentativa; 4xx não.
 
 Cache por processo, por (série, década). Década fechada não muda mais e fica
 para sempre. A década corrente expira em 6 h: num container de vida longa, um
@@ -37,7 +39,9 @@ SERIE_SELIC_META = 432      # Selic meta, % a.a.
 SERIE_IPCA_12M = 13522      # IPCA acumulado em 12 meses, %; mensal, datado do dia 1 do mês
 
 _URL = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.{serie}/dados"
-_TIMEOUT_HTTP = 30
+_TIMEOUT_HTTP = 45            # uma década da PTAX levou 20,7 s e 25,8 s em 2026-10-13
+_TENTATIVAS = 2               # nova tentativa só para falha transitória (5xx, timeout, conexão)
+_ESPERA_ENTRE_TENTATIVAS_S = 2.0
 _TTL_DECADA_ABERTA = 6 * 3600
 _JANELA_SELIC_DIAS = 120    # cobre feriados longos; a 432 tem linha todo dia
 
@@ -47,6 +51,7 @@ class ErroBcb(RuntimeError):
 
 
 _agora: Callable[[], float] = time.monotonic
+_dormir: Callable[[float], None] = time.sleep
 _cache: dict[tuple[int, int], tuple[float, pd.Series]] = {}
 
 
@@ -54,7 +59,30 @@ def _serie_vazia() -> pd.Series:
     return pd.Series(dtype=float, index=pd.DatetimeIndex([]))
 
 
+def _transitoria(causa: BaseException | None) -> bool:
+    """Timeout, falha de conexão ou HTTP 5xx: vale tentar de novo. Erro do cliente (4xx) e lixo não."""
+    if isinstance(causa, (requests.Timeout, requests.ConnectionError)):
+        return True
+    resposta = getattr(causa, "response", None)
+    return isinstance(causa, requests.HTTPError) and resposta is not None and resposta.status_code >= 500
+
+
 def _baixar_decada(serie: int, decada: int) -> pd.Series:
+    """
+    Uma janela de década, com ``_TENTATIVAS`` no total para falha transitória.
+    O SGS responde devagar e devolve 502 intermitente (sondado em 2026-10-13).
+    """
+    for tentativa in range(1, _TENTATIVAS + 1):
+        try:
+            return _consultar_decada(serie, decada)
+        except ErroBcb as erro:
+            if tentativa == _TENTATIVAS or not _transitoria(erro.__cause__):
+                raise
+            _dormir(_ESPERA_ENTRE_TENTATIVAS_S)
+    raise AssertionError("inalcançável: o laço retorna ou levanta")
+
+
+def _consultar_decada(serie: int, decada: int) -> pd.Series:
     params = {"formato": "json", "dataInicial": f"01/01/{decada}", "dataFinal": f"31/12/{decada + 9}"}
     try:
         resposta = requests.get(_URL.format(serie=serie), params=params, timeout=_TIMEOUT_HTTP)

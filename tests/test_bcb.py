@@ -41,6 +41,7 @@ class SgsFalso:
     def __init__(self, series: dict[int, dict[date, str]]):
         self.series = series
         self.falhas: dict[tuple[int, int], int] = {}     # (série, ano inicial da janela) -> HTTP
+        self.transitorias: dict[tuple[int, int], list[int]] = {}   # HTTPs devolvidos antes de responder
         self.chamadas: list[tuple[int, date, date]] = []
 
     def __call__(self, url, params=None, timeout=None):
@@ -48,6 +49,9 @@ class SgsFalso:
         inicio = datetime.strptime(params["dataInicial"], "%d/%m/%Y").date()
         fim = datetime.strptime(params["dataFinal"], "%d/%m/%Y").date()
         self.chamadas.append((codigo, inicio, fim))
+        pendentes = self.transitorias.get((codigo, inicio.year))
+        if pendentes:
+            return RespostaFalsa(pendentes.pop(0))
         if (codigo, inicio.year) in self.falhas:
             return RespostaFalsa(self.falhas[(codigo, inicio.year)])
         if fim > inicio.replace(year=inicio.year + 10):
@@ -66,6 +70,14 @@ def _cdi_por_dia_util(primeiro: str, ultimo: str) -> dict[date, str]:
 @pytest.fixture(autouse=True)
 def cache_isolado(monkeypatch):
     monkeypatch.setattr(bcb, "_cache", {})
+
+
+@pytest.fixture(autouse=True)
+def esperas(monkeypatch):
+    """Sem sleep real entre tentativas; registra as esperas pedidas."""
+    registradas: list[float] = []
+    monkeypatch.setattr(bcb, "_dormir", registradas.append)
+    return registradas
 
 
 @pytest.fixture
@@ -116,6 +128,48 @@ def test_falha_em_uma_decada_levanta_erro_e_nao_envenena_o_cache(sgs):
     cdi = bcb.baixar_cdi_diario(12, HOJE)
     assert cdi.index[-1] == pd.Timestamp("2026-10-09")
     assert len(cdi) == len([d for d in sgs.series[12] if d >= date(2014, 9, 12)])
+
+
+def _chamadas_da_janela(sgs: SgsFalso, ano: int) -> int:
+    return sum(1 for _, inicio, _ in sgs.chamadas if inicio.year == ano)
+
+
+def test_erro_5xx_transitorio_tenta_de_novo_e_recupera(sgs, esperas):
+    """O SGS devolve 502 intermitente (sonda de 2026-10-13: 20,7 s, 502, 25,8 s na mesma janela)."""
+    sgs.transitorias[(12, 2020)] = [502]
+    cdi = bcb.baixar_cdi_diario(5, HOJE)
+    assert cdi.index[-1] == pd.Timestamp("2026-10-09")
+    assert _chamadas_da_janela(sgs, 2020) == 2
+    assert esperas == [bcb._ESPERA_ENTRE_TENTATIVAS_S]
+
+
+def test_timeout_transitorio_tenta_de_novo_e_recupera(sgs, monkeypatch):
+    estourou: list[bool] = []
+
+    def get(url, params=None, timeout=None):
+        if not estourou:
+            estourou.append(True)
+            raise requests.ReadTimeout("Read timed out.")
+        return sgs(url, params=params, timeout=timeout)
+    monkeypatch.setattr(bcb.requests, "get", get)
+
+    assert bcb.baixar_cdi_diario(5, HOJE).index[-1] == pd.Timestamp("2026-10-09")
+
+
+def test_falha_5xx_persistente_desiste_apos_as_tentativas(sgs, esperas):
+    sgs.falhas[(12, 2020)] = 503
+    with pytest.raises(bcb.ErroBcb, match="503"):
+        bcb.baixar_cdi_diario(5, HOJE)
+    assert _chamadas_da_janela(sgs, 2020) == bcb._TENTATIVAS > 1
+    assert len(esperas) == bcb._TENTATIVAS - 1
+
+
+@pytest.mark.parametrize("status", [400, 406])
+def test_erro_do_cliente_nao_tenta_de_novo(sgs, esperas, status):
+    sgs.falhas[(12, 2020)] = status
+    with pytest.raises(bcb.ErroBcb):
+        bcb.baixar_cdi_diario(5, HOJE)
+    assert _chamadas_da_janela(sgs, 2020) == 1 and esperas == []
 
 
 def test_resposta_que_nao_e_json_levanta_erro(monkeypatch):

@@ -124,7 +124,7 @@ def aplicar_tilt_growth(mu: pd.Series, cov: pd.DataFrame, scores: pd.Series,
         mu_i' = mu_i + peso_tilt * z_i * sigma_i,   z_i em [-1, 1]
 
     onde z_i é o score centrado na mediana e escalado pela amplitude. Ativos
-    sem score (ex.: cripto) recebem z = 0, ou seja, nenhuma view. Aditivo para
+    sem score (fundamentos indisponíveis) recebem z = 0, ou seja, nenhuma view. Aditivo para
     não inverter o sinal de mu negativo.
 
     Não é Black-Litterman formal: não há prior de equilíbrio nem matriz de

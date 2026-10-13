@@ -32,8 +32,6 @@ mesmas condições.
   (~1 min a mais no walk-forward de 5 anos com a lista líquida).
 - **Growth Score** (fundamentos Yahoo, opcionalmente receita de 10 anos via CVM): filtro por percentil e
   tilt no μ, aplicados **só à carteira de hoje** (ver Limitações).
-- Cripto (BTC/ETH convertidos para R$ pela PTAX) com teto agregado — ainda presente no app, mas o projeto
-  passará a ser só ações.
 
 ### 📈 Análises
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
@@ -47,7 +45,7 @@ mesmas condições.
 
 ### 🏦 Dados
 - **Preços:** Yahoo Finance (`yfinance`), alinhados ao calendário da B3, com exigência de cobertura ≥ 95%.
-- **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1),
+- **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1, só para o painel macro),
   baixados em janelas de até 10 anos, com nova tentativa em falhas transitórias.
 - **Em desenvolvimento (só no `core/`, ainda sem tela):** painel macro mensal para cenários — Focus
   (expectativas do BCB), curva prefixada do Tesouro Direto e fatores de surpresa macro.
@@ -76,7 +74,7 @@ Portfolio-Optimization/
 ├── analise_top_portfolio.py  # Script de análise (com aviso de data snooping)
 ├── core/                     # Lógica pura, sem Streamlit
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
-│   ├── market_data.py        #   Preços, calendário B3, CDI, Selic, câmbio
+│   ├── market_data.py        #   Preços, calendário B3, CDI, Selic
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
 │   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites
@@ -151,8 +149,6 @@ Portfolio-Optimization/
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês).
 - **Janelas curtas.** Com 3–5 anos de histórico, alfas e diferenças de Sharpe raramente são
   estatisticamente significativos; o app mostra a estatística t para lembrar disso.
-- **Cripto** usa o fechamento do Yahoo (00h UTC), que não coincide com o da B3.
-
 ---
 
 ## 📝 Isenção de Responsabilidade (Disclaimer)

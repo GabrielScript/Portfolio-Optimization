@@ -37,11 +37,11 @@ def test_retornos_simples_amostra_comum():
 
 
 def test_tilt_ignora_ativos_sem_score():
-    mu = pd.Series([0.1, 0.1, 0.1], index=["a", "b", "BTC-USD"])
+    mu = pd.Series([0.1, 0.1, 0.1], index=["a", "b", "sem_score"])
     cov = pd.DataFrame(np.eye(3) * 0.04, index=mu.index, columns=mu.index)
     scores = pd.Series({"a": 90.0, "b": 10.0})
     ajustado = aplicar_tilt_growth(mu, cov, scores, 0.5)
-    assert ajustado["BTC-USD"] == pytest.approx(0.1)
+    assert ajustado["sem_score"] == pytest.approx(0.1)
     assert ajustado["a"] > 0.1 > ajustado["b"]
 
 

@@ -13,7 +13,7 @@ from core.config import Objetivo
 from ui import servicos
 
 APP = Path(__file__).resolve().parent.parent / "app.py"
-# 8 ações + 2 cripto: viável com teto de 20% por ativo e 10% em cripto, e a reamostragem roda em segundos.
+# 8 ações: viável com teto de 20% por ativo, e a reamostragem roda em segundos.
 SETOR_PEQUENO = "Tecnologia da Informação"
 TIMEOUT_S = 300
 
@@ -23,7 +23,7 @@ def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date) -> market
     datas = pd.bdate_range(end=pd.Timestamp(dia), periods=650)     # 504 de treino + 3 rebalanceamentos
     retornos = gerador.normal(0.0006, 0.015, size=(len(datas), len(tickers)))
     precos = pd.DataFrame(100 * np.cumprod(1 + retornos, axis=0), index=datas, columns=list(tickers))
-    return market_data.DadosPrecos(precos, fonte_cambio="sintético")
+    return market_data.DadosPrecos(precos)
 
 
 def _cdi_sintetico(anos: int, dia: date) -> pd.Series:
@@ -60,6 +60,12 @@ def test_reamostragem_vem_desligada_e_o_walk_forward_tem_4_estrategias(app):
     assert colunas[1].startswith("Otimizada")
     assert len(colunas) == 1 + 4 + 1                      # Métrica + 4 estratégias + BOVA11
     assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
+
+
+def test_app_nao_mostra_nada_de_cripto(app):
+    rotulos = [w.label for w in app.sidebar.checkbox] + [w.label for w in app.sidebar.slider]
+    textos = rotulos + [m.value for m in app.markdown] + [c.value for c in app.caption]
+    assert not [t for t in textos if "cripto" in t.lower() or "btc" in t.lower()]
 
 
 def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app):

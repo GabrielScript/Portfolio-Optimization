@@ -1,5 +1,5 @@
 """
-assets.py - Universo de ativos (B3, cripto, startups)
+assets.py - Universo de ações da B3 (lista curada e startups listadas na B3)
 TCC: Otimização de Carteiras de Investimentos
 Autor: Gabriel Estrela Lopes
 
@@ -31,13 +31,6 @@ ATIVOS_LIQUIDOS_TICKERS = [
     "MULT3", "HBSA3", "VIVA3", "CYRE3", "CXSE3", "DXCO3", "ECOR3", "TOTS3",
     "GGPS3", "BBSE3", "EMBJ3", "SBSP3", "LWSA3", "MOVI3", "YDUQ3", "BRAP4",
     "CSMG3", "BRKM5", "AXIA3", "MOTV3",
-]
-
-# Cripto cotada em USD no Yahoo: convertida para BRL e reamostrada no
-# calendário B3 (o fim de semana entra no retorno de segunda).
-CRIPTO = [
-    {"ticker": "BTC-USD", "nome": "Bitcoin", "setor": "Cripto"},
-    {"ticker": "ETH-USD", "nome": "Ethereum", "setor": "Cripto"},
 ]
 
 BENCHMARK_ACOES = "BOVA11.SA"   # ETF do Ibovespa: investível e de retorno total (ao contrário do ^BVSP)
@@ -248,39 +241,13 @@ STARTUPS_BR = [
     {"ticker": "FIQE3.SA", "nome": "Unifique", "setor": "Telecomunicações"},
 ]
 
-# Startups listadas nos EUA (Nasdaq/NYSE) — IPOs 2020-2024, cotadas em USD
-# (inclui startups brasileiras listadas lá fora: NU, INTR, VTEX)
-STARTUPS_US = [
-    {"ticker": "NU", "nome": "Nubank", "setor": "Financeiro"},
-    {"ticker": "INTR", "nome": "Inter & Co", "setor": "Financeiro"},
-    {"ticker": "VTEX", "nome": "VTEX", "setor": "Tecnologia da Informação"},
-    {"ticker": "PLTR", "nome": "Palantir", "setor": "Tecnologia da Informação"},
-    {"ticker": "ABNB", "nome": "Airbnb", "setor": "Consumo Cíclico"},
-    {"ticker": "COIN", "nome": "Coinbase", "setor": "Financeiro"},
-    {"ticker": "RBLX", "nome": "Roblox", "setor": "Tecnologia da Informação"},
-    {"ticker": "HOOD", "nome": "Robinhood", "setor": "Financeiro"},
-    {"ticker": "SOFI", "nome": "SoFi", "setor": "Financeiro"},
-    {"ticker": "RIVN", "nome": "Rivian", "setor": "Bens Industriais"},
-    {"ticker": "IONQ", "nome": "IonQ", "setor": "Tecnologia da Informação"},
-    {"ticker": "ARM", "nome": "Arm Holdings", "setor": "Tecnologia da Informação"},
-    {"ticker": "CAVA", "nome": "CAVA Group", "setor": "Consumo Cíclico"},
-    {"ticker": "KVYO", "nome": "Klaviyo", "setor": "Tecnologia da Informação"},
-    {"ticker": "RDDT", "nome": "Reddit", "setor": "Tecnologia da Informação"},
-    {"ticker": "TEM", "nome": "Tempus AI", "setor": "Saúde"},
-]
-
 def get_startup_tickers() -> list:
-    """Tickers de startups (BR + US) no formato yfinance."""
-    return [s["ticker"] for s in STARTUPS_BR + STARTUPS_US]
+    """Tickers das startups listadas na B3, no formato yfinance."""
+    return [s["ticker"] for s in STARTUPS_BR]
 
 def get_startup_info() -> dict:
-    """Dict ticker -> {nome, setor, mercado} para startups BR e US."""
-    info = {}
-    for s in STARTUPS_BR:
-        info[s["ticker"]] = {**s, "mercado": "B3"}
-    for s in STARTUPS_US:
-        info[s["ticker"]] = {**s, "mercado": "US"}
-    return info
+    """Dict ticker -> {nome, setor} das startups listadas na B3."""
+    return {s["ticker"]: {"nome": s["nome"], "setor": s["setor"]} for s in STARTUPS_BR}
 
 # Lista de setores únicos
 SETORES = list(set([ativo["setor"] for ativo in ATIVOS_B3]))
@@ -306,14 +273,8 @@ def get_tickers_by_setor(setores_selecionados: list) -> list:
     ]
 
 def get_ticker_info() -> dict:
-    """Dict ticker (formato Yahoo) -> {nome, setor}, para ações B3 e cripto."""
-    info = {f"{a['ticker']}.SA": {"nome": a["nome"], "setor": a["setor"]} for a in ATIVOS_B3}
-    info.update({c["ticker"]: {"nome": c["nome"], "setor": c["setor"]} for c in CRIPTO})
-    return info
-
-
-def get_cripto_tickers() -> list:
-    return [c["ticker"] for c in CRIPTO]
+    """Dict ticker (formato Yahoo) -> {nome, setor} das ações da lista B3."""
+    return {f"{a['ticker']}.SA": {"nome": a["nome"], "setor": a["setor"]} for a in ATIVOS_B3}
 
 def get_all_tickers() -> list:
     """

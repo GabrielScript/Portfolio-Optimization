@@ -188,8 +188,6 @@ LIMITACOES = """
 - **Viés de sobrevivência.** O universo é a lista atual de tickers. Empresas que quebraram ou
   fecharam capital não aparecem, o que favorece todas as estratégias.
 - **Custos.** O custo em bps é cobrado sobre o giro (compra e venda). **Imposto de renda não é modelado**
-  (15% sobre ganho líquido; isenção para vendas de ações até R$ 20 mil/mês; cripto tem regras próprias).
-- **Cripto.** BTC/ETH em BRL no calendário da B3: o fim de semana entra no retorno de segunda.
-  O fechamento do Yahoo (00h UTC) não coincide com o da B3, e as correlações diárias ficam subestimadas.
+  (15% sobre ganho líquido; isenção para vendas de ações até R$ 20 mil/mês).
 - **Ferramenta educacional.** Não é recomendação de investimento. Retorno passado não garante retorno futuro.
 """

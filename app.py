@@ -1,9 +1,9 @@
 """
 app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``).
-Otimizador de Carteiras B3 + Cripto para o investidor arrojado.
+Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-Fluxo: sidebar -> dados (B3 + cripto em BRL) -> momentos (Ledoit-Wolf +
+Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
 Jorion) -> [growth: filtro + tilt, só na carteira de hoje] -> otimização ->
 walk-forward de todas as estratégias no universo pré-filtro.
 """
@@ -18,14 +18,13 @@ import streamlit as st
 
 st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout="wide")
 
-from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_cripto_tickers,  # noqa: E402
-                    get_ticker_info, get_tickers_by_setor, get_tickers_liquidos)
+from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
+                    get_tickers_by_setor, get_tickers_liquidos)
 from core.backtest import estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
 from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simples  # noqa: E402
 from core.growth import filtrar_por_percentil  # noqa: E402
-from core import market_data  # noqa: E402
-from core.market_data import eh_ticker_b3, serie_rf_diaria  # noqa: E402
+from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroOtimizacao, ResultadoOtimizacao, fronteira_eficiente,  # noqa: E402
                                otimizar)
@@ -97,9 +96,6 @@ def ler_sidebar() -> Entradas:
         st.markdown("### Universo")
         setores = st.multiselect("Setores (vazio = lista líquida)", SETORES)
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
-        incluir_cripto = st.checkbox("Incluir cripto (BTC, ETH em R$)", value=True)
-        teto_cripto = st.slider("Teto total em cripto (%)", 0, 30, 10, 1,
-                                disabled=not incluir_cripto) / 100
 
         st.markdown("### Growth Score (só carteira de hoje)")
         usar_growth = st.checkbox("Filtro + tilt growth", value=True)
@@ -124,11 +120,10 @@ def ler_sidebar() -> Entradas:
         acoes = get_all_tickers()
     else:
         acoes = get_tickers_liquidos()
-    cripto = tuple(get_cripto_tickers()) if incluir_cripto else ()
     params = servicos.ParametrosOtimizacao(
         objetivo=objetivo, peso_maximo=peso_max, n_ativos_max=n_max,
         vol_maxima=None if objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value) else vol_max,
-        aversao_risco=aversao, tickers_cripto=cripto, teto_cripto=teto_cripto,
+        aversao_risco=aversao,
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, orcamento, usar_growth, percentil, tilt,
@@ -147,7 +142,7 @@ def validar(entradas: Entradas) -> str | None:
 
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Otimizador Arrojado B3 + Cripto</h1>'
+    st.markdown('<h1 class="main-title">Otimizador Arrojado B3</h1>'
                 '<p class="subtitle">Kelly/Markowitz robusto · Ledoit-Wolf + Jorion · '
                 'Walk-forward com custos · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     entradas = ler_sidebar()
@@ -157,7 +152,7 @@ def main() -> None:
         return
 
     hoje = date.today()
-    universo = entradas.tickers_acoes + entradas.params.tickers_cripto
+    universo = entradas.tickers_acoes
     with st.spinner("Baixando preços, CDI e Selic..."):
         dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje)
         cdi = servicos.carregar_cdi(entradas.anos, hoje)
@@ -167,10 +162,6 @@ def main() -> None:
         st.warning(f"Descartados por falta de dados/cobertura: {', '.join(descartados)}")
     if cdi.empty:
         st.warning("CDI histórico indisponível: Sharpe/Sortino usam a Selic atual constante.")
-    if dados.fonte_cambio == market_data.FONTE_YAHOO_CAMBIO:
-        st.warning("PTAX indisponível no BCB: cripto convertida para R$ pelo câmbio do Yahoo.")
-    elif dados.fonte_cambio:
-        st.caption(f"Câmbio USD→R$: {dados.fonte_cambio}.")
 
     precos = dados.precos
     benchmark_disponivel = BENCHMARK_ACOES in precos.columns
@@ -199,18 +190,16 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     info = get_ticker_info()
 
     if entradas.usar_growth:
-        acoes = [t for t in retornos.columns if eh_ticker_b3(t)]
+        acoes = list(retornos.columns)
         setores = tuple((t, info.get(t, {}).get("setor", "?")) for t in acoes)
         with st.spinner("Growth Score (fundamentos Yahoo/CVM)..."):
             growth = servicos.carregar_growth(tuple(acoes), precos[acoes], setores,
                                               entradas.usar_cvm, date.today())
         aprovados = filtrar_por_percentil(growth["score"], entradas.percentil_growth,
                                           minimo_ativos=entradas.params.n_ativos_max)
-        mantidos = aprovados + [t for t in retornos.columns if not eh_ticker_b3(t)]
-        mu, cov = mu[mantidos], cov.loc[mantidos, mantidos]
+        mu, cov = mu[aprovados], cov.loc[aprovados, aprovados]
         mu = aplicar_tilt_growth(mu, cov, growth["score"], entradas.peso_tilt)
-        st.info(f"Filtro growth: {len(acoes)} → {len(aprovados)} ações "
-                f"(+{len(mantidos) - len(aprovados)} cripto, isentas do filtro). Tilt {entradas.peso_tilt:.2f}σ.")
+        st.info(f"Filtro growth: {len(acoes)} → {len(aprovados)} ações. Tilt {entradas.peso_tilt:.2f}σ.")
 
     cfg = entradas.params.para_config(rf_aritmetica)
     try:

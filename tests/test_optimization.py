@@ -109,7 +109,7 @@ def test_cardinalidade(retornos_sinteticos):
 
 def test_teto_de_grupo(retornos_sinteticos):
     mu, cov = _momentos(retornos_sinteticos)
-    grupo = LimiteGrupo("cripto", frozenset({"A4.SA", "A3.SA"}), 0.10)
+    grupo = LimiteGrupo("setor", frozenset({"A4.SA", "A3.SA"}), 0.10)
     cfg = ConfigOtimizacao(objetivo=Objetivo.MAX_RETORNO, peso_maximo=0.5, n_ativos_max=None,
                            vol_maxima=None, grupos=(grupo,))
     res = otimizar(mu, cov, cfg)

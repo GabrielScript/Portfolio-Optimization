@@ -20,7 +20,7 @@ import streamlit as st
 from core import market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
-from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo
+from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
 from core.estimation import aplicar_tilt_growth
 from core.growth import calcular_growth_scores
 
@@ -34,17 +34,12 @@ class ParametrosOtimizacao:
     n_ativos_max: int
     vol_maxima: float | None
     aversao_risco: float
-    tickers_cripto: tuple[str, ...]
-    teto_cripto: float
 
     def para_config(self, taxa_livre_risco: float) -> ConfigOtimizacao:
-        grupos = ()
-        if self.tickers_cripto:
-            grupos = (LimiteGrupo("cripto", frozenset(self.tickers_cripto), self.teto_cripto),)
         return ConfigOtimizacao(
             objetivo=Objetivo(self.objetivo), peso_maximo=self.peso_maximo,
             n_ativos_max=self.n_ativos_max, vol_maxima=self.vol_maxima,
-            aversao_risco=self.aversao_risco, taxa_livre_risco=taxa_livre_risco, grupos=grupos,
+            aversao_risco=self.aversao_risco, taxa_livre_risco=taxa_livre_risco,
         )
 
 

@@ -30,7 +30,7 @@ class Objetivo(str, Enum):
 
 @dataclass(frozen=True)
 class LimiteGrupo:
-    """Teto de exposição agregada para um grupo de ativos (ex.: cripto <= 10%)."""
+    """Teto de exposição agregada para um grupo de ativos (ex.: um setor <= 30%)."""
 
     nome: str
     tickers: frozenset[str]

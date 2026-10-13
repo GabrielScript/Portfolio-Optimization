@@ -1,5 +1,5 @@
 """
-analise_top_portfolio.py - Seleção em 2 estágios: top ações B3 + top startups (BR/US em BRL).
+analise_top_portfolio.py - Seleção em 2 estágios: top ações B3 + top startups listadas na B3.
 
 Uso: python analise_top_portfolio.py
 
@@ -56,7 +56,7 @@ def main() -> None:
     precos_st = precos_st.loc[:, precos_st.notna().sum() >= MIN_PREGOES_STARTUP]
     cfg_st = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.25, n_ativos_max=5,
                               vol_maxima=0.60, taxa_livre_risco=rf)
-    top_st = otimizar_universo(precos_st, cfg_st, "TOP STARTUPS BR+US em BRL (Kelly, vol <= 60%)")
+    top_st = otimizar_universo(precos_st, cfg_st, "TOP STARTUPS B3 (Kelly, vol <= 60%)")
 
     selecionados = (top_acoes.pesos[top_acoes.pesos > 0].index.tolist()
                     + top_st.pesos[top_st.pesos > 0].index.tolist())

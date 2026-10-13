@@ -188,7 +188,7 @@ def calcular_growth_scores(tickers: list[str], precos: pd.DataFrame, setores: di
     """
     Score por ticker (índice) com colunas score, s_receita, s_fcf, s_pd,
     s_momentum, s_tam, revenue_growth e queima_caixa.
-    Passe apenas ações: cripto e ETFs não têm fundamentos.
+    Passe apenas ações: ETFs e índices não têm fundamentos.
     """
     referencia = data_referencia or date.today()
     api_cvm = _carregar_api_cvm() if usar_cvm else None

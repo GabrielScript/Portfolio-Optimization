@@ -403,3 +403,97 @@ def grafico_metricas_risco(metricas: dict) -> go.Figure:
         showlegend=False
     )
     return fig
+
+
+def grafico_contribuicao_risco(contrib: pd.Series, pesos: dict = None) -> go.Figure:
+    """
+    Contribuição relativa de risco por ativo (RC_i = w_i (Σw)_i / σ_p²).
+
+    Compara alocação de capital vs contribuição de risco — revela concentração
+    de risco que a pizza de alocação esconde (Palomar §6.5.3, risk parity).
+    """
+    tickers = [t.replace('.SA', '') for t in contrib.index]
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(
+        x=tickers,
+        y=contrib.values * 100,
+        name='Contribuição de Risco',
+        marker=dict(color=CORES['alerta']),
+        text=[f'{v*100:.1f}%' for v in contrib.values],
+        textposition='auto',
+        hovertemplate='%{x}<br>Contribuição de Risco: %{y:.1f}%<extra></extra>'
+    ))
+
+    if pesos is not None:
+        pesos_alinhados = [pesos.get(t, 0) * 100 for t in contrib.index]
+        fig.add_trace(go.Bar(
+            x=tickers,
+            y=pesos_alinhados,
+            name='Alocação de Capital',
+            marker=dict(color=CORES['azul']),
+            text=[f'{v:.1f}%' for v in pesos_alinhados],
+            textposition='auto',
+            hovertemplate='%{x}<br>Alocação: %{y:.1f}%<extra></extra>'
+        ))
+
+    fig.update_layout(
+        title=dict(text='🎯 Capital vs Risco: Onde o Risco Realmente Mora',
+                   font=dict(size=18, color=CORES['texto'])),
+        xaxis_title='',
+        yaxis_title='Participação (%)',
+        template='plotly_dark',
+        paper_bgcolor=CORES['fundo'],
+        plot_bgcolor=CORES['card'],
+        font=dict(color=CORES['texto']),
+        height=400,
+        barmode='group',
+        legend=dict(orientation='h', y=1.1)
+    )
+    return fig
+
+
+def grafico_metricas_rolling(df_rolling: pd.DataFrame, janela: int = 63) -> go.Figure:
+    """
+    Volatilidade e Sharpe em janela móvel (Palomar §6.3.4).
+
+    Expõe mudanças de regime de risco ao longo do tempo — a métrica cheia
+    do período esconde que vol e correlações explodem juntas em stress.
+    """
+    from plotly.subplots import make_subplots
+
+    fig = make_subplots(
+        rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+        subplot_titles=(f'Volatilidade Anualizada Rolling ({janela}d)',
+                        f'Sharpe Rolling ({janela}d)')
+    )
+
+    fig.add_trace(go.Scatter(
+        x=df_rolling.index, y=df_rolling['vol_rolling'] * 100,
+        mode='lines', name='Vol Rolling',
+        line=dict(color=CORES['alerta'], width=1.8),
+        hovertemplate='%{x}<br>Vol: %{y:.1f}%<extra></extra>'
+    ), row=1, col=1)
+
+    fig.add_trace(go.Scatter(
+        x=df_rolling.index, y=df_rolling['sharpe_rolling'],
+        mode='lines', name='Sharpe Rolling',
+        line=dict(color=CORES['azul'], width=1.8),
+        hovertemplate='%{x}<br>Sharpe: %{y:.2f}<extra></extra>'
+    ), row=2, col=1)
+
+    fig.add_hline(y=0, line_dash='dot', line_color=CORES['grid'], row=2, col=1)
+
+    fig.update_layout(
+        title=dict(text='📈 Regime de Risco ao Longo do Tempo',
+                   font=dict(size=18, color=CORES['texto'])),
+        template='plotly_dark',
+        paper_bgcolor=CORES['fundo'],
+        plot_bgcolor=CORES['card'],
+        font=dict(color=CORES['texto']),
+        height=500,
+        showlegend=False
+    )
+    fig.update_yaxes(title_text='Vol (%)', row=1, col=1)
+    fig.update_yaxes(title_text='Sharpe', row=2, col=1)
+    return fig

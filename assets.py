@@ -222,6 +222,60 @@ ATIVOS_B3 = [
     {"ticker": "CRFB3", "nome": "Carrefour Brasil", "setor": "Consumo não Cíclico"},
 ]
 
+# Startups / IPOs recentes listadas na B3 (2020-2021) — máx ~5 anos de história
+STARTUPS_BR = [
+    {"ticker": "CASH3.SA", "nome": "Méliuz", "setor": "Tecnologia da Informação"},
+    {"ticker": "PETZ3.SA", "nome": "Petz", "setor": "Consumo Cíclico"},
+    {"ticker": "ENJU3.SA", "nome": "Enjoei", "setor": "Consumo Cíclico"},
+    {"ticker": "INTB3.SA", "nome": "Intelbras", "setor": "Tecnologia da Informação"},
+    {"ticker": "TTEN3.SA", "nome": "3tentos", "setor": "Consumo não Cíclico"},
+    {"ticker": "GGPS3.SA", "nome": "GPS", "setor": "Bens Industriais"},
+    {"ticker": "SOJA3.SA", "nome": "Boa Safra Sementes", "setor": "Consumo não Cíclico"},
+    {"ticker": "VITT3.SA", "nome": "Vittia", "setor": "Consumo não Cíclico"},
+    {"ticker": "ARML3.SA", "nome": "Armac", "setor": "Bens Industriais"},
+    {"ticker": "BRBI11.SA", "nome": "BR Partners", "setor": "Financeiro"},
+    {"ticker": "MLAS3.SA", "nome": "Multilaser", "setor": "Tecnologia da Informação"},
+    {"ticker": "RECV3.SA", "nome": "PetroRecôncavo", "setor": "Petróleo, Gás e Biocombustíveis"},
+    {"ticker": "ONCO3.SA", "nome": "Oncoclínicas", "setor": "Saúde"},
+    {"ticker": "MATD3.SA", "nome": "Mater Dei", "setor": "Saúde"},
+    {"ticker": "DESK3.SA", "nome": "Desktop", "setor": "Tecnologia da Informação"},
+    {"ticker": "FIQE3.SA", "nome": "Unifique", "setor": "Telecomunicações"},
+]
+
+# Startups listadas nos EUA (Nasdaq/NYSE) — IPOs 2020-2024, cotadas em USD
+# (inclui startups brasileiras listadas lá fora: NU, INTR, VTEX)
+STARTUPS_US = [
+    {"ticker": "NU", "nome": "Nubank", "setor": "Financeiro"},
+    {"ticker": "INTR", "nome": "Inter & Co", "setor": "Financeiro"},
+    {"ticker": "VTEX", "nome": "VTEX", "setor": "Tecnologia da Informação"},
+    {"ticker": "PLTR", "nome": "Palantir", "setor": "Tecnologia da Informação"},
+    {"ticker": "ABNB", "nome": "Airbnb", "setor": "Consumo Cíclico"},
+    {"ticker": "COIN", "nome": "Coinbase", "setor": "Financeiro"},
+    {"ticker": "RBLX", "nome": "Roblox", "setor": "Tecnologia da Informação"},
+    {"ticker": "HOOD", "nome": "Robinhood", "setor": "Financeiro"},
+    {"ticker": "SOFI", "nome": "SoFi", "setor": "Financeiro"},
+    {"ticker": "RIVN", "nome": "Rivian", "setor": "Bens Industriais"},
+    {"ticker": "IONQ", "nome": "IonQ", "setor": "Tecnologia da Informação"},
+    {"ticker": "ARM", "nome": "Arm Holdings", "setor": "Tecnologia da Informação"},
+    {"ticker": "CAVA", "nome": "CAVA Group", "setor": "Consumo Cíclico"},
+    {"ticker": "KVYO", "nome": "Klaviyo", "setor": "Tecnologia da Informação"},
+    {"ticker": "RDDT", "nome": "Reddit", "setor": "Tecnologia da Informação"},
+    {"ticker": "TEM", "nome": "Tempus AI", "setor": "Saúde"},
+]
+
+def get_startup_tickers() -> list:
+    """Tickers de startups (BR + US) no formato yfinance."""
+    return [s["ticker"] for s in STARTUPS_BR + STARTUPS_US]
+
+def get_startup_info() -> dict:
+    """Dict ticker -> {nome, setor, mercado} para startups BR e US."""
+    info = {}
+    for s in STARTUPS_BR:
+        info[s["ticker"]] = {**s, "mercado": "B3"}
+    for s in STARTUPS_US:
+        info[s["ticker"]] = {**s, "mercado": "US"}
+    return info
+
 # Lista de setores únicos
 SETORES = list(set([ativo["setor"] for ativo in ATIVOS_B3]))
 SETORES.sort()

@@ -186,8 +186,16 @@ def otimizar_max_retorno(retornos_medios: pd.Series, matriz_cov: pd.DataFrame,
     try:
         _resolver_problema(prob)
     except Exception as e:
-        # Fallback de viabilidade: Se a restrição de volatilidade for excessivamente baixa
-        logger.warning(f"Otimização max_retorno inviável ou falhou ({e}). Fallback para min_volatilidade.")
+        # Ladder de fallback alinhada ao perfil agressivo:
+        # max_retorno inviável -> tenta max_sharpe (ainda busca retorno alto
+        # ajustado a risco) -> só então min_volatilidade como último recurso.
+        logger.warning(f"Otimização max_retorno inviável ou falhou ({e}). Fallback para max_sharpe.")
+        try:
+            res_sharpe = otimizar_max_sharpe(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, n_ativos_max)
+            if res_sharpe.sucesso:
+                return res_sharpe
+        except Exception as e_sharpe:
+            logger.warning(f"Fallback max_sharpe também falhou ({e_sharpe}).")
         return otimizar_min_volatilidade(retornos_medios, matriz_cov, taxa_livre_risco, peso_maximo, n_ativos_max)
 
     sucesso = prob.status in ["optimal", "optimal_inaccurate"]

@@ -1,10 +1,11 @@
 """
 app.py - Dashboard Streamlit Principal
-TCC: Otimização de Carteiras de Investimentos B3
+Otimizador Growth Agressivo B3 (evolução do TCC)
 Autor: Gabriel Estrela Lopes
 
-Dashboard interativo para otimização de portfólios usando
-a Teoria Moderna do Portfólio de Markowitz.
+Dashboard interativo para o investidor arrojado: otimização Markowitz
+max-retorno com filtro e tilt por Growth Score (lente VC aplicada a
+ações públicas B3) e benchmarks HRP/HERC.
 """
 
 import streamlit as st
@@ -13,25 +14,31 @@ import numpy as np
 
 # Configuração da página (DEVE ser a primeira chamada Streamlit)
 st.set_page_config(
-    page_title="Otimizador de Carteiras B3",
-    page_icon="📈",
+    page_title="Otimizador Growth Agressivo B3",
+    page_icon="🚀",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
 from assets import ATIVOS_B3, SETORES, get_tickers_by_setor, get_ticker_info, get_all_tickers, get_top75_tickers
-from risk_profiles import PERFIS_RISCO, get_perfil, get_nomes_perfis, TAXA_SELIC
-from data_loader import carregar_dados_completos, baixar_dados_historicos, baixar_cdi_historico
+from risk_profiles import PERFIS_RISCO, get_perfil, TAXA_SELIC
+from data_loader import (
+    carregar_dados_completos, baixar_dados_historicos, baixar_cdi_historico,
+    filtrar_universo_growth, aplicar_tilt_growth
+)
 from optimizer import otimizar_por_perfil, gerar_fronteira_eficiente
+from growth_score import calcular_growth_scores
+from hrp import otimizar_hrp, otimizar_herc
 from visualizations import (
     grafico_fronteira_eficiente, grafico_composicao_pizza,
     grafico_barras_alocacao, grafico_matriz_correlacao,
     grafico_evolucao_precos,
-    grafico_backtesting, grafico_drawdown, grafico_metricas_risco
+    grafico_backtesting, grafico_drawdown, grafico_metricas_risco,
+    grafico_contribuicao_risco, grafico_metricas_rolling
 )
 from backtesting import (
     backtesting_walk_forward, backtesting_pesos_fixos, calcular_metricas_risco_portfolio,
-    comparar_com_benchmark
+    comparar_com_benchmark, calcular_contribuicao_risco, calcular_metricas_rolling
 )
 
 # Taxa Selic obtida automaticamente via API do BCB (risk_profiles.py)
@@ -199,10 +206,10 @@ st.markdown("""
 
 def main():
     # ============== HEADER ==============
-    st.markdown('<h1 class="main-title">Otimizador de Carteiras B3</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">Otimizador Growth Agressivo B3</h1>', unsafe_allow_html=True)
     st.markdown(
-        '<p class="subtitle">Teoria Moderna do Portfolio de Markowitz | '
-        'TCC - Ciencia de Dados para Negocios - UFPB<br>'
+        '<p class="subtitle">Markowitz Max-Retorno + Growth Score (lente VC) | '
+        'Exclusivo para o investidor arrojado<br>'
         '<small>Por Gabriel Estrela Lopes</small></p>',
         unsafe_allow_html=True
     )
@@ -212,32 +219,51 @@ def main():
         st.markdown("## Parametros")
         st.markdown("---")
 
-        # ---------- Perfil de Risco ----------
-        st.markdown("### Perfil de Risco")
-        perfil_nome = st.radio(
-            "Selecione seu perfil:",
-            options=get_nomes_perfis(),
-            horizontal=True,
-            help="Define a estrategia de otimizacao"
-        )
+        # ---------- Perfil fixo: Agressivo ----------
+        perfil_nome = "Agressivo"
         perfil = get_perfil(perfil_nome)
-
-        # Cores e objetivos por perfil
-        cores_perfil = {"Conservador": "#00D4AA", "Moderado": "#FFB74D", "Agressivo": "#FF5252"}
-        objetivos_perfil = {
-            "Conservador": "Minimiza Volatilidade",
-            "Moderado": "Maximiza Sharpe",
-            "Agressivo": "Maximiza Retorno"
-        }
-        cor = cores_perfil[perfil_nome]
+        cor = "#FF5252"
 
         st.markdown(f"""
         <div class="perfil-info" style="background: {cor}15; border-left: 4px solid {cor};">
             <b>{perfil.icone} {perfil.nome}</b><br>
             <small>{perfil.descricao}</small><br>
-            <small style="color: {cor};">Objetivo: {objetivos_perfil[perfil_nome]}</small>
+            <small style="color: {cor};">Objetivo: Maximiza Retorno (teto de volatilidade {perfil.volatilidade_maxima*100:.0f}%)</small>
         </div>
         """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ---------- Growth Score (lente VC) ----------
+        st.markdown("### Growth Score (Lente VC)")
+        usar_growth = st.checkbox(
+            "Ativar filtro + tilt growth",
+            value=True,
+            help=(
+                "Score 0-100 por ativo: crescimento de receita, qualidade do FCF, "
+                "intensidade de P&D, momentum/linearidade e proxy de TAM (percentil "
+                "de market cap no setor). Filtra ativos fracos e inclina o retorno "
+                "esperado a favor dos mais fortes."
+            )
+        )
+
+        percentil_growth = st.slider(
+            "Percentil minimo de Growth Score:",
+            min_value=0, max_value=80, value=40, step=5,
+            help="40 = descarta os 40% piores ativos por score antes de otimizar",
+            disabled=not usar_growth
+        )
+
+        peso_tilt = st.slider(
+            "Intensidade do tilt growth (x vol):",
+            min_value=0.0, max_value=1.0, value=0.30, step=0.05,
+            help=(
+                "Desloca o retorno esperado em unidades da vol do ativo "
+                "(estilo Black-Litterman). 0.3 = ativo no topo do ranking "
+                "ganha +0.3 sigma de retorno esperado."
+            ),
+            disabled=not usar_growth
+        )
 
         st.markdown("---")
 
@@ -338,12 +364,44 @@ def main():
         st.error("Selecione setores com pelo menos 3 ativos disponiveis.")
         return
 
+    # Guarda de viabilidade: n_max ativos com teto de peso precisa somar >= 100%
+    if n_ativos_max * peso_maximo < 1.0:
+        st.error(
+            f"Combinacao inviavel: {n_ativos_max} ativos x peso maximo "
+            f"{peso_maximo*100:.0f}% = {n_ativos_max*peso_maximo*100:.0f}% < 100%. "
+            f"Aumente o numero de ativos ou o peso maximo."
+        )
+        return
+
     # Carrega dados
     dados = carregar_dados_completos(tickers, anos=periodo_anos)
 
     if dados is None:
         st.error("Erro ao carregar dados. Verifique sua conexao.")
         return
+
+    # ============== GROWTH SCORE (LENTE VC) ==============
+    growth_scores = None
+    if usar_growth:
+        with st.spinner('🔬 Calculando Growth Scores (fundamentals via Yahoo Finance)...'):
+            info_setores = {t: get_ticker_info().get(t, {}).get('setor', 'Desconhecido')
+                            for t in dados['tickers']}
+            growth_scores = calcular_growth_scores(
+                tuple(dados['tickers']), dados['precos'], info_setores
+            )
+
+        n_antes = dados['n_ativos']
+        # 1) Filtro (hard gate): corta ativos abaixo do percentil de score
+        dados = filtrar_universo_growth(dados, growth_scores, percentil_growth)
+        # 2) Tilt: inclina o retorno esperado a favor dos scores altos
+        dados['retornos_medios'] = aplicar_tilt_growth(
+            dados['retornos_medios'], dados['matriz_cov'], growth_scores, peso_tilt
+        )
+        st.info(
+            f"🔬 Filtro growth: {n_antes} → {dados['n_ativos']} ativos "
+            f"(corte no score {dados.get('corte_growth', 0):.1f}) | "
+            f"Tilt de {peso_tilt:.2f}σ aplicado ao retorno esperado"
+        )
 
     # Info dos dados
     col_info1, col_info2, col_info3 = st.columns(3)
@@ -357,7 +415,10 @@ def main():
     st.markdown("---")
 
     # ============== OTIMIZACAO ==============
-    params_key = f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_{dados['n_ativos']}_{periodo_anos}"
+    params_key = (
+        f"{perfil_nome}_{taxa_selic:.4f}_{peso_maximo:.2f}_{n_ativos_max}_"
+        f"{dados['n_ativos']}_{periodo_anos}_{usar_growth}_{percentil_growth}_{peso_tilt:.2f}"
+    )
 
     needs_optimization = (
         otimizar or
@@ -478,16 +539,34 @@ def main():
     ativos_carteira = []
     for ticker, peso in sorted(pesos_dict.items(), key=lambda x: -x[1]):
         info = info_tickers.get(ticker, {})
-        ativos_carteira.append({
+        linha = {
             'Ticker': ticker.replace('.SA', ''),
             'Nome': info.get('nome', '-'),
             'Setor': info.get('setor', '-'),
             'Peso (%)': f"{peso*100:.2f}%",
             'Valor (R$)': f"R$ {peso*orcamento:,.2f}"
-        })
+        }
+        if growth_scores is not None and ticker in growth_scores.index:
+            gs = growth_scores.loc[ticker]
+            linha['Growth Score'] = f"{gs['score']:.0f}/100"
+            linha['🔥 Burn'] = '⚠️ Sim' if gs['burn_flag'] else '—'
+        ativos_carteira.append(linha)
 
     df_carteira = pd.DataFrame(ativos_carteira)
     st.dataframe(df_carteira, use_container_width=True, hide_index=True)
+
+    # Detalhe dos componentes do Growth Score
+    if growth_scores is not None:
+        with st.expander("Ver Componentes do Growth Score", expanded=False):
+            st.markdown("""
+            **Componentes (lente VC aplicada a ações públicas B3):**
+            `s_receita` crescimento de receita (30%) | `s_fcf` qualidade FCF (20%) |
+            `s_pd` intensidade P&D (15%) | `s_momentum` momentum + linearidade R² (20%) |
+            `s_tam` proxy TAM: percentil de market cap no setor (15%)
+            """)
+            gs_view = growth_scores.copy()
+            gs_view.index = [t.replace('.SA', '') for t in gs_view.index]
+            st.dataframe(gs_view, use_container_width=True)
 
     # ============== ANALISES ADICIONAIS ==============
     with st.expander("Ver Matriz de Correlacao", expanded=False):
@@ -562,7 +641,7 @@ def main():
             taxa_livre_risco=taxa_selic
         )
 
-        # Benchmark 1/N (carteira equiponderada) — exigido pela Q1 do TCC
+        # Benchmark 1/N (carteira equiponderada)
         pesos_1n = {t: 1.0 / dados['n_ativos'] for t in dados['tickers']}
         backtest_1n = cached_backtest_is(
             _precos=dados['precos'],
@@ -571,6 +650,30 @@ def main():
             _taxa=taxa_selic,
             _serie_cdi=serie_cdi
         )
+
+        # Benchmarks hierárquicos (risk-based, ignoram mu): HRP e HERC
+        # sobre o MESMO universo growth-filtrado -> híbrido "seleção
+        # agressiva + alocação robusta". Se a carteira max-retorno não
+        # os bate em Calmar/Sortino, é sinal de alerta honesto.
+        try:
+            pesos_hrp = otimizar_hrp(dados['matriz_cov'])
+            backtest_hrp = cached_backtest_is(
+                _precos=dados['precos'], pesos_dict=pesos_hrp,
+                orcamento=orcamento, _taxa=taxa_selic, _serie_cdi=serie_cdi
+            )
+        except Exception as e:
+            st.warning(f"HRP indisponível: {e}")
+            backtest_hrp = None
+
+        try:
+            pesos_herc = otimizar_herc(dados['matriz_cov'])
+            backtest_herc = cached_backtest_is(
+                _precos=dados['precos'], pesos_dict=pesos_herc,
+                orcamento=orcamento, _taxa=taxa_selic, _serie_cdi=serie_cdi
+            )
+        except Exception as e:
+            st.warning(f"HERC indisponível: {e}")
+            backtest_herc = None
 
         # Dados do Ibovespa para comparacao
         try:
@@ -639,8 +742,25 @@ def main():
     fig_dd = grafico_drawdown(backtest['drawdown_serie'])
     st.plotly_chart(fig_dd, use_container_width=True)
 
-    # ============== TABELA COMPARATIVA: Otimizada vs 1/N vs Ibovespa ==============
-    st.markdown("### Comparacao: Otimizada vs Benchmark 1/N")
+    # ============== TABELA COMPARATIVA: Otimizada vs 1/N vs HRP vs HERC ==============
+    st.markdown("### Comparacao: Otimizada vs Benchmarks (1/N, HRP, HERC)")
+
+    def _coluna_metricas(bt: dict) -> list:
+        """Formata a coluna de métricas de um backtest para a tabela comparativa."""
+        def _fmt_ratio(v):
+            return "∞" if np.isinf(v) else f"{v:.3f}"
+        return [
+            f"{bt['retorno_total']*100:.2f}%",
+            f"{bt['retorno_anualizado']*100:.2f}%",
+            f"{bt['volatilidade']*100:.2f}%",
+            _fmt_ratio(bt['sharpe']),
+            _fmt_ratio(bt['sortino']),
+            _fmt_ratio(bt.get('calmar', 0)),
+            _fmt_ratio(bt.get('omega', 0)),
+            f"{bt['max_drawdown']*100:.2f}%",
+            f"{bt.get('var_95_anual', 0)*100:.2f}%",
+            f"{bt.get('cvar_95_anual', 0)*100:.2f}%"
+        ]
 
     comparacao_data = {
         'Metrica': [
@@ -649,34 +769,55 @@ def main():
             'Volatilidade',
             'Sharpe',
             'Sortino',
+            'Calmar',
+            'Omega',
             'Max Drawdown',
             'VaR 95% (anual)',
             'CVaR 95% (anual)'
         ],
-        f'Carteira Otimizada ({perfil_nome})': [
-            f"{backtest['retorno_total']*100:.2f}%",
-            f"{backtest['retorno_anualizado']*100:.2f}%",
-            f"{backtest['volatilidade']*100:.2f}%",
-            f"{backtest['sharpe']:.3f}",
-            f"{backtest['sortino']:.3f}",
-            f"{backtest['max_drawdown']*100:.2f}%",
-            f"{backtest.get('var_95_anual', 0)*100:.2f}%",
-            f"{backtest.get('cvar_95_anual', 0)*100:.2f}%"
-        ],
-        'Benchmark 1/N': [
-            f"{backtest_1n['retorno_total']*100:.2f}%",
-            f"{backtest_1n['retorno_anualizado']*100:.2f}%",
-            f"{backtest_1n['volatilidade']*100:.2f}%",
-            f"{backtest_1n['sharpe']:.3f}",
-            f"{backtest_1n['sortino']:.3f}",
-            f"{backtest_1n['max_drawdown']*100:.2f}%",
-            f"{backtest_1n.get('var_95_anual', 0)*100:.2f}%",
-            f"{backtest_1n.get('cvar_95_anual', 0)*100:.2f}%"
-        ]
+        f'Carteira Otimizada ({perfil_nome})': _coluna_metricas(backtest),
+        'Benchmark 1/N': _coluna_metricas(backtest_1n),
     }
+    if backtest_hrp is not None:
+        comparacao_data['HRP'] = _coluna_metricas(backtest_hrp)
+    if backtest_herc is not None:
+        comparacao_data['HERC'] = _coluna_metricas(backtest_herc)
 
     df_comparacao = pd.DataFrame(comparacao_data)
     st.dataframe(df_comparacao, use_container_width=True, hide_index=True)
+
+    st.caption(
+        "HRP (López de Prado) e HERC (Raffinot) são alocações hierárquicas risk-based "
+        "calculadas sobre o mesmo universo growth-filtrado — benchmarks honestos: "
+        "se a carteira max-retorno não os supera em Calmar/Sortino, o tilt agressivo "
+        "não está pagando o risco extra."
+    )
+
+    # ============== CONTRIBUICAO DE RISCO E ROLLING (Fase B) ==============
+    st.markdown("### Raio-X do Risco")
+
+    col_rc, col_roll = st.columns(2)
+
+    with col_rc:
+        try:
+            contrib = calcular_contribuicao_risco(pesos_dict, dados['matriz_cov'])
+            fig_contrib = grafico_contribuicao_risco(contrib, pesos_dict)
+            st.plotly_chart(fig_contrib, use_container_width=True)
+        except Exception as e:
+            st.warning(f"Contribuição de risco indisponível: {e}")
+
+    with col_roll:
+        try:
+            df_rolling = calcular_metricas_rolling(
+                backtest['retornos_carteira'], janela=63, taxa_livre_risco=taxa_selic
+            )
+            if not df_rolling.empty:
+                fig_rolling = grafico_metricas_rolling(df_rolling, janela=63)
+                st.plotly_chart(fig_rolling, use_container_width=True)
+            else:
+                st.info("Histórico insuficiente para métricas rolling (janela de 63 dias).")
+        except Exception as e:
+            st.warning(f"Métricas rolling indisponíveis: {e}")
 
     # Interpretacao das Metricas
     with st.expander("Entenda as Metricas de Risco", expanded=False):
@@ -694,6 +835,19 @@ def main():
         ### Indice de Sortino - {backtest['sortino']:.2f}
         Similar ao Sharpe, mas considera apenas volatilidade negativa (risco de perda).
         - **> 1**: Bom | **> 2**: Excelente | **< 0**: Retorno abaixo da taxa livre de risco
+
+        ### Indice de Calmar - {backtest.get('calmar', 0):.2f}
+        Retorno anualizado (excesso sobre Selic) dividido pelo drawdown maximo.
+        Mede quanto retorno voce ganha por unidade da PIOR queda historica —
+        metrica-chave para o investidor agressivo que tolera volatilidade
+        mas precisa sobreviver aos vales.
+        - **> 0.5**: Razoavel | **> 1**: Bom | **> 3**: Excelente
+
+        ### Indice Omega - {backtest.get('omega', 0):.2f}
+        Razao entre todos os ganhos e todas as perdas relativos a taxa livre
+        de risco. Captura a distribuicao INTEIRA (assimetria e caudas), nao so
+        media e variancia.
+        - **> 1**: Ganhos superam perdas | **quanto maior, melhor**
 
         ### Curtose - {metricas_risco.get('curtose', 0):.2f}
         Mede a probabilidade de eventos extremos (caudas pesadas).

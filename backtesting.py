@@ -246,6 +246,95 @@ def calcular_sortino(retornos: np.ndarray, taxa_livre_risco: float = None) -> fl
     return sortino
 
 
+def calcular_calmar(retorno_anualizado: float, max_drawdown: float,
+                    taxa_livre_risco: float = None) -> float:
+    """
+    Calcula o Índice de Calmar (Palomar §6.3.12).
+
+    Calmar = (retorno anualizado - rf) / |Max Drawdown|
+
+    Substitui a volatilidade do Sharpe pelo drawdown máximo — mede retorno
+    por unidade da pior queda histórica, métrica chave para o investidor
+    agressivo que tolera vol mas quer sobreviver aos vales.
+    """
+    if taxa_livre_risco is None:
+        taxa_livre_risco = risk_profiles.TAXA_SELIC
+    dd = abs(max_drawdown)
+    if dd == 0:
+        return np.inf
+    return (retorno_anualizado - taxa_livre_risco) / dd
+
+
+def calcular_omega(retornos: np.ndarray, taxa_livre_risco: float = None) -> float:
+    """
+    Calcula o Índice Omega (skill risk-metrics-calculation).
+
+    Omega(tau) = E[(r - tau)+] / E[(tau - r)+]
+
+    Razão entre ganhos e perdas relativos ao limiar tau (rf diária).
+    Captura TODA a distribuição (inclusive assimetria e caudas), não só
+    média/variância — Omega > 1 indica upside capture maior que downside.
+    """
+    if taxa_livre_risco is None:
+        taxa_livre_risco = risk_profiles.TAXA_SELIC
+    tau = taxa_livre_risco / 252  # limiar diário
+    excesso = retornos - tau
+    ganhos = excesso[excesso > 0].sum()
+    perdas = -excesso[excesso < 0].sum()
+    if perdas == 0:
+        return np.inf
+    return ganhos / perdas
+
+
+def calcular_contribuicao_risco(pesos: Dict[str, float],
+                                matriz_cov: pd.DataFrame) -> pd.Series:
+    """
+    Contribuição relativa de risco por ativo (Palomar §6.5.3, risk parity).
+
+    RC_i = w_i * (Sigma w)_i / (w' Sigma w)
+
+    As contribuições relativas somam 1. Revela concentração de risco que a
+    alocação de capital esconde: um ativo com 20% do capital pode carregar
+    45% do risco da carteira se for volátil e correlacionado.
+    """
+    tickers = [t for t in pesos.keys() if t in matriz_cov.index]
+    w = np.array([pesos[t] for t in tickers])
+    w = w / w.sum()
+    cov = matriz_cov.loc[tickers, tickers].values
+
+    sigma_w = cov @ w
+    var_p = float(w @ sigma_w)
+    if var_p <= 0:
+        return pd.Series(np.nan, index=tickers)
+    rc = w * sigma_w / var_p
+    return pd.Series(rc, index=tickers).sort_values(ascending=False)
+
+
+def calcular_metricas_rolling(retornos_carteira: pd.Series, janela: int = 63,
+                              taxa_livre_risco: float = None) -> pd.DataFrame:
+    """
+    Métricas de risco em janela móvel (Palomar §6.3.4, rolling Sharpe).
+
+    Volatilidade e Sharpe anualizados calculados em janelas de `janela` dias
+    úteis — expõe mudanças de regime de risco que a métrica cheia esconde
+    (correlações e vol sobem juntas em stress).
+
+    Returns:
+        DataFrame com colunas 'vol_rolling' e 'sharpe_rolling', indexado por data.
+    """
+    if taxa_livre_risco is None:
+        taxa_livre_risco = risk_profiles.TAXA_SELIC
+
+    vol = retornos_carteira.rolling(janela).std() * np.sqrt(252)
+    ret_anual = retornos_carteira.rolling(janela).mean() * 252
+    sharpe = (ret_anual - taxa_livre_risco) / vol
+
+    return pd.DataFrame({
+        'vol_rolling': vol,
+        'sharpe_rolling': sharpe,
+    }).dropna()
+
+
 def backtesting_pesos_fixos(
     precos: pd.DataFrame,
     pesos: Dict[str, float],
@@ -345,6 +434,8 @@ def backtesting_pesos_fixos(
         'sortino': sortino,
         'max_drawdown': max_drawdown,
         'duracao_max_drawdown': duracao_dd,
+        'calmar': calcular_calmar(retorno_anualizado, max_drawdown, taxa_livre_risco),
+        'omega': calcular_omega(retornos_carteira.values, taxa_livre_risco),
         'var_95': var_95,
         'cvar_95': cvar_95,
         'var_95_anual': var_95 * np.sqrt(252),
@@ -364,16 +455,21 @@ def backtesting_walk_forward(
     taxa_livre_risco: float = None,
     n_ativos_max: Optional[int] = None,
     peso_maximo: float = 0.20,
-    serie_cdi_diario: pd.Series = None
+    serie_cdi_diario: pd.Series = None,
+    shrink_mu: bool = False
 ) -> Dict:
     """
     Realiza o VERDADEIRO backtesting Walk-Forward (Out-of-Sample).
-    
+
     Metodologia:
     1. Otimiza a carteira em T usando janela_treino [T - janela_treino, T]
     2. Aplica esses pesos para os próximos dias (janela_teste) simulando a vida real
     3. Avança o tempo em janela_teste dias (T -> T + janela_teste)
     4. Repete o processo até o fim dos dados
+
+    Args:
+        shrink_mu: aplica shrinkage James-Stein/Jorion no mu de treino
+            (reduz o erro de estimação que o Max Return amplifica)
     """
     if taxa_livre_risco is None:
         taxa_livre_risco = risk_profiles.TAXA_SELIC
@@ -405,7 +501,11 @@ def backtesting_walk_forward(
 
         # 2. Otimiza apenas olhando pro passado para não ter look-ahead bias
         ret_medios, cov_matrix = data_loader.calcular_estatisticas(retornos_treino)
-        
+        if shrink_mu:
+            ret_medios = data_loader.aplicar_shrinkage_mu(
+                retornos_treino, ret_medios, cov_matrix)
+
+
         try:
             res_opt = optimizer.otimizar_por_perfil(
                 perfil=perfil,
@@ -479,6 +579,8 @@ def backtesting_walk_forward(
         'sortino': sortino,
         'max_drawdown': max_drawdown,
         'duracao_max_drawdown': duracao_dd,
+        'calmar': calcular_calmar(retorno_anualizado, max_drawdown, taxa_livre_risco),
+        'omega': calcular_omega(retornos_carteira.values, taxa_livre_risco),
         'var_95': var_95,
         'cvar_95': cvar_95,
         'var_95_anual': var_95 * np.sqrt(252),
@@ -609,11 +711,19 @@ def calcular_metricas_risco_portfolio(
     curtose = stats.kurtosis(ret_portfolio.values)
     assimetria = stats.skew(ret_portfolio.values)
     
+    # Calmar e Omega (Fase B — skill risk-metrics-calculation)
+    serie_acumulada = (1 + ret_portfolio).cumprod()
+    _, max_dd, _ = calcular_drawdown(serie_acumulada)
+    calmar = calcular_calmar(ret_anual, max_dd, taxa_livre_risco)
+    omega = calcular_omega(ret_portfolio.values, taxa_livre_risco)
+
     return {
         'retorno_anual': ret_anual,
         'volatilidade_anual': vol_anual,
         'sharpe': sharpe,
         'sortino': sortino,
+        'calmar': calmar,
+        'omega': omega,
         'var_95_diario': var_95,
         'var_99_diario': var_99,
         'var_95_anual': var_95 * np.sqrt(252),

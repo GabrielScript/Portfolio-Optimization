@@ -58,25 +58,10 @@ class PerfilRisco:
     icone: str
 
 
+# App exclusivo para investidor arrojado: perfil único Agressivo.
+# (Conservador/Moderado removidos — objetivo fixo em maximizar retorno,
+#  com fallback max_sharpe -> min_vol no optimizer quando infeasível.)
 PERFIS_RISCO: Dict[str, PerfilRisco] = {
-    "Conservador": PerfilRisco(
-        nome="Conservador",
-        descricao="Prioriza segurança e estabilidade. Aceita retornos menores em troca de menor volatilidade.",
-        volatilidade_maxima=0.20,
-        objetivo="min_volatility",
-        cor_primaria="#00D4AA",
-        cor_secundaria="#004D40",
-        icone="🛡️"
-    ),
-    "Moderado": PerfilRisco(
-        nome="Moderado",
-        descricao="Equilibra risco e retorno. Busca o melhor índice de Sharpe possível.",
-        volatilidade_maxima=0.35,
-        objetivo="max_sharpe",
-        cor_primaria="#FFB74D",
-        cor_secundaria="#E65100",
-        icone="⚖️"
-    ),
     "Agressivo": PerfilRisco(
         nome="Agressivo",
         descricao="Prioriza maximizar retornos. Tolera alta volatilidade em busca de ganhos maiores.",
@@ -89,9 +74,9 @@ PERFIS_RISCO: Dict[str, PerfilRisco] = {
 }
 
 
-def get_perfil(nome: str) -> PerfilRisco:
-    """Retorna o perfil de risco pelo nome."""
-    return PERFIS_RISCO.get(nome, PERFIS_RISCO["Moderado"])
+def get_perfil(nome: str = "Agressivo") -> PerfilRisco:
+    """Retorna o perfil de risco pelo nome (default e único: Agressivo)."""
+    return PERFIS_RISCO.get(nome, PERFIS_RISCO["Agressivo"])
 
 
 def get_nomes_perfis() -> list:

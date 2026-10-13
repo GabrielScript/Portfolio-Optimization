@@ -214,6 +214,20 @@ def carregar_precos(
     return replace(dados, fonte_cambio=fonte_cambio)
 
 
+def carregar_precos_mensais(tickers: list[str], inicio: date, hoje: date) -> pd.DataFrame:
+    """
+    Último fechamento ajustado de cada mês COMPLETO (meses anteriores ao de ``hoje``).
+
+    Sem filtro de cobertura e sem ffill, ao contrário de ``carregar_precos``: o
+    modelo de fatores usa até 180 meses e precisa também das ações com
+    histórico curto. Cada regressão usa só os meses em que a ação tem preço.
+    Índice: PeriodIndex mensal ``mes``.
+    """
+    fechamentos = baixar_fechamentos(tickers, inicio, hoje)
+    mensais = fechamentos.groupby(fechamentos.index.to_period("M")).last().rename_axis("mes")
+    return mensais[mensais.index < pd.Period(hoje, freq="M")]
+
+
 def baixar_cdi_diario(anos: int, hoje: date | None = None) -> pd.Series:
     """CDI diário (decimal ao dia) via SGS 12. Mais de 10 anos é quebrado em décadas pelo ``core.bcb``."""
     try:

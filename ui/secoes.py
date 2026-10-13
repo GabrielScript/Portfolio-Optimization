@@ -18,7 +18,9 @@ import pandas as pd
 import streamlit as st
 
 from core.backtest import ResultadoBacktest
-from core.metrics import ResumoDesempenho, comparar_benchmark, resumo_desempenho
+from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, momentos_sharpe,
+                          resumo_desempenho, retornos_de_valores, sharpe_probabilistico,
+                          sharpe_referencia_deflacionado)
 from core.optimization import ResultadoOtimizacao
 
 CSS = """
@@ -84,18 +86,61 @@ def tabela_carteira(pesos: pd.Series, orcamento: float, info: dict,
     st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True)
 
 
-def _coluna_resumo(r: ResumoDesempenho, bt: ResultadoBacktest) -> list[str]:
+def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:
+    """Peso final contra a fração das reamostras em que o ativo teve peso > 1%: frequência baixa = ruído."""
+    tabela = pd.DataFrame({"Peso": pesos, "% das reamostras em que aparece": frequencia})
+    tabela = tabela[(tabela > 0).any(axis=1)].sort_values("% das reamostras em que aparece", ascending=False)
+    tabela.index = tabela.index.str.replace(".SA", "", regex=False).rename("Ticker")
+    st.dataframe(tabela, width="stretch", column_config={
+        "Peso": st.column_config.NumberColumn(format="percent"),
+        "% das reamostras em que aparece": st.column_config.NumberColumn(format="percent"),
+    })
+
+
+def _coluna_resumo(r: ResumoDesempenho, bt: ResultadoBacktest, psr: float, dsr: float) -> list[str]:
     return [
         _fmt(r.retorno_total), _fmt(r.cagr), _fmt(r.volatilidade),
         _fmt(r.sharpe, False), _fmt(r.sortino, False), _fmt(r.calmar, False), _fmt(r.omega, False),
+        _fmt(psr, casas=1), _fmt(dsr, casas=1),
         _fmt(r.max_drawdown), _fmt(r.var_95_diario), _fmt(r.cvar_95_diario),
         f"{bt.turnover_anual_medio:.1f}x", f"R$ {bt.custos_totais:,.0f}", str(len(bt.falhas)),
     ]
 
 
 ROTULOS_RESUMO = ["Retorno total", "CAGR", "Volatilidade", "Sharpe (CDI)", "Sortino (CDI)",
-                  "Calmar", "Omega", "Max drawdown", "VaR 95% diário (C-F)", "CVaR 95% diário",
+                  "Calmar", "Omega", "PSR (Sharpe > 0)", "DSR (deflacionado)",
+                  "Max drawdown", "VaR 95% diário (C-F)", "CVaR 95% diário",
                   "Giro anual", "Custos pagos", "Falhas do otimizador"]
+
+LEGENDA_PSR_DSR = (
+    "**PSR**: probabilidade de o Sharpe verdadeiro sobre o CDI ser positivo, dado o tamanho da amostra, "
+    "a assimetria e a curtose (Bailey e López de Prado, 2012). **DSR**: o mesmo, descontando a escolha da "
+    "melhor entre as {n} estratégias da tabela (2014). Ajustes manuais de parâmetros não entram na conta, "
+    "então o DSR é otimista. Abaixo de 95%, a vantagem pode ser sorte."
+)
+
+
+def _momentos_do_excesso(bt: ResultadoBacktest, rf_diaria: pd.Series) -> MomentosSharpe:
+    retornos = retornos_de_valores(bt.valores)
+    return momentos_sharpe(retornos - rf_diaria.reindex(retornos.index).fillna(0.0))
+
+
+def _psr_e_dsr(resultados: dict[str, ResultadoBacktest], benchmark: ResultadoBacktest | None,
+               rf_diaria: pd.Series) -> dict[str, tuple[float, float]]:
+    """
+    PSR de todas; DSR só das estratégias (o benchmark não foi uma escolha entre tentativas).
+    Sharpe NaN (curva constante) fica fora de N e da variância, senão anularia o DSR das outras.
+    """
+    momentos = {nome: _momentos_do_excesso(bt, rf_diaria) for nome, bt in resultados.items()}
+    sharpes = [m.sharpe for m in momentos.values() if np.isfinite(m.sharpe)]
+    variancia = float(np.var(sharpes, ddof=1)) if len(sharpes) > 1 else 0.0
+    referencia = sharpe_referencia_deflacionado(variancia, len(sharpes))
+    saida = {nome: (sharpe_probabilistico(m), sharpe_probabilistico(m, referencia))
+             for nome, m in momentos.items()}
+    if benchmark is not None:
+        saida[benchmark.nome] = (sharpe_probabilistico(_momentos_do_excesso(benchmark, rf_diaria)),
+                                 float("nan"))
+    return saida
 
 
 def tabela_comparativa(resultados: dict[str, ResultadoBacktest], rf_diaria: pd.Series,
@@ -104,9 +149,11 @@ def tabela_comparativa(resultados: dict[str, ResultadoBacktest], rf_diaria: pd.S
     if benchmark is not None:
         todos[benchmark.nome] = benchmark
     resumos = {nome: resumo_desempenho(bt.valores, rf_diaria) for nome, bt in todos.items()}
+    psr_dsr = _psr_e_dsr(resultados, benchmark, rf_diaria)
     tabela = {"Métrica": ROTULOS_RESUMO}
-    tabela.update({nome: _coluna_resumo(resumos[nome], bt) for nome, bt in todos.items()})
+    tabela.update({nome: _coluna_resumo(resumos[nome], bt, *psr_dsr[nome]) for nome, bt in todos.items()})
     st.dataframe(pd.DataFrame(tabela), width="stretch", hide_index=True)
+    st.caption(LEGENDA_PSR_DSR.format(n=len(resultados)))
     return resumos
 
 

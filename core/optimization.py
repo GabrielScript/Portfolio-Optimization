@@ -242,6 +242,70 @@ def _resolver_com_cardinalidade(mu: pd.Series, cov: pd.DataFrame,
                     f"{etapa2.mensagem} Cardinalidade <= {k} (heurística 2 etapas).")
 
 
+@dataclass(frozen=True)
+class PesosProjetados:
+    pesos: pd.Series
+    status: str          # "otimo" | "impreciso" | "fallback"
+    mensagem: str
+
+
+def projetar_pesos(alvo: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao) -> PesosProjetados:
+    """
+    Carteira viável mais próxima de ``alvo`` na norma euclidiana:
+
+        min ||w - alvo_S||^2  s.a.  w em W restrito a S,  ||L'w|| <= vol_max
+
+    S são os k maiores pesos de ``alvo`` (k = cfg.n_ativos_max; sem k, todos).
+    Uso: a média de carteiras viáveis (reamostragem) já satisfaz as restrições
+    lineares de W, que formam um conjunto convexo, mas pode ter mais de k
+    ativos e romper o teto de vol sob ``cov``, porque cada reamostra o
+    respeitou sob a própria covariância. Status "fallback" em dois casos:
+    - teto de vol inviável em S: projeta só nas restrições lineares;
+    - restrições lineares inviáveis em S (ex.: um teto de grupo com membros
+      entre os k maiores): projeta em todos os ativos, sem o limite de k.
+      Isso sempre tem solução quando o alvo é média de carteiras viáveis.
+    """
+    if not alvo.index.equals(cov.index) or not cov.index.equals(cov.columns):
+        raise ValueError("alvo e cov precisam ter os mesmos tickers na mesma ordem.")
+    k = len(alvo) if cfg.n_ativos_max is None else min(cfg.n_ativos_max, len(alvo))
+    _checar_capacidade(k, cfg)
+    try:
+        return _projetar_no_suporte(alvo, cov, cfg, k)
+    except ErroInviavel:
+        if k == len(alvo):
+            raise
+        projecao = _projetar_no_suporte(alvo, cov, cfg, len(alvo))
+        mensagem = (f"Limite de {k} ativos não aplicado: os {k} maiores pesos não cabem nos tetos "
+                    f"por ativo e de grupo. {projecao.mensagem}").strip()
+        return PesosProjetados(projecao.pesos, "fallback", mensagem)
+
+
+def _projetar_no_suporte(alvo: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao,
+                         k: int) -> PesosProjetados:
+    suporte = np.argsort(-alvo.values, kind="stable")[:k]
+    tickers = [alvo.index[i] for i in suporte]
+    w = cp.Variable(k)
+    objetivo = cp.Minimize(cp.sum_squares(w - alvo.values[suporte]))
+    lineares = _restricoes(w, tickers, cfg)
+
+    status, mensagem = "otimo", ""
+    if cfg.vol_maxima is None:
+        pesos, status = _resolver(cp.Problem(objetivo, lineares), w)
+    else:
+        cholesky = np.linalg.cholesky(preparar_covariancia(cov.iloc[suporte, suporte]))
+        try:
+            pesos, status = _resolver(
+                cp.Problem(objetivo, lineares + [cp.norm(cholesky.T @ w, 2) <= cfg.vol_maxima]), w)
+        except ErroInviavel:
+            pesos, _ = _resolver(cp.Problem(objetivo, lineares), w)
+            status = "fallback"
+            mensagem = (f"Teto de vol {cfg.vol_maxima:.0%} inviável com os {k} ativos escolhidos; "
+                        "projeção feita sem ele.")
+    finais = np.zeros(len(alvo))
+    finais[suporte] = _limpar_pesos(pesos)
+    return PesosProjetados(pd.Series(finais, index=alvo.index), status, mensagem)
+
+
 def metricas_carteira(pesos: np.ndarray, mu: np.ndarray, cov: np.ndarray,
                       taxa_livre_risco: float) -> tuple[float, float, float]:
     """(retorno esperado, volatilidade, Sharpe) anualizados."""

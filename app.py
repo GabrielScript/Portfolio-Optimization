@@ -27,7 +27,8 @@ from core.growth import filtrar_por_percentil  # noqa: E402
 from core import market_data  # noqa: E402
 from core.market_data import eh_ticker_b3, serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
-from core.optimization import ErroOtimizacao, fronteira_eficiente, otimizar  # noqa: E402
+from core.optimization import (ErroOtimizacao, ResultadoOtimizacao, fronteira_eficiente,  # noqa: E402
+                               otimizar)
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -42,6 +43,17 @@ ROTULOS_OBJETIVO = {
     Objetivo.MAX_RETORNO.value: "Máximo retorno c/ teto de vol (legado, concentra no erro)",
 }
 
+# Desligada: na avaliação pré-registrada de 2026-10-13 (scripts/avaliar_reamostragem.py),
+# o Sharpe ficou abaixo do Kelly simples em 5 e 10 anos, e o drawdown não melhorou.
+REAMOSTRAGEM_PADRAO = False
+AJUDA_REAMOSTRAGEM = (
+    "Média de 100 carteiras Kelly calculadas em reamostras do histórico (bootstrap em blocos de 21 "
+    "pregões), projetada nos limites. Espalha o peso entre mais ativos. Na avaliação pré-registrada "
+    "(walk-forward de 5 e 10 anos), o Sharpe ficou ABAIXO do Kelly simples e o drawdown não melhorou: "
+    "opção de estudo, não padrão. Lenta: ~1 min a mais no walk-forward de 5 anos com a lista líquida, "
+    "~15 min com todos os ativos."
+)
+
 
 @dataclass(frozen=True)
 class Entradas:
@@ -55,6 +67,18 @@ class Entradas:
     usar_cvm: bool
     shrink_mu: bool
     custo_bps: float
+    reamostrar: bool
+
+
+@dataclass(frozen=True)
+class CarteiraCalculada:
+    """Pesos e os momentos que os geraram: fronteira, ponto 1/N e contribuição de risco usam os mesmos."""
+
+    resultado: ResultadoOtimizacao
+    mu: pd.Series
+    cov: pd.DataFrame
+    intensidade_shrinkage: float
+    frequencia: pd.Series | None = None       # só na reamostrada
 
 
 def ler_sidebar() -> Entradas:
@@ -89,6 +113,9 @@ def ler_sidebar() -> Entradas:
             anos = st.slider("Histórico (anos)", 3, 10, 5,
                              help="Walk-forward precisa de ≥ 2 anos de treino + teste.")
             shrink = st.checkbox("Shrinkage de μ (Jorion)", value=True)
+            reamostrar = st.checkbox("Reamostragem de μ (bagging, B=100)", value=REAMOSTRAGEM_PADRAO,
+                                     key="reamostrar", disabled=objetivo != Objetivo.KELLY.value,
+                                     help=AJUDA_REAMOSTRAGEM)
             custo = st.slider("Custo de transação (bps por lado)", 0, 50, 10)
 
     if setores:
@@ -103,8 +130,9 @@ def ler_sidebar() -> Entradas:
         vol_maxima=None if objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value) else vol_max,
         aversao_risco=aversao, tickers_cripto=cripto, teto_cripto=teto_cripto,
     )
+    # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, orcamento, usar_growth, percentil, tilt,
-                    usar_cvm, shrink, float(custo))
+                    usar_cvm, shrink, float(custo), reamostrar and objetivo == Objetivo.KELLY.value)
 
 
 def validar(entradas: Entradas) -> str | None:
@@ -186,17 +214,20 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
 
     cfg = entradas.params.para_config(rf_aritmetica)
     try:
-        resultado = otimizar(mu, cov, cfg)
-        fronteira = fronteira_eficiente(mu, cov, cfg)
+        carteira = (_carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica, growth)
+                    if entradas.reamostrar
+                    else CarteiraCalculada(otimizar(mu, cov, cfg), mu, cov, momentos.intensidade_shrinkage))
+        fronteira = fronteira_eficiente(carteira.mu, carteira.cov, cfg)
     except ErroOtimizacao as erro:
         st.error(f"Otimização falhou: {erro}")
         st.stop()
+    resultado, mu, cov = carteira.resultado, carteira.mu, carteira.cov
     if resultado.tem_aviso:
         st.warning(resultado.mensagem)
     else:
         st.caption(resultado.mensagem)
 
-    secoes.cards_otimizacao(resultado, entradas.orcamento, momentos.intensidade_shrinkage)
+    secoes.cards_otimizacao(resultado, entradas.orcamento, carteira.intensidade_shrinkage)
     pesos = resultado.pesos[resultado.pesos > 0]
     n = len(mu)
     ponto_1n = {"retorno": float(mu.mean()), "volatilidade": float((cov.values.sum() / n**2) ** 0.5)}
@@ -204,6 +235,8 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     col1.plotly_chart(grafico_fronteira_eficiente(
         fronteira, {"retorno": resultado.retorno_esperado, "volatilidade": resultado.volatilidade},
         resultado.objetivo.value, rf_aritmetica, benchmark_1n=ponto_1n), width="stretch")
+    if carteira.frequencia is not None:
+        col1.caption("A carteira reamostrada fica dentro da fronteira estimada, por construção.")
     col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
     secoes.tabela_carteira(resultado.pesos, entradas.orcamento, info, growth)
@@ -213,9 +246,23 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
                         width="stretch")
     if len(pesos) > 1:
         col_corr.plotly_chart(grafico_matriz_correlacao(cov.loc[pesos.index, pesos.index]), width="stretch")
+    if carteira.frequencia is not None:
+        with st.expander("Estabilidade nas reamostras"):
+            secoes.tabela_estabilidade(resultado.pesos, carteira.frequencia)
     if growth is not None:
         with st.expander("Componentes do Growth Score"):
             st.dataframe(growth, width="stretch")
+
+
+def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float,
+                          growth: pd.DataFrame | None) -> CarteiraCalculada:
+    """Reestima μ e Σ no universo JÁ filtrado pelo growth: são esses momentos que a tela mostra."""
+    with st.spinner("Reamostrando: 100 carteiras Kelly..."):
+        reamostrada = servicos.otimizar_reamostrado(
+            retornos, entradas.params, rf_aritmetica, entradas.shrink_mu,
+            None if growth is None else growth["score"], entradas.peso_tilt)
+    return CarteiraCalculada(reamostrada.resultado, reamostrada.mu, reamostrada.cov,
+                             reamostrada.intensidade_shrinkage, reamostrada.frequencia)
 
 
 def secao_backtest(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
@@ -223,15 +270,18 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFr
                    benchmark_disponivel: bool) -> None:
     st.markdown("---")
     st.markdown("## Walk-forward fora da amostra (universo pré-filtro, líquido de custos)")
-    with st.spinner("Rodando walk-forward de 4 estratégias..."):
+    espera = ("de 5 estratégias (a reamostrada leva minutos)" if entradas.reamostrar
+              else "de 4 estratégias")
+    with st.spinner(f"Rodando walk-forward {espera}..."):
         try:
             resultados = servicos.rodar_walk_forward(
                 retornos, entradas.params, entradas.shrink_mu, entradas.custo_bps,
-                entradas.orcamento, cdi, rf_aritmetica)
+                entradas.orcamento, cdi, rf_aritmetica, entradas.reamostrar)
         except ValueError as erro:
             st.info(f"Walk-forward indisponível: {erro}")
             return
 
+    # A ordem do dicionário define a principal: a reamostrada vem primeiro quando ligada.
     nome_otimizada = next(iter(resultados))
     benchmark = None
     if benchmark_disponivel:

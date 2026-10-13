@@ -2,10 +2,12 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from core import reamostragem
 from core.backtest import (backtest_pesos_fixos, estrategia_equiponderada, estrategia_hrp,
-                           estrategia_otimizada, walk_forward)
+                           estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
 from core.optimization import ErroOtimizacao
+from core.reamostragem import ConfigReamostragem
 
 CFG_BT = ConfigBacktest(janela_treino=252, janela_teste=63, capital_inicial=1000.0, custo_bps=0.0)
 CFG_OPT = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.5, n_ativos_max=None,
@@ -82,6 +84,22 @@ def test_rf_point_in_time_muda_max_sharpe(retornos_sinteticos):
     baixa = walk_forward(retornos_sinteticos, estrategia_otimizada(cfg, True), CFG_BT, "rf0")
     alta = walk_forward(retornos_sinteticos, estrategia_otimizada(cfg, True, rf_alta), CFG_BT, "rf25")
     assert not np.allclose(baixa.pesos_alvo.values, alta.pesos_alvo.values)
+
+
+def test_reamostrada_com_bootstrap_identidade_iguala_a_otimizada_com_rf_da_data(retornos_sinteticos,
+                                                                              monkeypatch):
+    """Oráculo da ligação: mesma rf na data, mesmo shrink, mesmo cfg. Max Sharpe depende da rf."""
+    monkeypatch.setattr(reamostragem, "indices_bootstrap_circular",
+                        lambda n_obs, tamanho_bloco, gerador: np.arange(n_obs))
+    cfg = ConfigOtimizacao(objetivo=Objetivo.MAX_SHARPE, peso_maximo=0.5, n_ativos_max=None,
+                           vol_maxima=None, taxa_livre_risco=0.0)
+    rf_alta = pd.Series(0.0009, index=retornos_sinteticos.index)
+    otimizada = walk_forward(retornos_sinteticos, estrategia_otimizada(cfg, True, rf_alta), CFG_BT, "o")
+    reamostrada = walk_forward(
+        retornos_sinteticos,
+        estrategia_reamostrada(cfg, True, rf_alta, ConfigReamostragem(n_reamostras=2)), CFG_BT, "r")
+    np.testing.assert_allclose(reamostrada.pesos_alvo.values, otimizada.pesos_alvo.values, atol=1e-4)
+    assert not reamostrada.falhas
 
 
 def test_historico_curto_rejeitado(retornos_sinteticos):

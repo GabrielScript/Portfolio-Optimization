@@ -25,6 +25,11 @@ mesmas condições.
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
 - Histórico de 3 a 10 anos, custo de transação em bps por lado e shrinkage de μ ligável/desligável.
+- **Reamostragem de μ (bagging de Michaud)**, opcional e só para o Kelly: média de 100 carteiras calculadas
+  em reamostras do histórico (bootstrap circular em blocos de 21 pregões), projetada nos limites. Espalha o
+  peso entre mais ativos, mas vem **desligada**: na avaliação pré-registrada (`scripts/avaliar_reamostragem.py`,
+  walk-forward de 5 e 10 anos), o Sharpe ficou abaixo do Kelly simples e o drawdown não melhorou. É lenta
+  (~1 min a mais no walk-forward de 5 anos com a lista líquida).
 - **Growth Score** (fundamentos Yahoo, opcionalmente receita de 10 anos via CVM): filtro por percentil e
   tilt no μ, aplicados **só à carteira de hoje** (ver Limitações).
 - Cripto (BTC/ETH convertidos para R$ pela PTAX) com teto agregado — ainda presente no app, mas o projeto
@@ -34,9 +39,11 @@ mesmas condições.
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
   com setores, contribuição para o risco e matriz de correlação.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com 2 anos de treino; compara o objetivo
-  escolhido, 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR, volatilidade, Sharpe e Sortino
-  (sobre o CDI vigente em cada data), Calmar, Omega, VaR/CVaR, drawdown máximo, alfa por regressão com estatística t,
-  pesos ao longo do tempo e métricas rolantes.
+  escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR,
+  volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade
+  de o Sharpe verdadeiro ser positivo e a mesma probabilidade descontada pelo número de estratégias comparadas;
+  Bailey e López de Prado), VaR/CVaR, drawdown máximo, alfa por regressão com estatística t, pesos ao longo do
+  tempo e métricas rolantes.
 
 ### 🏦 Dados
 - **Preços:** Yahoo Finance (`yfinance`), alinhados ao calendário da B3, com exigência de cobertura ≥ 95%.
@@ -72,9 +79,10 @@ Portfolio-Optimization/
 │   ├── market_data.py        #   Preços, calendário B3, CDI, Selic, câmbio
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
-│   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira
+│   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites
+│   ├── reamostragem.py       #   Carteira reamostrada (bagging, bootstrap em blocos)
 │   ├── hierarchical.py       #   HRP e HRP-Árvore
-│   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown
+│   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown, PSR/DSR
 │   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time
 │   ├── growth.py             #   Growth Score (Yahoo/CVM)
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
@@ -84,8 +92,9 @@ Portfolio-Optimization/
 │   ├── servicos.py           # Cache do Streamlit com chaves explícitas
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
-│   └── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
-├── tests/                    # Testes com pytest, sem rede
+│   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
+│   └── avaliar_reamostragem.py   # Avaliação pré-registrada da reamostragem (usa rede, ~30 min)
+├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
 └── requirements.txt
 ```
 

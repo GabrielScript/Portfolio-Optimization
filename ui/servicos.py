@@ -12,14 +12,16 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
+from functools import partial
 
 import pandas as pd
 import streamlit as st
 
-from core import market_data
+from core import market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp,
-                           estrategia_otimizada, walk_forward)
+                           estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo
+from core.estimation import aplicar_tilt_growth
 from core.growth import calcular_growth_scores
 
 
@@ -73,21 +75,38 @@ def carregar_growth(tickers: tuple[str, ...], precos: pd.DataFrame, setores: tup
 
 
 @st.cache_data(show_spinner=False, max_entries=8)
+def otimizar_reamostrado(retornos: pd.DataFrame, params: ParametrosOtimizacao, taxa_livre_risco: float,
+                         shrink_mu: bool, scores_growth: pd.Series | None,
+                         peso_tilt: float) -> reamostragem.ResultadoReamostragem:
+    """Carteira de hoje reamostrada. O tilt growth é montado aqui porque uma função não entra na chave do cache."""
+    ajuste = (None if scores_growth is None
+              else partial(aplicar_tilt_growth, scores=scores_growth, peso_tilt=peso_tilt))
+    return reamostragem.otimizar_reamostrado(retornos, params.para_config(taxa_livre_risco),
+                                             shrink_mu=shrink_mu, ajustar_mu=ajuste)
+
+
+@st.cache_data(show_spinner=False, max_entries=8)
 def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, shrink_mu: bool,
                        custo_bps: float, capital: float, cdi_diario: pd.Series,
-                       taxa_constante_aritmetica: float) -> dict[str, ResultadoBacktest]:
+                       taxa_constante_aritmetica: float, reamostrar: bool) -> dict[str, ResultadoBacktest]:
     """
     Todas as estratégias no MESMO protocolo: mesmo universo (pré-filtro growth),
     mesmas janelas e mesmos custos. rf point-in-time pelo CDI.
+
+    A PRIMEIRA estratégia do dicionário é a principal da tela (o app usa
+    ``next(iter(...))``): a reamostrada, quando ligada; senão, a otimizada.
     """
     cfg_bt = ConfigBacktest(capital_inicial=capital, custo_bps=custo_bps, shrink_mu=shrink_mu)
     cfg_opt = params.para_config(taxa_constante_aritmetica)
     rf = cdi_diario if not cdi_diario.empty else None
-    estrategias = {
+    estrategias = {}
+    if reamostrar:
+        estrategias[f"Reamostrada ({params.objetivo})"] = estrategia_reamostrada(cfg_opt, shrink_mu, rf)
+    estrategias.update({
         f"Otimizada ({params.objetivo})": estrategia_otimizada(cfg_opt, shrink_mu, rf),
         "1/N": estrategia_equiponderada(),
         "HRP": estrategia_hrp(arvore=False),
         "HRP-Árvore": estrategia_hrp(arvore=True),
-    }
+    })
     return {nome: walk_forward(retornos, estrategia, cfg_bt, nome)
             for nome, estrategia in estrategias.items()}

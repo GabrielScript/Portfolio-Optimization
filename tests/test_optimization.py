@@ -4,7 +4,8 @@ import pytest
 
 from core.config import ConfigOtimizacao, LimiteGrupo, Objetivo
 from core.estimation import estimar_momentos
-from core.optimization import ErroInviavel, fronteira_eficiente, otimizar, preparar_covariancia
+from core.optimization import (ErroInviavel, fronteira_eficiente, otimizar, preparar_covariancia,
+                               projetar_pesos)
 
 
 def _momentos(retornos):
@@ -125,6 +126,63 @@ def test_inviavel_explicito():
 def test_config_rejeita_cardinalidade_impossivel():
     with pytest.raises(ValueError):
         ConfigOtimizacao(peso_maximo=0.2, n_ativos_max=4)
+
+
+def _cov_diagonal(variancias, tickers):
+    return pd.DataFrame(np.diag(variancias), index=tickers, columns=tickers)
+
+
+def test_projecao_mantem_alvo_que_ja_e_viavel():
+    alvo = pd.Series([0.3, 0.3, 0.2, 0.2], index=list("abcd"))
+    cfg = ConfigOtimizacao(peso_maximo=0.4, n_ativos_max=None, vol_maxima=None)
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04] * 4, list("abcd")), cfg)
+    np.testing.assert_allclose(proj.pesos.values, alvo.values, atol=1e-5)
+    assert proj.status == "otimo"
+
+
+def test_projecao_fica_com_os_k_maiores_e_redistribui_por_igual():
+    """Simplex com caixa: (0,30; 0,25; 0,20) somam 0,75 e cada um recebe +0,25/3."""
+    alvo = pd.Series([0.30, 0.25, 0.20, 0.15, 0.10], index=list("abcde"))
+    cfg = ConfigOtimizacao(peso_maximo=0.5, n_ativos_max=3, vol_maxima=None)
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04] * 5, list("abcde")), cfg)
+    np.testing.assert_allclose(proj.pesos.values, [0.383333, 0.333333, 0.283333, 0.0, 0.0], atol=1e-5)
+
+
+def test_projecao_respeita_teto_de_grupo():
+    """a+b <= 0,5 ativa: a e b cedem 0,15 cada para c."""
+    alvo = pd.Series([0.4, 0.4, 0.2], index=list("abc"))
+    grupo = LimiteGrupo("ab", frozenset({"a", "b"}), 0.5)
+    cfg = ConfigOtimizacao(peso_maximo=1.0, n_ativos_max=None, vol_maxima=None, grupos=(grupo,))
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04] * 3, list("abc")), cfg)
+    np.testing.assert_allclose(proj.pesos.values, [0.25, 0.25, 0.5], atol=1e-5)
+
+
+def test_projecao_sem_cardinalidade_quando_o_top_k_nao_cabe_no_teto_de_grupo():
+    """Top-2 = {a, b} com a <= 0,35 e teto de 0,5: no máximo 0,85 < 1. Em todos os ativos o alvo já é viável."""
+    alvo = pd.Series([0.30, 0.26, 0.24, 0.20], index=list("abcd"))
+    grupo = LimiteGrupo("a", frozenset({"a"}), 0.35)
+    cfg = ConfigOtimizacao(peso_maximo=0.5, n_ativos_max=2, vol_maxima=None, grupos=(grupo,))
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04] * 4, list("abcd")), cfg)
+    np.testing.assert_allclose(proj.pesos.values, alvo.values, atol=1e-5)
+    assert proj.status == "fallback" and "Limite de 2 ativos não aplicado" in proj.mensagem
+
+
+def test_projecao_impoe_teto_de_vol_da_covariancia_dada():
+    """sigma 20% e 50%, sem correlação, teto 20%: 0,29a² − 0,5a + 0,21 = 0 → a = 0,42/0,58."""
+    alvo = pd.Series([0.5, 0.5], index=["a", "b"])
+    cfg = ConfigOtimizacao(peso_maximo=1.0, n_ativos_max=None, vol_maxima=0.20)
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04, 0.25], ["a", "b"]), cfg)
+    assert proj.pesos["a"] == pytest.approx(0.42 / 0.58, abs=1e-4)
+    assert proj.status == "otimo"
+
+
+def test_projecao_sem_o_teto_de_vol_quando_ele_e_inviavel():
+    """Vol mínima possível com 20%/50% é ~18,6% > 10%: projeta só nas restrições lineares."""
+    alvo = pd.Series([0.5, 0.5], index=["a", "b"])
+    cfg = ConfigOtimizacao(peso_maximo=1.0, n_ativos_max=None, vol_maxima=0.10)
+    proj = projetar_pesos(alvo, _cov_diagonal([0.04, 0.25], ["a", "b"]), cfg)
+    np.testing.assert_allclose(proj.pesos.values, [0.5, 0.5], atol=1e-5)
+    assert proj.status == "fallback" and "inviável" in proj.mensagem
 
 
 def test_preparar_covariancia_simetrica_definida_positiva():

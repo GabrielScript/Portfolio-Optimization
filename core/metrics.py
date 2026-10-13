@@ -17,6 +17,10 @@ Correções em relação à versão anterior:
 - Information ratio: média anualizada do retorno ativo dividida pelo
   tracking error.
 - Curtose reportada como EXCESSO (normal = 0). O texto antigo dizia "> 3".
+
+PSR/DSR usam Sharpe e momentos POR PERÍODO do excesso sobre o CDI e a curtose
+BRUTA (normal = 3), como nos artigos originais. Não misturar com ``sharpe``,
+que é anualizado.
 """
 
 from __future__ import annotations
@@ -96,6 +100,77 @@ def cvar_historico(retornos: pd.Series, confianca: float = 0.95) -> float:
     limite = -var_historico(retornos, confianca)
     cauda = retornos[retornos <= limite]
     return float(-cauda.mean()) if len(cauda) else var_historico(retornos, confianca)
+
+
+# ------------------------------------------------- Sharpe estatístico (PSR/DSR)
+
+_EULER_MASCHERONI = 0.5772156649015329
+
+
+@dataclass(frozen=True)
+class MomentosSharpe:
+    """Insumos do PSR, todos POR PERÍODO (diários, não anualizados)."""
+
+    sharpe: float          # média / desvio-padrão (ddof=1) do excesso
+    n_obs: int
+    assimetria: float
+    curtose: float         # curtose BRUTA (normal = 3), não o excesso
+
+
+def momentos_sharpe(excesso_diario: pd.Series) -> MomentosSharpe:
+    """Sharpe diário e momentos do EXCESSO sobre o CDI (não dos retornos brutos)."""
+    valores = excesso_diario.dropna().values
+    # Série constante: np.std devolve ~1e-19 por arredondamento, não 0. Testar a amplitude.
+    if len(valores) < 2 or np.ptp(valores) == 0:
+        return MomentosSharpe(float("nan"), len(valores), float("nan"), float("nan"))
+    return MomentosSharpe(
+        sharpe=float(np.mean(valores) / np.std(valores, ddof=1)),
+        n_obs=len(valores),
+        assimetria=float(stats.skew(valores)),
+        curtose=float(stats.kurtosis(valores, fisher=False)),
+    )
+
+
+def sharpe_probabilistico(m: MomentosSharpe, sharpe_referencia: float = 0.0) -> float:
+    """
+    PSR (Bailey e López de Prado, 2012): P[Sharpe verdadeiro > referência].
+
+        PSR = Phi( (SR - SR*) sqrt(T - 1) / sqrt(1 - g3 SR + (g4 - 1)/4 SR^2) )
+
+    SR e SR* por período; g3 = assimetria; g4 = curtose bruta. Supõe retornos
+    estacionários e independentes no tempo: a autocorrelação não entra no erro
+    padrão. Devolve NaN se o Sharpe não existe ou se T < 2.
+    """
+    if not np.isfinite(m.sharpe) or m.n_obs < 2:
+        return float("nan")
+    variancia = 1.0 - m.assimetria * m.sharpe + (m.curtose - 1.0) / 4.0 * m.sharpe**2
+    if variancia <= 0:
+        return float("nan")
+    z = (m.sharpe - sharpe_referencia) * np.sqrt(m.n_obs - 1) / np.sqrt(variancia)
+    return float(stats.norm.cdf(z))
+
+
+def sharpe_referencia_deflacionado(variancia_sharpes: float, n_tentativas: int) -> float:
+    """
+    SR0 do DSR (Bailey e López de Prado, 2014): Sharpe máximo esperado entre N
+    tentativas independentes cujo Sharpe verdadeiro é zero.
+
+        SR0 = sqrt(V) [ (1 - g) Phi^-1(1 - 1/N) + g Phi^-1(1 - 1/(N e)) ],  g = Euler-Mascheroni
+
+    V = variância dos Sharpes POR PERÍODO das tentativas. Com N = 1 não há
+    seleção e SR0 = 0 (a fórmula daria Phi^-1(0) = -inf). O DSR é o PSR com
+    referência SR0. Tentativas correlacionadas são menos de N independentes,
+    então o SR0 fica conservador nesse ponto. Tentativas não contadas (ajustes
+    manuais de parâmetros) o deixam otimista.
+    """
+    if n_tentativas < 1:
+        raise ValueError(f"n_tentativas deve ser >= 1: {n_tentativas}")
+    if n_tentativas == 1:
+        return 0.0
+    quantil_n = stats.norm.ppf(1.0 - 1.0 / n_tentativas)
+    quantil_ne = stats.norm.ppf(1.0 - 1.0 / (n_tentativas * np.e))
+    return float(np.sqrt(variancia_sharpes)
+                 * ((1.0 - _EULER_MASCHERONI) * quantil_n + _EULER_MASCHERONI * quantil_ne))
 
 
 @dataclass(frozen=True)

@@ -32,6 +32,7 @@ from core.config import DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao
 from core.estimation import covariancia_ledoit_wolf, estimar_momentos
 from core.hierarchical import otimizar_hrp, otimizar_hrp_arvore
 from core.optimization import ErroOtimizacao, otimizar
+from core.reamostragem import ConfigReamostragem, otimizar_reamostrado
 
 logger = logging.getLogger(__name__)
 
@@ -142,21 +143,37 @@ def backtest_pesos_fixos(retornos: pd.DataFrame, pesos: pd.Series, cfg: ConfigBa
 
 # ---------------------------------------------------------------- estratégias
 
+def _cfg_com_rf_da_data(cfg: ConfigOtimizacao, rf_diaria: pd.Series | None,
+                        data: pd.Timestamp) -> ConfigOtimizacao:
+    """Taxa livre de risco vigente NA DATA (point-in-time), na convenção aritmética 252 x diária."""
+    if rf_diaria is None or rf_diaria.empty:
+        return cfg
+    rf_vigente = rf_diaria.asof(data)
+    if pd.isna(rf_vigente):
+        return cfg
+    return replace(cfg, taxa_livre_risco=float(rf_vigente) * DIAS_UTEIS_ANO)
+
+
 def estrategia_otimizada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,
                          rf_diaria: pd.Series | None = None) -> Estrategia:
     """
     Estima momentos no treino e otimiza. Se ``rf_diaria`` (CDI) for dada, a taxa
-    livre de risco é a vigente NA DATA do rebalanceamento (point-in-time), na
-    convenção aritmética 252 x diária. Sem ela, usa a do cfg.
+    livre de risco é a vigente na data do rebalanceamento. Sem ela, usa a do cfg.
     """
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
         momentos = estimar_momentos(treino, shrink_mu=shrink_mu)
-        cfg = cfg_otimizacao
-        if rf_diaria is not None and not rf_diaria.empty:
-            rf_vigente = rf_diaria.asof(treino.index[-1])
-            if pd.notna(rf_vigente):
-                cfg = replace(cfg, taxa_livre_risco=float(rf_vigente) * DIAS_UTEIS_ANO)
+        cfg = _cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1])
         return otimizar(momentos.mu, momentos.cov, cfg).pesos
+    return _estrategia
+
+
+def estrategia_reamostrada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,
+                           rf_diaria: pd.Series | None = None,
+                           config: ConfigReamostragem = ConfigReamostragem()) -> Estrategia:
+    """Como ``estrategia_otimizada``, mas com a carteira reamostrada (core.reamostragem) do treino."""
+    def _estrategia(treino: pd.DataFrame) -> pd.Series:
+        cfg = _cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1])
+        return otimizar_reamostrado(treino, cfg, shrink_mu=shrink_mu, config=config).resultado.pesos
     return _estrategia
 
 

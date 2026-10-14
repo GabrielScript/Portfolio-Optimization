@@ -66,3 +66,92 @@ def test_carregar_precos_de_acoes_baixa_so_os_tickers_pedidos_e_nao_consulta_o_b
     assert pedidos == [["AAA.SA", "BBB.SA"]]
     assert list(dados.precos.columns) == ["AAA.SA", "BBB.SA"]
     assert dados.precos.notna().all().all()
+
+
+# --- cotações do dia ---------------------------------------------------------------------------
+
+DIARIOS = pd.DataFrame({"A.SA": [9.0, 9.5], "B.SA": [19.0, 19.8], "C.SA": [5.0, np.nan]},
+                       index=pd.to_datetime(["2026-10-12", "2026-10-13"]))
+
+
+def _barras_1m(**fechamentos) -> pd.DataFrame:
+    """Saída do yfinance com interval='1m': colunas (campo, ticker) e índice com fuso de São Paulo."""
+    indice = pd.date_range("2026-10-14 12:54", periods=3, freq="min", tz="America/Sao_Paulo")
+    colunas = pd.MultiIndex.from_product([["Close", "Volume"], list(fechamentos)])
+    dados = {("Close", t): v for t, v in fechamentos.items()}
+    dados |= {("Volume", t): [100.0] * 3 for t in fechamentos}
+    return pd.DataFrame(dados, index=indice)[colunas]
+
+
+def test_cotacao_e_o_ultimo_negocio_valido_do_dia(monkeypatch):
+    chamadas = []
+
+    def download(tickers, **kwargs):
+        chamadas.append(kwargs)
+        return _barras_1m(**{"A.SA": [10.0, 10.5, 10.6], "B.SA": [20.0, 20.2, np.nan]})
+
+    monkeypatch.setattr(market_data.yf, "download", download)
+
+    cotacoes = market_data.cotacoes_atuais(["A.SA", "B.SA"], DIARIOS)
+
+    assert chamadas[0]["period"] == "1d" and chamadas[0]["interval"] == "1m"
+    assert cotacoes.loc["A.SA", "preco"] == 10.6
+    assert cotacoes.loc["A.SA", "horario"] == pd.Timestamp("2026-10-14 12:56")
+    assert cotacoes.loc["B.SA", "preco"] == 20.2
+    assert cotacoes.loc["B.SA", "horario"] == pd.Timestamp("2026-10-14 12:55")
+    assert set(cotacoes["fonte"]) == {market_data.FONTE_INTRADIARIA}
+
+
+def test_ticker_sem_negocio_no_dia_usa_o_ultimo_fechamento(monkeypatch):
+    monkeypatch.setattr(market_data.yf, "download",
+                        lambda tickers, **kw: _barras_1m(**{"A.SA": [10.0, 10.5, 10.6]}))
+
+    cotacoes = market_data.cotacoes_atuais(["A.SA", "B.SA", "C.SA"], DIARIOS)
+
+    assert cotacoes.loc["A.SA", "fonte"] == market_data.FONTE_INTRADIARIA
+    assert cotacoes.loc["B.SA", "preco"] == 19.8
+    assert cotacoes.loc["B.SA", "horario"] == pd.Timestamp("2026-10-13")
+    assert cotacoes.loc["B.SA", "fonte"] == market_data.FONTE_FECHAMENTO
+    assert cotacoes.loc["C.SA", "preco"] == 5.0             # último fechamento VÁLIDO
+    assert cotacoes.loc["C.SA", "horario"] == pd.Timestamp("2026-10-12")
+
+
+def test_falha_do_yahoo_usa_o_fechamento_de_todos(monkeypatch):
+    def falha(tickers, **kwargs):
+        raise ConnectionError("sem rede")
+
+    monkeypatch.setattr(market_data.yf, "download", falha)
+
+    cotacoes = market_data.cotacoes_atuais(["A.SA", "B.SA"], DIARIOS)
+
+    assert list(cotacoes["preco"]) == [9.5, 19.8]
+    assert set(cotacoes["fonte"]) == {market_data.FONTE_FECHAMENTO}
+
+
+def test_barra_com_preco_zero_e_ignorada_e_vale_o_ultimo_negocio_positivo(monkeypatch):
+    monkeypatch.setattr(market_data.yf, "download",
+                        lambda tickers, **kw: _barras_1m(**{"A.SA": [10.0, 10.5, 0.0]}))
+
+    cotacoes = market_data.cotacoes_atuais(["A.SA"], DIARIOS)
+
+    assert cotacoes.loc["A.SA", "preco"] == 10.5
+    assert cotacoes.loc["A.SA", "horario"] == pd.Timestamp("2026-10-14 12:55")
+
+
+def test_ticker_so_com_barras_de_preco_zero_usa_o_ultimo_fechamento(monkeypatch):
+    monkeypatch.setattr(market_data.yf, "download",
+                        lambda tickers, **kw: _barras_1m(**{"B.SA": [0.0, 0.0, 0.0]}))
+
+    cotacoes = market_data.cotacoes_atuais(["B.SA"], DIARIOS)
+
+    assert cotacoes.loc["B.SA", "preco"] == 19.8
+    assert cotacoes.loc["B.SA", "fonte"] == market_data.FONTE_FECHAMENTO
+
+
+def test_ticker_sem_nenhum_preco_fica_nan(monkeypatch):
+    monkeypatch.setattr(market_data.yf, "download", lambda tickers, **kw: pd.DataFrame())
+
+    cotacoes = market_data.cotacoes_atuais(["A.SA", "Z.SA"], DIARIOS)
+
+    assert cotacoes.loc["A.SA", "preco"] == 9.5
+    assert np.isnan(cotacoes.loc["Z.SA", "preco"])

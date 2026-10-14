@@ -5,6 +5,8 @@ Fontes:
 - Preços: Yahoo Finance via yfinance (``auto_adjust=True`` -> retorno total,
   dividendos/JCP reinvestidos conforme o ajuste do Yahoo).
 - CDI diário (SGS 12) e Selic meta (SGS 432): BCB, via ``core.bcb``.
+- Cotação do dia (plano de compra): último negócio nas barras de 1 min do
+  Yahoo, com atraso de ~15 min; sem ele, o último fechamento diário.
 
 Calendário: a grade de datas é o calendário de pregões da B3, inferido dos
 próprios tickers ``.SA``. Datas fora dela (feriados com dado espúrio) saem,
@@ -158,6 +160,57 @@ def carregar_precos_mensais(tickers: list[str], inicio: date, hoje: date) -> pd.
     fechamentos = baixar_fechamentos(tickers, inicio, hoje)
     mensais = fechamentos.groupby(fechamentos.index.to_period("M")).last().rename_axis("mes")
     return mensais[mensais.index < pd.Period(hoje, freq="M")]
+
+
+FONTE_INTRADIARIA = "Yahoo 1 min (atraso ~15 min)"
+FONTE_FECHAMENTO = "último fechamento"
+
+
+def baixar_ultimos_negocios(tickers: list[str]) -> pd.DataFrame:
+    """Último negócio do pregão mais recente (barras de 1 min do Yahoo). Colunas: preco, horario."""
+    bruto = yf.download(tickers, period="1d", interval="1m", progress=False, auto_adjust=False,
+                        threads=True)
+    barras = _extrair_fechamentos(bruto, tickers)
+    linhas = {}
+    for ticker in barras.columns:
+        precos = barras[ticker]
+        negocios = precos[precos > 0]          # o Yahoo às vezes devolve barra com preço 0; NaN também sai aqui
+        if not negocios.empty:
+            linhas[ticker] = (float(negocios.iloc[-1]), negocios.index[-1])
+    return pd.DataFrame.from_dict(linhas, orient="index", columns=["preco", "horario"])
+
+
+def cotacoes_atuais(tickers: list[str], precos_diarios: pd.DataFrame) -> pd.DataFrame:
+    """
+    Cotação de cada ticker para dimensionar a compra: o último negócio do dia no
+    Yahoo (atraso de ~15 min) ou, se o ticker não negociou ou o Yahoo falhou, o
+    último fechamento válido de ``precos_diarios``. O fechamento ajustado mais
+    recente é o fechamento de fato: o ajuste por proventos só reescala as datas
+    anteriores a eles.
+
+    Colunas: preco (NaN se nenhuma fonte tem o ticker), horario, fonte.
+    """
+    try:
+        intradiario = baixar_ultimos_negocios(tickers)
+    except Exception as erro:  # noqa: BLE001 - qualquer falha do Yahoo cai no fechamento, com aviso
+        logger.warning("Cotações do dia indisponíveis (%s); usando o último fechamento.", erro)
+        intradiario = pd.DataFrame(columns=["preco", "horario"])
+    linhas = {}
+    for ticker in tickers:
+        if ticker in intradiario.index:
+            linhas[ticker] = (intradiario.at[ticker, "preco"], intradiario.at[ticker, "horario"],
+                              FONTE_INTRADIARIA)
+        else:
+            linhas[ticker] = _ultimo_fechamento(precos_diarios, ticker)
+    return pd.DataFrame.from_dict(linhas, orient="index", columns=["preco", "horario", "fonte"])
+
+
+def _ultimo_fechamento(precos_diarios: pd.DataFrame, ticker: str) -> tuple[float, pd.Timestamp, str]:
+    fechamentos = (precos_diarios[ticker].dropna() if ticker in precos_diarios.columns
+                   else pd.Series(dtype=float))
+    if fechamentos.empty:
+        return float("nan"), pd.NaT, FONTE_FECHAMENTO
+    return float(fechamentos.iloc[-1]), fechamentos.index[-1], FONTE_FECHAMENTO
 
 
 def baixar_cdi_diario(anos: int, hoje: date | None = None) -> pd.Series:

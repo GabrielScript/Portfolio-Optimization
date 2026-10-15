@@ -17,12 +17,17 @@ APP = Path(__file__).resolve().parent.parent / "app.py"
 # 8 ações: viável com teto de 20% por ativo, e a reamostragem roda em segundos.
 SETOR_PEQUENO = "Tecnologia da Informação"
 TIMEOUT_S = 300
+JANELA_ANOS, TESTE_ANOS = 3, 1           # os mínimos dos sliders: walk-forward curto e rápido
 CARREGAR_COTACOES_REAL = servicos.carregar_cotacoes      # guardada antes de a fixture trocá-la
+
+
+def _datas_sinteticas(anos: int, dia: date) -> pd.DatetimeIndex:
+    return pd.bdate_range(end=pd.Timestamp(dia), periods=anos * 252 + 10)
 
 
 def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
     gerador = np.random.default_rng(7)
-    datas = pd.bdate_range(end=pd.Timestamp(dia), periods=650)     # 504 de treino + 3 rebalanceamentos
+    datas = _datas_sinteticas(anos, dia)
     retornos = gerador.normal(0.0006, 0.015, size=(len(datas), len(tickers)))
     # Perto de R$ 10, como boa parte das ações da B3: 2 unidades cabem no teto mesmo com R$ 500 a investir.
     precos = pd.DataFrame(10 * np.cumprod(1 + retornos, axis=0), index=datas, columns=list(tickers))
@@ -56,7 +61,9 @@ def app(monkeypatch) -> AppTest:
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     at.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO])
-    at.sidebar.slider(key="teto_setor").set_value(100).run()        # um setor só: sem teto por setor
+    at.sidebar.slider(key="teto_setor").set_value(100)               # um setor só: sem teto por setor
+    at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
+    at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
     return at
 
 
@@ -73,6 +80,61 @@ def test_reamostragem_vem_desligada_e_o_walk_forward_tem_4_estrategias(app):
     assert colunas[1].startswith("Otimizada")
     assert len(colunas) == 1 + 4 + 1                      # Métrica + 4 estratégias + BOVA11
     assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
+
+
+def test_walk_forward_treina_na_janela_da_carteira_de_hoje(app):
+    # O walk-forward baixa janela + teste anos; o 1º rebalanceamento vem depois de janela × 252 pregões
+    # (o 1º pregão do download não tem retorno).
+    datas = _datas_sinteticas(JANELA_ANOS + TESTE_ANOS, date.today())
+    legendas = [c.value for c in app.caption if c.value.startswith("Treino:")]
+    assert len(legendas) == 1
+    assert f"fora da amostra desde {datas[JANELA_ANOS * 252 + 1]:%d/%m/%Y}" in legendas[0]
+
+
+def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
+    # Mesmo cfg das estratégias: compra na véspera do 1º rebalanceamento (pregão janela × 252 do download),
+    # paga 10 bps uma vez (o padrão da sidebar) e segura até o fim.
+    tickers = tuple(get_tickers_by_setor([SETOR_PEQUENO])) + (BENCHMARK_ACOES,)
+    bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today()).precos[BENCHMARK_ACOES]
+    esperado = (1 - 10 / 10_000) * bova.iloc[-1] / bova.iloc[JANELA_ANOS * 252] - 1
+
+    tabela = _tabela_walk_forward(app).set_index("Métrica")
+
+    assert tabela.loc["Retorno total", "BOVA11"] == f"{esperado * 100:.2f}%"
+
+
+def _precos_sem_historico_longo_para_a_ultima(tickers: tuple[str, ...], anos: int,
+                                              dia: date) -> market_data.DadosPrecos:
+    """A última ação do universo não tem janela + teste anos de histórico: some só do download do walk-forward."""
+    precos = _precos_sinteticos(tickers, anos, dia).precos
+    if anos > JANELA_ANOS:
+        precos = precos.drop(columns=[t for t in tickers if t != BENCHMARK_ACOES][-1])
+    return market_data.DadosPrecos(precos)
+
+
+def test_legenda_do_walk_forward_lista_a_acao_sem_historico_para_ele(app, monkeypatch):
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_sem_historico_longo_para_a_ultima)
+    app.run()
+
+    assert not app.exception
+    curta = get_tickers_by_setor([SETOR_PEQUENO])[-1].replace(".SA", "")
+    legenda = next(c.value for c in app.caption if c.value.startswith("Treino:"))
+    assert legenda.endswith(f"Fora do walk-forward por histórico curto: {curta}.")
+
+
+def _precos_sem_nenhuma_acao_no_historico_longo(tickers: tuple[str, ...], anos: int,
+                                                dia: date) -> market_data.DadosPrecos:
+    """Nenhuma ação tem janela + teste anos de histórico: o download do walk-forward só traz o BOVA11."""
+    precos = _precos_sinteticos(tickers, anos, dia).precos
+    return market_data.DadosPrecos(precos[[BENCHMARK_ACOES]] if anos > JANELA_ANOS else precos)
+
+
+def test_walk_forward_sem_acoes_com_historico_suficiente_avisa_em_vez_de_quebrar(app, monkeypatch):
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_sem_nenhuma_acao_no_historico_longo)
+    app.run()
+
+    assert not app.exception
+    assert len([i.value for i in app.info if i.value.startswith("Walk-forward indisponível")]) == 1
 
 
 def test_app_nao_mostra_nada_de_cripto(app):

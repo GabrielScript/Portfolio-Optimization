@@ -105,17 +105,17 @@ def otimizar_reamostrado(retornos: pd.DataFrame, params: ParametrosOtimizacao, t
 
 
 @st.cache_data(show_spinner=False, max_entries=8)
-def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, shrink_mu: bool,
-                       custo_bps: float, capital: float, cdi_diario: pd.Series,
-                       taxa_constante_aritmetica: float, reamostrar: bool) -> dict[str, ResultadoBacktest]:
+def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg_bt: ConfigBacktest,
+                       cdi_diario: pd.Series, taxa_constante_aritmetica: float,
+                       reamostrar: bool) -> dict[str, ResultadoBacktest]:
     """
     Todas as estratégias no MESMO protocolo: mesmo universo (pré-filtro growth),
-    mesmas janelas e mesmos custos. rf point-in-time pelo CDI.
+    mesmas janelas e mesmos custos (``cfg_bt``, o mesmo do benchmark). rf point-in-time pelo CDI.
 
     A PRIMEIRA estratégia do dicionário é a principal da tela (o app usa
     ``next(iter(...))``): a reamostrada, quando ligada; senão, a otimizada.
     """
-    cfg_bt = ConfigBacktest(capital_inicial=capital, custo_bps=custo_bps, shrink_mu=shrink_mu)
+    shrink_mu = cfg_bt.shrink_mu
     cfg_opt = params.para_config(taxa_constante_aritmetica)
     rf = cdi_diario if not cdi_diario.empty else None
     estrategias = {}

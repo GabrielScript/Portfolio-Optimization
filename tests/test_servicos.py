@@ -1,7 +1,10 @@
 """Parâmetros da sidebar → configuração do core (só ações)."""
 
-from core.config import Objetivo, limites_por_setor
-from ui.servicos import ParametrosOtimizacao
+import numpy as np
+import pandas as pd
+
+from core.config import ConfigBacktest, Objetivo, limites_por_setor
+from ui.servicos import ParametrosOtimizacao, rodar_walk_forward
 
 
 def test_parametros_so_de_acoes_viram_config_sem_limites_de_grupo():
@@ -11,6 +14,19 @@ def test_parametros_so_de_acoes_viram_config_sem_limites_de_grupo():
     assert cfg.grupos == ()
     assert (cfg.objetivo, cfg.peso_maximo, cfg.n_ativos_max, cfg.vol_maxima, cfg.aversao_risco,
             cfg.taxa_livre_risco) == (Objetivo.KELLY, 0.2, 10, 0.4, 2.0, 0.12)
+
+
+def test_walk_forward_rebalanceia_pela_primeira_vez_depois_da_janela_de_treino_dada():
+    datas = pd.bdate_range("2020-01-01", periods=400)
+    retornos = pd.DataFrame(np.random.default_rng(1).normal(0.0005, 0.01, (400, 4)), index=datas,
+                            columns=["A.SA", "B.SA", "C.SA", "D.SA"])
+    params = ParametrosOtimizacao(objetivo=Objetivo.MIN_VOL.value, peso_maximo=0.5, n_ativos_max=4,
+                                  vol_maxima=None, aversao_risco=2.0)
+    cfg_bt = ConfigBacktest(janela_treino=300, janela_teste=50, capital_inicial=1_000.0, custo_bps=0.0)
+
+    resultados = rodar_walk_forward(retornos, params, cfg_bt, pd.Series(dtype=float), 0.1, False)
+
+    assert {bt.pesos_alvo.index[0] for bt in resultados.values()} == {datas[300]}
 
 
 def test_teto_por_setor_vira_um_limite_de_grupo_por_setor():

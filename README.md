@@ -34,7 +34,8 @@ mesmas condições.
 
 ### 📈 Análises
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
-  com setores, contribuição para o risco e matriz de correlação.
+  com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (padrão 30%; 100% = sem
+  limite) na carteira, no plano de compra e no walk-forward; o HRP ignora.
 - **Plano de compra:** cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último fechamento) e quantas
   ações comprar de cada uma, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
   inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma
@@ -42,10 +43,14 @@ mesmas condições.
   passam do peso máximo × valor (com aviso); depois de comprar o piso de cada alvo, segue comprando a ação
   mais abaixo do alvo até nada caber no caixa e no teto (uma posição pode passar um pouco do alvo). Divide
   cada quantidade em lote padrão (múltiplos de 100) e fracionário (ticker com F) e mostra o peso efetivo, o
-  valor investido e a sobra em caixa. Avisa quais ações ficaram de fora e por quê (2 ações passam do teto ou
-  não cabem no caixa). Ação sem cotação sai do plano com aviso, e o valor dela vai para as outras. As
+  valor investido e a sobra em caixa. A sobra não leva um setor além do teto, e o peso efetivo por setor
+  aparece abaixo da tabela. Avisa quais ações ficaram de fora e por quê (2 ações passam do teto por ativo,
+  passariam do teto do setor ou não cabem no caixa). Ação sem cotação sai do plano com aviso, e o valor dela vai para as outras. As
   cotações ficam guardadas por 5 min; o botão "Atualizar cotações" busca de novo só as da carteira na tela.
-- **Walk-forward fora da amostra:** rebalanceamento trimestral com 2 anos de treino; compara o objetivo
+- **Walk-forward fora da amostra:** rebalanceamento trimestral com treino rolante na **mesma janela de
+  estimação da carteira de hoje** e teste de N anos (sliders "Janela de estimação" e "Teste fora da amostra").
+  Ele baixa janela + teste anos de preços, então ações com histórico mais curto ficam fora dele (a legenda
+  lista quais) e continuam na carteira de hoje. O BOVA11 usa a mesma janela e as mesmas datas. Compara o objetivo
   escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR,
   volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade
   de o Sharpe verdadeiro ser positivo e a mesma probabilidade descontada pelo número de estratégias comparadas;

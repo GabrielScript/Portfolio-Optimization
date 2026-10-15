@@ -256,7 +256,8 @@ def bloco_alfa(otimizada: ResultadoBacktest, benchmark: ResultadoBacktest, rf_di
 LIMITACOES = """
 **O que este backtest mede e o que não mede**
 
-- **Walk-forward fora da amostra.** Cada rebalanceamento trimestral usa só os 2 anos anteriores.
+- **Walk-forward fora da amostra.** Cada rebalanceamento trimestral usa só a janela de estimação anterior,
+  a mesma da carteira de hoje. Ações com histórico menor que janela + teste ficam fora dele.
   A taxa livre de risco é o CDI vigente na data. Todas as estratégias usam as mesmas datas e custos.
 - **O filtro e o tilt growth NÃO entram no backtest.** Eles usam fundamentos e momentum de HOJE. Filtrar
   o universo com eles e testar no mesmo período seleciona os vencedores do período (look-ahead).

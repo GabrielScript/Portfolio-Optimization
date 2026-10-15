@@ -21,8 +21,8 @@ st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout
 
 from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
-from core.backtest import estrategia_equiponderada, walk_forward  # noqa: E402
-from core.config import ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
+from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
+from core.config import DIAS_UTEIS_ANO, ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
 from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simples  # noqa: E402
 from core.growth import filtrar_por_percentil  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
@@ -67,7 +67,8 @@ PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quan
 class Entradas:
     params: servicos.ParametrosOtimizacao
     tickers_acoes: tuple[str, ...]
-    anos: int
+    anos: int                  # janela de estimação: carteira de hoje e treino rolante do walk-forward
+    anos_teste: int
     orcamento: float
     usar_growth: bool
     percentil_growth: int
@@ -118,8 +119,12 @@ def ler_sidebar() -> Entradas:
             peso_max = st.slider("Peso máximo por ativo (%)", 5, 50, 20) / 100
             teto_setor = st.slider("Teto por setor (%)", 20, 100, 30, 5, key="teto_setor",
                                    help=AJUDA_TETO_SETOR) / 100
-            anos = st.slider("Histórico (anos)", 3, 10, 5,
-                             help="Walk-forward precisa de ≥ 2 anos de treino + teste.")
+            anos = st.slider("Janela de estimação (anos)", 3, 10, 5, key="janela",
+                             help="Histórico que estima μ e Σ: na carteira de hoje e em cada rebalanceamento "
+                                  "do walk-forward (treino rolante).")
+            anos_teste = st.slider("Teste fora da amostra (anos)", 1, 10, 3, key="anos_teste",
+                                   help="O walk-forward baixa janela + teste anos de preços: ações com "
+                                        "histórico mais curto ficam fora dele (não da carteira de hoje).")
             shrink = st.checkbox("Shrinkage de μ (Jorion)", value=True)
             reamostrar = st.checkbox("Reamostragem de μ (bagging, B=100)", value=REAMOSTRAGEM_PADRAO,
                                      key="reamostrar", disabled=objetivo != Objetivo.KELLY.value,
@@ -140,7 +145,7 @@ def ler_sidebar() -> Entradas:
         setores=tuple(sorted((t, info[t]["setor"]) for t in acoes)),
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
-    return Entradas(params, tuple(acoes), anos, orcamento, usar_growth, percentil, tilt,
+    return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, usar_growth, percentil, tilt,
                     usar_cvm, shrink, float(custo), reamostrar and objetivo == Objetivo.KELLY.value)
 
 
@@ -167,9 +172,12 @@ def main() -> None:
 
     hoje = date.today()
     universo = entradas.tickers_acoes
+    anos_walk_forward = entradas.anos + entradas.anos_teste
     with st.spinner("Baixando preços, CDI e Selic..."):
         dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje)
-        cdi = servicos.carregar_cdi(entradas.anos, hoje)
+        precos_walk_forward = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), anos_walk_forward,
+                                                       hoje).precos
+        cdi = servicos.carregar_cdi(anos_walk_forward, hoje)
         selic = servicos.carregar_selic(hoje)
     descartados = dados.descartados_sem_dados + dados.descartados_cobertura
     if descartados:
@@ -178,11 +186,9 @@ def main() -> None:
         st.warning("CDI histórico indisponível: Sharpe/Sortino usam a Selic atual constante.")
 
     precos = dados.precos
-    benchmark_disponivel = BENCHMARK_ACOES in precos.columns
     colunas = [t for t in universo if t in precos.columns]
     retornos = retornos_simples(precos[colunas])
     rf_aritmetica = taxa_anual_para_aritmetica(selic.valor)
-    rf_diaria = serie_rf_diaria(retornos.index, cdi, selic.valor)
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Amostra comum", f"{retornos.index[0]:%m/%Y} a {retornos.index[-1]:%m/%Y}",
@@ -191,7 +197,7 @@ def main() -> None:
     c3.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off")
 
     carteira_hoje(entradas, precos, retornos, rf_aritmetica)
-    secao_backtest(entradas, precos, retornos, rf_diaria, rf_aritmetica, cdi, benchmark_disponivel)
+    secao_backtest(entradas, precos_walk_forward, colunas, cdi, selic.valor)
     st.markdown("---")
     st.markdown(secoes.LIMITACOES)
 
@@ -325,32 +331,42 @@ def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmet
                              reamostrada.intensidade_shrinkage, reamostrada.frequencia)
 
 
-def secao_backtest(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
-                   rf_diaria: pd.Series, rf_aritmetica: float, cdi: pd.Series,
-                   benchmark_disponivel: bool) -> None:
+def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[str], cdi: pd.Series,
+                   selic: float) -> None:
+    """``precos``: download de janela + teste anos, só do walk-forward; ``acoes_hoje``: universo da carteira de hoje."""
     st.markdown("---")
     st.markdown("## Walk-forward fora da amostra (universo pré-filtro, líquido de custos)")
+    colunas = [t for t in entradas.tickers_acoes if t in precos.columns]
+    anos_historico = entradas.anos + entradas.anos_teste
+    if len(colunas) < 2:          # sem ações, o 1/N divide por zero; com uma só, não há carteira a comparar
+        st.info(f"Walk-forward indisponível: só {len(colunas)} ação(ões) com {anos_historico} anos de histórico. "
+                "Diminua a janela de estimação ou o teste fora da amostra.")
+        return
+    retornos = retornos_simples(precos[colunas])
+    rf_diaria = serie_rf_diaria(retornos.index, cdi, selic)
+    # Um cfg só, para as estratégias e o BOVA11: mesma janela de treino, mesmas datas, mesmos custos.
+    cfg_bt = ConfigBacktest(janela_treino=entradas.anos * DIAS_UTEIS_ANO, capital_inicial=entradas.orcamento,
+                            custo_bps=entradas.custo_bps, shrink_mu=entradas.shrink_mu)
     espera = ("de 5 estratégias (a reamostrada leva minutos)" if entradas.reamostrar
               else "de 4 estratégias")
     with st.spinner(f"Rodando walk-forward {espera}..."):
         try:
-            resultados = servicos.rodar_walk_forward(
-                retornos, entradas.params, entradas.shrink_mu, entradas.custo_bps,
-                entradas.orcamento, cdi, rf_aritmetica, entradas.reamostrar)
+            resultados = servicos.rodar_walk_forward(retornos, entradas.params, cfg_bt, cdi,
+                                                     taxa_anual_para_aritmetica(selic), entradas.reamostrar)
         except ValueError as erro:
             st.info(f"Walk-forward indisponível: {erro}")
             return
 
     # A ordem do dicionário define a principal: a reamostrada vem primeiro quando ligada.
     nome_otimizada = next(iter(resultados))
+    otimizada = resultados[nome_otimizada]
+    st.caption(_legenda_walk_forward(entradas, otimizada, colunas, acoes_hoje))
     benchmark = None
-    if benchmark_disponivel:
+    if BENCHMARK_ACOES in precos.columns:
         ret_bova = retornos_simples(precos[[BENCHMARK_ACOES]]).reindex(retornos.index).dropna()
-        cfg_bt = ConfigBacktest(capital_inicial=entradas.orcamento, custo_bps=entradas.custo_bps)
         if len(ret_bova) > cfg_bt.janela_treino + 1:
             benchmark = walk_forward(ret_bova, estrategia_equiponderada(), cfg_bt, "BOVA11")
 
-    otimizada = resultados[nome_otimizada]
     if otimizada.falhas:
         st.warning(f"{len(otimizada.falhas)} rebalanceamento(s) mantiveram a carteira por falha: "
                    + "; ".join(otimizada.falhas[:3]))
@@ -374,6 +390,16 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFr
     rolantes = metricas_rolantes(otimizada.valores.pct_change().dropna(), rf_diaria)
     if not rolantes.empty:
         col2.plotly_chart(grafico_metricas_rolling(rolantes), width="stretch")
+
+
+def _legenda_walk_forward(entradas: Entradas, otimizada: ResultadoBacktest, colunas_walk_forward: list[str],
+                          acoes_hoje: list[str]) -> str:
+    fora = [t.replace(".SA", "") for t in acoes_hoje if t not in colunas_walk_forward]
+    texto = (f"Treino: {entradas.anos} anos rolando, a mesma janela da carteira de hoje · teste: "
+             f"{entradas.anos_teste} ano(s), fora da amostra desde {otimizada.pesos_alvo.index[0]:%d/%m/%Y} · "
+             f"{len(colunas_walk_forward)} ações com {entradas.anos + entradas.anos_teste} anos de histórico "
+             f"(a carteira de hoje usa {len(acoes_hoje)})")
+    return texto + (f". Fora do walk-forward por histórico curto: {', '.join(fora)}." if fora else ".")
 
 
 if __name__ == "__main__":

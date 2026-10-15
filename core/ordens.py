@@ -10,9 +10,11 @@ Compra a partir de carteira zerada (não considera posições atuais). Regras:
   quadrático em relação ao alvo, uma por vez (ou ``quantidade_minima`` de uma vez
   quando a posição está zerada), enquanto couber no caixa e no teto.
 
-Com orçamento pequeno, uma ação cuja quantidade mínima não cabe no teto fica de
-fora (``PlanoCompra.fora``) e o dinheiro dela fica na sobra. Na B3, múltiplos de
-100 vão no lote padrão; o resto, no mercado fracionário (ticker com sufixo F).
+Com orçamento pequeno, uma ação pode ficar de fora, e o dinheiro dela fica na
+sobra. ``PlanoCompra.motivos_fora`` diz por quê: a quantidade mínima custa o
+dobro ou mais do valor alvo (comprar afastaria do alvo), passa do teto ou não
+cabe no caixa que sobrou. Na B3, múltiplos de 100 vão no lote padrão; o resto,
+no mercado fracionário (ticker com sufixo F).
 
 Ponto flutuante: as comparações em reais usam a tolerância absoluta
 ``TOLERANCIA_REAIS``. Uma compra que cabe exatamente no caixa ou no teto (ex.:
@@ -24,6 +26,7 @@ tolerância vira zero. Absoluta, e não relativa ao orçamento, para que
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 
 import numpy as np
 import pandas as pd
@@ -31,6 +34,14 @@ import pandas as pd
 LOTE_PADRAO = 100
 TOLERANCIA_SOMA_PESOS = 1e-6
 TOLERANCIA_REAIS = 1e-9
+
+
+class MotivoFora(str, Enum):
+    """Por que uma ação com peso alvo > 0 ficou sem nenhuma unidade comprada."""
+
+    TETO = "teto"
+    VALOR_ALVO = "valor_alvo"
+    CAIXA = "caixa"
 
 
 @dataclass(frozen=True)
@@ -59,7 +70,11 @@ class PlanoCompra:
     investido: float
     custo_estimado: float
     sobra: float
-    fora: tuple[str, ...]           # peso alvo > 0, mas nenhuma ação comprada
+    motivos_fora: dict[str, MotivoFora]     # peso alvo > 0, mas nenhuma ação comprada
+
+    @property
+    def fora(self) -> tuple[str, ...]:
+        return tuple(self.motivos_fora)
 
 
 def plano_de_compra(pesos: pd.Series, cotacoes: pd.Series, regras: RegrasCompra) -> PlanoCompra:
@@ -79,8 +94,34 @@ def plano_de_compra(pesos: pd.Series, cotacoes: pd.Series, regras: RegrasCompra)
     investido = float(itens["valor"].sum())
     custo = investido * taxa
     sobra = _zerar_ruido(regras.orcamento - investido - custo)
-    fora = tuple(itens.index[itens["quantidade"] == 0])
-    return PlanoCompra(itens, investido, custo, sobra, fora)
+    motivos = _motivos_fora(itens, valores_alvo, teto, regras.quantidade_minima)
+    return PlanoCompra(itens, investido, custo, sobra, motivos)
+
+
+def _motivos_fora(itens: pd.DataFrame, valores_alvo: np.ndarray, teto: float,
+                  minimo: int) -> dict[str, MotivoFora]:
+    fora = (itens["quantidade"] == 0).to_numpy()
+    custos_minimos = minimo * itens["cotacao"].to_numpy()
+    return {ticker: _motivo_fora(custo, valor_alvo, teto)
+            for ticker, custo, valor_alvo in zip(itens.index[fora], custos_minimos[fora], valores_alvo[fora])}
+
+
+def _motivo_fora(custo_minimo: float, valor_alvo: float, teto: float) -> MotivoFora:
+    """
+    Com a mesma aritmética do guloso, que compra a quantidade mínima só se ``_ganho > 0``,
+    ou seja, se ela custa menos que o dobro do valor alvo. O valor alvo vem antes do teto:
+    quando os dois barram, subir o peso máximo não resolve; só um valor a investir maior.
+    """
+    if _ganho(valor_alvo, 0.0, custo_minimo) <= 0:
+        return MotivoFora.VALOR_ALVO
+    if custo_minimo > teto + TOLERANCIA_REAIS:
+        return MotivoFora.TETO
+    return MotivoFora.CAIXA
+
+
+def _ganho(valor_alvo, valor_atual, valor_novo):
+    """Redução do desvio quadrático em relação ao alvo (> 0: a compra aproxima do alvo). Escalar ou array."""
+    return (valor_alvo - valor_atual) ** 2 - (valor_alvo - valor_novo) ** 2
 
 
 def _zerar_ruido(valor: float) -> float:
@@ -118,7 +159,7 @@ def _distribuir_sobra(quantidades: np.ndarray, valores_alvo: np.ndarray, precos:
         custo_passo = passos * precos
         valor_atual = quantidades * precos
         valor_novo = valor_atual + custo_passo
-        ganho = (valores_alvo - valor_atual) ** 2 - (valores_alvo - valor_novo) ** 2
+        ganho = _ganho(valores_alvo, valor_atual, valor_novo)
         cabe_no_caixa = custo_passo <= caixa + TOLERANCIA_REAIS
         cabe_no_teto = valor_novo <= teto + TOLERANCIA_REAIS
         viavel = cabe_no_caixa & cabe_no_teto & (ganho > 0)

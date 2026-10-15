@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.ordens import RegrasCompra, plano_de_compra
+from core.ordens import MotivoFora, RegrasCompra, plano_de_compra
 
 SEM_CUSTO = dict(custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
 
@@ -84,6 +84,44 @@ def test_acao_que_nao_cabe_no_teto_com_a_quantidade_minima_fica_de_fora():
     assert plano.itens.loc["C", "quantidade"] == 3
     assert plano.itens.loc["E", "quantidade"] == 10
     assert (plano.itens["valor"] <= 0.2 * 500.0 + 1e-9).all()
+
+
+def test_motivo_de_fora_e_o_teto_quando_2_acoes_passam_dele():
+    # R$ 100 e teto 30% = R$ 30. Alvo de B = R$ 30; 2 de B = R$ 40: passa do teto, mas não do dobro do alvo.
+    plano = plano_de_compra(_serie(A=0.3, B=0.3), _serie(A=1.0, B=20.0),
+                            RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=0.3, quantidade_minima=2))
+
+    assert plano.fora == ("B",)
+    assert plano.motivos_fora == {"B": MotivoFora.TETO}
+
+
+def test_motivo_de_fora_e_o_valor_alvo_quando_2_acoes_custam_o_dobro_dele_ou_mais():
+    # Alvo de B = R$ 5; 2 de B = R$ 20 cabem no caixa (R$ 50) e no teto (R$ 100), mas afastariam B do alvo.
+    plano = plano_de_compra(_serie(A=0.5, B=0.05), _serie(A=1.0, B=10.0),
+                            RegrasCompra(orcamento=100.0, **SEM_CUSTO))
+
+    assert plano.fora == ("B",)
+    assert plano.motivos_fora == {"B": MotivoFora.VALOR_ALVO}
+
+
+def test_motivo_de_fora_e_o_caixa_quando_2_acoes_nao_cabem_no_que_sobrou():
+    # Piso: 85 de A (R$ 85), caixa R$ 15. Alvo de B = R$ 15; 2 de B = R$ 20: abaixo do dobro do alvo
+    # e do teto, mas acima do caixa.
+    plano = plano_de_compra(_serie(A=0.85, B=0.15), _serie(A=1.0, B=10.0),
+                            RegrasCompra(orcamento=100.0, **SEM_CUSTO))
+
+    assert plano.fora == ("B",)
+    assert plano.motivos_fora == {"B": MotivoFora.CAIXA}
+
+
+def test_quando_passa_do_teto_e_do_dobro_do_alvo_o_motivo_e_o_valor_alvo():
+    # Teto R$ 30, alvo de B R$ 30, 2 de B = R$ 70. Com peso máximo de 70%, B ainda ficaria de fora
+    # (R$ 70 afasta do alvo de R$ 30): o conselho certo é aumentar o valor a investir, não o teto.
+    plano = plano_de_compra(_serie(A=0.3, B=0.3), _serie(A=1.0, B=35.0),
+                            RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=0.3, quantidade_minima=2))
+
+    assert plano.fora == ("B",)
+    assert plano.motivos_fora == {"B": MotivoFora.VALOR_ALVO}
 
 
 def test_peso_efetivo_e_sobre_o_orcamento_e_fecha_com_custo_e_sobra():

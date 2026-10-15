@@ -16,6 +16,7 @@ APP = Path(__file__).resolve().parent.parent / "app.py"
 # 8 ações: viável com teto de 20% por ativo, e a reamostragem roda em segundos.
 SETOR_PEQUENO = "Tecnologia da Informação"
 TIMEOUT_S = 300
+CARREGAR_COTACOES_REAL = servicos.carregar_cotacoes      # guardada antes de a fixture trocá-la
 
 
 def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
@@ -113,6 +114,59 @@ def test_aceita_valor_a_investir_abaixo_de_mil_reais(app):
     sobra = next(m for m in app.metric if m.label == "Sobra em caixa")
     investido = next(m for m in app.metric if m.label == "Investido")
     assert sobra.value.startswith("R$") and investido.value.startswith("R$")
+
+
+def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_a_tabela_continua(app, monkeypatch):
+    pedidos = []
+
+    def cotacoes_sem_a_primeira(tickers, precos_recentes):
+        pedidos.append(tickers)
+        cotacoes = _cotacoes_sinteticas(tickers, precos_recentes)
+        cotacoes.loc[tickers[0], "preco"] = float("nan")
+        return cotacoes
+
+    monkeypatch.setattr(servicos, "carregar_cotacoes", cotacoes_sem_a_primeira)
+    app.run()
+
+    assert not app.exception
+    assert not [e.value for e in app.error]
+    tickers = [t.replace(".SA", "") for t in pedidos[-1]]
+    avisos = [w.value for w in app.warning if "Sem cotação" in w.value]
+    assert len(avisos) == 1 and tickers[0] in avisos[0]
+    assert set(_plano_de_compra(app)["Ticker"]) == set(tickers[1:])
+
+
+@pytest.fixture
+def yahoo_contador(app, monkeypatch) -> list[tuple[str, ...]]:
+    """Cache verdadeiro de ``carregar_cotacoes``; só o Yahoo é falso: a n-ésima busca devolve R$ 10 × n."""
+    buscas = []
+
+    def cotacoes_atuais(tickers, precos_diarios):
+        buscas.append(tuple(tickers))
+        return pd.DataFrame({"preco": 10.0 * len(buscas), "horario": pd.Timestamp(date.today()),
+                             "fonte": market_data.FONTE_INTRADIARIA}, index=list(tickers))
+
+    monkeypatch.setattr(market_data, "cotacoes_atuais", cotacoes_atuais)
+    monkeypatch.setattr(servicos, "carregar_cotacoes", CARREGAR_COTACOES_REAL)
+    CARREGAR_COTACOES_REAL.clear()
+    yield buscas
+    CARREGAR_COTACOES_REAL.clear()
+
+
+def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contador):
+    outra_carteira = (("OUTRA.SA",), pd.DataFrame({"OUTRA.SA": [5.0]}))
+    CARREGAR_COTACOES_REAL(*outra_carteira)              # 1ª busca (R$ 10): cotação de outro usuário
+
+    app.run()                                            # 2ª busca: R$ 20
+    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {20.0}
+    app.run()                                            # rerun: vem do cache
+    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {20.0}
+    app.button(key="atualizar_cotacoes").click().run()   # 3ª busca: R$ 30
+
+    assert not app.exception
+    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {30.0}
+    CARREGAR_COTACOES_REAL(*outra_carteira)
+    assert yahoo_contador.count(("OUTRA.SA",)) == 1      # a entrada da outra carteira continua no cache
 
 
 def test_reamostragem_so_vale_para_o_kelly(app):

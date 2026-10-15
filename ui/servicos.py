@@ -62,10 +62,19 @@ def carregar_selic(dia: date) -> market_data.TaxaSelic:
     return market_data.obter_selic_meta(hoje=dia)
 
 
-@st.cache_data(ttl=60, show_spinner=False, max_entries=16)
+@st.cache_data(ttl=5 * 60, show_spinner=False, max_entries=16)
 def carregar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
     """Último negócio do dia (Yahoo, ~15 min de atraso); sem ele, o último fechamento de ``precos_recentes``."""
     return market_data.cotacoes_atuais(list(tickers), precos_recentes)
+
+
+def descartar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> None:
+    """
+    Apaga só a entrada desta carteira (botão "Atualizar cotações"). O cache é do
+    processo, compartilhado por todos os usuários do app: ``clear()`` sem
+    argumentos apagaria também as cotações dos outros.
+    """
+    carregar_cotacoes.clear(tickers, precos_recentes)
 
 
 @st.cache_data(ttl=86400, show_spinner=False)

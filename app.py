@@ -251,15 +251,21 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
 def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict,
                           growth: pd.DataFrame | None) -> None:
     st.markdown("### Plano de compra")
-    if st.button("Atualizar cotações", icon=":material/refresh:"):
-        servicos.carregar_cotacoes.clear()
     tickers = tuple(pesos.index)
-    cotacoes = servicos.carregar_cotacoes(tickers, precos[list(tickers)].tail(PREGOES_PARA_FECHAMENTO))
+    janela = precos[list(tickers)].tail(PREGOES_PARA_FECHAMENTO)    # mesmos argumentos ao limpar e ao buscar
+    if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes"):
+        servicos.descartar_cotacoes(tickers, janela)
+    with st.spinner("Buscando as cotações do dia…"):
+        cotacoes = servicos.carregar_cotacoes(tickers, janela)
+    com_cotacao = cotacoes["preco"].reindex(pesos.index) > 0          # NaN e ticker ausente: False
+    if not com_cotacao.all():
+        nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
+        st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o peso alvo fica em caixa.")
     # O HRP ignora o teto de peso: o plano nunca corta um alvo abaixo do próprio peso.
     teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
     regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO)
     try:
-        plano = plano_de_compra(pesos, cotacoes["preco"], regras)
+        plano = plano_de_compra(pesos[com_cotacao], cotacoes["preco"], regras)
     except ValueError as erro:
         st.error(f"Plano de compra indisponível: {erro}")
         return

@@ -1,12 +1,17 @@
-"""PSR e DSR da tabela do walk-forward (ui/secoes.py)."""
+"""Blocos de ui/secoes.py: PSR e DSR do walk-forward e o resumo do plano de compra."""
+
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import pytest
+from streamlit.proto.Metric_pb2 import Metric as MetricProto
+from streamlit.testing.v1 import AppTest
 
 from core.backtest import ResultadoBacktest
+from core.market_data import FONTE_FECHAMENTO
 from core.metrics import momentos_sharpe, sharpe_probabilistico, sharpe_referencia_deflacionado
-from ui.secoes import _psr_e_dsr
+from ui.secoes import _psr_e_dsr, _rotulo_cotacao
 
 DATAS = pd.bdate_range("2022-01-03", periods=300)
 RF_ZERO = pd.Series(0.0, index=DATAS)
@@ -41,3 +46,50 @@ def test_benchmark_tem_psr_mas_nao_tem_dsr():
     a, b = _backtest("A", _curva(1, 0.001)), _backtest("B", _curva(2, 0.0005))
     saida = _psr_e_dsr({"A": a}, b, RF_ZERO)
     assert np.isfinite(saida["B"][0]) and np.isnan(saida["B"][1])
+
+
+def test_aviso_de_fora_da_o_motivo_certo_quando_2_acoes_custam_o_dobro_do_alvo():
+    def script():
+        import pandas as pd
+
+        from core.ordens import RegrasCompra, plano_de_compra
+        from ui.secoes import resumo_plano
+
+        # Alvo de BBBB3 = R$ 5; 2 ações = R$ 20 cabem no caixa e no teto, mas afastariam do alvo.
+        regras = RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
+        plano = plano_de_compra(pd.Series({"AAAA3.SA": 0.5, "BBBB3.SA": 0.05}),
+                                pd.Series({"AAAA3.SA": 1.0, "BBBB3.SA": 10.0}), regras)
+        resumo_plano(plano, regras)
+
+    at = AppTest.from_function(script, default_timeout=60).run()
+
+    assert not at.exception
+    avisos = [w.value for w in at.warning]
+    assert len(avisos) == 1
+    assert "BBBB3" in avisos[0] and "dobro" in avisos[0]
+    assert "teto" not in avisos[0]
+
+
+def test_rotulo_do_fechamento_nao_mostra_a_data():
+    # O preço diário passa por ffill: a data da última linha pode ser de um dia em que a ação não negociou.
+    assert _rotulo_cotacao(pd.Timestamp("2026-10-09"), FONTE_FECHAMENTO, date(2026, 10, 14)) == "último fechamento"
+
+
+def test_investido_e_custo_estimado_nao_mostram_seta():
+    # O delta deles é informativo ("100.0% do valor", "10 bps"): uma seta para cima sugere alta.
+    def script():
+        import pandas as pd
+
+        from core.ordens import RegrasCompra, plano_de_compra
+        from ui.secoes import resumo_plano
+
+        regras = RegrasCompra(orcamento=1_000.0, custo_bps=10.0, peso_maximo=1.0, quantidade_minima=2)
+        plano = plano_de_compra(pd.Series({"AAAA3.SA": 1.0}), pd.Series({"AAAA3.SA": 10.0}), regras)
+        resumo_plano(plano, regras)
+
+    at = AppTest.from_function(script, default_timeout=60).run()
+
+    assert not at.exception
+    direcoes = {m.label: m.proto.direction for m in at.metric}
+    assert direcoes["Investido"] == MetricProto.MetricDirection.NONE
+    assert direcoes["Custo estimado"] == MetricProto.MetricDirection.NONE

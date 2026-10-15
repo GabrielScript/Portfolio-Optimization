@@ -24,7 +24,7 @@ from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, 
                           resumo_desempenho, retornos_de_valores, sharpe_probabilistico,
                           sharpe_referencia_deflacionado)
 from core.optimization import ResultadoOtimizacao
-from core.ordens import PlanoCompra, RegrasCompra
+from core.ordens import MotivoFora, PlanoCompra, RegrasCompra
 
 CSS = """
 <style>
@@ -110,24 +110,38 @@ def _rotulo_cotacao(horario: pd.Timestamp, fonte: str, hoje: date) -> str:
         return "—"
     if fonte == FONTE_INTRADIARIA:
         return f"{horario:%H:%M}" if horario.date() == hoje else f"{horario:%d/%m %H:%M}"
-    return f"fechamento {horario:%d/%m}"
+    return "último fechamento"          # sem data: a do ffill pode ser de um dia sem negócio
 
 
 def resumo_plano(plano: PlanoCompra, regras: RegrasCompra) -> None:
     c1, c2, c3 = st.columns(3)
     c1.metric("Investido", f"R$ {plano.investido:,.2f}", f"{plano.investido / regras.orcamento:.1%} do valor",
-              delta_color="off", border=True)
+              delta_color="off", delta_arrow="off", border=True)
     c2.metric("Custo estimado", f"R$ {plano.custo_estimado:,.2f}", f"{regras.custo_bps:.0f} bps",
-              delta_color="off", border=True)
+              delta_color="off", delta_arrow="off", border=True)
     c3.metric("Sobra em caixa", f"R$ {plano.sobra:,.2f}", border=True)
     if plano.fora:
-        nomes = ", ".join(t.replace(".SA", "") for t in plano.fora)
-        st.warning(f"Ficaram de fora: {nomes}. Com R$ {regras.orcamento:,.2f}, {regras.quantidade_minima} "
-                   f"ações de cada custariam mais que o caixa ou que o teto de {regras.peso_maximo:.0%} por "
-                   "ativo. Aumente o valor a investir ou o peso máximo.")
+        st.warning(_aviso_fora(plano, regras))
     st.caption("Lote padrão = múltiplos de 100 ações; o resto vai no mercado fracionário, com o ticker "
-               "terminado em F (ex.: PETR4F). Cotações do Yahoo com atraso de ~15 min: confira o preço no "
-               "book da corretora antes de enviar a ordem. Compra a partir de carteira zerada.")
+               "terminado em F (ex.: PETR4F). Cotações do Yahoo com atraso de ~15 min, guardadas por 5 min "
+               "(o botão Atualizar cotações busca de novo): confira o preço no book da corretora antes de "
+               "enviar a ordem. Compra a partir de carteira zerada.")
+
+
+TEXTO_MOTIVO_FORA = {
+    MotivoFora.VALOR_ALVO: "custam o dobro ou mais do valor alvo dela: comprar afastaria a carteira do alvo",
+    MotivoFora.TETO: "passam do teto de {teto:.0%} por ativo",
+    MotivoFora.CAIXA: "não couberam no caixa que sobrou",
+}
+
+
+def _aviso_fora(plano: PlanoCompra, regras: RegrasCompra) -> str:
+    linhas = [f"- **{ticker.replace('.SA', '')}**: {regras.quantidade_minima} ações "
+              + TEXTO_MOTIVO_FORA[motivo].format(teto=regras.peso_maximo)
+              for ticker, motivo in plano.motivos_fora.items()]
+    conselho = ("Aumente o valor a investir ou o peso máximo."
+                if MotivoFora.TETO in plano.motivos_fora.values() else "Aumente o valor a investir.")
+    return "\n".join(["Ficaram de fora (o dinheiro delas fica em caixa):", *linhas, "", conselho])
 
 
 def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:

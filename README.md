@@ -40,7 +40,9 @@ mesmas condições.
   inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma
   posição passa do peso máximo. Divide cada quantidade em lote padrão (múltiplos de 100) e fracionário
   (ticker com F) e mostra o peso efetivo, o valor investido e a sobra em caixa. Com valor pequeno, avisa
-  quais ações ficaram de fora.
+  quais ações ficaram de fora e por quê (2 ações custam o dobro ou mais do valor alvo, passam do teto ou
+  não cabem no caixa). Ação sem cotação sai do plano com aviso. As cotações ficam guardadas por 5 min; o
+  botão "Atualizar cotações" busca de novo só as da carteira na tela.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com 2 anos de treino; compara o objetivo
   escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR,
   volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade

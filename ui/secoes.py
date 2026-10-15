@@ -12,16 +12,19 @@ de incerteza, nunca como valor prometido em R$.
 from __future__ import annotations
 
 import html
+from datetime import date
 
 import numpy as np
 import pandas as pd
 import streamlit as st
 
 from core.backtest import ResultadoBacktest
+from core.market_data import FONTE_INTRADIARIA
 from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, momentos_sharpe,
                           resumo_desempenho, retornos_de_valores, sharpe_probabilistico,
                           sharpe_referencia_deflacionado)
 from core.optimization import ResultadoOtimizacao
+from core.ordens import PlanoCompra, RegrasCompra
 
 CSS = """
 <style>
@@ -71,19 +74,60 @@ def cards_otimizacao(resultado: ResultadoOtimizacao, orcamento: float, intensida
              "estimativa de modelo; não é promessa")
 
 
-def tabela_carteira(pesos: pd.Series, orcamento: float, info: dict,
-                    growth: pd.DataFrame | None) -> None:
+COLUNAS_PLANO = {
+    "Peso alvo": st.column_config.NumberColumn(format="percent"),
+    "Cotação (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
+    "Qtd.": st.column_config.NumberColumn(format="%d", help="Ações a comprar (lote padrão + fracionário)"),
+    "Lote padrão": st.column_config.NumberColumn(format="%d", help="Múltiplos de 100 ações"),
+    "Fracionário": st.column_config.NumberColumn(format="%d", help="1 a 99 ações, ticker com F (ex.: PETR4F)"),
+    "Valor (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
+    "Peso efetivo": st.column_config.NumberColumn(format="percent", help="Valor comprado ÷ valor a investir"),
+}
+
+
+def tabela_carteira(plano: PlanoCompra, cotacoes: pd.DataFrame, info: dict,
+                    growth: pd.DataFrame | None, hoje: date) -> None:
     linhas = []
-    for ticker, peso in pesos[pesos > 0].sort_values(ascending=False).items():
+    for ticker, item in plano.itens.sort_values("peso_alvo", ascending=False).iterrows():
         dados = info.get(ticker, {})
         linha = {"Ticker": ticker.replace(".SA", ""), "Nome": dados.get("nome", "—"),
-                 "Setor": dados.get("setor", "—"), "Peso": f"{peso:.2%}",
-                 "Valor (R$)": f"{peso * orcamento:,.2f}"}
+                 "Setor": dados.get("setor", "—"), "Peso alvo": item["peso_alvo"],
+                 "Cotação (R$)": item["cotacao"],
+                 "Cotação de": _rotulo_cotacao(cotacoes.at[ticker, "horario"], cotacoes.at[ticker, "fonte"], hoje),
+                 "Qtd.": int(item["quantidade"]), "Lote padrão": int(item["lote_padrao"]),
+                 "Fracionário": int(item["fracionario"]), "Valor (R$)": item["valor"],
+                 "Peso efetivo": item["peso_efetivo"]}
         if growth is not None and ticker in growth.index:
             linha["Growth Score"] = f"{growth.loc[ticker, 'score']:.0f}"
             linha["Queima de caixa"] = "sim" if growth.loc[ticker, "queima_caixa"] else "—"
         linhas.append(linha)
-    st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True)
+    st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True, column_config=COLUNAS_PLANO,
+                 alt="Carteira de hoje: peso alvo, cotação e quantidade de ações a comprar")
+
+
+def _rotulo_cotacao(horario: pd.Timestamp, fonte: str, hoje: date) -> str:
+    if pd.isna(horario):
+        return "—"
+    if fonte == FONTE_INTRADIARIA:
+        return f"{horario:%H:%M}" if horario.date() == hoje else f"{horario:%d/%m %H:%M}"
+    return f"fechamento {horario:%d/%m}"
+
+
+def resumo_plano(plano: PlanoCompra, regras: RegrasCompra) -> None:
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Investido", f"R$ {plano.investido:,.2f}", f"{plano.investido / regras.orcamento:.1%} do valor",
+              delta_color="off", border=True)
+    c2.metric("Custo estimado", f"R$ {plano.custo_estimado:,.2f}", f"{regras.custo_bps:.0f} bps",
+              delta_color="off", border=True)
+    c3.metric("Sobra em caixa", f"R$ {plano.sobra:,.2f}", border=True)
+    if plano.fora:
+        nomes = ", ".join(t.replace(".SA", "") for t in plano.fora)
+        st.warning(f"Ficaram de fora: {nomes}. Com R$ {regras.orcamento:,.2f}, {regras.quantidade_minima} "
+                   f"ações de cada custariam mais que o caixa ou que o teto de {regras.peso_maximo:.0%} por "
+                   "ativo. Aumente o valor a investir ou o peso máximo.")
+    st.caption("Lote padrão = múltiplos de 100 ações; o resto vai no mercado fracionário, com o ticker "
+               "terminado em F (ex.: PETR4F). Cotações do Yahoo com atraso de ~15 min: confira o preço no "
+               "book da corretora antes de enviar a ordem. Compra a partir de carteira zerada.")
 
 
 def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:
@@ -189,5 +233,6 @@ LIMITACOES = """
   fecharam capital não aparecem, o que favorece todas as estratégias.
 - **Custos.** O custo em bps é cobrado sobre o giro (compra e venda). **Imposto de renda não é modelado**
   (15% sobre ganho líquido; isenção para vendas de ações até R$ 20 mil/mês).
-- **Ferramenta educacional.** Não é recomendação de investimento. Retorno passado não garante retorno futuro.
+- **Estimativas, não garantias.** μ, Sharpe ex-ante e a faixa de ±1σ vêm do histórico e carregam erro de
+  estimação grande. Confira o walk-forward OOS antes de alocar: é a melhor evidência de que o método funciona.
 """

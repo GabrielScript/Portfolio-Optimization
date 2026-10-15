@@ -62,6 +62,12 @@ def carregar_selic(dia: date) -> market_data.TaxaSelic:
     return market_data.obter_selic_meta(hoje=dia)
 
 
+@st.cache_data(ttl=60, show_spinner=False, max_entries=16)
+def carregar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
+    """Último negócio do dia (Yahoo, ~15 min de atraso); sem ele, o último fechamento de ``precos_recentes``."""
+    return market_data.cotacoes_atuais(list(tickers), precos_recentes)
+
+
 @st.cache_data(ttl=86400, show_spinner=False)
 def carregar_growth(tickers: tuple[str, ...], precos: pd.DataFrame, setores: tuple[tuple[str, str], ...],
                     usar_cvm: bool, dia: date) -> pd.DataFrame:

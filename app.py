@@ -28,6 +28,7 @@ from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroOtimizacao, ResultadoOtimizacao, fronteira_eficiente,  # noqa: E402
                                otimizar)
+from core.ordens import RegrasCompra, plano_de_compra  # noqa: E402
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -52,6 +53,9 @@ AJUDA_REAMOSTRAGEM = (
     "opção de estudo, não padrão. Lenta: ~1 min a mais no walk-forward de 5 anos com a lista líquida, "
     "~15 min com todos os ativos."
 )
+# Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
+QUANTIDADE_MINIMA_POR_ACAO = 2
+PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
 
 
 @dataclass(frozen=True)
@@ -91,7 +95,8 @@ def ler_sidebar() -> Entradas:
                                  "viável, λ=2 NÃO equivale a 'meio Kelly'.")
         vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, 80, 40, 5,
                             disabled=objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value)) / 100
-        orcamento = st.number_input("Valor a investir (R$)", 1000.0, 10_000_000.0, 10_000.0, 1000.0)
+        orcamento = st.number_input("Valor a investir (R$)", 100.0, 10_000_000.0, 10_000.0, 100.0,
+                                    key="orcamento")
 
         st.markdown("### Universo")
         setores = st.multiselect("Setores (vazio = lista líquida)", SETORES)
@@ -228,7 +233,7 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
         col1.caption("A carteira reamostrada fica dentro da fronteira estimada, por construção.")
     col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
-    secoes.tabela_carteira(resultado.pesos, entradas.orcamento, info, growth)
+    secao_plano_de_compra(entradas, pesos, precos, info, growth)
 
     col_rc, col_corr = st.columns(2)
     col_rc.plotly_chart(grafico_contribuicao_risco(contribuicao_risco(pesos, cov), pesos.to_dict()),
@@ -241,6 +246,25 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     if growth is not None:
         with st.expander("Componentes do Growth Score"):
             st.dataframe(growth, width="stretch")
+
+
+def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict,
+                          growth: pd.DataFrame | None) -> None:
+    st.markdown("### Plano de compra")
+    if st.button("Atualizar cotações", icon=":material/refresh:"):
+        servicos.carregar_cotacoes.clear()
+    tickers = tuple(pesos.index)
+    cotacoes = servicos.carregar_cotacoes(tickers, precos[list(tickers)].tail(PREGOES_PARA_FECHAMENTO))
+    # O HRP ignora o teto de peso: o plano nunca corta um alvo abaixo do próprio peso.
+    teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
+    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO)
+    try:
+        plano = plano_de_compra(pesos, cotacoes["preco"], regras)
+    except ValueError as erro:
+        st.error(f"Plano de compra indisponível: {erro}")
+        return
+    secoes.tabela_carteira(plano, cotacoes, info, growth, date.today())
+    secoes.resumo_plano(plano, regras)
 
 
 def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float,

@@ -35,12 +35,21 @@ def _growth_sintetico(tickers, precos, setores, usar_cvm, dia) -> pd.DataFrame:
     return pd.DataFrame({"score": scores, "queima_caixa": False}, index=list(tickers))
 
 
+def _cotacoes_sinteticas(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
+    """Último fechamento como 'negócio do dia', sem rede."""
+    ultimos = precos_recentes.ffill().iloc[-1]
+    return pd.DataFrame({"preco": ultimos.reindex(list(tickers)),
+                         "horario": pd.Timestamp(precos_recentes.index[-1]),
+                         "fonte": market_data.FONTE_INTRADIARIA}, index=list(tickers))
+
+
 @pytest.fixture
 def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
     monkeypatch.setattr(servicos, "carregar_growth", _growth_sintetico)
+    monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     at.sidebar.multiselect[0].set_value([SETOR_PEQUENO]).run()
@@ -79,6 +88,31 @@ def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app)
     estabilidade = [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
     assert len(estabilidade) == 1
     assert "% das reamostras em que aparece" in estabilidade[0].dataframe[0].value.columns
+
+
+def _plano_de_compra(at: AppTest) -> pd.DataFrame:
+    tabelas = [df.value for df in at.dataframe if "Qtd." in df.value.columns]
+    assert len(tabelas) == 1
+    return tabelas[0]
+
+
+def test_carteira_mostra_cotacao_e_quantidade_inteira_com_minimo_de_2_acoes(app):
+    assert not app.exception
+    plano = _plano_de_compra(app)
+    assert {"Cotação (R$)", "Qtd.", "Lote padrão", "Fracionário", "Peso efetivo"} <= set(plano.columns)
+    assert ((plano["Qtd."] == 0) | (plano["Qtd."] >= 2)).all()
+    assert (plano["Lote padrão"] + plano["Fracionário"] == plano["Qtd."]).all()
+    assert {"Investido", "Custo estimado", "Sobra em caixa"} <= {m.label for m in app.metric}
+
+
+def test_aceita_valor_a_investir_abaixo_de_mil_reais(app):
+    app.sidebar.number_input(key="orcamento").set_value(500.0).run()
+
+    assert not app.exception
+    assert app.sidebar.number_input(key="orcamento").value == 500.0
+    sobra = next(m for m in app.metric if m.label == "Sobra em caixa")
+    investido = next(m for m in app.metric if m.label == "Investido")
+    assert sobra.value.startswith("R$") and investido.value.startswith("R$")
 
 
 def test_reamostragem_so_vale_para_o_kelly(app):

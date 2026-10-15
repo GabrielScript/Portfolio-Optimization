@@ -35,6 +35,12 @@ mesmas condições.
 ### 📈 Análises
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
   com setores, contribuição para o risco e matriz de correlação.
+- **Plano de compra:** cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último fechamento) e quantas
+  ações comprar de cada uma, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
+  inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma
+  posição passa do peso máximo. Divide cada quantidade em lote padrão (múltiplos de 100) e fracionário
+  (ticker com F) e mostra o peso efetivo, o valor investido e a sobra em caixa. Com valor pequeno, avisa
+  quais ações ficaram de fora.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com 2 anos de treino; compara o objetivo
   escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR,
   volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade
@@ -72,7 +78,8 @@ Portfolio-Optimization/
 ├── visualizations.py         # Gráficos Plotly
 ├── core/                     # Lógica pura, sem Streamlit
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
-│   ├── market_data.py        #   Preços, calendário B3, CDI, Selic
+│   ├── market_data.py        #   Preços, calendário B3, CDI, Selic, cotação do dia
+│   ├── ordens.py             #   Plano de compra: pesos + cotações → quantidades inteiras
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
 │   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites

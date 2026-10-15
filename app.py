@@ -10,6 +10,7 @@ walk-forward de todas as estratégias no universo pré-filtro.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from datetime import date
 
@@ -28,7 +29,7 @@ from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroOtimizacao, ResultadoOtimizacao, fronteira_eficiente,  # noqa: E402
                                otimizar)
-from core.ordens import RegrasCompra, plano_de_compra  # noqa: E402
+from core.ordens import RegrasCompra, acoes_que_cabem, plano_de_compra  # noqa: E402
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -190,17 +191,19 @@ def main() -> None:
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
                   rf_aritmetica: float) -> None:
     st.markdown("## Carteira de hoje")
+    acoes = list(retornos.columns)
+    compraveis = acoes_compraveis(entradas, precos[acoes])
     momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
-    mu, cov, growth = momentos.mu, momentos.cov, None
+    mu, cov, growth = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis], None
     info = get_ticker_info()
 
     if entradas.usar_growth:
-        acoes = list(retornos.columns)
+        # O score sai do universo inteiro (a chave do cache não muda com o valor); o corte, só entre as compráveis.
         setores = tuple((t, info.get(t, {}).get("setor", "?")) for t in acoes)
         with st.spinner("Growth Score (fundamentos Yahoo/CVM)..."):
             growth = servicos.carregar_growth(tuple(acoes), precos[acoes], setores,
                                               entradas.usar_cvm, date.today())
-        aprovados = filtrar_por_percentil(growth["score"], entradas.percentil_growth,
+        aprovados = filtrar_por_percentil(growth["score"].reindex(compraveis), entradas.percentil_growth,
                                           minimo_ativos=entradas.params.n_ativos_max)
         mu, cov = mu[aprovados], cov.loc[aprovados, aprovados]
         mu = aplicar_tilt_growth(mu, cov, growth["score"], entradas.peso_tilt)
@@ -248,6 +251,29 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
             st.dataframe(growth, width="stretch")
 
 
+def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
+    """
+    Tira do universo, antes de otimizar, as ações cuja quantidade mínima passa do teto por ação
+    (último fechamento). Sem isso, o otimizador daria peso a ações que o plano de compra não
+    consegue comprar, e esse peso viraria caixa.
+    """
+    peso_maximo = entradas.params.peso_maximo
+    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, peso_maximo, QUANTIDADE_MINIMA_POR_ACAO)
+    compraveis = acoes_que_cabem(precos.ffill().iloc[-1], regras)
+    teto = peso_maximo * entradas.orcamento
+    necessarias = math.ceil(1.0 / peso_maximo - 1e-9)        # menos que isso não soma 100% com o teto
+    if len(compraveis) < necessarias:
+        st.error(f"Com R$ {entradas.orcamento:,.2f} e peso máximo de {peso_maximo:.0%}, cada ação vai até "
+                 f"R$ {teto:,.2f}: só {len(compraveis)} cabem com {QUANTIDADE_MINIMA_POR_ACAO} unidades, e a "
+                 f"carteira precisa de {necessarias}. Aumente o valor a investir ou o peso máximo.")
+        st.stop()
+    caras = [t.replace(".SA", "") for t in precos.columns if t not in compraveis]
+    if caras:
+        st.info(f"Fora da otimização ({len(caras)}): {QUANTIDADE_MINIMA_POR_ACAO} ações passam do teto de "
+                f"R$ {teto:,.2f} por ativo ({peso_maximo:.0%} do valor a investir): {', '.join(caras)}.")
+    return compraveis
+
+
 def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict,
                           growth: pd.DataFrame | None) -> None:
     st.markdown("### Plano de compra")
@@ -260,12 +286,14 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     com_cotacao = cotacoes["preco"].reindex(pesos.index) > 0          # NaN e ticker ausente: False
     if not com_cotacao.all():
         nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
-        st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o peso alvo fica em caixa.")
+        st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o valor dela vai para as outras ações.")
     # O HRP ignora o teto de peso: o plano nunca corta um alvo abaixo do próprio peso.
     teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
     regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO)
+    # Reescala para 100%: o valor das ações sem cotação vai para as outras, na proporção do otimizador.
+    alvo = pesos[com_cotacao] / pesos[com_cotacao].sum()
     try:
-        plano = plano_de_compra(pesos[com_cotacao], cotacoes["preco"], regras)
+        plano = plano_de_compra(alvo, cotacoes["preco"], regras)
     except ValueError as erro:
         st.error(f"Plano de compra indisponível: {erro}")
         return

@@ -6,15 +6,15 @@ Compra a partir de carteira zerada (não considera posições atuais). Regras:
   então ``investido + custo <= orçamento``;
 - quantidades inteiras; cada posição tem 0 ou pelo menos ``quantidade_minima`` ações;
 - nenhuma posição passa de ``peso_maximo`` do orçamento (o mesmo teto da otimização);
-- compra o piso de cada alvo; com a sobra, compra a ação que mais reduz o desvio
-  quadrático em relação ao alvo, uma por vez (ou ``quantidade_minima`` de uma vez
-  quando a posição está zerada), enquanto couber no caixa e no teto.
+- compra o piso de cada alvo; com a sobra, compra a ação mais abaixo do valor alvo,
+  uma por vez (ou ``quantidade_minima`` de uma vez quando a posição está zerada),
+  até nada caber no caixa e no teto. Uma posição pode passar do alvo: para quem quer
+  investir o valor todo, dinheiro parado é pior que um desvio pequeno.
 
-Com orçamento pequeno, uma ação pode ficar de fora, e o dinheiro dela fica na
-sobra. ``PlanoCompra.motivos_fora`` diz por quê: a quantidade mínima custa o
-dobro ou mais do valor alvo (comprar afastaria do alvo), passa do teto ou não
-cabe no caixa que sobrou. Na B3, múltiplos de 100 vão no lote padrão; o resto,
-no mercado fracionário (ticker com sufixo F).
+Uma ação pode ficar de fora; ``PlanoCompra.motivos_fora`` diz por quê: a quantidade
+mínima passa do teto ou não cabe no caixa que sobrou. ``acoes_que_cabem`` tira do
+universo, antes da otimização, as que passariam do teto. Na B3, múltiplos de 100 vão
+no lote padrão; o resto, no mercado fracionário (ticker com sufixo F).
 
 Ponto flutuante: as comparações em reais usam a tolerância absoluta
 ``TOLERANCIA_REAIS``. Uma compra que cabe exatamente no caixa ou no teto (ex.:
@@ -40,7 +40,6 @@ class MotivoFora(str, Enum):
     """Por que uma ação com peso alvo > 0 ficou sem nenhuma unidade comprada."""
 
     TETO = "teto"
-    VALOR_ALVO = "valor_alvo"
     CAIXA = "caixa"
 
 
@@ -77,6 +76,17 @@ class PlanoCompra:
         return tuple(self.motivos_fora)
 
 
+def acoes_que_cabem(precos: pd.Series, regras: RegrasCompra) -> list[str]:
+    """
+    Tickers com preço > 0 cuja quantidade mínima cabe no teto por ação (``peso_maximo`` ×
+    orçamento), na ordem de ``precos``. Uso: tirar do universo, ANTES de otimizar, as ações que
+    o plano de compra nunca conseguiria comprar; senão o peso delas viraria caixa. Preço NaN sai.
+    """
+    teto = regras.peso_maximo * regras.orcamento
+    cabem = (precos > 0) & (regras.quantidade_minima * precos <= teto + TOLERANCIA_REAIS)
+    return precos.index[cabem].tolist()
+
+
 def plano_de_compra(pesos: pd.Series, cotacoes: pd.Series, regras: RegrasCompra) -> PlanoCompra:
     alvo = _validar_pesos(pesos)
     precos = _validar_cotacoes(alvo.index, cotacoes)
@@ -94,34 +104,19 @@ def plano_de_compra(pesos: pd.Series, cotacoes: pd.Series, regras: RegrasCompra)
     investido = float(itens["valor"].sum())
     custo = investido * taxa
     sobra = _zerar_ruido(regras.orcamento - investido - custo)
-    motivos = _motivos_fora(itens, valores_alvo, teto, regras.quantidade_minima)
+    motivos = _motivos_fora(itens, teto, regras.quantidade_minima)
     return PlanoCompra(itens, investido, custo, sobra, motivos)
 
 
-def _motivos_fora(itens: pd.DataFrame, valores_alvo: np.ndarray, teto: float,
-                  minimo: int) -> dict[str, MotivoFora]:
-    fora = (itens["quantidade"] == 0).to_numpy()
-    custos_minimos = minimo * itens["cotacao"].to_numpy()
-    return {ticker: _motivo_fora(custo, valor_alvo, teto)
-            for ticker, custo, valor_alvo in zip(itens.index[fora], custos_minimos[fora], valores_alvo[fora])}
-
-
-def _motivo_fora(custo_minimo: float, valor_alvo: float, teto: float) -> MotivoFora:
+def _motivos_fora(itens: pd.DataFrame, teto: float, minimo: int) -> dict[str, MotivoFora]:
     """
-    Com a mesma aritmética do guloso, que compra a quantidade mínima só se ``_ganho > 0``,
-    ou seja, se ela custa menos que o dobro do valor alvo. O valor alvo vem antes do teto:
-    quando os dois barram, subir o peso máximo não resolve; só um valor a investir maior.
+    O guloso só para quando nada cabe; então a quantidade mínima de uma ação de fora passou do
+    teto ou do caixa que sobrou. O teto vem antes: com ele barrando, só um peso máximo maior resolve.
     """
-    if _ganho(valor_alvo, 0.0, custo_minimo) <= 0:
-        return MotivoFora.VALOR_ALVO
-    if custo_minimo > teto + TOLERANCIA_REAIS:
-        return MotivoFora.TETO
-    return MotivoFora.CAIXA
-
-
-def _ganho(valor_alvo, valor_atual, valor_novo):
-    """Redução do desvio quadrático em relação ao alvo (> 0: a compra aproxima do alvo). Escalar ou array."""
-    return (valor_alvo - valor_atual) ** 2 - (valor_alvo - valor_novo) ** 2
+    fora = itens.index[itens["quantidade"] == 0]
+    custos_minimos = minimo * itens.loc[fora, "cotacao"]
+    return {ticker: MotivoFora.TETO if custo > teto + TOLERANCIA_REAIS else MotivoFora.CAIXA
+            for ticker, custo in custos_minimos.items()}
 
 
 def _zerar_ruido(valor: float) -> float:
@@ -151,21 +146,26 @@ def _validar_cotacoes(tickers: pd.Index, cotacoes: pd.Series) -> np.ndarray:
 
 def _distribuir_sobra(quantidades: np.ndarray, valores_alvo: np.ndarray, precos: np.ndarray,
                       disponivel: float, teto: float, minimo: int) -> np.ndarray:
-    """Guloso: cada passo gasta pelo menos uma cotação > 0, então termina."""
+    """
+    Guloso de enchimento por nível: compra a ação mais abaixo do valor alvo (déficit em reais, que
+    pode ser negativo) entre as que cabem no caixa e no teto, até nenhuma caber. Para um gasto
+    fixo, igualar os déficits minimiza a soma dos quadrados dos desvios; escolher o passo que menos
+    piora o desvio seria míope (o passo barato de uma ação já acima do alvo venceria sempre).
+    Cada passo gasta pelo menos uma cotação > 0, então termina.
+    """
     quantidades = quantidades.copy()
     while True:
         caixa = disponivel - float(quantidades @ precos)
         passos = np.where(quantidades == 0, minimo, 1)
         custo_passo = passos * precos
         valor_atual = quantidades * precos
-        valor_novo = valor_atual + custo_passo
-        ganho = _ganho(valores_alvo, valor_atual, valor_novo)
         cabe_no_caixa = custo_passo <= caixa + TOLERANCIA_REAIS
-        cabe_no_teto = valor_novo <= teto + TOLERANCIA_REAIS
-        viavel = cabe_no_caixa & cabe_no_teto & (ganho > 0)
+        cabe_no_teto = valor_atual + custo_passo <= teto + TOLERANCIA_REAIS
+        viavel = cabe_no_caixa & cabe_no_teto
         if not viavel.any():
             return quantidades
-        melhor = int(np.argmax(np.where(viavel, ganho, -np.inf)))    # empate: primeiro ticker
+        deficit = valores_alvo - valor_atual
+        melhor = int(np.argmax(np.where(viavel, deficit, -np.inf)))    # empate: primeiro ticker
         quantidades[melhor] += passos[melhor]
 
 

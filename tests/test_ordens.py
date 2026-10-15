@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.ordens import MotivoFora, RegrasCompra, plano_de_compra
+from core.ordens import MotivoFora, RegrasCompra, acoes_que_cabem, plano_de_compra
 
 SEM_CUSTO = dict(custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
 
@@ -32,6 +32,17 @@ def test_teto_de_peso_impede_a_compra_que_reduziria_o_desvio():
                             RegrasCompra(orcamento=10_000.0, **SEM_CUSTO | {"peso_maximo": 0.5}))
 
     assert plano.itens.loc["A", "quantidade"] == 151
+
+
+def test_sobra_que_paga_mais_uma_acao_e_investida_mesmo_passando_do_alvo():
+    # alvo R$ 500 cada; piso 12 + 12 (R$ 960), caixa R$ 40. A 13ª de A deixa A R$ 20 acima do alvo
+    # (antes, R$ 20 abaixo): o desvio não melhora, mas o caixa parado é pior para quem quer investir tudo.
+    plano = plano_de_compra(_serie(A=0.5, B=0.5), _serie(A=40.0, B=40.0),
+                            RegrasCompra(orcamento=1_000.0, **SEM_CUSTO))
+
+    assert plano.itens.loc["A", "quantidade"] == 13
+    assert plano.itens.loc["B", "quantidade"] == 12
+    assert plano.sobra == 0.0
 
 
 def test_quantidade_e_dividida_em_lote_padrao_e_fracionario():
@@ -95,13 +106,16 @@ def test_motivo_de_fora_e_o_teto_quando_2_acoes_passam_dele():
     assert plano.motivos_fora == {"B": MotivoFora.TETO}
 
 
-def test_motivo_de_fora_e_o_valor_alvo_quando_2_acoes_custam_o_dobro_dele_ou_mais():
-    # Alvo de B = R$ 5; 2 de B = R$ 20 cabem no caixa (R$ 50) e no teto (R$ 100), mas afastariam B do alvo.
+def test_sobra_vai_primeiro_para_a_acao_mais_abaixo_do_alvo():
+    # Alvos A R$ 50 e B R$ 5; piso 50 de A, caixa R$ 50. B (R$ 5 abaixo) leva 2 (R$ 20); depois cada compra
+    # vai para quem está mais abaixo do alvo: A até 66, B a 3ª, A até 70. Gastar o caixa só em A (100 de A,
+    # B de fora) daria desvios -50 e +5 (soma dos quadrados 2.525) contra -20 e -25 (1.025).
     plano = plano_de_compra(_serie(A=0.5, B=0.05), _serie(A=1.0, B=10.0),
                             RegrasCompra(orcamento=100.0, **SEM_CUSTO))
 
-    assert plano.fora == ("B",)
-    assert plano.motivos_fora == {"B": MotivoFora.VALOR_ALVO}
+    assert plano.itens.loc["A", "quantidade"] == 70
+    assert plano.itens.loc["B", "quantidade"] == 3
+    assert plano.sobra == 0.0
 
 
 def test_motivo_de_fora_e_o_caixa_quando_2_acoes_nao_cabem_no_que_sobrou():
@@ -114,14 +128,14 @@ def test_motivo_de_fora_e_o_caixa_quando_2_acoes_nao_cabem_no_que_sobrou():
     assert plano.motivos_fora == {"B": MotivoFora.CAIXA}
 
 
-def test_quando_passa_do_teto_e_do_dobro_do_alvo_o_motivo_e_o_valor_alvo():
-    # Teto R$ 30, alvo de B R$ 30, 2 de B = R$ 70. Com peso máximo de 70%, B ainda ficaria de fora
-    # (R$ 70 afasta do alvo de R$ 30): o conselho certo é aumentar o valor a investir, não o teto.
+def test_motivo_e_o_teto_mesmo_quando_2_acoes_custam_o_dobro_do_alvo():
+    # Teto R$ 30, alvo de B R$ 30, 2 de B = R$ 70. A fica no teto e sobram R$ 70 de caixa: B cabe no
+    # caixa, mas não no teto. Passar do alvo não barra mais a compra (o guloso enche até nada caber).
     plano = plano_de_compra(_serie(A=0.3, B=0.3), _serie(A=1.0, B=35.0),
                             RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=0.3, quantidade_minima=2))
 
     assert plano.fora == ("B",)
-    assert plano.motivos_fora == {"B": MotivoFora.VALOR_ALVO}
+    assert plano.motivos_fora == {"B": MotivoFora.TETO}
 
 
 def test_peso_efetivo_e_sobre_o_orcamento_e_fecha_com_custo_e_sobra():
@@ -195,6 +209,27 @@ def test_cotacao_ausente_ou_invalida_levanta_erro(cotacoes):
 def test_pesos_negativos_ou_somando_mais_de_100_por_cento_levantam_erro(pesos):
     with pytest.raises(ValueError, match="pesos"):
         plano_de_compra(pesos, _serie(A=10.0, B=10.0), RegrasCompra(orcamento=1_000.0, **SEM_CUSTO))
+
+
+def test_acoes_que_cabem_tira_a_que_passa_do_teto_com_a_quantidade_minima():
+    # R$ 500 e teto 20% = R$ 100: 2 de A custam R$ 115,72; 2 de B, R$ 20.
+    regras = RegrasCompra(orcamento=500.0, custo_bps=10.0, peso_maximo=0.2, quantidade_minima=2)
+
+    assert acoes_que_cabem(_serie(A=57.86, B=10.0), regras) == ["B"]
+
+
+def test_acoes_que_cabem_mantem_a_que_bate_exatamente_no_teto():
+    # teto = 0,29 × R$ 100, que em ponto flutuante dá 28,999999999999996; 2 × R$ 14,50 = R$ 29,00.
+    regras = RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=0.29, quantidade_minima=2)
+
+    assert acoes_que_cabem(_serie(A=14.5), regras) == ["A"]
+
+
+@pytest.mark.parametrize("preco", [np.nan, 0.0, -1.0])
+def test_acoes_que_cabem_tira_a_sem_preco_valido(preco):
+    regras = RegrasCompra(orcamento=1_000.0, custo_bps=0.0, peso_maximo=0.5, quantidade_minima=2)
+
+    assert acoes_que_cabem(_serie(A=10.0, B=preco), regras) == ["A"]
 
 
 @pytest.mark.parametrize("campo, valor", [("orcamento", 0.0), ("custo_bps", -1.0), ("peso_maximo", 0.0),

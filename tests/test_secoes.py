@@ -48,17 +48,17 @@ def test_benchmark_tem_psr_mas_nao_tem_dsr():
     assert np.isfinite(saida["B"][0]) and np.isnan(saida["B"][1])
 
 
-def test_aviso_de_fora_da_o_motivo_certo_quando_2_acoes_custam_o_dobro_do_alvo():
+def test_aviso_de_fora_da_o_motivo_e_o_conselho_do_teto():
     def script():
         import pandas as pd
 
         from core.ordens import RegrasCompra, plano_de_compra
         from ui.secoes import resumo_plano
 
-        # Alvo de BBBB3 = R$ 5; 2 ações = R$ 20 cabem no caixa e no teto, mas afastariam do alvo.
-        regras = RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
-        plano = plano_de_compra(pd.Series({"AAAA3.SA": 0.5, "BBBB3.SA": 0.05}),
-                                pd.Series({"AAAA3.SA": 1.0, "BBBB3.SA": 10.0}), regras)
+        # Teto 30% = R$ 30; 2 ações de BBBB3 = R$ 70: cabem no caixa que sobra, mas não no teto.
+        regras = RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=0.3, quantidade_minima=2)
+        plano = plano_de_compra(pd.Series({"AAAA3.SA": 0.3, "BBBB3.SA": 0.3}),
+                                pd.Series({"AAAA3.SA": 1.0, "BBBB3.SA": 35.0}), regras)
         resumo_plano(plano, regras)
 
     at = AppTest.from_function(script, default_timeout=60).run()
@@ -66,8 +66,8 @@ def test_aviso_de_fora_da_o_motivo_certo_quando_2_acoes_custam_o_dobro_do_alvo()
     assert not at.exception
     avisos = [w.value for w in at.warning]
     assert len(avisos) == 1
-    assert "BBBB3" in avisos[0] and "dobro" in avisos[0]
-    assert "teto" not in avisos[0]
+    assert "BBBB3" in avisos[0] and "teto de 30%" in avisos[0]
+    assert "peso máximo" in avisos[0]
 
 
 def test_rotulo_do_fechamento_nao_mostra_a_data():

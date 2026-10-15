@@ -8,6 +8,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from assets import BENCHMARK_ACOES, get_tickers_by_setor
 from core import market_data
 from core.config import Objetivo
 from ui import servicos
@@ -23,7 +24,8 @@ def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date) -> market
     gerador = np.random.default_rng(7)
     datas = pd.bdate_range(end=pd.Timestamp(dia), periods=650)     # 504 de treino + 3 rebalanceamentos
     retornos = gerador.normal(0.0006, 0.015, size=(len(datas), len(tickers)))
-    precos = pd.DataFrame(100 * np.cumprod(1 + retornos, axis=0), index=datas, columns=list(tickers))
+    # Perto de R$ 10, como boa parte das ações da B3: 2 unidades cabem no teto mesmo com R$ 500 a investir.
+    precos = pd.DataFrame(10 * np.cumprod(1 + retornos, axis=0), index=datas, columns=list(tickers))
     return market_data.DadosPrecos(precos)
 
 
@@ -116,7 +118,41 @@ def test_aceita_valor_a_investir_abaixo_de_mil_reais(app):
     assert sobra.value.startswith("R$") and investido.value.startswith("R$")
 
 
-def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_a_tabela_continua(app, monkeypatch):
+def _precos_com_a_ultima_acao_cara(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+    """A última ação do universo custa 1.000 vezes mais: 2 unidades passam de qualquer teto da sidebar."""
+    precos = _precos_sinteticos(tickers, anos, dia).precos
+    acoes = [t for t in tickers if t != BENCHMARK_ACOES]
+    precos[acoes[-1]] *= 1_000
+    return market_data.DadosPrecos(precos)
+
+
+def test_acao_cara_demais_para_o_teto_sai_antes_da_otimizacao_com_aviso(app, monkeypatch):
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_com_a_ultima_acao_cara)
+    # HRP dá peso a todas: sem o filtro, a ação cara entraria no plano (com 0 ações e o peso em caixa).
+    app.sidebar.selectbox[0].set_value(Objetivo.HRP.value).run()
+
+    assert not app.exception
+    cara = get_tickers_by_setor([SETOR_PEQUENO])[-1].replace(".SA", "")
+    assert len([i.value for i in app.info if cara in i.value]) == 1
+    assert cara not in set(_plano_de_compra(app)["Ticker"])
+
+
+def _precos_todos_caros(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+    precos = _precos_sinteticos(tickers, anos, dia).precos * 1_000
+    return market_data.DadosPrecos(precos)
+
+
+def test_valor_pequeno_demais_para_o_teto_explica_o_que_aumentar(app, monkeypatch):
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_todos_caros)
+    app.run()
+
+    assert not app.exception
+    erros = [e.value for e in app.error]
+    assert len(erros) == 1 and "valor a investir" in erros[0]
+    assert not [df for df in app.dataframe if "Qtd." in df.value.columns]
+
+
+def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_o_peso_dela_vai_para_as_outras(app, monkeypatch):
     pedidos = []
 
     def cotacoes_sem_a_primeira(tickers, precos_recentes):
@@ -133,7 +169,9 @@ def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_a_tabela_continua(app, monkey
     tickers = [t.replace(".SA", "") for t in pedidos[-1]]
     avisos = [w.value for w in app.warning if "Sem cotação" in w.value]
     assert len(avisos) == 1 and tickers[0] in avisos[0]
-    assert set(_plano_de_compra(app)["Ticker"]) == set(tickers[1:])
+    plano = _plano_de_compra(app)
+    assert set(plano["Ticker"]) == set(tickers[1:])
+    assert plano["Peso alvo"].sum() == pytest.approx(1.0)        # reescalados: a proporção entre elas se mantém
 
 
 @pytest.fixture

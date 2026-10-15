@@ -129,7 +129,6 @@ def resumo_plano(plano: PlanoCompra, regras: RegrasCompra) -> None:
 
 
 TEXTO_MOTIVO_FORA = {
-    MotivoFora.VALOR_ALVO: "custam o dobro ou mais do valor alvo dela: comprar afastaria a carteira do alvo",
     MotivoFora.TETO: "passam do teto de {teto:.0%} por ativo",
     MotivoFora.CAIXA: "não couberam no caixa que sobrou",
 }
@@ -141,7 +140,8 @@ def _aviso_fora(plano: PlanoCompra, regras: RegrasCompra) -> str:
               for ticker, motivo in plano.motivos_fora.items()]
     conselho = ("Aumente o valor a investir ou o peso máximo."
                 if MotivoFora.TETO in plano.motivos_fora.values() else "Aumente o valor a investir.")
-    return "\n".join(["Ficaram de fora (o dinheiro delas fica em caixa):", *linhas, "", conselho])
+    return "\n".join(["Ficaram de fora (o dinheiro delas foi para as outras ações, até o teto de cada uma):",
+                      *linhas, "", conselho])
 
 
 def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:

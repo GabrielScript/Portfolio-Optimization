@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.ordens import MotivoFora, RegrasCompra, acoes_que_cabem, plano_de_compra
+from core.config import LimiteGrupo
+from core.ordens import MotivoFora, RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra
 
 SEM_CUSTO = dict(custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
 
@@ -116,6 +117,46 @@ def test_sobra_vai_primeiro_para_a_acao_mais_abaixo_do_alvo():
     assert plano.itens.loc["A", "quantidade"] == 70
     assert plano.itens.loc["B", "quantidade"] == 3
     assert plano.sobra == 0.0
+
+
+def test_sobra_nao_passa_do_teto_do_grupo():
+    # Alvos A R$ 25, B R$ 25 (grupo de 50% = R$ 50), C R$ 50 a R$ 60 (2 de C não cabem). Piso 2 + 2 (R$ 40),
+    # caixa R$ 60. Sem o teto do grupo a sobra iria toda para A e B (5 + 5 = R$ 100); com ele, só +1 de A.
+    grupo = LimiteGrupo("Energia", frozenset({"A", "B"}), 0.5)
+    plano = plano_de_compra(_serie(A=0.25, B=0.25, C=0.5), _serie(A=10.0, B=10.0, C=60.0),
+                            RegrasCompra(orcamento=100.0, **SEM_CUSTO, grupos=(grupo,)))
+
+    assert plano.itens.loc["A", "quantidade"] == 3
+    assert plano.itens.loc["B", "quantidade"] == 2
+
+
+def test_motivo_de_fora_e_o_grupo_quando_o_teto_dele_ja_foi_atingido():
+    # Grupo {A, B} com teto de 30% = R$ 30. Piso: 28 de A, 2 de C (R$ 60), caixa R$ 12. A sobe até 30 e enche
+    # o grupo; sobram R$ 10, que pagam 2 de B (R$ 10), mas o grupo não tem mais folga.
+    grupo = LimiteGrupo("Energia", frozenset({"A", "B"}), 0.3)
+    plano = plano_de_compra(_serie(A=0.28, B=0.02, C=0.70), _serie(A=1.0, B=5.0, C=30.0),
+                            RegrasCompra(orcamento=100.0, **SEM_CUSTO, grupos=(grupo,)))
+
+    assert plano.sobra == pytest.approx(10.0)
+    assert plano.motivos_fora == {"B": MotivoFora.GRUPO}
+
+
+def test_limite_do_grupo_no_plano_nunca_fica_abaixo_do_peso_alvo_do_grupo():
+    # O HRP ignora o teto do grupo: um alvo de 40% num grupo de teto 30% não pode ser cortado pelo plano.
+    grupos = (LimiteGrupo("Energia", frozenset({"A", "B"}), 0.3), LimiteGrupo("Bancos", frozenset({"C"}), 0.3))
+
+    limites = limites_do_plano(grupos, _serie(A=0.25, B=0.15, C=0.10, D=0.50))
+
+    assert [(g.nome, g.teto) for g in limites] == [("Energia", pytest.approx(0.40)), ("Bancos", 0.3)]
+
+
+def test_limite_do_plano_fica_em_100_por_cento_quando_o_alvo_do_grupo_passa_de_1_por_ponto_flutuante():
+    # Universo de um setor só com teto de 100%: o alvo reescalado pode somar 1 + 1e-12.
+    grupos = (LimiteGrupo("Energia", frozenset({"A", "B"}), 1.0),)
+
+    limites = limites_do_plano(grupos, _serie(A=0.5, B=0.5 + 1e-12))
+
+    assert limites[0].teto == 1.0
 
 
 def test_motivo_de_fora_e_o_caixa_quando_2_acoes_nao_cabem_no_que_sobrou():

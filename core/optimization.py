@@ -131,6 +131,25 @@ def _checar_capacidade(n_ativos: int, cfg: ConfigOtimizacao) -> None:
         )
 
 
+def _checar_capacidade_grupos(tickers: list[str], cfg: ConfigOtimizacao) -> None:
+    """
+    O máximo que os ativos somam com os tetos: sum_G min(c_G, n_G u) + n_fora u. Exato para
+    grupos disjuntos (setores). Com sobreposição é só um limite superior, e o solver decide.
+    """
+    agrupados: set[str] = set()
+    capacidade = 0.0
+    for grupo in cfg.grupos:
+        membros = grupo.tickers.intersection(tickers)
+        agrupados |= membros
+        capacidade += min(grupo.teto, len(membros) * cfg.peso_maximo)
+    capacidade += len(set(tickers) - agrupados) * cfg.peso_maximo
+    if capacidade < 1.0 - 1e-9:
+        raise ErroInviavel(
+            f"Com teto de {cfg.peso_maximo:.0%} por ativo e os tetos de grupo, os {len(tickers)} "
+            f"ativos somam no máximo {capacidade:.0%}."
+        )
+
+
 def _min_vol(mu: np.ndarray, cov: np.ndarray, tickers: list[str],
              cfg: ConfigOtimizacao) -> _Solucao:
     w = cp.Variable(len(mu))
@@ -221,6 +240,7 @@ def _resolver_com_cardinalidade(mu: pd.Series, cov: pd.DataFrame,
     tickers = mu.index.tolist()
     cov_np = preparar_covariancia(cov)
     _checar_capacidade(len(tickers), cfg)
+    _checar_capacidade_grupos(tickers, cfg)
 
     etapa1 = solucionador(mu.values, cov_np, tickers, cfg)
     pesos = _limpar_pesos(etapa1.pesos)

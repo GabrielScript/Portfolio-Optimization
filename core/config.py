@@ -12,6 +12,7 @@ Convenções usadas em todo o pacote:
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -39,6 +40,14 @@ class LimiteGrupo:
     def __post_init__(self) -> None:
         if not 0.0 <= self.teto <= 1.0:
             raise ValueError(f"Teto do grupo '{self.nome}' fora de [0, 1]: {self.teto}")
+
+
+def limites_por_setor(setores: Mapping[str, str], teto: float) -> tuple[LimiteGrupo, ...]:
+    """Um ``LimiteGrupo`` por setor (ticker -> setor), todos com o mesmo teto, em ordem de nome."""
+    membros: dict[str, set[str]] = {}
+    for ticker, setor in setores.items():
+        membros.setdefault(setor, set()).add(ticker)
+    return tuple(LimiteGrupo(setor, frozenset(tickers), teto) for setor, tickers in sorted(membros.items()))
 
 
 @dataclass(frozen=True)

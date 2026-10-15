@@ -55,7 +55,8 @@ def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
-    at.sidebar.multiselect[0].set_value([SETOR_PEQUENO]).run()
+    at.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO])
+    at.sidebar.slider(key="teto_setor").set_value(100).run()        # um setor só: sem teto por setor
     return at
 
 
@@ -205,6 +206,45 @@ def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contad
     assert set(_plano_de_compra(app)["Cotação (R$)"]) == {30.0}
     CARREGAR_COTACOES_REAL(*outra_carteira)
     assert yahoo_contador.count(("OUTRA.SA",)) == 1      # a entrada da outra carteira continua no cache
+
+
+SETOR_AUXILIAR = "Telecomunicações"          # 4 ações: com teto de 70%, os dois setores ainda somam 100%
+
+
+def _precos_tecnologia_em_alta(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+    """Tecnologia sobe ~0,2% ao dia a mais: sem teto por setor, o otimizador põe tudo nela."""
+    precos = _precos_sinteticos(tickers, anos, dia).precos
+    tecnologia = [t for t in get_tickers_by_setor([SETOR_PEQUENO]) if t in precos.columns]
+    precos[tecnologia] = precos[tecnologia].mul(np.exp(0.002 * np.arange(len(precos))), axis=0)
+    return market_data.DadosPrecos(precos)
+
+
+def _peso_por_setor(plano: pd.DataFrame, coluna: str) -> pd.Series:
+    return plano.groupby("Setor")[coluna].sum()
+
+
+def test_teto_por_setor_limita_o_peso_alvo_de_cada_setor(app, monkeypatch):
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_tecnologia_em_alta)
+    app.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO, SETOR_AUXILIAR])
+    app.sidebar.slider(key="teto_setor").set_value(70).run()
+
+    assert not app.exception
+    assert (_peso_por_setor(_plano_de_compra(app), "Peso alvo") <= 0.70 + 1e-6).all()
+
+
+def test_plano_mostra_o_peso_efetivo_de_cada_setor(app):
+    assert not app.exception
+    efetivo = _peso_por_setor(_plano_de_compra(app), "Peso efetivo")[SETOR_PEQUENO]
+    legendas = [c.value for c in app.caption if c.value.startswith("Por setor")]
+    assert len(legendas) == 1 and f"{SETOR_PEQUENO} {efetivo:.1%}" in legendas[0]
+
+
+def test_um_setor_so_com_teto_por_setor_explica_o_que_aumentar(app):
+    app.sidebar.slider(key="teto_setor").set_value(30).run()
+
+    assert not app.exception
+    erros = [e.value for e in app.error]
+    assert len(erros) == 1 and "teto por setor" in erros[0]
 
 
 def test_reamostragem_so_vale_para_o_kelly(app):

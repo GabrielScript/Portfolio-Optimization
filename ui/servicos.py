@@ -20,26 +20,35 @@ import streamlit as st
 from core import market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
-from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
+from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
 from core.estimation import aplicar_tilt_growth
 from core.growth import calcular_growth_scores
 
 
 @dataclass(frozen=True)
 class ParametrosOtimizacao:
-    """Parâmetros vindos da sidebar, todos hasheáveis."""
+    """
+    Parâmetros vindos da sidebar, todos hasheáveis. ``setores``: pares (ticker, setor) em tupla
+    ordenada, e não ``LimiteGrupo``, para que a chave do cache não dependa da ordem de um frozenset.
+    """
 
     objetivo: str
     peso_maximo: float
     n_ativos_max: int
     vol_maxima: float | None
     aversao_risco: float
+    teto_setor: float = 1.0
+    setores: tuple[tuple[str, str], ...] = ()
+
+    @property
+    def grupos(self) -> tuple[LimiteGrupo, ...]:
+        return limites_por_setor(dict(self.setores), self.teto_setor)
 
     def para_config(self, taxa_livre_risco: float) -> ConfigOtimizacao:
         return ConfigOtimizacao(
             objetivo=Objetivo(self.objetivo), peso_maximo=self.peso_maximo,
             n_ativos_max=self.n_ativos_max, vol_maxima=self.vol_maxima,
-            aversao_risco=self.aversao_risco, taxa_livre_risco=taxa_livre_risco,
+            aversao_risco=self.aversao_risco, taxa_livre_risco=taxa_livre_risco, grupos=self.grupos,
         )
 
 

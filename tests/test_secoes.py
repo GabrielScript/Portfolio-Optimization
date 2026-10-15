@@ -70,6 +70,31 @@ def test_aviso_de_fora_da_o_motivo_e_o_conselho_do_teto():
     assert "peso máximo" in avisos[0]
 
 
+def test_aviso_de_fora_da_o_motivo_e_o_conselho_do_teto_por_setor():
+    def script():
+        import pandas as pd
+
+        from core.config import LimiteGrupo
+        from core.ordens import RegrasCompra, plano_de_compra
+        from ui.secoes import resumo_plano
+
+        # Setor {AAAA3, BBBB3} com teto de 30% = R$ 30: AAAA3 enche o setor; sobram R$ 10, que pagam 2 de BBBB3.
+        setor = LimiteGrupo("Utilidade Pública", frozenset({"AAAA3.SA", "BBBB3.SA"}), 0.3)
+        regras = RegrasCompra(orcamento=100.0, custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2,
+                              grupos=(setor,))
+        plano = plano_de_compra(pd.Series({"AAAA3.SA": 0.28, "BBBB3.SA": 0.02, "CCCC3.SA": 0.70}),
+                                pd.Series({"AAAA3.SA": 1.0, "BBBB3.SA": 5.0, "CCCC3.SA": 30.0}), regras)
+        resumo_plano(plano, regras)
+
+    at = AppTest.from_function(script, default_timeout=60).run()
+
+    assert not at.exception
+    avisos = [w.value for w in at.warning]
+    assert len(avisos) == 1
+    assert "BBBB3" in avisos[0] and "teto de 30% do setor Utilidade Pública" in avisos[0]
+    assert "teto por setor" in avisos[0]
+
+
 def test_rotulo_do_fechamento_nao_mostra_a_data():
     # O preço diário passa por ffill: a data da última linha pode ser de um dia em que a ação não negociou.
     assert _rotulo_cotacao(pd.Timestamp("2026-10-09"), FONTE_FECHAMENTO, date(2026, 10, 14)) == "último fechamento"

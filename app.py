@@ -27,9 +27,9 @@ from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simp
 from core.growth import filtrar_por_percentil  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
-from core.optimization import (ErroOtimizacao, ResultadoOtimizacao, fronteira_eficiente,  # noqa: E402
-                               otimizar)
-from core.ordens import RegrasCompra, acoes_que_cabem, plano_de_compra  # noqa: E402
+from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
+                               fronteira_eficiente, otimizar)
+from core.ordens import RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra  # noqa: E402
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -53,6 +53,10 @@ AJUDA_REAMOSTRAGEM = (
     "(walk-forward de 5 e 10 anos), o Sharpe ficou ABAIXO do Kelly simples e o drawdown não melhorou: "
     "opção de estudo, não padrão. Lenta: ~1 min a mais no walk-forward de 5 anos com a lista líquida, "
     "~15 min com todos os ativos."
+)
+AJUDA_TETO_SETOR = (
+    "Soma máxima dos pesos das ações de um mesmo setor (100% = sem limite). Vale para a carteira de hoje, "
+    "o plano de compra e o walk-forward; o HRP ignora."
 )
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
@@ -100,7 +104,7 @@ def ler_sidebar() -> Entradas:
                                     key="orcamento")
 
         st.markdown("### Universo")
-        setores = st.multiselect("Setores (vazio = lista líquida)", SETORES)
+        setores = st.multiselect("Setores (vazio = lista líquida)", SETORES, key="setores")
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
 
         st.markdown("### Growth Score (só carteira de hoje)")
@@ -112,6 +116,8 @@ def ler_sidebar() -> Entradas:
         with st.expander("Avançado"):
             n_max = st.slider("Máximo de ativos", 3, 30, 10)
             peso_max = st.slider("Peso máximo por ativo (%)", 5, 50, 20) / 100
+            teto_setor = st.slider("Teto por setor (%)", 20, 100, 30, 5, key="teto_setor",
+                                   help=AJUDA_TETO_SETOR) / 100
             anos = st.slider("Histórico (anos)", 3, 10, 5,
                              help="Walk-forward precisa de ≥ 2 anos de treino + teste.")
             shrink = st.checkbox("Shrinkage de μ (Jorion)", value=True)
@@ -126,10 +132,12 @@ def ler_sidebar() -> Entradas:
         acoes = get_all_tickers()
     else:
         acoes = get_tickers_liquidos()
+    info = get_ticker_info()
     params = servicos.ParametrosOtimizacao(
         objetivo=objetivo, peso_maximo=peso_max, n_ativos_max=n_max,
         vol_maxima=None if objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value) else vol_max,
-        aversao_risco=aversao,
+        aversao_risco=aversao, teto_setor=teto_setor,
+        setores=tuple(sorted((t, info[t]["setor"]) for t in acoes)),
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, orcamento, usar_growth, percentil, tilt,
@@ -215,6 +223,9 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
                     if entradas.reamostrar
                     else CarteiraCalculada(otimizar(mu, cov, cfg), mu, cov, momentos.intensidade_shrinkage))
         fronteira = fronteira_eficiente(carteira.mu, carteira.cov, cfg)
+    except ErroInviavel as erro:
+        st.error(f"Carteira inviável: {erro} Aumente o peso máximo ou o teto por setor, ou inclua mais setores.")
+        st.stop()
     except ErroOtimizacao as erro:
         st.error(f"Otimização falhou: {erro}")
         st.stop()
@@ -287,17 +298,19 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     if not com_cotacao.all():
         nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
         st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o valor dela vai para as outras ações.")
-    # O HRP ignora o teto de peso: o plano nunca corta um alvo abaixo do próprio peso.
-    teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
-    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO)
     # Reescala para 100%: o valor das ações sem cotação vai para as outras, na proporção do otimizador.
     alvo = pesos[com_cotacao] / pesos[com_cotacao].sum()
+    # O HRP ignora os tetos: o plano nunca corta um alvo abaixo do próprio peso (por ação ou por setor).
+    teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
+    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO,
+                          limites_do_plano(entradas.params.grupos, alvo))
     try:
         plano = plano_de_compra(alvo, cotacoes["preco"], regras)
     except ValueError as erro:
         st.error(f"Plano de compra indisponível: {erro}")
         return
     secoes.tabela_carteira(plano, cotacoes, info, growth, date.today())
+    secoes.legenda_por_setor(plano, info)
     secoes.resumo_plano(plano, regras)
 
 

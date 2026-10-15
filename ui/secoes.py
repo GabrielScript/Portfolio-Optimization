@@ -128,20 +128,38 @@ def resumo_plano(plano: PlanoCompra, regras: RegrasCompra) -> None:
                "enviar a ordem. Compra a partir de carteira zerada.")
 
 
+def legenda_por_setor(plano: PlanoCompra, info: dict) -> None:
+    """Peso efetivo (o que o plano compra de fato) somado por setor, do maior para o menor."""
+    por_setor = plano.itens["peso_efetivo"].groupby(lambda t: info.get(t, {}).get("setor", "—")).sum()
+    por_setor = por_setor[por_setor > 0].sort_values(ascending=False)
+    st.caption("Por setor (peso efetivo): " + " · ".join(f"{setor} {peso:.1%}" for setor, peso in por_setor.items()))
+
+
 TEXTO_MOTIVO_FORA = {
     MotivoFora.TETO: "passam do teto de {teto:.0%} por ativo",
+    MotivoFora.GRUPO: "passariam do teto de {teto:.0%} do setor {setor}",
     MotivoFora.CAIXA: "não couberam no caixa que sobrou",
 }
+# Além do valor a investir, o que o usuário pode aumentar para a ação entrar.
+AJUSTE_POR_MOTIVO = {MotivoFora.TETO: "o peso máximo", MotivoFora.GRUPO: "o teto por setor"}
 
 
 def _aviso_fora(plano: PlanoCompra, regras: RegrasCompra) -> str:
     linhas = [f"- **{ticker.replace('.SA', '')}**: {regras.quantidade_minima} ações "
-              + TEXTO_MOTIVO_FORA[motivo].format(teto=regras.peso_maximo)
+              + _texto_motivo(ticker, motivo, regras)
               for ticker, motivo in plano.motivos_fora.items()]
-    conselho = ("Aumente o valor a investir ou o peso máximo."
-                if MotivoFora.TETO in plano.motivos_fora.values() else "Aumente o valor a investir.")
+    ajustes = ["o valor a investir"] + [ajuste for motivo, ajuste in AJUSTE_POR_MOTIVO.items()
+                                        if motivo in plano.motivos_fora.values()]
+    conselho = "Aumente " + ", ".join(ajustes[:-1]) + (" ou " if len(ajustes) > 1 else "") + ajustes[-1] + "."
     return "\n".join(["Ficaram de fora (o dinheiro delas foi para as outras ações, até o teto de cada uma):",
                       *linhas, "", conselho])
+
+
+def _texto_motivo(ticker: str, motivo: MotivoFora, regras: RegrasCompra) -> str:
+    if motivo is MotivoFora.GRUPO:
+        grupo = next(g for g in regras.grupos if ticker in g.tickers)
+        return TEXTO_MOTIVO_FORA[motivo].format(teto=grupo.teto, setor=grupo.nome)
+    return TEXTO_MOTIVO_FORA[motivo].format(teto=regras.peso_maximo)
 
 
 def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:

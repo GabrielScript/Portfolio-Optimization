@@ -6,13 +6,16 @@ Compra a partir de carteira zerada (não considera posições atuais). Regras:
   então ``investido + custo <= orçamento``;
 - quantidades inteiras; cada posição tem 0 ou pelo menos ``quantidade_minima`` ações;
 - nenhuma posição passa de ``peso_maximo`` do orçamento (o mesmo teto da otimização);
+- a sobra não leva um grupo (ex.: setor) além do teto dele; o piso segue o alvo, que já
+  respeita esse teto quando vem do otimizador;
 - compra o piso de cada alvo; com a sobra, compra a ação mais abaixo do valor alvo,
   uma por vez (ou ``quantidade_minima`` de uma vez quando a posição está zerada),
-  até nada caber no caixa e no teto. Uma posição pode passar do alvo: para quem quer
+  até nada caber no caixa e nos tetos. Uma posição pode passar do alvo: para quem quer
   investir o valor todo, dinheiro parado é pior que um desvio pequeno.
 
 Uma ação pode ficar de fora; ``PlanoCompra.motivos_fora`` diz por quê: a quantidade
-mínima passa do teto ou não cabe no caixa que sobrou. ``acoes_que_cabem`` tira do
+mínima passa do teto por ação, não cabe no que falta para o teto do grupo ou não cabe
+no caixa que sobrou. ``acoes_que_cabem`` tira do
 universo, antes da otimização, as que passariam do teto. Na B3, múltiplos de 100 vão
 no lote padrão; o resto, no mercado fracionário (ticker com sufixo F).
 
@@ -25,11 +28,13 @@ tolerância vira zero. Absoluta, e não relativa ao orçamento, para que
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from enum import Enum
 
 import numpy as np
 import pandas as pd
+
+from core.config import LimiteGrupo
 
 LOTE_PADRAO = 100
 TOLERANCIA_SOMA_PESOS = 1e-6
@@ -40,6 +45,7 @@ class MotivoFora(str, Enum):
     """Por que uma ação com peso alvo > 0 ficou sem nenhuma unidade comprada."""
 
     TETO = "teto"
+    GRUPO = "grupo"
     CAIXA = "caixa"
 
 
@@ -49,6 +55,7 @@ class RegrasCompra:
     custo_bps: float
     peso_maximo: float
     quantidade_minima: int = 2
+    grupos: tuple[LimiteGrupo, ...] = ()        # ex.: setores; teto em fração do orçamento
 
     def __post_init__(self) -> None:
         if not self.orcamento > 0:
@@ -76,6 +83,37 @@ class PlanoCompra:
         return tuple(self.motivos_fora)
 
 
+@dataclass(frozen=True)
+class _Tetos:
+    """Tetos em reais: por ação e por grupo. ``membros``: matriz grupos × ações (bool)."""
+
+    por_acao: float
+    por_grupo: np.ndarray
+    membros: np.ndarray
+
+    @classmethod
+    def das_regras(cls, tickers: pd.Index, regras: RegrasCompra) -> _Tetos:
+        membros = np.array([[t in grupo.tickers for t in tickers] for grupo in regras.grupos],
+                           dtype=bool).reshape(len(regras.grupos), len(tickers))
+        por_grupo = np.array([grupo.teto * regras.orcamento for grupo in regras.grupos])
+        return cls(regras.peso_maximo * regras.orcamento, por_grupo, membros)
+
+    def folga_dos_grupos(self, valores: np.ndarray) -> np.ndarray:
+        """Por ação, quanto ainda cabe no grupo mais cheio dela (infinito se ela não tem grupo)."""
+        folga = self.por_grupo - self.membros @ valores
+        return np.where(self.membros, folga[:, None], np.inf).min(axis=0, initial=np.inf)
+
+
+def limites_do_plano(grupos: tuple[LimiteGrupo, ...], alvo: pd.Series) -> tuple[LimiteGrupo, ...]:
+    """
+    Tetos de grupo para o plano: o de cada grupo sobe até o peso alvo dele, se for maior. O HRP
+    ignora os tetos de grupo, e o plano nunca corta um alvo; só impede a sobra de passar do teto.
+    No máximo 100%: um alvo reescalado pode somar 1 + ruído de ponto flutuante.
+    """
+    return tuple(replace(grupo, teto=min(1.0, max(grupo.teto, float(alvo[alvo.index.isin(grupo.tickers)].sum()))))
+                 for grupo in grupos)
+
+
 def acoes_que_cabem(precos: pd.Series, regras: RegrasCompra) -> list[str]:
     """
     Tickers com preço > 0 cuja quantidade mínima cabe no teto por ação (``peso_maximo`` ×
@@ -93,30 +131,39 @@ def plano_de_compra(pesos: pd.Series, cotacoes: pd.Series, regras: RegrasCompra)
     taxa = regras.custo_bps / 10_000
     disponivel = regras.orcamento / (1.0 + taxa)
     valores_alvo = alvo.to_numpy() * disponivel
-    teto = regras.peso_maximo * regras.orcamento
+    tetos = _Tetos.das_regras(alvo.index, regras)
 
-    quantidades = np.floor(np.minimum(valores_alvo, teto) / precos)
+    quantidades = np.floor(np.minimum(valores_alvo, tetos.por_acao) / precos)
     quantidades[quantidades < regras.quantidade_minima] = 0.0
-    quantidades = _distribuir_sobra(quantidades, valores_alvo, precos, disponivel, teto,
+    quantidades = _distribuir_sobra(quantidades, valores_alvo, precos, disponivel, tetos,
                                     regras.quantidade_minima)
 
     itens = _montar_itens(alvo, precos, quantidades.astype(int), regras.orcamento)
     investido = float(itens["valor"].sum())
     custo = investido * taxa
     sobra = _zerar_ruido(regras.orcamento - investido - custo)
-    motivos = _motivos_fora(itens, teto, regras.quantidade_minima)
+    motivos = _motivos_fora(itens, tetos, regras.quantidade_minima)
     return PlanoCompra(itens, investido, custo, sobra, motivos)
 
 
-def _motivos_fora(itens: pd.DataFrame, teto: float, minimo: int) -> dict[str, MotivoFora]:
+def _motivos_fora(itens: pd.DataFrame, tetos: _Tetos, minimo: int) -> dict[str, MotivoFora]:
     """
     O guloso só para quando nada cabe; então a quantidade mínima de uma ação de fora passou do
-    teto ou do caixa que sobrou. O teto vem antes: com ele barrando, só um peso máximo maior resolve.
+    teto por ação, da folga do grupo dela ou do caixa que sobrou, nessa ordem de precedência. O
+    teto por ação vem antes porque, com ele barrando, só um peso máximo maior resolve.
     """
-    fora = itens.index[itens["quantidade"] == 0]
-    custos_minimos = minimo * itens.loc[fora, "cotacao"]
-    return {ticker: MotivoFora.TETO if custo > teto + TOLERANCIA_REAIS else MotivoFora.CAIXA
-            for ticker, custo in custos_minimos.items()}
+    custos_minimos = minimo * itens["cotacao"].to_numpy()
+    folgas = tetos.folga_dos_grupos(itens["valor"].to_numpy())
+    motivos = {}
+    for posicao in np.flatnonzero(itens["quantidade"].to_numpy() == 0):
+        custo = custos_minimos[posicao]
+        if custo > tetos.por_acao + TOLERANCIA_REAIS:
+            motivos[itens.index[posicao]] = MotivoFora.TETO
+        elif custo > folgas[posicao] + TOLERANCIA_REAIS:
+            motivos[itens.index[posicao]] = MotivoFora.GRUPO
+        else:
+            motivos[itens.index[posicao]] = MotivoFora.CAIXA
+    return motivos
 
 
 def _zerar_ruido(valor: float) -> float:
@@ -145,13 +192,13 @@ def _validar_cotacoes(tickers: pd.Index, cotacoes: pd.Series) -> np.ndarray:
 
 
 def _distribuir_sobra(quantidades: np.ndarray, valores_alvo: np.ndarray, precos: np.ndarray,
-                      disponivel: float, teto: float, minimo: int) -> np.ndarray:
+                      disponivel: float, tetos: _Tetos, minimo: int) -> np.ndarray:
     """
     Guloso de enchimento por nível: compra a ação mais abaixo do valor alvo (déficit em reais, que
-    pode ser negativo) entre as que cabem no caixa e no teto, até nenhuma caber. Para um gasto
-    fixo, igualar os déficits minimiza a soma dos quadrados dos desvios; escolher o passo que menos
-    piora o desvio seria míope (o passo barato de uma ação já acima do alvo venceria sempre).
-    Cada passo gasta pelo menos uma cotação > 0, então termina.
+    pode ser negativo) entre as que cabem no caixa, no teto por ação e no teto do grupo, até nenhuma
+    caber. Para um gasto fixo, igualar os déficits minimiza a soma dos quadrados dos desvios; escolher
+    o passo que menos piora o desvio seria míope (o passo barato de uma ação já acima do alvo venceria
+    sempre). Cada passo gasta pelo menos uma cotação > 0, então termina.
     """
     quantidades = quantidades.copy()
     while True:
@@ -160,8 +207,9 @@ def _distribuir_sobra(quantidades: np.ndarray, valores_alvo: np.ndarray, precos:
         custo_passo = passos * precos
         valor_atual = quantidades * precos
         cabe_no_caixa = custo_passo <= caixa + TOLERANCIA_REAIS
-        cabe_no_teto = valor_atual + custo_passo <= teto + TOLERANCIA_REAIS
-        viavel = cabe_no_caixa & cabe_no_teto
+        cabe_no_teto = valor_atual + custo_passo <= tetos.por_acao + TOLERANCIA_REAIS
+        cabe_no_grupo = custo_passo <= tetos.folga_dos_grupos(valor_atual) + TOLERANCIA_REAIS
+        viavel = cabe_no_caixa & cabe_no_teto & cabe_no_grupo
         if not viavel.any():
             return quantidades
         deficit = valores_alvo - valor_atual

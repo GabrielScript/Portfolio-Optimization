@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.config import ConfigOtimizacao, LimiteGrupo, Objetivo
+from core.config import ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
 from core.estimation import estimar_momentos
 from core.optimization import (ErroInviavel, fronteira_eficiente, otimizar, preparar_covariancia,
                                projetar_pesos)
@@ -116,11 +116,26 @@ def test_teto_de_grupo(retornos_sinteticos):
     assert res.pesos[["A3.SA", "A4.SA"]].sum() <= 0.10 + 1e-5
 
 
+def test_limites_por_setor_criam_um_grupo_por_setor_com_o_mesmo_teto():
+    grupos = limites_por_setor({"a": "Energia", "b": "Bancos", "c": "Energia"}, 0.30)
+    assert grupos == (LimiteGrupo("Bancos", frozenset({"b"}), 0.30),
+                      LimiteGrupo("Energia", frozenset({"a", "c"}), 0.30))
+
+
 def test_inviavel_explicito():
     mu = pd.Series([0.1, 0.2], index=["a", "b"])
     cov = pd.DataFrame(np.eye(2) * 0.04, index=["a", "b"], columns=["a", "b"])
     with pytest.raises(ErroInviavel):
         otimizar(mu, cov, ConfigOtimizacao(peso_maximo=0.3, n_ativos_max=None))
+
+
+def test_teto_de_grupo_inviavel_diz_quanto_os_ativos_somam_no_maximo():
+    """3 ativos no mesmo setor, teto de 30% no setor e 50% por ativo: no máximo 30% < 100%."""
+    mu = pd.Series([0.10, 0.20, 0.15], index=list("abc"))
+    grupos = limites_por_setor({"a": "Energia", "b": "Energia", "c": "Energia"}, 0.30)
+    cfg = ConfigOtimizacao(peso_maximo=0.5, n_ativos_max=None, vol_maxima=None, grupos=grupos)
+    with pytest.raises(ErroInviavel, match="somam no máximo 30%"):
+        otimizar(mu, _cov_diagonal([0.04] * 3, list("abc")), cfg)
 
 
 def test_config_rejeita_cardinalidade_impossivel():

@@ -29,8 +29,9 @@ mesmas condições.
   peso entre mais ativos, mas vem **desligada**: na avaliação pré-registrada (`scripts/avaliar_reamostragem.py`,
   walk-forward de 5 e 10 anos), o Sharpe ficou abaixo do Kelly simples e o drawdown não melhorou. É lenta
   (~1 min a mais no walk-forward de 5 anos com a lista líquida).
-- **Growth Score** (fundamentos Yahoo, opcionalmente receita de 10 anos via CVM): filtro por percentil e
-  tilt no μ, aplicados **só à carteira de hoje** (ver Limitações).
+- **Growth Score fora da tela.** O código continua em `core/growth.py`, mas o app não o usa: ele lê
+  fundamentos e momentum de hoje (look-ahead se aplicado ao passado) e nunca foi testado no walk-forward.
+  Assim, a carteira de hoje sai do mesmo método que o walk-forward avalia.
 
 ### 📈 Análises
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
@@ -96,7 +97,7 @@ Portfolio-Optimization/
 │   ├── hierarchical.py       #   HRP e HRP-Árvore
 │   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown, PSR/DSR
 │   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time
-│   ├── growth.py             #   Growth Score (Yahoo/CVM)
+│   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
 │   └── fatores_macro.py      #   Painel e fatores macro (em desenvolvimento)
@@ -156,8 +157,6 @@ Portfolio-Optimization/
 
 ## ⚠️ Limitações
 
-- **Filtro e tilt growth não entram no backtest.** Usam fundamentos e momentum de hoje; aplicá-los ao
-  passado seria look-ahead. O walk-forward mede só a alocação sobre o universo pré-filtro.
 - **Viés de sobrevivência.** O universo é a lista atual de tickers; empresas que quebraram ou fecharam
   capital não aparecem, o que favorece todas as estratégias.
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês).

@@ -4,8 +4,8 @@ Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
 Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
-Jorion) -> [growth: filtro + tilt, só na carteira de hoje] -> otimização ->
-walk-forward de todas as estratégias no universo pré-filtro.
+Jorion) -> otimização -> walk-forward de todas as estratégias. O Growth Score
+(core/growth.py) fica fora da tela até ser validado fora da amostra.
 """
 
 from __future__ import annotations
@@ -23,8 +23,7 @@ from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_ticker_info, 
                     get_tickers_by_setor, get_tickers_liquidos)
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import DIAS_UTEIS_ANO, ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
-from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simples  # noqa: E402
-from core.growth import filtrar_por_percentil  # noqa: E402
+from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
@@ -70,10 +69,6 @@ class Entradas:
     anos: int                  # janela de estimação: carteira de hoje e treino rolante do walk-forward
     anos_teste: int
     orcamento: float
-    usar_growth: bool
-    percentil_growth: int
-    peso_tilt: float
-    usar_cvm: bool
     shrink_mu: bool
     custo_bps: float
     reamostrar: bool
@@ -108,12 +103,6 @@ def ler_sidebar() -> Entradas:
         setores = st.multiselect("Setores (vazio = lista líquida)", SETORES, key="setores")
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
 
-        st.markdown("### Growth Score (só carteira de hoje)")
-        usar_growth = st.checkbox("Filtro + tilt growth", value=True)
-        percentil = st.slider("Percentil mínimo", 0, 80, 40, 5, disabled=not usar_growth)
-        tilt = st.slider("Tilt (× vol)", 0.0, 1.0, 0.30, 0.05, disabled=not usar_growth)
-        usar_cvm = st.checkbox("Receita 10 anos via CVM (lento)", value=False, disabled=not usar_growth)
-
         with st.expander("Avançado"):
             n_max = st.slider("Máximo de ativos", 3, 30, 10)
             peso_max = st.slider("Peso máximo por ativo (%)", 5, 50, 20) / 100
@@ -145,8 +134,8 @@ def ler_sidebar() -> Entradas:
         setores=tuple(sorted((t, info[t]["setor"]) for t in acoes)),
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
-    return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, usar_growth, percentil, tilt,
-                    usar_cvm, shrink, float(custo), reamostrar and objetivo == Objetivo.KELLY.value)
+    return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
+                    reamostrar and objetivo == Objetivo.KELLY.value)
 
 
 def validar(entradas: Entradas) -> str | None:
@@ -208,24 +197,12 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     acoes = list(retornos.columns)
     compraveis = acoes_compraveis(entradas, precos[acoes])
     momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
-    mu, cov, growth = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis], None
+    mu, cov = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis]
     info = get_ticker_info()
-
-    if entradas.usar_growth:
-        # O score sai do universo inteiro (a chave do cache não muda com o valor); o corte, só entre as compráveis.
-        setores = tuple((t, info.get(t, {}).get("setor", "?")) for t in acoes)
-        with st.spinner("Growth Score (fundamentos Yahoo/CVM)..."):
-            growth = servicos.carregar_growth(tuple(acoes), precos[acoes], setores,
-                                              entradas.usar_cvm, date.today())
-        aprovados = filtrar_por_percentil(growth["score"].reindex(compraveis), entradas.percentil_growth,
-                                          minimo_ativos=entradas.params.n_ativos_max)
-        mu, cov = mu[aprovados], cov.loc[aprovados, aprovados]
-        mu = aplicar_tilt_growth(mu, cov, growth["score"], entradas.peso_tilt)
-        st.info(f"Filtro growth: {len(acoes)} → {len(aprovados)} ações. Tilt {entradas.peso_tilt:.2f}σ.")
 
     cfg = entradas.params.para_config(rf_aritmetica)
     try:
-        carteira = (_carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica, growth)
+        carteira = (_carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica)
                     if entradas.reamostrar
                     else CarteiraCalculada(otimizar(mu, cov, cfg), mu, cov, momentos.intensidade_shrinkage))
         fronteira = fronteira_eficiente(carteira.mu, carteira.cov, cfg)
@@ -253,7 +230,7 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
         col1.caption("A carteira reamostrada fica dentro da fronteira estimada, por construção.")
     col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
-    secao_plano_de_compra(entradas, pesos, precos, info, growth)
+    secao_plano_de_compra(entradas, pesos, precos, info)
 
     col_rc, col_corr = st.columns(2)
     col_rc.plotly_chart(grafico_contribuicao_risco(contribuicao_risco(pesos, cov), pesos.to_dict()),
@@ -263,9 +240,6 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     if carteira.frequencia is not None:
         with st.expander("Estabilidade nas reamostras"):
             secoes.tabela_estabilidade(resultado.pesos, carteira.frequencia)
-    if growth is not None:
-        with st.expander("Componentes do Growth Score"):
-            st.dataframe(growth, width="stretch")
 
 
 def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
@@ -291,8 +265,7 @@ def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
     return compraveis
 
 
-def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict,
-                          growth: pd.DataFrame | None) -> None:
+def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict) -> None:
     st.markdown("### Plano de compra")
     tickers = tuple(pesos.index)
     janela = precos[list(tickers)].tail(PREGOES_PARA_FECHAMENTO)    # mesmos argumentos ao limpar e ao buscar
@@ -315,18 +288,15 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     except ValueError as erro:
         st.error(f"Plano de compra indisponível: {erro}")
         return
-    secoes.tabela_carteira(plano, cotacoes, info, growth, date.today())
+    secoes.tabela_carteira(plano, cotacoes, info, date.today())
     secoes.legenda_por_setor(plano, info)
     secoes.resumo_plano(plano, regras)
 
 
-def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float,
-                          growth: pd.DataFrame | None) -> CarteiraCalculada:
-    """Reestima μ e Σ no universo JÁ filtrado pelo growth: são esses momentos que a tela mostra."""
+def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float) -> CarteiraCalculada:
+    """Reestima μ e Σ nas ações compráveis: são esses momentos que a tela mostra."""
     with st.spinner("Reamostrando: 100 carteiras Kelly..."):
-        reamostrada = servicos.otimizar_reamostrado(
-            retornos, entradas.params, rf_aritmetica, entradas.shrink_mu,
-            None if growth is None else growth["score"], entradas.peso_tilt)
+        reamostrada = servicos.otimizar_reamostrado(retornos, entradas.params, rf_aritmetica, entradas.shrink_mu)
     return CarteiraCalculada(reamostrada.resultado, reamostrada.mu, reamostrada.cov,
                              reamostrada.intensidade_shrinkage, reamostrada.frequencia)
 
@@ -335,7 +305,7 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[st
                    selic: float) -> None:
     """``precos``: download de janela + teste anos, só do walk-forward; ``acoes_hoje``: universo da carteira de hoje."""
     st.markdown("---")
-    st.markdown("## Walk-forward fora da amostra (universo pré-filtro, líquido de custos)")
+    st.markdown("## Walk-forward fora da amostra (líquido de custos)")
     colunas = [t for t in entradas.tickers_acoes if t in precos.columns]
     anos_historico = entradas.anos + entradas.anos_teste
     if len(colunas) < 2:          # sem ações, o 1/N divide por zero; com uma só, não há carteira a comparar

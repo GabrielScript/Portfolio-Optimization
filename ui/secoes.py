@@ -85,8 +85,7 @@ COLUNAS_PLANO = {
 }
 
 
-def tabela_carteira(plano: PlanoCompra, cotacoes: pd.DataFrame, info: dict,
-                    growth: pd.DataFrame | None, hoje: date) -> None:
+def tabela_carteira(plano: PlanoCompra, cotacoes: pd.DataFrame, info: dict, hoje: date) -> None:
     linhas = []
     for ticker, item in plano.itens.sort_values("peso_alvo", ascending=False).iterrows():
         dados = info.get(ticker, {})
@@ -97,9 +96,6 @@ def tabela_carteira(plano: PlanoCompra, cotacoes: pd.DataFrame, info: dict,
                  "Qtd.": int(item["quantidade"]), "Lote padrão": int(item["lote_padrao"]),
                  "Fracionário": int(item["fracionario"]), "Valor (R$)": item["valor"],
                  "Peso efetivo": item["peso_efetivo"]}
-        if growth is not None and ticker in growth.index:
-            linha["Growth Score"] = f"{growth.loc[ticker, 'score']:.0f}"
-            linha["Queima de caixa"] = "sim" if growth.loc[ticker, "queima_caixa"] else "—"
         linhas.append(linha)
     st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True, column_config=COLUNAS_PLANO,
                  alt="Carteira de hoje: peso alvo, cotação e quantidade de ações a comprar")
@@ -259,9 +255,6 @@ LIMITACOES = """
 - **Walk-forward fora da amostra.** Cada rebalanceamento trimestral usa só a janela de estimação anterior,
   a mesma da carteira de hoje. Ações com histórico menor que janela + teste ficam fora dele.
   A taxa livre de risco é o CDI vigente na data. Todas as estratégias usam as mesmas datas e custos.
-- **O filtro e o tilt growth NÃO entram no backtest.** Eles usam fundamentos e momentum de HOJE. Filtrar
-  o universo com eles e testar no mesmo período seleciona os vencedores do período (look-ahead).
-  A curva OOS mede só a **alocação** sobre o universo pré-filtro.
 - **Viés de sobrevivência.** O universo é a lista atual de tickers. Empresas que quebraram ou
   fecharam capital não aparecem, o que favorece todas as estratégias.
 - **Custos.** O custo em bps é cobrado sobre o giro (compra e venda). **Imposto de renda não é modelado**

@@ -3,7 +3,7 @@ servicos.py - Fachada com cache entre a UI e o core.
 
 Regra de cache: TODO argumento que muda o resultado entra na chave. A versão
 anterior passava os preços como ``_precos``, e o Streamlit ignora argumentos
-com prefixo "_" no hash. Mudar o filtro growth alterava o universo, mas o
+com prefixo "_" no hash. Mudar o universo não mudava a chave, e o
 backtest antigo continuava sendo exibido. Aqui as funções recebem só tipos
 hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 """
@@ -12,7 +12,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import date
-from functools import partial
 
 import pandas as pd
 import streamlit as st
@@ -21,8 +20,6 @@ from core import market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
-from core.estimation import aplicar_tilt_growth
-from core.growth import calcular_growth_scores
 
 
 @dataclass(frozen=True)
@@ -86,22 +83,11 @@ def descartar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) 
     carregar_cotacoes.clear(tickers, precos_recentes)
 
 
-@st.cache_data(ttl=86400, show_spinner=False)
-def carregar_growth(tickers: tuple[str, ...], precos: pd.DataFrame, setores: tuple[tuple[str, str], ...],
-                    usar_cvm: bool, dia: date) -> pd.DataFrame:
-    return calcular_growth_scores(list(tickers), precos, dict(setores), usar_cvm=usar_cvm,
-                                  data_referencia=dia)
-
-
 @st.cache_data(show_spinner=False, max_entries=8)
 def otimizar_reamostrado(retornos: pd.DataFrame, params: ParametrosOtimizacao, taxa_livre_risco: float,
-                         shrink_mu: bool, scores_growth: pd.Series | None,
-                         peso_tilt: float) -> reamostragem.ResultadoReamostragem:
-    """Carteira de hoje reamostrada. O tilt growth é montado aqui porque uma função não entra na chave do cache."""
-    ajuste = (None if scores_growth is None
-              else partial(aplicar_tilt_growth, scores=scores_growth, peso_tilt=peso_tilt))
-    return reamostragem.otimizar_reamostrado(retornos, params.para_config(taxa_livre_risco),
-                                             shrink_mu=shrink_mu, ajustar_mu=ajuste)
+                         shrink_mu: bool) -> reamostragem.ResultadoReamostragem:
+    """Carteira de hoje reamostrada."""
+    return reamostragem.otimizar_reamostrado(retornos, params.para_config(taxa_livre_risco), shrink_mu=shrink_mu)
 
 
 @st.cache_data(show_spinner=False, max_entries=8)
@@ -109,7 +95,7 @@ def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg
                        cdi_diario: pd.Series, taxa_constante_aritmetica: float,
                        reamostrar: bool) -> dict[str, ResultadoBacktest]:
     """
-    Todas as estratégias no MESMO protocolo: mesmo universo (pré-filtro growth),
+    Todas as estratégias no MESMO protocolo: mesmo universo,
     mesmas janelas e mesmos custos (``cfg_bt``, o mesmo do benchmark). rf point-in-time pelo CDI.
 
     A PRIMEIRA estratégia do dicionário é a principal da tela (o app usa

@@ -38,11 +38,6 @@ def _cdi_sintetico(anos: int, dia: date) -> pd.Series:
     return pd.Series(0.0005, index=pd.bdate_range(end=pd.Timestamp(dia), periods=900))
 
 
-def _growth_sintetico(tickers, precos, setores, usar_cvm, dia) -> pd.DataFrame:
-    scores = np.linspace(20, 90, len(tickers))
-    return pd.DataFrame({"score": scores, "queima_caixa": False}, index=list(tickers))
-
-
 def _cotacoes_sinteticas(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
     """Último fechamento como 'negócio do dia', sem rede."""
     ultimos = precos_recentes.ffill().iloc[-1]
@@ -56,7 +51,6 @@ def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
-    monkeypatch.setattr(servicos, "carregar_growth", _growth_sintetico)
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
@@ -141,6 +135,16 @@ def test_app_nao_mostra_nada_de_cripto(app):
     rotulos = [w.label for w in app.sidebar.checkbox] + [w.label for w in app.sidebar.slider]
     textos = rotulos + [m.value for m in app.markdown] + [c.value for c in app.caption]
     assert not [t for t in textos if "cripto" in t.lower() or "btc" in t.lower()]
+
+
+def test_app_nao_mostra_nada_do_growth(app):
+    # A carteira de hoje é a mesma que o walk-forward testa: sem filtro nem tilt por fundamentos de hoje.
+    rotulos = [w.label for w in app.sidebar.checkbox] + [w.label for w in app.sidebar.slider]
+    textos = (rotulos + [m.value for m in app.markdown] + [c.value for c in app.caption]
+              + [i.value for i in app.info] + [e.label for e in app.expander])
+    assert not [t for t in textos if "growth" in t.lower()]
+    assert not {"Percentil mínimo", "Tilt (× vol)", "Receita 10 anos via CVM (lento)"} & set(rotulos)
+    assert not {"Growth Score", "Queima de caixa"} & set(_plano_de_compra(app).columns)
 
 
 def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app):

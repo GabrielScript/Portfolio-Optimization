@@ -1,6 +1,7 @@
 # Roteiro do Otimizador B3: do protótipo a uma carteira realista e competitiva
 
-_Atualizado em 2026-10-15. Produção: `main` = `8b6551b` (https://portfolio-optimization-b3.streamlit.app/).
+_Atualizado em 2026-10-15 (depois do tiro 1 do teste das janelas). Produção: `main` = `8b6551b`
+(https://portfolio-optimization-b3.streamlit.app/).
 Branch de trabalho: `feat/teste-janelas`._
 
 ---
@@ -9,7 +10,7 @@ Branch de trabalho: `feat/teste-janelas`._
 
 | Parte | Situação |
 |---|---|
-| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (203 testes) |
+| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (230 testes) |
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
@@ -27,6 +28,7 @@ Branch de trabalho: `feat/teste-janelas`._
 
 Leitura: **empate estatístico com o índice** (erro do Sharpe ≈ ±0,5 num período só), com queda menor.
 Vantagem de retorno **não comprovada** (t do alfa = 1,25). Os números ainda usam dados do Yahoo.
+Teste das janelas, tiro 1 (outro protocolo, 7,6 anos): ver §4.2.
 
 ---
 
@@ -83,21 +85,46 @@ flowchart TD
 - [x] Teto por setor (padrão 30%) na carteira, no plano de compra e no walk-forward
 - [x] Walk-forward treina na mesma janela da carteira de hoje; BOVA11 começa na mesma data (`8b6551b`)
 
-### 4.2 Em andamento: teste pré-registrado das janelas (branch `feat/teste-janelas`)
+### 4.2 Teste pré-registrado das janelas (branch `feat/teste-janelas`): tiro 1 feito, tiro 2 depois do S1-P
 
 - [x] `pesos_ewma` e `covariancia_ewma` (EWMA com encolhimento Ledoit-Wolf), com TDD
 - [x] `estimar_momentos(..., meia_vida_cov=...)`: Σ EWMA também alimenta o Jorion
 - [x] `com_janela(estrategia, pregoes)`: janelas diferentes nas mesmas datas e no mesmo universo
-- [ ] `estrategia_otimizada(..., meia_vida_cov=...)`
-- [ ] `scripts/avaliar_janelas.py` com a regra de decisão `decidir` testada
-- [ ] Revisão adversarial do pré-registro (workflow de revisão em curso) e ajustes aprovados
-- [ ] Gravar o pré-registro (contagem do universo de 13 anos inclusa) no `session_state.md` e no script **antes de rodar**
-- [ ] Tiro 1 (dados Yahoo) e relatório
-- [ ] Tiro 2 depois do S1-P
+- [x] `estrategia_otimizada(..., meia_vida_cov=...)`
+- [x] `scripts/avaliar_janelas.py` com a regra de decisão `decidir` testada (`4b6394e`)
+- [~] Revisão adversarial do pré-registro: parcial (só a sonda terminou; workflow parado por custo)
+- [x] Pré-registro no docstring do script, commitado **antes de rodar** (`7d5c6cb`)
+- [x] Tiro 1 (dados Yahoo), 2026-10-15: saída completa em `docs/janelas-tiro1-2026-10-15.txt`
+- [ ] Tiro 2 depois do S1-P (mesmo script, sem mudar nada)
 
 Candidatas: R5 (controle, padrão atual), R3, R2 e EWMA (Σ com meia-vida de 6 meses e μ de 5 anos). Troca só se
 P[candidata > R5] ≥ 0,983 (Bonferroni), drawdown não piorar mais de 5 p.p. e giro ≤ 2× nos **dois** tiros.
-Expectativa honesta: o mais provável é "inconclusivo, fica 5 anos".
+Expectativa registrada antes: "inconclusivo, fica 5 anos". **Errou** (ver abaixo).
+
+**Tiro 1** (52 ações, fora da amostra de 19/02/2019 a 15/10/2026, 1.906 pregões, 10 bps por lado):
+
+| | R5 (controle) | R3 | R2 | EWMA | 1/N | BOVA11 |
+|---|---|---|---|---|---|---|
+| CAGR | 18,5% | 28,9% | 33,0% | 25,0% | 14,8% | 10,7% |
+| Sharpe | 0,43 | 0,74 | 0,85 | 0,61 | 0,31 | 0,16 |
+| Drawdown máximo | −45,0% | −52,3% | −52,4% | −49,4% | −48,8% | −46,9% |
+| Giro anual | 177% | 207% | 232% | 205% | 63% | 13% |
+| P[> R5] | — | 0,982 | 0,994 | 0,991 | 0,274 | 0,085 |
+
+Veredito pré-registrado: **EWMA passou nos 3 critérios** (C1 0,991 ≥ 0,9833; drawdown 4,4 p.p. pior, limite 5;
+giro 1,16×). R2 passou no C1 e caiu no C2 (7,4 p.p. pior). R3 caiu no C1 (0,982, por 0,001) e no C2.
+Margens da EWMA são estreitas (0,6 p.p. no C2). **O app não muda**: só troca se a EWMA passar também no tiro 2.
+
+Leitura (hipóteses, não conclusões):
+- A expectativa errou porque usou o erro do Sharpe (±0,4) como régua; a decisão usa o PSR da série diferença, que
+  cancela o ruído comum de estratégias muito correlacionadas e tem mais poder.
+- O Sharpe cresce com a "recência" (R2 > R3 > EWMA > R5). Mecanismo plausível: o universo é a lista líquida de
+  hoje, escolhida pelo tamanho no fim do período; μ de janela curta reage mais rápido aos vencedores que essa
+  escolha favorece. É exatamente o que o tiro 2 (com deslistadas) separa.
+- Os saltos suspeitos do Yahoo (PCAR3 +112% em 01/03/2021 etc.) ficaram como estavam; uma posição de 10–20% num
+  salto falso move a carteira 11–22% num dia só. Não dá para saber, pela saída salva, quem segurava esses papéis.
+- R5 contra o BOVA11 aqui (18,5% × 10,7%) não contradiz o §1 (20,0% × 21,3%): outro protocolo (7,6 anos × 3; 52
+  ações × 57) e as estratégias rodam sobre sobreviventes, o BOVA11 não. Mesmo assim P[R5 > BOVA11] ≈ 0,915 < 0,95.
 
 ### 4.3 Imediato (depois do merge que já está em produção)
 

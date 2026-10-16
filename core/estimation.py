@@ -60,6 +60,33 @@ def covariancia_ledoit_wolf(retornos_diarios: pd.DataFrame) -> pd.DataFrame:
                         columns=retornos_diarios.columns)
 
 
+def pesos_ewma(n_obs: int, meia_vida: float) -> np.ndarray:
+    """Pesos exponenciais do mais antigo ao mais recente: dobram a cada ``meia_vida`` pregões; somam 1."""
+    if meia_vida <= 0:
+        raise ValueError(f"meia_vida deve ser > 0 pregões: {meia_vida}")
+    defasagens = np.arange(n_obs - 1, -1, -1, dtype=float)
+    pesos = 0.5 ** (defasagens / meia_vida)
+    return pesos / pesos.sum()
+
+
+def covariancia_ewma(retornos_diarios: pd.DataFrame, meia_vida: float) -> pd.DataFrame:
+    """
+    Covariância diária com pesos exponenciais (meia-vida em pregões) e encolhimento Ledoit-Wolf.
+
+    Reponderação: y_t = sqrt(T w_t) (x_t - m), com m = sum_t w_t x_t. Assim y'y / T é a
+    covariância ponderada, e o Ledoit-Wolf centrado a encolhe para a identidade escalada.
+    É heurística: a intensidade de Ledoit-Wolf supõe observações iid de mesmo peso. Com
+    pesos iguais, o resultado é a Ledoit-Wolf amostral.
+    """
+    valores = retornos_diarios.values
+    pesos = pesos_ewma(len(valores), meia_vida)
+    centrados = valores - pesos @ valores
+    reponderados = np.sqrt(len(valores) * pesos)[:, None] * centrados
+    modelo = LedoitWolf(assume_centered=True).fit(reponderados)
+    return pd.DataFrame(modelo.covariance_, index=retornos_diarios.columns,
+                        columns=retornos_diarios.columns)
+
+
 def shrinkage_jorion(media_diaria: np.ndarray, cov_diaria: np.ndarray,
                      n_obs: int) -> tuple[np.ndarray, float]:
     """
@@ -93,15 +120,21 @@ def shrinkage_jorion(media_diaria: np.ndarray, cov_diaria: np.ndarray,
     return (1.0 - intensidade) * media_diaria + intensidade * m0, intensidade
 
 
-def estimar_momentos(retornos_diarios: pd.DataFrame, shrink_mu: bool = True) -> Momentos:
-    """mu e Sigma anualizados a partir de retornos simples diários."""
+def estimar_momentos(retornos_diarios: pd.DataFrame, shrink_mu: bool = True,
+                     meia_vida_cov: float | None = None) -> Momentos:
+    """
+    mu e Sigma anualizados a partir de retornos simples diários. Com ``meia_vida_cov``
+    (pregões), Sigma é a ``covariancia_ewma``, e o Jorion usa esse mesmo Sigma; mu continua
+    a média simples da janela inteira.
+    """
     if retornos_diarios.isna().any().any():
         raise ValueError("retornos_diarios contém NaN; use retornos_simples() antes.")
     n_obs, n_ativos = retornos_diarios.shape
     if n_obs < 30:
         raise ValueError(f"Amostra curta demais: T={n_obs} pregões para N={n_ativos} ativos.")
 
-    cov_diaria = covariancia_ledoit_wolf(retornos_diarios)
+    cov_diaria = (covariancia_ledoit_wolf(retornos_diarios) if meia_vida_cov is None
+                  else covariancia_ewma(retornos_diarios, meia_vida_cov))
     media_diaria = retornos_diarios.mean().values
     intensidade = 0.0
     if shrink_mu:

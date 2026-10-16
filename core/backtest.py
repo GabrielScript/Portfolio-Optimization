@@ -155,13 +155,15 @@ def _cfg_com_rf_da_data(cfg: ConfigOtimizacao, rf_diaria: pd.Series | None,
 
 
 def estrategia_otimizada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,
-                         rf_diaria: pd.Series | None = None) -> Estrategia:
+                         rf_diaria: pd.Series | None = None,
+                         meia_vida_cov: float | None = None) -> Estrategia:
     """
     Estima momentos no treino e otimiza. Se ``rf_diaria`` (CDI) for dada, a taxa
     livre de risco é a vigente na data do rebalanceamento. Sem ela, usa a do cfg.
+    Com ``meia_vida_cov``, Sigma é a covariância EWMA (ver ``estimar_momentos``).
     """
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
-        momentos = estimar_momentos(treino, shrink_mu=shrink_mu)
+        momentos = estimar_momentos(treino, shrink_mu=shrink_mu, meia_vida_cov=meia_vida_cov)
         cfg = _cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1])
         return otimizar(momentos.mu, momentos.cov, cfg).pesos
     return _estrategia
@@ -174,6 +176,19 @@ def estrategia_reamostrada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
         cfg = _cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1])
         return otimizar_reamostrado(treino, cfg, shrink_mu=shrink_mu, config=config).resultado.pesos
+    return _estrategia
+
+
+def com_janela(estrategia: Estrategia, pregoes: int) -> Estrategia:
+    """
+    A mesma estratégia, estimada só nos últimos ``pregoes`` do treino. Com o walk-forward
+    configurado para a maior janela, estratégias de janelas diferentes decidem nas mesmas
+    datas e no mesmo universo.
+    """
+    def _estrategia(treino: pd.DataFrame) -> pd.Series:
+        if len(treino) < pregoes:
+            raise ValueError(f"Treino de {len(treino)} pregões para uma janela de {pregoes}.")
+        return estrategia(treino.iloc[-pregoes:])
     return _estrategia
 
 

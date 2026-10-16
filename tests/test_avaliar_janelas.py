@@ -1,12 +1,16 @@
+from datetime import date
+
 import numpy as np
 import pandas as pd
 import pytest
 
+from core import market_data
 from core.backtest import ResultadoBacktest
 from core.config import ConfigOtimizacao, Objetivo
 from core.estimation import estimar_momentos
 from core.optimization import otimizar
-from scripts.avaliar_janelas import Dados, Medidas, avaliar, decidir, estrategias, medir, rodar
+from scripts.avaliar_janelas import (Dados, Medidas, _imprimir, avaliar, cdi_ou_vazio, decidir, estrategias,
+                                     medir, montar_dados, rodar)
 
 CONTROLE = "R5"
 CFG = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.5, n_ativos_max=None, vol_maxima=None)
@@ -131,3 +135,39 @@ def test_decidir_entre_duas_aprovadas_escolhe_a_de_maior_sharpe():
                "R3": _medidas(sharpe=0.50, p_supera_controle=0.99),
                "EWMA": _medidas(sharpe=0.55, p_supera_controle=0.99)}
     assert decidir(medidas, controle=CONTROLE).escolhida == "EWMA"
+
+
+def _precos(colunas: list[str], dias: int = 6) -> pd.DataFrame:
+    gerador = np.random.default_rng(17)
+    valores = 100.0 * np.cumprod(1.0 + gerador.normal(0.0, 0.01, (dias, len(colunas))), axis=0)
+    return pd.DataFrame(valores, columns=colunas, index=pd.bdate_range("2026-10-01", periods=dias))
+
+
+def test_montar_dados_recusa_precos_sem_o_bova11():
+    with pytest.raises(market_data.ErroDadosMercado, match="BOVA11"):
+        montar_dados(_precos(["PETR4.SA", "VALE3.SA"]), cdi=pd.Series(dtype=float), selic=0.15)
+
+
+def test_montar_dados_separa_as_acoes_do_bova11_na_amostra_comum():
+    precos = _precos(["PETR4.SA", "BOVA11.SA", "VALE3.SA"])
+    precos.iloc[:2, 2] = np.nan                       # VALE3 começa no 3º pregão
+    dados = montar_dados(precos, cdi=pd.Series(dtype=float), selic=0.15)
+    assert dados.acoes == ["PETR4.SA", "VALE3.SA"]
+    assert dados.setores == {"PETR4.SA": "Petróleo, Gás e Biocombustíveis", "VALE3.SA": "Materiais Básicos"}
+    assert list(dados.retornos.columns) == ["PETR4.SA", "VALE3.SA", "BOVA11.SA"]
+    assert dados.retornos.index[0] == precos.index[3]   # 1º dia com os 3 preços hoje e na véspera
+    assert dados.retornos.notna().all().all()
+
+
+def test_cdi_fora_do_ar_vira_serie_vazia(monkeypatch):
+    def bcb_fora_do_ar(anos, hoje=None):
+        raise market_data.ErroDadosMercado("SGS 12: 503")
+    monkeypatch.setattr(market_data, "baixar_cdi_diario", bcb_fora_do_ar)
+    assert cdi_ou_vazio(date(2026, 10, 15)).empty
+
+
+def test_imprimir_mostra_os_3_criterios_de_cada_desafiante(dados_com_setor_dominante, capsys):
+    _imprimir(avaliar(dados_com_setor_dominante))
+    linhas = capsys.readouterr().out.splitlines()
+    for nome in ("R3", "R2", "EWMA"):
+        assert sum(linha.strip().startswith(f"{nome}: ") for linha in linhas) == 3, nome

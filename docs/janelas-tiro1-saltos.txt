@@ -1,0 +1,71 @@
+﻿Universo: 52 de 74 ações; amostra comum 24/01/2014 a 14/10/2026 (3165 pregões); Selic 13.75% (BCB SGS 432); CDI ok
+Descartados sem dados: []
+Descartados por cobertura: ['RAIZ4.SA', 'CBAV3.SA', 'VAMO3.SA', 'ASAI3.SA', 'RAIL3.SA', 'GMAT3.SA', 'CMIN3.SA', 'HAPV3.SA', 'VBBR3.SA', 'RDOR3.SA', 'BPAC11.SA', 'BRAV3.SA', 'SMFT3.SA', 'CEAB3.SA', 'SIMH3.SA', 'AURE3.SA', 'HBSA3.SA', 'VIVA3.SA', 'CXSE3.SA', 'GGPS3.SA', 'LWSA3.SA', 'MOVI3.SA']
+
+1. Reprodução do tiro 1 sem o último dia (15/10): MDD igual e giro TOTAL igual (= mesmos pesos)
+  R5         MDD -45.02% (tiro 1 -45.02%)  giro total 13.4131 (tiro 1 13.4131)  Sharpe 0.436 (tiro 1 0.432)  igual
+  R3         MDD -52.28% (tiro 1 -52.28%)  giro total 15.6369 (tiro 1 15.6368)  Sharpe 0.742 (tiro 1 0.738)  igual
+  R2         MDD -52.38% (tiro 1 -52.38%)  giro total 17.5635 (tiro 1 17.5632)  Sharpe 0.849 (tiro 1 0.846)  igual
+  EWMA       MDD -49.42% (tiro 1 -49.42%)  giro total 15.5150 (tiro 1 15.5150)  Sharpe 0.621 (tiro 1 0.614)  igual
+  1/N        MDD -48.75% (tiro 1 -48.75%)  giro total 4.7311 (tiro 1 4.7310)  Sharpe 0.317 (tiro 1 0.308)  igual
+  BOVA11.SA  MDD -46.93% (tiro 1 -46.93%)  giro total 1.0000 (tiro 1 0.9999)  Sharpe 0.168 (tiro 1 0.161)  igual
+
+2. Saltos |r| > 40% nos dados (8):
+  22/01/2015 PRIO3.SA  +42.0%
+  24/03/2016 PRIO3.SA  +83.7%
+  01/02/2017 PCAR3.SA  +139.1%
+  05/05/2017 PCAR3.SA  +77.5%
+  22/08/2017 AXIA3.SA  +49.3%
+  01/03/2021 PCAR3.SA  +112.3%
+  28/06/2021 UGPA3.SA  +119.3%
+  23/08/2023 PCAR3.SA  -66.6%
+
+3. Saltos fora da amostra (desde 19/02/2019): peso na abertura, contribuição, retorno do dia
+  01/03/2021 PCAR3.SA +112.3%
+    R5         peso   3.6%  contribuição  +4.07%  retorno do dia  +6.55%
+    R3         peso   0.0%  contribuição  +0.00%  retorno do dia  +1.86%
+    R2         peso   0.0%  contribuição  +0.00%  retorno do dia  +0.97%
+    EWMA       peso  14.4%  contribuição +16.20%  retorno do dia +18.44%
+    1/N        peso   2.3%  contribuição  +2.57%  retorno do dia  +2.27%
+    BOVA11.SA  peso   0.0%  contribuição  +0.00%  retorno do dia  +0.33%
+  28/06/2021 UGPA3.SA +119.3%
+    R5         peso   0.0%  contribuição  +0.00%  retorno do dia  -0.09%
+    R3         peso   0.0%  contribuição  +0.00%  retorno do dia  -0.19%
+    R2         peso   0.0%  contribuição  +0.00%  retorno do dia  +0.27%
+    EWMA       peso   0.0%  contribuição  +0.00%  retorno do dia  -0.36%
+    1/N        peso   1.8%  contribuição  +2.12%  retorno do dia  +2.22%
+    BOVA11.SA  peso   0.0%  contribuição  +0.00%  retorno do dia  -0.04%
+  23/08/2023 PCAR3.SA -66.6%
+    R5         peso   4.7%  contribuição  -3.11%  retorno do dia  -2.36%
+    R3         peso   6.1%  contribuição  -4.04%  retorno do dia  -2.83%
+    R2         peso   0.0%  contribuição  -0.00%  retorno do dia  +1.54%
+    EWMA       peso   0.0%  contribuição  -0.00%  retorno do dia  +0.72%
+    1/N        peso   2.1%  contribuição  -1.43%  retorno do dia  -0.66%
+    BOVA11.SA  peso   0.0%  contribuição  -0.00%  retorno do dia  +1.68%
+  (checagem: maior |reconstrução - motor| = 3.6e-16)
+
+4. Janela do drawdown máximo (pico -> fundo) e saltos dentro dela
+  R5         -45.02%  04/02/2020 -> 18/03/2020  saltos dentro: nenhum
+  R3         -52.28%  04/02/2020 -> 18/03/2020  saltos dentro: nenhum
+  R2         -52.38%  21/02/2020 -> 18/03/2020  saltos dentro: nenhum
+  EWMA       -49.42%  04/02/2020 -> 23/03/2020  saltos dentro: nenhum
+  1/N        -48.75%  23/01/2020 -> 23/03/2020  saltos dentro: nenhum
+  BOVA11.SA  -46.93%  23/01/2020 -> 23/03/2020  saltos dentro: nenhum
+
+5. Contaminação do treino: peso-alvo médio no papel (todos os rebalanceamentos | com o salto na janela do μ)
+   R5 e EWMA têm o MESMO μ (1.260 pregões): diferença entre elas aqui vem só do Σ.
+  22/01/2015 PRIO3.SA  +42%:  R5 16.0% |  9.4% ( 4)   R3 12.6% |  nan% ( 0)   R2  9.8% |  nan% ( 0)   EWMA 17.1% | 19.0% ( 4)
+  24/03/2016 PRIO3.SA  +84%:  R5 16.0% | 15.2% ( 9)   R3 12.6% | 20.0% ( 1)   R2  9.8% |  nan% ( 0)   EWMA 17.1% | 16.5% ( 9)
+  01/02/2017 PCAR3.SA  +139%:  R5  3.2% |  6.0% (12)   R3  3.3% |  6.6% ( 4)   R2  2.8% |  nan% ( 0)   EWMA  3.4% |  8.7% (12)
+  05/05/2017 PCAR3.SA  +78%:  R5  3.2% |  5.9% (13)   R3  3.3% |  5.3% ( 5)   R2  2.8% |  0.0% ( 1)   EWMA  3.4% |  8.0% (13)
+  22/08/2017 AXIA3.SA  +49%:  R5  2.1% |  4.4% (15)   R3  0.8% |  3.6% ( 7)   R2  0.9% |  9.2% ( 3)   EWMA  3.5% |  7.3% (15)
+  01/03/2021 PCAR3.SA  +112%:  R5  3.2% |  3.3% (20)   R3  3.3% |  6.4% (12)   R2  2.8% | 10.7% ( 8)   EWMA  3.4% |  1.4% (20)
+  28/06/2021 UGPA3.SA  +119%:  R5  0.4% |  0.6% (20)   R3  1.0% |  1.8% (12)   R2  1.3% |  2.8% ( 8)   EWMA  1.1% |  1.7% (20)
+  23/08/2023 PCAR3.SA  -67%:  R5  3.2% |  0.0% (13)   R3  3.3% |  0.0% (12)   R2  2.8% |  0.0% ( 8)   EWMA  3.4% |  0.0% (13)
+
+6. Sensibilidade (não decide): P[candidata > R5] sem os dias de salto fora da amostra
+  R3    P tiro 1 0.982 | até 14/10 0.982 -> sem os 3 dias 0.989  (soma da diferença nesses dias: -5.26%)
+  R2    P tiro 1 0.994 | até 14/10 0.994 -> sem os 3 dias 0.995  (soma da diferença nesses dias: -1.32%)
+  EWMA  P tiro 1 0.991 | até 14/10 0.992 -> sem os 3 dias 0.956  (soma da diferença nesses dias: +14.71%)
+  (1905 pregões fora da amostra, 7.6 anos)
+codigo de saida: 0

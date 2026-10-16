@@ -121,8 +121,36 @@ Leitura (hipóteses, não conclusões):
 - O Sharpe cresce com a "recência" (R2 > R3 > EWMA > R5). Mecanismo plausível: o universo é a lista líquida de
   hoje, escolhida pelo tamanho no fim do período; μ de janela curta reage mais rápido aos vencedores que essa
   escolha favorece. É exatamente o que o tiro 2 (com deslistadas) separa.
-- Os saltos suspeitos do Yahoo (PCAR3 +112% em 01/03/2021 etc.) ficaram como estavam; uma posição de 10–20% num
-  salto falso move a carteira 11–22% num dia só. Não dá para saber, pela saída salva, quem segurava esses papéis.
+- Os saltos suspeitos do Yahoo ficaram como estavam (regra do pré-registro). O diagnóstico abaixo mostra que a
+  aprovação da EWMA depende deles.
+
+**Diagnóstico dos saltos** (não muda o veredito; saída em `docs/janelas-tiro1-saltos.txt`). Mesma rodada do tiro 1
+com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo giro total, ou seja, mesmos pesos.
+
+| Dia (salto do Yahoo) | Peso R5 | Peso R3 | Peso R2 | Peso EWMA | Ganho/perda falso EWMA − R5 |
+|---|---|---|---|---|---|
+| 01/03/2021 PCAR3 +112% | 3,6% | 0% | 0% | **14,4%** | **+12,1 p.p.** |
+| 28/06/2021 UGPA3 +119% | 0% | 0% | 0% | 0% | 0 |
+| 23/08/2023 PCAR3 −67% | 4,7% | 6,1% | 0% | 0% | +3,1 p.p. |
+
+- **P[EWMA > R5] cai de 0,991 para 0,956 sem esses 3 dias**: abaixo de 0,9833, a EWMA não passaria no C1. A
+  aprovação do tiro 1 vem, em boa parte, de um único dia com preço errado. R2 (0,994 → 0,995) e R3 (0,982 → 0,989)
+  quase não mudam. Essa conta só tira o efeito direto (o dia inteiro); não desfaz o efeito pelo treino.
+- Os saltos também entram pelo treino: os dois saltos de PCAR3 em 2017 (+139%, +78%) inflam o μ por 5 anos; com eles
+  na janela, a EWMA põe 8–9% em PCAR3 (média geral 3,4%). Com o salto de 2021 na janela, a R2 chegou a 10,7% de
+  PCAR3 (média 2,8%): se isso ajudou ou atrapalhou a R2, esta saída não mostra.
+- **Mecanismo (hipótese para o tiro 2)**: a EWMA usa μ de 5 anos e Σ de meia-vida de 6 meses. O μ lembra um salto por
+  5 anos; o Σ esquece a variância dele em ~1 ano. O papel parece ter retorno alto e risco baixo, e a EWMA carrega. Com
+  dados corretos isso vale para saltos reais também (ex.: AXIA3 em 2017, se for real).
+- Nenhum salto cai dentro da janela do drawdown máximo (todas em fev–mar/2020): o C2 não depende deles.
+- Prováveis eventos societários (a conferir na sonda do S1-P): PCAR3 01/03/2021 = cisão do Assaí; PCAR3 23/08/2023 =
+  cisão do Éxito; AXIA3 22/08/2017 (+49%) pode ser real (anúncio da privatização da Eletrobras). UGPA3 28/06/2021,
+  PRIO3 (2015, 2016) e PCAR3 (2017) sem explicação ainda. **O S1-P precisa tratar cisões**, não só proventos e
+  desdobramentos.
+- O 15/10/2026 do tiro 1 provavelmente era o preço com o pregão aberto (o Yahoo reescreveu esse dia depois): no
+  tiro 2, passar a data de um pregão já fechado.
+- Tiro 2 com "o mesmo script": o S1-P deve entrar por trás de `market_data.carregar_precos` e da lista líquida
+  point-in-time; se precisar de outra porta de entrada, só a `carregar()` muda. Decidir isso no desenho do S1-P.
 - R5 contra o BOVA11 aqui (18,5% × 10,7%) não contradiz o §1 (20,0% × 21,3%): outro protocolo (7,6 anos × 3; 52
   ações × 57) e as estratégias rodam sobre sobreviventes, o BOVA11 não. Mesmo assim P[R5 > BOVA11] ≈ 0,915 < 0,95.
 

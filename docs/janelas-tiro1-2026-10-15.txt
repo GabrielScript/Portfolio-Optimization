@@ -1,0 +1,26 @@
+﻿Universo: 52 de 74 ações; amostra comum 24/01/2014 a 15/10/2026 (3166 pregões); Selic 13.75% (BCB SGS 432); CDI ok
+Descartados sem dados: []
+Descartados por cobertura: ['RAIZ4.SA', 'CBAV3.SA', 'VAMO3.SA', 'ASAI3.SA', 'RAIL3.SA', 'GMAT3.SA', 'CMIN3.SA', 'HAPV3.SA', 'VBBR3.SA', 'RDOR3.SA', 'BPAC11.SA', 'BRAV3.SA', 'SMFT3.SA', 'CEAB3.SA', 'SIMH3.SA', 'AURE3.SA', 'HBSA3.SA', 'VIVA3.SA', 'CXSE3.SA', 'GGPS3.SA', 'LWSA3.SA', 'MOVI3.SA']
+
+Walk-forward fora da amostra, 18/02/2019 a 15/10/2026 (1906 pregões), 10 bps por lado
+          Retorno total    CAGR     Vol Sharpe Sortino      MDD CVaR95 diário Giro anual    PSR    DSR P[> R5]  Falhas
+R5              260.36%  18.47%  25.62%  0.432   0.593  -45.02%         3.58%    177.34%  0.879  0.746     nan       0
+R3              582.20%  28.90%  26.94%  0.738   1.012  -52.28%         3.76%    206.74%  0.974  0.927   0.982       0
+R2              764.57%  33.00%  27.35%  0.846   1.160  -52.38%         3.85%    232.21%  0.987  0.958   0.994       0
+EWMA            441.46%  25.02%  27.63%  0.614   0.878  -49.42%         3.68%    205.13%  0.953  0.878   0.991       0
+1/N             183.02%  14.75%  25.39%  0.308   0.420  -48.75%         3.59%     62.55%  0.799    nan   0.274       0
+BOVA11.SA       116.38%  10.74%  23.56%  0.161   0.220  -46.93%         3.37%     13.22%  0.670    nan   0.085       0
+
+Veredito pré-registrado (controle R5)
+  R3: NÃO PASSOU  C1 P[supera R5] >= 0.9833
+  R3: NÃO PASSOU  C2 drawdown no máximo 5% pior
+  R3: PASSOU      C3 giro <= 2x
+  R2: PASSOU      C1 P[supera R5] >= 0.9833
+  R2: NÃO PASSOU  C2 drawdown no máximo 5% pior
+  R2: PASSOU      C3 giro <= 2x
+  EWMA: PASSOU      C1 P[supera R5] >= 0.9833
+  EWMA: PASSOU      C2 drawdown no máximo 5% pior
+  EWMA: PASSOU      C3 giro <= 2x
+
+EWMA passou neste tiro; a janela do app só muda se passar também no tiro 2. (tempo total 32 s)
+codigo de saida: 0

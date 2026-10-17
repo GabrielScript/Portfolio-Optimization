@@ -3,9 +3,50 @@ import pandas as pd
 import pytest
 
 from core.config import taxa_anual_para_aritmetica
-from core.estimation import aplicar_tilt_growth, estimar_momentos, retornos_simples, shrinkage_jorion
+from core.estimation import (aplicar_tilt_growth, covariancia_ewma, covariancia_ledoit_wolf, estimar_momentos,
+                             pesos_ewma, retornos_simples, shrinkage_jorion)
 from core.hierarchical import otimizar_hrp, otimizar_hrp_arvore
 from core import metrics
+
+
+def test_pesos_ewma_dobram_a_cada_meia_vida_rumo_ao_presente_e_somam_um():
+    # meia-vida de 1 pregão: pesos crus 1/4, 1/2, 1 (do mais antigo ao mais recente), soma 7/4
+    assert pesos_ewma(3, meia_vida=1) == pytest.approx([1 / 7, 2 / 7, 4 / 7])
+
+
+@pytest.mark.parametrize("meia_vida", [0, -21])
+def test_pesos_ewma_rejeitam_meia_vida_nao_positiva(meia_vida):
+    with pytest.raises(ValueError, match="meia_vida"):
+        pesos_ewma(3, meia_vida=meia_vida)
+
+
+def test_covariancia_ewma_com_meia_vida_infinita_iguala_ledoit_wolf(retornos_sinteticos):
+    """Pesos iguais: a EWMA encolhida tem que ser a Ledoit-Wolf amostral (mesmo centro, mesma escala)."""
+    ewma = covariancia_ewma(retornos_sinteticos, meia_vida=1e12)
+    amostral = covariancia_ledoit_wolf(retornos_sinteticos)
+    np.testing.assert_allclose(ewma.values, amostral.values, rtol=1e-6)
+    assert list(ewma.index) == list(ewma.columns) == list(retornos_sinteticos.columns)
+
+
+def test_covariancia_ewma_pesa_mais_o_regime_recente():
+    """
+    950 pregões com vol 1% e os 50 últimos com 3%. Meia-vida 21: os 50 últimos levam
+    1 - 0,5^(50/21) ~ 81% do peso, variância esperada ~7,5e-4; na amostral, ~1,4e-4.
+    """
+    gerador = np.random.default_rng(7)
+    vols = np.r_[np.full(950, 0.01), np.full(50, 0.03)]
+    retornos = pd.DataFrame(gerador.standard_normal((1000, 3)) * vols[:, None], columns=["a", "b", "c"])
+    variancia_ewma = np.diag(covariancia_ewma(retornos, meia_vida=21).values)
+    variancia_amostral = np.diag(covariancia_ledoit_wolf(retornos).values)
+    assert (variancia_ewma > 3 * variancia_amostral).all()
+
+
+def test_estimar_momentos_com_meia_vida_usa_a_ewma_no_sigma_e_no_jorion(retornos_sinteticos):
+    momentos = estimar_momentos(retornos_sinteticos, shrink_mu=True, meia_vida_cov=63)
+    cov_diaria = covariancia_ewma(retornos_sinteticos, meia_vida=63).values
+    _, intensidade = shrinkage_jorion(retornos_sinteticos.mean().values, cov_diaria, len(retornos_sinteticos))
+    np.testing.assert_allclose(momentos.cov.values, cov_diaria * 252)
+    assert momentos.intensidade_shrinkage == pytest.approx(intensidade)
 
 
 def test_jorion_invariante_a_anualizacao(retornos_sinteticos):

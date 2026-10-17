@@ -3,10 +3,11 @@ import pandas as pd
 import pytest
 
 from core import reamostragem
-from core.backtest import (backtest_pesos_fixos, estrategia_equiponderada, estrategia_hrp,
+from core.backtest import (backtest_pesos_fixos, com_janela, estrategia_equiponderada, estrategia_hrp,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
-from core.optimization import ErroOtimizacao
+from core.estimation import estimar_momentos
+from core.optimization import ErroOtimizacao, otimizar
 from core.reamostragem import ConfigReamostragem
 
 CFG_BT = ConfigBacktest(janela_treino=252, janela_teste=63, capital_inicial=1000.0, custo_bps=0.0)
@@ -100,6 +101,33 @@ def test_reamostrada_com_bootstrap_identidade_iguala_a_otimizada_com_rf_da_data(
         estrategia_reamostrada(cfg, True, rf_alta, ConfigReamostragem(n_reamostras=2)), CFG_BT, "r")
     np.testing.assert_allclose(reamostrada.pesos_alvo.values, otimizada.pesos_alvo.values, atol=1e-4)
     assert not reamostrada.falhas
+
+
+def test_com_janela_entrega_so_os_ultimos_pregoes_e_devolve_os_pesos_da_estrategia(retornos_sinteticos):
+    recebidos = []
+    pesos_da_estrategia = pd.Series(1.0 / 6, index=retornos_sinteticos.columns)
+
+    def espia(treino):
+        recebidos.append(treino)
+        return pesos_da_estrategia
+
+    pesos = com_janela(espia, pregoes=100)(retornos_sinteticos.iloc[:300])
+    assert recebidos[0].index.equals(retornos_sinteticos.index[200:300])
+    assert pesos is pesos_da_estrategia
+
+
+def test_estrategia_otimizada_com_meia_vida_otimiza_com_a_sigma_ewma(retornos_sinteticos):
+    treino = retornos_sinteticos.iloc[:500]
+    pesos = estrategia_otimizada(CFG_OPT, shrink_mu=True, meia_vida_cov=63)(treino)
+    momentos = estimar_momentos(treino, shrink_mu=True, meia_vida_cov=63)
+    pd.testing.assert_series_equal(pesos, otimizar(momentos.mu, momentos.cov, CFG_OPT).pesos)
+    assert not np.allclose(pesos.values, estrategia_otimizada(CFG_OPT, shrink_mu=True)(treino).values,
+                           atol=1e-3)
+
+
+def test_com_janela_rejeita_treino_mais_curto_que_a_janela(retornos_sinteticos):
+    with pytest.raises(ValueError, match="100"):
+        com_janela(estrategia_equiponderada(), pregoes=100)(retornos_sinteticos.iloc[:99])
 
 
 def test_historico_curto_rejeitado(retornos_sinteticos):

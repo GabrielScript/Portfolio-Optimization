@@ -62,6 +62,11 @@ mesmas condições.
 - **Preços:** Yahoo Finance (`yfinance`), alinhados ao calendário da B3, com exigência de cobertura ≥ 95%.
 - **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1, só para o painel macro),
   baixados em janelas de até 10 anos, com nova tentativa em falhas transitórias.
+- **Lago de dados da B3 (projeto irmão `b3-datalake`, ainda não ligado ao app):** exports em parquet gerados
+  a partir do COTAHIST oficial (1986–hoje) e dos eventos da B3 e da CVM: retorno total ajustado
+  desde 07/1994 de 4.043 papéis, **incluindo deslistados e em recuperação judicial**, painel mensal de
+  liquidez/volatilidade/microestrutura e índices próprios. Vai substituir o Yahoo (preços e proventos) e remover o
+  viés de sobrevivência quando for integrado; hoje o app ainda usa o Yahoo.
 - **Em desenvolvimento (só no `core/`, ainda sem tela):** painel macro mensal para cenários — Focus
   (expectativas do BCB), curva prefixada do Tesouro Direto e fatores de surpresa macro.
 
@@ -106,7 +111,11 @@ Portfolio-Optimization/
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
-│   └── avaliar_reamostragem.py   # Avaliação pré-registrada da reamostragem (usa rede, ~30 min)
+│   ├── avaliar_reamostragem.py   # Avaliação pré-registrada da reamostragem (usa rede, ~30 min)
+│   └── avaliar_janelas.py        # Teste pré-registrado das janelas de estimação (usa rede)
+├── docs/
+│   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
+│   └── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
 └── requirements.txt
 ```
@@ -158,15 +167,26 @@ Portfolio-Optimization/
 ## ⚠️ Limitações
 
 - **Viés de sobrevivência.** O universo é a lista atual de tickers; empresas que quebraram ou fecharam
-  capital não aparecem, o que favorece todas as estratégias.
-- **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês).
+  capital não aparecem, o que favorece todas as estratégias. Os dados para corrigir isso já existem no
+  lago de dados da B3 (`b3-datalake`), mas ainda não alimentam o app.
+- **Preços e proventos do Yahoo têm erros conhecidos** (cisões, JCP bruto): comparado ao COTAHIST, o Yahoo
+  registrou +112% num dia em que o retorno total real foi +14,1% (cisão do Assaí). Resultados do walk-forward
+  herdam esses erros até a integração do lago.
+- **Sem vantagem comprovada sobre o BOVA11.** A última medição fora da amostra deu empate estatístico; use o
+  BOVA11 como núcleo e o otimizador, no máximo, como satélite pequeno.
+- **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo
+  também usa o JCP bruto; o lago da B3 já desconta o IR retido na fonte (15% até 2025 e 17,5% desde
+  01/01/2026, LC 224/2025).
 - **Janelas curtas.** Com 3–5 anos de histórico, alfas e diferenças de Sharpe raramente são
   estatisticamente significativos; o app mostra a estatística t para lembrar disso.
+
+O que falta e em que ordem: [`docs/ROTEIRO.md`](docs/ROTEIRO.md).
+
 ---
 
 ## 📝 Isenção de Responsabilidade (Disclaimer)
 
-Esta ferramenta foi desenvolvida para fins **educacionais**.
+Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o BOVA11 até o fim da validação em paper trading.
 
 > ⚠️ **Não representa recomendação de investimento.** As decisões financeiras devem ser tomadas com base em análise própria ou orientação profissional. Retornos passados não garantem retornos futuros.
 

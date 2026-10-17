@@ -1,8 +1,8 @@
 # Roteiro do Otimizador B3: do protótipo a uma carteira realista e competitiva
 
-_Atualizado em 2026-10-15 (depois do tiro 1 do teste das janelas). Produção: `main` = `8b6551b`
+_Atualizado em 2026-10-16 (lago de dados da B3 pronto; teste das janelas na `main`). Produção: `main` = `f12ed03`
 (https://portfolio-optimization-b3.streamlit.app/).
-Branch de trabalho: `feat/teste-janelas`._
+Branch de trabalho: `feat/s1p-precos`._
 
 ---
 
@@ -10,12 +10,12 @@ Branch de trabalho: `feat/teste-janelas`._
 
 | Parte | Situação |
 |---|---|
-| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (230 testes) |
+| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (231 testes) |
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
-| Dados de preço | **Yahoo: sem ações deslistadas (viés de sobrevivência), proventos com erro, JCP bruto** |
-| Growth Score (indicadores contábeis) | **Não testado, usa dados de hoje e vem LIGADO por padrão** |
+| Dados de preço | **Yahoo: sem ações deslistadas (viés de sobrevivência), proventos com erro, JCP bruto.** O lago de dados da B3 já tem o retorno total corrigido de 4.043 papéis desde 07/1994, deslistados incluídos, mas ainda não alimenta o app (S1-P.a) |
+| Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
 | Execução (custo por liquidez, IR, carteira existente) | Não modelada |
 
 **Último resultado fora da amostra** (treino de 5 anos, teste de 3 anos, 11/2023 a 10/2026, teto de 30% por setor):
@@ -30,6 +30,10 @@ Leitura: **empate estatístico com o índice** (erro do Sharpe ≈ ±0,5 num per
 Vantagem de retorno **não comprovada** (t do alfa = 1,25). Os números ainda usam dados do Yahoo.
 Teste das janelas, tiro 1 (outro protocolo, 7,6 anos): ver §4.2.
 
+**Kelly × outros objetivos** (2026-10-16, mesmos dados do Yahoo): o Kelly fica como opção, **não como objetivo
+principal**. Em 10 anos a Mín. Variância teve Sharpe parecido com metade do drawdown (−29% × −55%); o Kelly venceu
+em 5 anos. O rótulo "recomendado" do Kelly só muda depois do teste núcleo + satélite (§7).
+
 ---
 
 ## 2. Critério de "pronto" (fixado antes, não muda depois de ver resultado)
@@ -41,7 +45,7 @@ O otimizador só pode receber mais dinheiro quando tiver as três coisas abaixo:
 3. confirmado por **6 a 12 meses de paper trading** registrado (S5).
 
 Até lá, a regra para dinheiro real: **BOVA11 no núcleo, otimizador como satélite pequeno**, só dinheiro de 5 anos
-ou mais, Growth desligado, rebalanceio trimestral.
+ou mais, rebalanceio trimestral.
 
 ---
 
@@ -49,22 +53,24 @@ ou mais, Growth desligado, rebalanceio trimestral.
 
 ```mermaid
 flowchart TD
-    A["Produção 8b6551b<br/>teto por setor + walk-forward alinhado"] --> B["Reboot + conferência ao vivo"]
-    B --> G0["Decidir: Growth desligado por padrão?"]
-    B --> C["Teste das janelas, tiro 1<br/>(dados Yahoo)"]
-    C --> D["S1-P: dados honestos de preço"]
+    A["Produção f12ed03<br/>teste das janelas na main"] --> L["Lago de dados da B3 pronto<br/>(COTAHIST + eventos B3/CVM)"]
+    L --> R["Triagem dos resíduos do ajuste<br/>no universo ponto no tempo"]
+    R --> D["S1-P.a: retorno total do lago no app<br/>+ rotina de atualização"]
     D --> E["Teste das janelas, tiro 2<br/>(mesmo script, mesmos limites)"]
     E --> F{"Passou nos 2 tiros?"}
     F -- sim --> F1["Nova janela vira padrão"]
     F -- não --> F2["Fica 5 anos"]
-    F1 --> BL["Black-Litterman sem views<br/>(alvo do Jorion = mercado)"]
-    F2 --> BL
+    F1 --> PB["S1-P.b: universo ponto no tempo<br/>com deslistadas (teste novo)"]
+    F2 --> PB
+    PB --> S5["S5: paper trading 6–12 meses<br/>(início a decidir, §7)"]
+    PB --> CAP["Contagem histórica de ações<br/>(valor de mercado e giro)"]
+    CAP --> BL["Black-Litterman sem views<br/>(alvo do Jorion = mercado)"]
     BL --> S1F["S1-F: fundamentos CVM point-in-time"]
     S1F --> S2["S2: laboratório de sinais"]
     S2 --> S3["S3: Black-Litterman com views"]
     S3 --> S4["S4: execução realista + IR + carteira existente<br/>+ fração Kelly ações × CDI"]
-    S4 --> S5["S5: paper trading 6–12 meses"]
-    S5 --> OK{"Alfa líquido fora da amostra<br/>com PSR ≥ 0,95?"}
+    S4 --> OK{"Alfa líquido fora da amostra<br/>com PSR ≥ 0,95?"}
+    S5 --> OK
     OK -- sim --> SAT["Satélite pode crescer"]
     OK -- não --> NUC["Fica no núcleo BOVA11"]
 ```
@@ -84,8 +90,14 @@ flowchart TD
 - [x] Plano de compra: quantidade de ações com cotação do dia; sobra de caixa ≤ 0,8% de R$ 300 a R$ 50 mil
 - [x] Teto por setor (padrão 30%) na carteira, no plano de compra e no walk-forward
 - [x] Walk-forward treina na mesma janela da carteira de hoje; BOVA11 começa na mesma data (`8b6551b`)
+- [x] Growth Score fora da tela (`55fb9b5`); Reboot e conferência ao vivo feitos
+- [x] Teste das janelas (código, pré-registro e tiro 1) na `main` (`f12ed03`)
+- [x] Lago de dados da B3 (projeto `b3-datalake`, fora deste repositório): COTAHIST 1986–hoje, eventos da B3 +
+      flags do COTAHIST + CVM FRE, retorno total com JCP líquido, 4.043 papéis com deslistados e em recuperação
+      judicial
+- [x] Teste Kelly × outros objetivos: Kelly fica como opção, não como principal (§1)
 
-### 4.2 Teste pré-registrado das janelas (branch `feat/teste-janelas`): tiro 1 feito, tiro 2 depois do S1-P
+### 4.2 Teste pré-registrado das janelas (na `main`): tiro 1 feito, tiro 2 depois do S1-P.a
 
 - [x] `pesos_ewma` e `covariancia_ewma` (EWMA com encolhimento Ledoit-Wolf), com TDD
 - [x] `estimar_momentos(..., meia_vida_cov=...)`: Σ EWMA também alimenta o Jorion
@@ -95,7 +107,8 @@ flowchart TD
 - [~] Revisão adversarial do pré-registro: parcial (só a sonda terminou; workflow parado por custo)
 - [x] Pré-registro no docstring do script, commitado **antes de rodar** (`7d5c6cb`)
 - [x] Tiro 1 (dados Yahoo), 2026-10-15: saída completa em `docs/janelas-tiro1-2026-10-15.txt`
-- [ ] Tiro 2 depois do S1-P (mesmo script, sem mudar nada)
+- [ ] Tiro 2 depois do S1-P.a (mesmo script, sem mudar nada, data de um pregão já fechado). Mede só a correção
+      de preços nas sobreviventes: o viés de sobrevivência fica para o teste novo do S1-P.b
 
 Candidatas: R5 (controle, padrão atual), R3, R2 e EWMA (Σ com meia-vida de 6 meses e μ de 5 anos). Troca só se
 P[candidata > R5] ≥ 0,983 (Bonferroni), drawdown não piorar mais de 5 p.p. e giro ≤ 2× nos **dois** tiros.
@@ -149,31 +162,33 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
   desdobramentos.
 - O 15/10/2026 do tiro 1 provavelmente era o preço com o pregão aberto (o Yahoo reescreveu esse dia depois): no
   tiro 2, passar a data de um pregão já fechado.
-- Tiro 2 com "o mesmo script": o S1-P deve entrar por trás de `market_data.carregar_precos` e da lista líquida
-  point-in-time; se precisar de outra porta de entrada, só a `carregar()` muda. Decidir isso no desenho do S1-P.
+- Tiro 2 com "o mesmo script": o S1-P.a deve entrar por trás de `market_data.carregar_precos`; se precisar de outra
+  porta de entrada, só a `carregar()` muda. Decidir isso no desenho do S1-P.a.
 - R5 contra o BOVA11 aqui (18,5% × 10,7%) não contradiz o §1 (20,0% × 21,3%): outro protocolo (7,6 anos × 3; 52
   ações × 57) e as estratégias rodam sobre sobreviventes, o BOVA11 não. Mesmo assim P[R5 > BOVA11] ≈ 0,915 < 0,95.
 
-### 4.3 Imediato (depois do merge que já está em produção)
+### 4.3 S1-P.a: preços corrigidos no app (a partir do lago da B3)
 
-- [ ] Streamlit Cloud: **Manage app → Reboot app**
-- [ ] Conferência ao vivo: nenhum setor > 30%; legenda do walk-forward ("fora da amostra desde ~11/2023", 57 ações);
-      erro "Carteira inviável" com um setor só; R$ 500 com sobra < 1%; aviso de CDI indisponível, se aparecer
-- [ ] Conferir a carteira **com e sem** "Filtro + tilt growth" (a testada pelo walk-forward é a sem Growth)
-- [ ] Decisão: Growth desligado por padrão até ser validado (tarefa pequena, separada)
+- [ ] Triagem dos resíduos do ajuste no universo ponto no tempo, com deslistadas (3.449 saltos sem explicação,
+      17 contradições com a CVM, 159 eventos da CVM sem correspondente com pregão na janela): medir o impacto antes
+      de corrigir; corrigir só o que pesa
+- [ ] Desenho aprovado (snapshot ou painel; quais arquivos entram no repositório; fonte mostrada na tela) → plano → TDD
+- [ ] Retorno total do lago (proventos oficiais, JCP líquido, cisões) por trás de `carregar_precos`
+- [ ] Rotina de atualização do lago (onde roda, de quanto em quanto tempo os dados novos vão para a `main`)
+- [ ] Tiro 2 do teste das janelas (§4.2)
 
-### 4.4 S1-P: dados honestos de preço (a base de tudo)
+### 4.4 S1-P.b: universo sem viés de sobrevivência (teste novo)
 
-- [ ] Retorno total com **proventos oficiais da B3** (JCP líquido de IR na fonte)
-- [ ] Universo **sem viés de sobrevivência**: COTAHIST (preço e volume de todos os tickers) + API B3 "listados" para
-      as deslistadas, depois de uma sonda de desdobramentos e bonificações
-- [ ] Liquidez **point-in-time** (o universo de cada data só com ações líquidas naquela data)
-- [ ] Decisão pendente: piso de liquidez de R$ 1 mi/dia **nominal** ou **corrigido pelo IPCA** (SGS 433)
-- [ ] Recalcular todas as linhas do walk-forward; publicar os números novos (devem cair: o viés some)
+- [ ] IPCA (SGS 433) para o piso de liquidez: **R$ 1 mi/dia corrigido pelo IPCA** (decidido); o lago ainda não tem IPCA
+- [ ] Universo ponto no tempo: em cada rebalanceio, só as ações líquidas naquela data (critério fixado no pré-registro)
+- [ ] Walk-forward com universo dinâmico: a deslistada sai no último fechamento
+- [ ] Pré-registro próprio contra o BOVA11; refazer o Kelly × objetivos e o teste núcleo + satélite sobre esses dados
+- [ ] Recalcular e publicar os números novos (devem cair: o viés some)
 
 ### 4.5 Black-Litterman sem views (aguarda decisão)
 
-- [ ] Alvo do Jorion = retorno de equilíbrio de mercado Π = δΣw_cap (w_cap pelo nº de ações da B3 × preço)
+- [ ] Contagem histórica de ações (CVM FRE) para valor de mercado e giro; chave pronta: CNPJ → código CVM → emissor da B3
+- [ ] Alvo do Jorion = retorno de equilíbrio de mercado Π = δΣw_cap (w_cap = nº de ações × preço, em cada data)
 - [ ] Avaliar com protocolo pré-registrado contra o padrão atual
 
 ### 4.6 S1-F: fundamentos point-in-time
@@ -205,6 +220,7 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 
 ### 4.10 S5: paper trading
 
+- [ ] Decidir quando o relógio começa (§7)
 - [ ] Carteira registrada a cada rebalanceio, com data e preço, sem ajuste retroativo
 - [ ] 6 a 12 meses; comparar com BOVA11 e CDI pelo critério da seção 2
 
@@ -214,10 +230,10 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 
 | Tema | Hoje | Realista (mínimo para usar) | Competitivo (padrão de gestora quant) |
 |---|---|---|---|
-| Dados de preço | Yahoo, só sobreviventes | Proventos B3 + deslistadas (S1-P) | Base point-in-time auditada, eventos corporativos conferidos |
+| Dados de preço | Yahoo, só sobreviventes (lago da B3 pronto, não ligado) | Lago da B3: proventos oficiais + deslistadas (S1-P.a/.b) | Base point-in-time auditada, eventos corporativos conferidos |
 | Retorno esperado (μ) | Média histórica | Shrinkage para o mercado (BL sem views) | Sinais validados fora da amostra (S2/S3) |
 | Covariância (Σ) | Ledoit-Wolf | LW ou EWMA, escolhida por teste | Modelo de fatores de risco (setor, estilo, macro) |
-| Indicadores contábeis | Growth Score não testado | Desligado até validar | Fatores de valor e qualidade point-in-time (S1-F/S2) |
+| Indicadores contábeis | Growth Score fora da tela | Desligado até validar | Fatores de valor e qualidade point-in-time (S1-F/S2) |
 | Custos | 10 bps fixos | Custo por liquidez + zona de não negociação | Modelo de impacto calibrado com execuções reais |
 | Impostos | Ignorados | IR 15% + isenção de R$ 20 mil/mês | Rebalanceio que otimiza o IR |
 | Validação | WF de um caminho, PSR/DSR | Pré-registro + dados honestos + 2 tiros | Vários períodos, CPCV, paper trading, auditoria |
@@ -234,10 +250,19 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 - O 1º carregamento faz dois downloads do Yahoo (janela e janela + teste).
 - Ação sem cotação: a reescala dos pesos pode levar um setor acima do teto no plano.
 - Cosmético: a legenda do walk-forward diz "ano(s)".
+- Limite de N ações junto com o teto por setor pode cair no caminho alternativo (fallback) da otimização.
+- O README e o rótulo do objetivo no app ainda chamam o Kelly de "recomendado" (conflita com o §1; muda depois do
+  teste núcleo + satélite).
+- Lago da B3: resíduos do ajuste ainda não medidos no universo do app; sem IPCA; debêntures quase não aparecem no
+  COTAHIST.
+- Depois de todo push na `main`: Reboot do app no Streamlit Cloud.
 
 ## 7. Decisões que dependem do usuário
 
-1. Growth desligado por padrão até validar? (recomendado: sim)
-2. Piso de liquidez do S1-P: nominal ou corrigido pelo IPCA?
-3. Black-Litterman sem views: avaliar como alvo do Jorion?
-4. Mostrar no app a fração Kelly ações × CDI (S4)?
+1. Rodar o teste pré-registrado núcleo + satélite (núcleo Mín. Variância ou BOVA11, satélite Kelly)?
+2. Quando começa o relógio do paper trading: logo depois do S1-P.a ou depois do S1-P.b (recomendado: S1-P.b, para
+   contar o tempo já na estratégia que vai ser usada)?
+3. Quais exports do lago entram no repositório (o painel mensal tem 17,8 MB)? Decidir no desenho do S1-P.a.
+4. Black-Litterman sem views: avaliar como alvo do Jorion?
+5. Mostrar no app a fração Kelly ações × CDI (S4)?
+6. Debêntures: ficam fora do escopo deste otimizador de ações (só entram se virarem um produto novo)?

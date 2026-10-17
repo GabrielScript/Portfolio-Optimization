@@ -129,7 +129,6 @@ def grafico_barras_alocacao(pesos: dict, orcamento: float, info_tickers: dict) -
     
     tickers = [t.replace('.SA', '') for t in pesos_ord.keys()]
     valores_pct = [v * 100 for v in pesos_ord.values()]
-    valores_reais = [v * orcamento for v in pesos_ord.values()]
     nomes = [info_tickers.get(t, {}).get('nome', t) for t in pesos_ord.keys()]
     
     n = len(tickers)

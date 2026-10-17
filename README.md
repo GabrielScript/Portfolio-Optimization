@@ -64,9 +64,10 @@ mesmas condições.
   baixados em janelas de até 10 anos, com nova tentativa em falhas transitórias.
 - **Lago de dados da B3 (projeto irmão `b3-datalake`, ainda não ligado ao app):** exports em parquet gerados
   a partir do COTAHIST oficial (1986–hoje) e dos eventos da B3 e da CVM: retorno total ajustado
-  desde 07/1994 de 4.043 papéis, **incluindo deslistados e em recuperação judicial**, painel mensal de
-  liquidez/volatilidade/microestrutura e índices próprios. Vai substituir o Yahoo (preços e proventos) e remover o
-  viés de sobrevivência quando for integrado; hoje o app ainda usa o Yahoo.
+  desde 07/1994 de 3.948 papéis, **incluindo deslistados e em recuperação judicial** (troca de ticker,
+  como ITAU4 → ITUB4, continua a mesma série), painel mensal de liquidez/volatilidade/microestrutura e
+  índices próprios. Vai substituir o Yahoo (preços e proventos) e remover o viés de sobrevivência quando
+  for integrado; hoje o app ainda usa o Yahoo.
 - **Em desenvolvimento (só no `core/`, ainda sem tela):** painel macro mensal para cenários — Focus
   (expectativas do BCB), curva prefixada do Tesouro Direto e fatores de surpresa macro.
 

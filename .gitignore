@@ -146,3 +146,6 @@ cython_debug/
 
 # Diário de sessão (notas internas)
 session_state.md
+
+# Dados locais (exports do lago, IPCA, listas de trabalho): fora do git
+data/

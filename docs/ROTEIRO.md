@@ -1,6 +1,7 @@
 # Roteiro do Otimizador B3: do protótipo a uma carteira realista e competitiva
 
-_Atualizado em 2026-10-16 (lago de dados da B3 pronto; universo medido e resíduos triados; teste das janelas na `main`).
+_Atualizado em 2026-10-17 (lago corrigido por regras gerais, trocas de ticker travadas, gold reproduzível; teste das
+janelas na `main`).
 Produção: `main` = `f12ed03`
 (https://portfolio-optimization-b3.streamlit.app/).
 Branch de trabalho: `feat/s1p-precos`._
@@ -15,7 +16,7 @@ Branch de trabalho: `feat/s1p-precos`._
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
-| Dados de preço | **Yahoo: sem ações deslistadas (viés de sobrevivência), proventos com erro, JCP bruto.** O lago de dados da B3 já tem o retorno total corrigido de 4.043 papéis desde 07/1994, deslistados incluídos, mas ainda não alimenta o app (S1-P.a) |
+| Dados de preço | **Yahoo: sem ações deslistadas (viés de sobrevivência), proventos com erro, JCP bruto.** O lago de dados da B3 já tem o retorno total corrigido de 3.948 papéis desde 07/1994, deslistados incluídos (troca de ticker continua a mesma série), mas ainda não alimenta o app (S1-P.a) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
 | Execução (custo por liquidez, IR, carteira existente) | Não modelada |
 
@@ -55,8 +56,9 @@ ou mais, rebalanceio trimestral.
 ```mermaid
 flowchart TD
     A["Produção f12ed03<br/>teste das janelas na main"] --> L["Lago de dados da B3 pronto<br/>(COTAHIST + eventos B3/CVM)"]
-    L --> R["Resíduos triados no universo (24 + 8 casos)<br/>corrigir ~12 erros no lago"]
-    R --> D["S1-P.a: retorno total do lago no app<br/>+ rotina de atualização"]
+    L --> R["Resíduos corrigidos por regra geral<br/>(72 → 58 dias com retorno ≥ ±50%; trocas de ticker travadas)"]
+    R --> RT["Rotina diária do lago no Windows<br/>+ FRE por regra + portão de erro pequeno"]
+    RT --> D["S1-P.a: retorno total do lago no app<br/>+ SMAL11 e DIVO11 ao lado do BOVA11"]
     D --> E["Teste das janelas, tiro 2<br/>(mesmo script, mesmos limites)"]
     E --> F{"Passou nos 2 tiros?"}
     F -- sim --> F1["Nova janela vira padrão"]
@@ -94,8 +96,10 @@ flowchart TD
 - [x] Growth Score fora da tela (`55fb9b5`); Reboot e conferência ao vivo feitos
 - [x] Teste das janelas (código, pré-registro e tiro 1) na `main` (`f12ed03`)
 - [x] Lago de dados da B3 (projeto `b3-datalake`, fora deste repositório): COTAHIST 1986–hoje, eventos da B3 +
-      flags do COTAHIST + CVM FRE, retorno total com JCP líquido, 4.043 papéis com deslistados e em recuperação
+      flags do COTAHIST + CVM FRE, retorno total com JCP líquido, 3.948 papéis com deslistados e em recuperação
       judicial; repositório privado `GabrielScript/b3-datalake`
+- [x] Erros de ajuste do lago corrigidos por regra geral, não papel por papel (§4.3); trocas de ticker travadas numa
+      tabela versionada; duas rodadas seguidas do lago dão tabelas idênticas
 - [x] Teste Kelly × outros objetivos: Kelly fica como opção, não como principal (§1)
 - [x] Tamanho do universo ponto no tempo (pisos R$ 1 mi e R$ 5 mi, 80% e 90% dos pregões) e triagem dos resíduos do
       ajuste nesse universo (§4.3)
@@ -181,13 +185,23 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
       e **~12 estão errados** com causa identificada (BBDC3 2004, PMAM4 2008, ETER3 2007, LAME3/4 2021, JSLG3 2020,
       TELB3 1998, CST 6 1995, ELET6 1997, LIPR3 1998, CESP3 1999) + 4 a conferir (TLCP4 2005, BRPR3 2023, AMER3 2024,
       RCSL3 2023)
-- [ ] Corrigir os ~12 no lago: duas regras gerais (evento confirmado numa classe vale para a classe irmã que salta
-      pelo mesmo fator; ticker reaproveitado quebra a série e liga a empresa antiga ao ticker novo, JSLG3 → SIMH3)
-      + tabela de correções manuais versionada (papel, dia, tipo, fator ou valor, evidência). Pesa no tiro 2: SIMH3
-      (lista do app) hoje só tem história no lago a partir de 18/09/2020
+- [x] Erros corrigidos por regra geral (2026-10-17): classe irmã (evento confirmado numa classe vale para a irmã que
+      salta pelo mesmo fator), FRE da CVM com veto do preço, flag grudada na classe, troca de ticker por regra estrita
+      (81 ligações, como ITAU4 → ITUB4 e BRDT3 → VBBR3; amostra de 10 com notícia: 5 confirmadas, 0 contraditas) e
+      tabela de correções manuais com evidência (JSLG3 → SIMH3, LAME → AMER3, RCSL3/4, PETZ3, quebras sem fonte).
+      No universo: dias com retorno total ≥ ±50% caem de 72 para 58 (os erros sumiram, nenhum dia novo); saltos sem
+      explicação, de 24 para 20. Saídas em `docs/universo-*-2026-10-17.*`
+- [x] Trocas de ticker travadas em `corrections/corrections.csv`: a regra só propõe ligações novas, para revisão; e
+      gold reproduzível (o Polars embaralhava a ordem das linhas em três escolhas; duas rodadas agora são idênticas)
+- [ ] Rotina diária do lago no Windows: pregão do dia baixado depois das ~21h35, novas tentativas com limite,
+      portões automáticos e aviso no Windows quando algo falha (em desenho)
+- [ ] Triagem do FRE no universo por regra (9 contradições + 11 ausentes; primeiro caso: ITUB3/4 2009, bonificação
+      de 10% aplicada como dois eventos, ×1,15 e ×1,05)
+- [ ] Portão de erro pequeno: erro de 10–20% em dia de evento não aparece no portão de ±50%
 - [ ] Desenho aprovado (snapshot ou painel; quais arquivos entram no repositório; fonte mostrada na tela) → plano → TDD
-- [ ] Retorno total do lago (proventos oficiais, JCP líquido, cisões) por trás de `carregar_precos`
-- [ ] Rotina de atualização do lago (onde roda, de quanto em quanto tempo os dados novos vão para a `main`)
+- [ ] Retorno total do lago (proventos oficiais, JCP líquido, cisões) por trás de `carregar_precos` (ler `ret_total`,
+      nulo nas quebras, nunca razões de `tr_close`)
+- [ ] SMAL11 e DIVO11 ao lado do BOVA11 no walk-forward (referências de mercado; fora do N do DSR)
 - [ ] Tiro 2 do teste das janelas (§4.2)
 
 ### 4.4 S1-P.b: universo sem viés de sobrevivência (teste novo)
@@ -270,8 +284,10 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 - Limite de N ações junto com o teto por setor pode cair no caminho alternativo (fallback) da otimização.
 - O README e o rótulo do objetivo no app ainda chamam o Kelly de "recomendado" (conflita com o §1; muda depois do
   teste núcleo + satélite).
-- Lago da B3: ~12 erros de ajuste no universo, já identificados e ainda não corrigidos (§4.3); sem IPCA; debêntures
-  quase não aparecem no COTAHIST.
+- Lago da B3: triagem do FRE no universo e portão de erro pequeno pendentes (§4.3); direitos de subscrição fora do
+  retorno total (AMER3 2024); ligações por regra sem fonte aberta (5 de 10 na amostra); sem IPCA; sem rotina
+  agendada (um pregão atrás); BDRs e ETFs só com preço cru (fora do universo e das auditorias); debêntures quase
+  não aparecem no COTAHIST.
 - Depois de todo push na `main`: Reboot do app no Streamlit Cloud.
 
 ## 7. Decisões que dependem do usuário
@@ -287,3 +303,8 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
    R$ 5 mi da arquitetura v1? A medição (§4.4) mostra que 80% × 90% não muda quase nada e que R$ 5 mi deixa o universo
    com menos de 30 empresas de 1995 a 2000 (recomendado: manter R$ 1 mi; o tamanho da ordem frente ao volume entra
    no S4 como teto por posição, que depende do capital).
+8. "Comparar todas as estratégias possíveis": cada estratégia comparada entra no N do DSR (mais tentativas, mais chance
+   de a melhor ganhar por sorte). Recomendado: lista fechada no pré-registro do S1-P.b.
+
+Decidido em 2026-10-17: terminar a B3 primeiro; depois, alocação entre classes (ações B3 × ETFs e BDRs de exterior ×
+ETFs de cripto × CDI) com dados que já estão no lago; dados crus dos EUA e de cripto só se essa camada mostrar que vale.

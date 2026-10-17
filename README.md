@@ -67,7 +67,10 @@ mesmas condições.
   desde 07/1994 de 3.948 papéis, **incluindo deslistados e em recuperação judicial** (troca de ticker,
   como ITAU4 → ITUB4, continua a mesma série), painel mensal de liquidez/volatilidade/microestrutura e
   índices próprios. Vai substituir o Yahoo (preços e proventos) e remover o viés de sobrevivência quando
-  for integrado; hoje o app ainda usa o Yahoo.
+  for integrado; hoje o app ainda usa o Yahoo. Uma rotina diária no Windows (Agendador de Tarefas, seg–sex
+  às 21h45 com novas tentativas até 23h45 e às 8h do dia seguinte) traz o pregão do dia para o lago, confere
+  com portões automáticos (troca de ticker sem revisão, arquivo truncado, retorno ≥ 50% sem revisão, gold
+  reproduzível) e só atualiza os exports quando todos passam; quando algo falha, avisa no Windows.
 - **Em desenvolvimento (só no `core/`, ainda sem tela):** painel macro mensal para cenários — Focus
   (expectativas do BCB), curva prefixada do Tesouro Direto e fatores de surpresa macro.
 

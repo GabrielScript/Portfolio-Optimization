@@ -1,0 +1,152 @@
+Universo ponto no tempo e triagem dos resíduos do ajuste (lago da B3, diagnóstico só de leitura)
+Dados: gold do lago até 2026-10-15; ações e units (sem BDR, FII, ETF); IPCA (SGS 433) até 09/2026;
+pisos em reais de 09/2026 (o volume de cada dia é corrigido pelo IPCA do seu mês). Universo do mês m usa os
+12 meses anteriores (pregões sem negócio contam como volume zero; IPO precisa de ~11 meses de pregões para
+passar). O IPCA só sai em meados do mês seguinte: aqui isso não importa (medição, não backtest).
+Combinações: piso R$ 1 mi ou R$ 5 mi/dia × negociada em ≥ 80% ou ≥ 90% dos pregões.
+
+Tamanho do universo: papéis / emissores (emissor = 1 classe no app)
+mês                1mi_80          1mi_90          5mi_80          5mi_90
+01/1996         42 / 39         39 / 36         17 / 15         17 / 15  
+01/1997         52 / 45         50 / 43         15 / 13         15 / 13  
+01/1998         66 / 54         65 / 53         31 / 26         31 / 26  
+01/1999         46 / 38         44 / 36         24 / 21         23 / 20  
+01/2000         72 / 58         71 / 57         36 / 30         35 / 29  
+01/2001         86 / 67         85 / 66         47 / 39         47 / 39  
+01/2002         71 / 55         71 / 55         44 / 37         44 / 37  
+01/2003         65 / 55         64 / 54         39 / 33         39 / 33  
+01/2004         75 / 63         75 / 63         47 / 41         47 / 41  
+01/2005         81 / 67         81 / 67         58 / 51         58 / 51  
+01/2006         90 / 74         89 / 74         65 / 56         65 / 56  
+01/2007        105 / 89         99 / 83         79 / 70         77 / 68  
+01/2008        137 / 122       133 / 118       108 / 96        105 / 93  
+01/2009        166 / 152       164 / 150       108 / 98        108 / 98  
+01/2010        156 / 143       156 / 143       100 / 91        100 / 91  
+01/2011        161 / 145       160 / 144       116 / 105       115 / 104 
+01/2012        158 / 145       157 / 144       118 / 108       117 / 107 
+01/2013        156 / 144       156 / 144       127 / 118       127 / 118 
+01/2014        161 / 149       160 / 148       135 / 126       134 / 125 
+01/2015        159 / 146       158 / 145       127 / 117       126 / 116 
+01/2016        135 / 124       135 / 124       103 / 97        103 / 97  
+01/2017        129 / 121       129 / 121       106 / 100       106 / 100 
+01/2018        148 / 137       145 / 134       111 / 105       108 / 102 
+01/2019        158 / 147       158 / 147       130 / 122       130 / 122 
+01/2020        158 / 146       157 / 145       144 / 135       144 / 135 
+01/2021        199 / 178       195 / 174       171 / 159       168 / 156 
+01/2022        236 / 211       228 / 203       198 / 186       191 / 179 
+01/2023        240 / 218       240 / 218       188 / 178       188 / 178 
+01/2024        223 / 203       222 / 202       168 / 160       168 / 160 
+01/2025        212 / 192       212 / 192       152 / 145       152 / 145 
+01/2026        187 / 173       186 / 172       137 / 132       137 / 132 
+10/2026        189 / 174       188 / 173       144 / 138       143 / 137 
+
+Mínimo de emissores (mês) em cada período:
+  1995-07 em diante  1mi_80: 37 (04/1996) | 1mi_90: 36 (12/1995) | 5mi_80: 12 (10/1996) | 5mi_90: 12 (10/1996)
+  2000 em diante     1mi_80: 51 (07/2002) | 1mi_90: 50 (08/2002) | 5mi_80: 29 (02/2000) | 5mi_90: 29 (01/2000)
+  2005 em diante     1mi_80: 66 (03/2005) | 1mi_90: 66 (03/2005) | 5mi_80: 50 (02/2005) | 5mi_90: 50 (02/2005)
+  2010 em diante     1mi_80: 119 (08/2016) | 1mi_90: 119 (08/2016) | 5mi_80: 91 (01/2010) | 5mi_90: 91 (01/2010)
+
+Meses com menos de 30 / 20 emissores (de 1995-07 a hoje):
+  1mi_80   <30:   0 meses   <20:   0 meses   (de 376)
+  1mi_90   <30:   0 meses   <20:   0 meses   (de 376)
+  5mi_80   <30:  55 meses   <20:  25 meses   (de 376)
+  5mi_90   <30:  56 meses   <20:  28 meses   (de 376)
+
+Papéis que já entraram no universo alguma vez (e quantos hoje estão deslistados):
+  1mi_80     573 papéis,  480 emissores; deslistados: 325 (57%)
+  1mi_90     570 papéis,  477 emissores; deslistados: 323 (57%)
+  5mi_80     448 papéis,  389 emissores; deslistados: 242 (54%)
+  5mi_90     447 papéis,  388 emissores; deslistados: 242 (54%)
+
+Em recuperação judicial / concordata / sanção no mês anterior, dentro do universo:
+  1mi_80   máx. 9 papéis num mês; 169 meses com pelo menos 1
+  1mi_90   máx. 9 papéis num mês; 168 meses com pelo menos 1
+  5mi_80   máx. 6 papéis num mês; 137 meses com pelo menos 1
+  5mi_90   máx. 6 papéis num mês; 137 meses com pelo menos 1
+
+Saltos sem explicação: 3449 no lago (todos os tipos de ativo); 3173 em ações/units
+salto = abertura / fechamento anterior − 1 (gap da noite); 'grande' = |gap| ≥ 50% (portão da arquitetura v1)
+  1mi_80   no universo:   24; grandes:  21; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):  13
+  1mi_90   no universo:   23; grandes:  20; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):  12
+  5mi_80   no universo:   16; grandes:  16; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):  10
+  5mi_90   no universo:   15; grandes:  15; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):   9
+
+Rótulo dos saltos no universo mais largo (1mi_80):
+  movimento persistente      13 (grandes: 11)
+  cara de evento              9 (grandes: 9)
+  reverteu                    2 (grandes: 1)
+
+Saltos no universo por década:
+  1990s:    8 (grandes: 7)
+  2000s:    3 (grandes: 3)
+  2020s:   13 (grandes: 11)
+
+Impacto máximo num índice de pesos iguais do universo (retorno do dia do salto zerado):
+  1mi_90   CAGR 14.16% | sem os grandes 14.27% (+11 bps/ano) | sem nenhum 14.33% (+17 bps/ano)  [1995-07-03 a 2026-10-15]
+  5mi_90   CAGR 13.80% | sem os grandes 14.07% (+27 bps/ano) | sem nenhum 14.07% (+27 bps/ano)  [1995-07-03 a 2026-10-15]
+  1mi_80   CAGR 14.36% | sem os grandes 14.48% (+12 bps/ano) | sem nenhum 14.53% (+18 bps/ano)  [1995-07-03 a 2026-10-15]
+
+Auditoria CVM FRE: eventos sem 'match' com papel no universo do mês do evento até 3 meses depois
+(contradição: mês do ex na B3; ausente: mês da aprovação)
+  contradiction  17 no total;  17 com classe negociada; no universo: 1mi_80: 2 | 1mi_90: 2 | 5mi_80: 2 | 5mi_90: 2
+  missing       404 no total; 359 com classe negociada; no universo: 1mi_80: 6 | 1mi_90: 6 | 5mi_80: 4 | 5mi_90: 4
+
+Lista dos que caem no universo mais largo (1mi_80):
+  contradiction MMXM  ON  aprov. 2007-04-28 ex 2007-07-31 FRE ×3.129 aplicado ×2 [MMXM3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction ETER  ON  aprov. 2007-04-29 ex 2007-04-26 FRE ×2.1 aplicado ×1.05 [ETER3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       BRFS  ON  aprov. 2011-03-31 ex None FRE ×2 aplicado ×nan [BRFS3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       LAME  PN  aprov. 2011-04-30 ex None FRE ×1.019 aplicado ×nan [LAME4] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       LAME  ON  aprov. 2011-04-30 ex None FRE ×1.019 aplicado ×nan [LAME3] em: 1mi_80,1mi_90
+  missing       OGXP  ON  aprov. 2011-05-23 ex None FRE ×0.008 aplicado ×nan [OGXP3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       AMAR  ON  aprov. 2013-04-30 ex None FRE ×1 aplicado ×nan [AMAR3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       PDGR  ON  aprov. 2019-08-23 ex None FRE ×0.1 aplicado ×nan [PDGR3] em: 1mi_80,1mi_90
+
+================================================================================================================
+Triagem manual (2026-10-16): os 24 saltos e os 8 eventos da CVM no universo mais largo, olhando o preço do dia
+================================================================================================================
+O gap da noite (acima) só aponta o dia. O que o backtest usa é o retorno total de fechamento a fechamento (ret_cc no
+CSV `universo-saltos-2026-10-16.csv`). Leitura de cada caso:
+
+Já certos no lago (o retorno total absorve o evento):
+  PCAR3 01/03/2021 (cisão do Assaí, +14,1%) | PCAR3 23/08/2023 (cisão do Éxito, +6,4%) | BRAP3/BRAP4 17/12/2021 (≈ 0)
+  TELB4 21/09/1998 (cisão da Telebrás, −2,3%) | SYNE3 09/12/2024 (−2,3%)
+  CVM sem efeito no preço (reapresentação no FRE, sem salto no pregão): MMXM3 2007, BRFS3 2011, OGXP3 2011,
+  AMAR3 2013, PDGR3 2019. LAME3/LAME4 2011: bonificação de 1,9% ausente (erro de −1,9% num dia; pequeno).
+
+Reais (não corrigir): AMER3 12/01/2023 (fraude contábil, −77%); AMBP3 01/10/2026 (tick de centavos, reverteu).
+
+Errados, com causa identificada (corrigir no lago):
+  | Papel     | Dia        | ret_cc | Causa                                                                    | Universo  |
+  | BBDC3     | 14/12/2004 | −67%   | Desdobramento ×3 confirmado na BBDC4 e REJEITADO na BBDC3 (classe irmã)  | 1 mi      |
+  | PMAM4     | 16/06/2008 | −38%   | Desdobramento ×2 confirmado na PMAM3 e ausente na PMAM4 (classe irmã)    | 1 mi      |
+  | ETER3     | 26/04/2007 | −50%   | B3 diz bonificação ×1,05; preço (−53%) e CVM FRE dizem ×2,1              | todos     |
+  | LAME3/4   | 19/07/2021 | −62%   | Reorganização Americanas (flag EC): sócio da LAME recebeu AMER3; lago    | 5 mi (L4) |
+  |           |            |        | não tem a relação de troca                                               |           |
+  | JSLG3     | 11/11/2020 | −67%   | Ticker reaproveitado em < 180 dias: a JSL antiga virou SIMH3 (18/09/2020) | 1 mi      |
+  |           |            |        | e a JSL nova estreou como JSLG3. Efeito colateral: SIMH3 (lista do app)  |           |
+  |           |            |        | fica sem a história de antes de 09/2020                                  |           |
+  | TELB3     | 22/09/1998 | −38%   | Cisão da Telebrás (flag EC) sem o valor das filhas na ON; depois ticks   | todos     |
+  |           |            |        | de centavo (+100%, +105%) no resto da casca                              |           |
+  | CST 6     | 01/09/1995 | −96%   | Preço ÷28 com quantidade ×39 e volume em R$ igual: mudança de unidade de  | todos     |
+  |           |            |        | cotação ou desdobramento não registrado                                  |           |
+  | ELET6     | 30/12/1997 | −90%   | Preço ÷10 alinha a PNB com a ON (que não saltou): unidade de cotação     | todos     |
+  | LIPR3     | 22/06/1998 | −99,7% | Preço ÷340 com flag ER; quantidade ×13: evento não registrado            | todos     |
+  | CESP3     | 26/07/1999 | −69%   | Provável cisão da CESP de 1999 (Tietê, Paranapanema): a conferir         | 1 mi      |
+
+A conferir (podem ser reais): TLCP4 05/12/2005 (+89%; salto 2:1 rejeitado pelo teste de persistência; época da
+reorganização da Vivo) | BRPR3 05/04/2023 (−26% com redução de capital parcialmente absorvida, depois OPA e ticks
+de 486 a 900 a 165) | AMER3 15/08/2024 (−58%; diluição do aumento de capital, real em parte) | RCSL3 10/07/2023 (+92%).
+
+Conclusão:
+  1. O peso no índice é pequeno (+11 a +27 bps/ano no máximo), mas um único dia errado basta para mudar uma decisão
+     do otimizador (tiro 1: a aprovação da EWMA dependia de 1 dia do Yahoo). Como são só ~12 casos, corrigir todos é
+     barato; "corrigir só o que pesa" = esses 12, não os 3.449.
+  2. Duas regras gerais resolvem parte e evitam casos futuros: (a) evento confirmado numa classe vale para as classes
+     irmãs do mesmo emissor no mesmo dia quando o preço delas salta pelo mesmo fator; (b) ticker reaproveitado
+     (série nova de outra empresa) quebra a série mesmo com menos de 180 dias, com ligação explícita da antiga ao
+     ticker novo (JSLG3 → SIMH3).
+  3. O resto vai numa tabela de correções manuais versionada no lago (papel, dia, tipo, fator ou valor, evidência).
+  4. Para o tiro 2 (sobreviventes 2014–2026) pesam JSLG3/SIMH3 e AMER3 (real); para o S1-P.b pesam todos de 2000
+     em diante.
+  5. Piso e negociação: 80% × 90% quase não muda nada (1 a 8 papéis); R$ 5 mi deixa menos de 30 emissores em 55
+     meses (todos antes de 2001) e menos de 20 em 25 meses; R$ 1 mi nunca cai abaixo de 36 e fica ≥ 50 desde 2000.

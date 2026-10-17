@@ -1,6 +1,7 @@
 # Roteiro do Otimizador B3: do protótipo a uma carteira realista e competitiva
 
-_Atualizado em 2026-10-16 (lago de dados da B3 pronto; teste das janelas na `main`). Produção: `main` = `f12ed03`
+_Atualizado em 2026-10-16 (lago de dados da B3 pronto; universo medido e resíduos triados; teste das janelas na `main`).
+Produção: `main` = `f12ed03`
 (https://portfolio-optimization-b3.streamlit.app/).
 Branch de trabalho: `feat/s1p-precos`._
 
@@ -54,7 +55,7 @@ ou mais, rebalanceio trimestral.
 ```mermaid
 flowchart TD
     A["Produção f12ed03<br/>teste das janelas na main"] --> L["Lago de dados da B3 pronto<br/>(COTAHIST + eventos B3/CVM)"]
-    L --> R["Triagem dos resíduos do ajuste<br/>no universo ponto no tempo"]
+    L --> R["Resíduos triados no universo (24 + 8 casos)<br/>corrigir ~12 erros no lago"]
     R --> D["S1-P.a: retorno total do lago no app<br/>+ rotina de atualização"]
     D --> E["Teste das janelas, tiro 2<br/>(mesmo script, mesmos limites)"]
     E --> F{"Passou nos 2 tiros?"}
@@ -94,8 +95,10 @@ flowchart TD
 - [x] Teste das janelas (código, pré-registro e tiro 1) na `main` (`f12ed03`)
 - [x] Lago de dados da B3 (projeto `b3-datalake`, fora deste repositório): COTAHIST 1986–hoje, eventos da B3 +
       flags do COTAHIST + CVM FRE, retorno total com JCP líquido, 4.043 papéis com deslistados e em recuperação
-      judicial
+      judicial; repositório privado `GabrielScript/b3-datalake`
 - [x] Teste Kelly × outros objetivos: Kelly fica como opção, não como principal (§1)
+- [x] Tamanho do universo ponto no tempo (pisos R$ 1 mi e R$ 5 mi, 80% e 90% dos pregões) e triagem dos resíduos do
+      ajuste nesse universo (§4.3)
 
 ### 4.2 Teste pré-registrado das janelas (na `main`): tiro 1 feito, tiro 2 depois do S1-P.a
 
@@ -169,9 +172,19 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 
 ### 4.3 S1-P.a: preços corrigidos no app (a partir do lago da B3)
 
-- [ ] Triagem dos resíduos do ajuste no universo ponto no tempo, com deslistadas (3.449 saltos sem explicação,
-      17 contradições com a CVM, 159 eventos da CVM sem correspondente com pregão na janela): medir o impacto antes
-      de corrigir; corrigir só o que pesa
+- [x] Triagem dos resíduos do ajuste no universo ponto no tempo, com deslistadas (saída completa em
+      `docs/universo-residuos-2026-10-16.txt`; lista em `docs/universo-saltos-2026-10-16.csv`; script
+      `scripts/universe_residuals.py` no repositório do lago). Dos 3.449 saltos sem explicação, só **24** caem no
+      universo mais largo (R$ 1 mi, 80%); dos 17 + 404 eventos da CVM sem match, só **8**. Efeito máximo num índice de
+      pesos iguais do universo: +11 a +27 bps/ano. Olhando o preço de cada um: 6 já estão certos (cisões do Assaí, do
+      Éxito, Bradespar, Telebrás PN), 5 da CVM não mexem no preço, 2 são reais (fraude da Americanas, tick da Ambipar)
+      e **~12 estão errados** com causa identificada (BBDC3 2004, PMAM4 2008, ETER3 2007, LAME3/4 2021, JSLG3 2020,
+      TELB3 1998, CST 6 1995, ELET6 1997, LIPR3 1998, CESP3 1999) + 4 a conferir (TLCP4 2005, BRPR3 2023, AMER3 2024,
+      RCSL3 2023)
+- [ ] Corrigir os ~12 no lago: duas regras gerais (evento confirmado numa classe vale para a classe irmã que salta
+      pelo mesmo fator; ticker reaproveitado quebra a série e liga a empresa antiga ao ticker novo, JSLG3 → SIMH3)
+      + tabela de correções manuais versionada (papel, dia, tipo, fator ou valor, evidência). Pesa no tiro 2: SIMH3
+      (lista do app) hoje só tem história no lago a partir de 18/09/2020
 - [ ] Desenho aprovado (snapshot ou painel; quais arquivos entram no repositório; fonte mostrada na tela) → plano → TDD
 - [ ] Retorno total do lago (proventos oficiais, JCP líquido, cisões) por trás de `carregar_precos`
 - [ ] Rotina de atualização do lago (onde roda, de quanto em quanto tempo os dados novos vão para a `main`)
@@ -180,6 +193,10 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 ### 4.4 S1-P.b: universo sem viés de sobrevivência (teste novo)
 
 - [ ] IPCA (SGS 433) para o piso de liquidez: **R$ 1 mi/dia corrigido pelo IPCA** (decidido); o lago ainda não tem IPCA
+      (a medição de 2026-10-16 baixou a SGS 433 pelo `core/bcb.py`)
+- Tamanho medido (emissores, regra D1, reais de 09/2026): R$ 1 mi e 90% → mínimo de 36 (12/1995), ≥ 50 desde 2000,
+  ≥ 119 desde 2010, **173 hoje**; R$ 5 mi e 90% → menos de 30 em 56 meses (todos de 1995 a 2000), ≥ 50 desde 2005,
+  **137 hoje**. 80% × 90% muda de 1 a 8 papéis. Já passaram pelo universo de R$ 1 mi 570 papéis, 57% hoje deslistados
 - [ ] Universo ponto no tempo: em cada rebalanceio, só as ações líquidas naquela data (critério fixado no pré-registro)
 - [ ] Walk-forward com universo dinâmico: a deslistada sai no último fechamento
 - [ ] Pré-registro próprio contra o BOVA11; refazer o Kelly × objetivos e o teste núcleo + satélite sobre esses dados
@@ -253,8 +270,8 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 - Limite de N ações junto com o teto por setor pode cair no caminho alternativo (fallback) da otimização.
 - O README e o rótulo do objetivo no app ainda chamam o Kelly de "recomendado" (conflita com o §1; muda depois do
   teste núcleo + satélite).
-- Lago da B3: resíduos do ajuste ainda não medidos no universo do app; sem IPCA; debêntures quase não aparecem no
-  COTAHIST.
+- Lago da B3: ~12 erros de ajuste no universo, já identificados e ainda não corrigidos (§4.3); sem IPCA; debêntures
+  quase não aparecem no COTAHIST.
 - Depois de todo push na `main`: Reboot do app no Streamlit Cloud.
 
 ## 7. Decisões que dependem do usuário
@@ -266,3 +283,7 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 4. Black-Litterman sem views: avaliar como alvo do Jorion?
 5. Mostrar no app a fração Kelly ações × CDI (S4)?
 6. Debêntures: ficam fora do escopo deste otimizador de ações (só entram se virarem um produto novo)?
+7. Piso de liquidez do universo: manter o decidido em 2026-10-14 (**R$ 1 mi/dia e 90% dos pregões**) ou trocar pelo
+   R$ 5 mi da arquitetura v1? A medição (§4.4) mostra que 80% × 90% não muda quase nada e que R$ 5 mi deixa o universo
+   com menos de 30 empresas de 1995 a 2000 (recomendado: manter R$ 1 mi; o tamanho da ordem frente ao volume entra
+   no S4 como teto por posição, que depende do capital).

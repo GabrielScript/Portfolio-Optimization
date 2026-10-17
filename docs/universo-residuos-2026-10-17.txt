@@ -1,0 +1,119 @@
+Universo ponto no tempo e triagem dos resíduos do ajuste (lago da B3, diagnóstico só de leitura)
+Dados: gold do lago até 2026-10-15; ações e units (sem BDR, FII, ETF); IPCA (SGS 433) até 09/2026;
+pisos em reais de 09/2026 (o volume de cada dia é corrigido pelo IPCA do seu mês). Universo do mês m usa os
+12 meses anteriores (pregões sem negócio contam como volume zero; IPO precisa de ~11 meses de pregões para
+passar). O IPCA só sai em meados do mês seguinte: aqui isso não importa (medição, não backtest).
+Combinações: piso R$ 1 mi ou R$ 5 mi/dia × negociada em ≥ 80% ou ≥ 90% dos pregões.
+
+Tamanho do universo: papéis / emissores (emissor = 1 classe no app)
+mês                1mi_80          1mi_90          5mi_80          5mi_90
+01/1996         42 / 39         39 / 36         17 / 15         17 / 15  
+01/1997         52 / 45         50 / 43         15 / 13         15 / 13  
+01/1998         66 / 54         65 / 53         31 / 26         31 / 26  
+01/1999         46 / 38         44 / 36         24 / 21         23 / 20  
+01/2000         72 / 59         71 / 58         36 / 30         35 / 29  
+01/2001         86 / 69         85 / 68         47 / 41         47 / 41  
+01/2002         71 / 57         71 / 57         44 / 38         44 / 38  
+01/2003         65 / 56         64 / 55         39 / 34         39 / 34  
+01/2004         75 / 64         75 / 64         47 / 42         47 / 42  
+01/2005         81 / 68         81 / 68         58 / 52         58 / 52  
+01/2006         91 / 76         90 / 76         66 / 58         66 / 58  
+01/2007        106 / 90        101 / 85         80 / 71         79 / 70  
+01/2008        138 / 123       134 / 119       109 / 97        106 / 94  
+01/2009        167 / 153       165 / 151       109 / 99        109 / 99  
+01/2010        159 / 145       159 / 145       102 / 93        102 / 93  
+01/2011        164 / 148       163 / 147       118 / 107       117 / 106 
+01/2012        163 / 149       162 / 148       121 / 111       120 / 110 
+01/2013        157 / 145       157 / 145       128 / 119       128 / 119 
+01/2014        162 / 150       161 / 149       136 / 127       135 / 126 
+01/2015        160 / 147       159 / 146       127 / 117       126 / 116 
+01/2016        137 / 126       137 / 126       104 / 98        104 / 98  
+01/2017        130 / 122       130 / 122       107 / 101       107 / 101 
+01/2018        151 / 141       149 / 139       113 / 107       111 / 105 
+01/2019        159 / 148       159 / 148       131 / 123       131 / 123 
+01/2020        161 / 149       161 / 149       147 / 138       147 / 138 
+01/2021        200 / 179       197 / 176       172 / 160       170 / 158 
+01/2022        243 / 218       235 / 210       205 / 193       198 / 186 
+01/2023        242 / 220       242 / 220       189 / 179       189 / 179 
+01/2024        226 / 206       226 / 206       171 / 163       171 / 163 
+01/2025        216 / 196       216 / 196       155 / 148       155 / 148 
+01/2026        192 / 177       191 / 176       142 / 136       142 / 136 
+10/2026        192 / 177       192 / 177       147 / 141       147 / 141 
+
+Mínimo de emissores (mês) em cada período:
+  1995-07 em diante  1mi_80: 37 (04/1996) | 1mi_90: 36 (12/1995) | 5mi_80: 12 (10/1996) | 5mi_90: 12 (10/1996)
+  2000 em diante     1mi_80: 52 (07/2002) | 1mi_90: 51 (08/2002) | 5mi_80: 29 (02/2000) | 5mi_90: 29 (01/2000)
+  2005 em diante     1mi_80: 67 (03/2005) | 1mi_90: 67 (03/2005) | 5mi_80: 51 (02/2005) | 5mi_90: 51 (02/2005)
+  2010 em diante     1mi_80: 120 (07/2016) | 1mi_90: 120 (07/2016) | 5mi_80: 93 (01/2010) | 5mi_90: 93 (01/2010)
+
+Meses com menos de 30 / 20 emissores (de 1995-07 a hoje):
+  1mi_80   <30:   0 meses   <20:   0 meses   (de 376)
+  1mi_90   <30:   0 meses   <20:   0 meses   (de 376)
+  5mi_80   <30:  55 meses   <20:  25 meses   (de 376)
+  5mi_90   <30:  56 meses   <20:  28 meses   (de 376)
+
+Papéis que já entraram no universo alguma vez (e quantos hoje estão deslistados):
+  1mi_80     521 papéis,  437 emissores; deslistados: 267 (51%)
+  1mi_90     519 papéis,  435 emissores; deslistados: 265 (51%)
+  5mi_80     406 papéis,  354 emissores; deslistados: 194 (48%)
+  5mi_90     406 papéis,  354 emissores; deslistados: 194 (48%)
+
+Em recuperação judicial / concordata / sanção no mês anterior, dentro do universo:
+  1mi_80   máx. 9 papéis num mês; 169 meses com pelo menos 1
+  1mi_90   máx. 9 papéis num mês; 168 meses com pelo menos 1
+  5mi_80   máx. 6 papéis num mês; 137 meses com pelo menos 1
+  5mi_90   máx. 6 papéis num mês; 137 meses com pelo menos 1
+
+Saltos sem explicação: 3419 no lago (todos os tipos de ativo); 3144 em ações/units
+salto = abertura / fechamento anterior − 1 (gap da noite); 'grande' = |gap| ≥ 50% (portão da arquitetura v1)
+  1mi_80   no universo:   20; grandes:  17; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):   5
+  1mi_90   no universo:   20; grandes:  17; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):   5
+  5mi_80   no universo:   15; grandes:  15; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):   4
+  5mi_90   no universo:   15; grandes:  15; grandes também no retorno de fechamento a fechamento (|r| ≥ 50%):   4
+
+Rótulo dos saltos no universo mais largo (1mi_80):
+  movimento persistente      12 (grandes: 10)
+  cara de evento              6 (grandes: 6)
+  reverteu                    2 (grandes: 1)
+
+Saltos no universo por década:
+  1990s:    6 (grandes: 5)
+  2000s:    2 (grandes: 2)
+  2020s:   12 (grandes: 10)
+
+Impacto máximo num índice de pesos iguais do universo (retorno do dia do salto zerado):
+  1mi_90   CAGR 14.56% | sem os grandes 14.43% (-13 bps/ano) | sem nenhum 14.44% (-12 bps/ano)  [1995-07-03 a 2026-10-15]
+  5mi_90   CAGR 14.42% | sem os grandes 14.22% (-19 bps/ano) | sem nenhum 14.22% (-19 bps/ano)  [1995-07-03 a 2026-10-15]
+  1mi_80   CAGR 14.71% | sem os grandes 14.58% (-13 bps/ano) | sem nenhum 14.59% (-12 bps/ano)  [1995-07-03 a 2026-10-15]
+
+Dias com |retorno total de fechamento a fechamento| ≥ 50% no universo 1mi_80 (retorno nulo
+na estreia, depois de > 180 dias sem negócio e nas quebras manuais):
+  58 dias; 3 em dia de evento aplicado (fator a conferir); lista no CSV de saltos grandes
+
+Auditoria CVM FRE: eventos sem 'match' com papel no universo do mês do evento até 3 meses depois
+(contradição: mês do ex na B3; ausente: mês da aprovação)
+  contradiction  58 no total;  58 com classe negociada; no universo: 1mi_80: 9 | 1mi_90: 9 | 5mi_80: 6 | 5mi_90: 6
+  missing       352 no total; 301 com classe negociada; no universo: 1mi_80: 11 | 1mi_90: 11 | 5mi_80: 8 | 5mi_90: 8
+
+Lista dos que caem no universo mais largo (1mi_80):
+  contradiction MMXM  ON  aprov. 2007-04-28 ex 2007-07-31 FRE ×3.129 aplicado ×2 [MMXM3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       ITUB  ON  aprov. 2009-04-24 ex None FRE ×1.1 aplicado ×nan [ITUB3] em: 1mi_80,1mi_90
+  missing       ITUB  PN  aprov. 2009-04-24 ex None FRE ×1.1 aplicado ×nan [ITUB4] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       BRFS  ON  aprov. 2011-03-31 ex None FRE ×2 aplicado ×nan [BRFS3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction CIEL  ON  aprov. 2011-04-29 ex 2011-05-30 FRE ×0.16 aplicado ×0.3333 [CIEL3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       LAME  PN  aprov. 2011-04-30 ex None FRE ×1.019 aplicado ×nan [LAME4] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       LAME  ON  aprov. 2011-04-30 ex None FRE ×1.019 aplicado ×nan [LAME3] em: 1mi_80,1mi_90
+  missing       OGXP  ON  aprov. 2011-05-23 ex None FRE ×0.008 aplicado ×nan [OGXP3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction MNDL  PN  aprov. 2011-05-27 ex 2011-05-30 FRE ×6 aplicado ×5 [MNDL4] em: 1mi_80,1mi_90
+  missing       AMAR  ON  aprov. 2013-04-30 ex None FRE ×1 aplicado ×nan [AMAR3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction VIVR  ON  aprov. 2019-04-12 ex 2019-04-15 FRE ×0.1 aplicado ×0.1417 [VIVR3] em: 1mi_80,1mi_90
+  contradiction BIDI  PN  aprov. 2019-06-26 ex 2019-07-04 FRE ×6 aplicado ×4.446 [BIDI4] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       PDGR  ON  aprov. 2019-08-23 ex None FRE ×0.1 aplicado ×nan [PDGR3] em: 1mi_80,1mi_90
+  missing       TIMS  ON  aprov. 2020-07-02 ex None FRE ×0.01 aplicado ×nan [TIMS3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       SIMH  ON  aprov. 2020-07-20 ex None FRE ×1.133 aplicado ×nan [SIMH3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction BIDI  PN  aprov. 2021-04-28 ex 2021-05-26 FRE ×22.51 aplicado ×2.762 [BIDI4] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction BIDI  ON  aprov. 2021-04-28 ex 2021-05-26 FRE ×22.66 aplicado ×2.725 [BIDI3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  missing       DXCO  ON  aprov. 2021-12-09 ex None FRE ×1.1 aplicado ×nan [DXCO3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+  contradiction RCSL  PN  aprov. 2022-06-24 ex 2022-06-27 FRE ×0.5 aplicado ×0.6667 [RCSL4] em: 1mi_80,1mi_90
+  contradiction GFSA  ON  aprov. 2022-08-10 ex 2022-09-23 FRE ×0.1123 aplicado ×0.1442 [GFSA3] em: 1mi_80,1mi_90,5mi_80,5mi_90
+

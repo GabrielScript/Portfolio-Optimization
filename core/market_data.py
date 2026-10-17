@@ -2,8 +2,11 @@
 market_data.py - Aquisição e limpeza de dados de mercado (sem UI).
 
 Fontes:
-- Preços: Yahoo Finance via yfinance (``auto_adjust=True`` -> retorno total,
-  dividendos/JCP reinvestidos conforme o ajuste do Yahoo).
+- Preços diários (carteira de hoje e walk-forward): lago de dados da B3
+  (``core.lago``), retorno total a partir do COTAHIST e dos eventos da B3/CVM,
+  com deslistadas, cisões e JCP líquido. Pregão sem negócio do papel vem vazio.
+- Preços mensais (painel macro, em desenvolvimento): Yahoo Finance via yfinance
+  (``auto_adjust=True`` -> retorno total conforme o ajuste do Yahoo).
 - CDI diário (SGS 12) e Selic meta (SGS 432): BCB, via ``core.bcb``.
 - Cotação do dia (plano de compra): último negócio nas barras de 1 min do
   Yahoo, com atraso de ~15 min; sem ele, o último fechamento diário.
@@ -23,7 +26,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import yfinance as yf
 
-from core import bcb
+from core import bcb, lago
 
 logger = logging.getLogger(__name__)
 
@@ -141,10 +144,13 @@ def carregar_precos(
     hoje: date | None = None,
     cobertura_minima: float = 0.95,
 ) -> DadosPrecos:
-    """Pipeline completo: download e limpeza no calendário B3."""
+    """Pipeline completo: preços de retorno total do lago da B3 e limpeza no calendário B3."""
     fim = hoje or date.today()
     inicio = fim - timedelta(days=int(anos * 365.25) + 10)
-    fechamentos = baixar_fechamentos(list(dict.fromkeys(tickers)), inicio, fim)
+    try:
+        fechamentos = lago.ler_fechamentos(list(dict.fromkeys(tickers)), inicio, fim)
+    except FileNotFoundError as erro:
+        raise ErroDadosMercado(f"Arquivo de preços do lago ausente: {erro.filename}") from erro
     return limpar_precos(fechamentos, cobertura_minima=cobertura_minima)
 
 

@@ -32,7 +32,7 @@ def test_estrategia_com_sharpe_nan_nao_anula_o_dsr_das_outras():
     a, b = _backtest("A", _curva(1, 0.001)), _backtest("B", _curva(2, 0.0005))
     resultados = {"A": a, "B": b, "Parada": _backtest("Parada", np.full(len(DATAS), 100.0))}
 
-    saida = _psr_e_dsr(resultados, None, RF_ZERO)
+    saida = _psr_e_dsr(resultados, {}, RF_ZERO)
 
     momentos = {n: momentos_sharpe(bt.valores.pct_change().dropna()) for n, bt in [("A", a), ("B", b)]}
     variancia = float(np.var([m.sharpe for m in momentos.values()], ddof=1))
@@ -42,10 +42,18 @@ def test_estrategia_com_sharpe_nan_nao_anula_o_dsr_das_outras():
     assert np.isnan(saida["Parada"][0]) and np.isnan(saida["Parada"][1])
 
 
-def test_benchmark_tem_psr_mas_nao_tem_dsr():
+def test_referencia_de_mercado_tem_psr_mas_nao_tem_dsr():
     a, b = _backtest("A", _curva(1, 0.001)), _backtest("B", _curva(2, 0.0005))
-    saida = _psr_e_dsr({"A": a}, b, RF_ZERO)
+    saida = _psr_e_dsr({"A": a}, {"B": b}, RF_ZERO)
     assert np.isfinite(saida["B"][0]) and np.isnan(saida["B"][1])
+
+
+def test_nenhuma_das_referencias_de_mercado_entra_no_n_do_dsr():
+    # BOVA11, SMAL11 e DIVO11 não foram escolhas entre tentativas: o DSR das estratégias não muda com elas
+    a, b = _backtest("A", _curva(1, 0.001)), _backtest("B", _curva(2, 0.0005))
+    referencias = {"SMAL11": _backtest("SMAL11", _curva(3, 0.002)), "DIVO11": _backtest("DIVO11", _curva(4, 0.0))}
+    com, sem = _psr_e_dsr({"A": a, "B": b}, referencias, RF_ZERO), _psr_e_dsr({"A": a, "B": b}, {}, RF_ZERO)
+    assert (com["A"][1], com["B"][1]) == pytest.approx((sem["A"][1], sem["B"][1]))
 
 
 def test_aviso_de_fora_da_o_motivo_e_o_conselho_do_teto():
@@ -118,3 +126,8 @@ def test_investido_e_custo_estimado_nao_mostram_seta():
     direcoes = {m.label: m.proto.direction for m in at.metric}
     assert direcoes["Investido"] == MetricProto.MetricDirection.NONE
     assert direcoes["Custo estimado"] == MetricProto.MetricDirection.NONE
+
+
+def test_sem_acao_descartada_nao_ha_aviso():
+    from ui.secoes import aviso_descartados
+    assert aviso_descartados([], []) is None

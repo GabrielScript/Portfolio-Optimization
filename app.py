@@ -19,11 +19,12 @@ import streamlit as st
 
 st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout="wide")
 
-from assets import (BENCHMARK_ACOES, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
+from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import DIAS_UTEIS_ANO, ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
+from core import lago  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
@@ -162,15 +163,16 @@ def main() -> None:
     hoje = date.today()
     universo = entradas.tickers_acoes
     anos_walk_forward = entradas.anos + entradas.anos_teste
-    with st.spinner("Baixando preços, CDI e Selic..."):
-        dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje)
-        precos_walk_forward = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), anos_walk_forward,
-                                                       hoje).precos
+    versao_dados = lago.versao_dos_dados()
+    with st.spinner("Carregando preços, CDI e Selic..."):
+        dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje, versao_dados)
+        precos_walk_forward = servicos.carregar_precos(universo + BENCHMARKS, anos_walk_forward,
+                                                       hoje, versao_dados).precos
         cdi = servicos.carregar_cdi(anos_walk_forward, hoje)
         selic = servicos.carregar_selic(hoje)
-    descartados = dados.descartados_sem_dados + dados.descartados_cobertura
-    if descartados:
-        st.warning(f"Descartados por falta de dados/cobertura: {', '.join(descartados)}")
+    aviso = secoes.aviso_descartados(dados.descartados_sem_dados, dados.descartados_cobertura)
+    if aviso:
+        st.warning(aviso)
     if cdi.empty:
         st.warning("CDI histórico indisponível: Sharpe/Sortino usam a Selic atual constante.")
 
@@ -184,6 +186,7 @@ def main() -> None:
               f"{len(retornos)} pregões")
     c2.metric("Ativos válidos", len(colunas))
     c3.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off")
+    st.caption(f"Preços: lago de dados da B3 (COTAHIST e eventos da B3/CVM, retorno total), até {precos.index[-1]:%d/%m/%Y}.")
 
     carteira_hoje(entradas, precos, retornos, rf_aritmetica)
     secao_backtest(entradas, precos_walk_forward, colunas, cdi, selic.valor)
@@ -331,22 +334,19 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[st
     nome_otimizada = next(iter(resultados))
     otimizada = resultados[nome_otimizada]
     st.caption(_legenda_walk_forward(entradas, otimizada, colunas, acoes_hoje))
-    benchmark = None
-    if BENCHMARK_ACOES in precos.columns:
-        ret_bova = retornos_simples(precos[[BENCHMARK_ACOES]]).reindex(retornos.index).dropna()
-        if len(ret_bova) > cfg_bt.janela_treino + 1:
-            benchmark = walk_forward(ret_bova, estrategia_equiponderada(), cfg_bt, "BOVA11")
+    referencias = _referencias_de_mercado(precos, retornos.index, cfg_bt)
 
     if otimizada.falhas:
         st.warning(f"{len(otimizada.falhas)} rebalanceamento(s) mantiveram a carteira por falha: "
                    + "; ".join(otimizada.falhas[:3]))
-    secoes.tabela_comparativa(resultados, rf_diaria, benchmark)
-    if benchmark is not None:
-        secoes.bloco_alfa(otimizada, benchmark, rf_diaria)
+    secoes.tabela_comparativa(resultados, rf_diaria, referencias)
+    sem_historico = [_nome(t) for t in BENCHMARKS if _nome(t) not in referencias]
+    if sem_historico:
+        st.caption(f"Sem histórico para os {anos_historico} anos do walk-forward: {', '.join(sem_historico)}.")
+    if _nome(BENCHMARK_ACOES) in referencias:          # o critério pré-registrado é o alfa contra o BOVA11
+        secoes.bloco_alfa(otimizada, referencias[_nome(BENCHMARK_ACOES)], rf_diaria)
 
-    curvas = {nome: bt.valores for nome, bt in resultados.items()}
-    if benchmark is not None:
-        curvas["BOVA11"] = benchmark.valores
+    curvas = {nome: bt.valores for nome, bt in {**resultados, **referencias}.items()}
     datas = otimizada.valores.index
     curvas["CDI"] = entradas.orcamento * (1 + rf_diaria.reindex(datas).fillna(0.0).iloc[1:]).cumprod()
     curvas["CDI"] = pd.concat([pd.Series([entradas.orcamento], index=datas[:1]), curvas["CDI"]])
@@ -360,6 +360,23 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[st
     rolantes = metricas_rolantes(otimizada.valores.pct_change().dropna(), rf_diaria)
     if not rolantes.empty:
         col2.plotly_chart(grafico_metricas_rolling(rolantes), width="stretch")
+
+
+def _nome(ticker: str) -> str:
+    return ticker.replace(".SA", "")
+
+
+def _referencias_de_mercado(precos: pd.DataFrame, datas: pd.DatetimeIndex,
+                            cfg_bt: ConfigBacktest) -> dict[str, ResultadoBacktest]:
+    """Walk-forward de cada referência com histórico na janela: mesmas datas, mesmo cfg (treino, custos)."""
+    referencias = {}
+    for ticker in BENCHMARKS:
+        if ticker not in precos.columns:
+            continue
+        retornos = retornos_simples(precos[[ticker]]).reindex(datas).dropna()
+        if len(retornos) > cfg_bt.janela_treino + 1:
+            referencias[_nome(ticker)] = walk_forward(retornos, estrategia_equiponderada(), cfg_bt, _nome(ticker))
+    return referencias
 
 
 def _legenda_walk_forward(entradas: Entradas, otimizada: ResultadoBacktest, colunas_walk_forward: list[str],

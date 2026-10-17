@@ -8,7 +8,7 @@ import pandas as pd
 import pytest
 from streamlit.testing.v1 import AppTest
 
-from assets import BENCHMARK_ACOES, get_tickers_by_setor
+from assets import BENCHMARK_ACOES, BENCHMARKS, get_tickers_by_setor
 from core import market_data
 from core.config import Objetivo
 from ui import servicos
@@ -25,7 +25,7 @@ def _datas_sinteticas(anos: int, dia: date) -> pd.DatetimeIndex:
     return pd.bdate_range(end=pd.Timestamp(dia), periods=anos * 252 + 10)
 
 
-def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+def _precos_sinteticos(tickers: tuple[str, ...], anos: int, dia: date, versao_dados: int) -> market_data.DadosPrecos:
     gerador = np.random.default_rng(7)
     datas = _datas_sinteticas(anos, dia)
     retornos = gerador.normal(0.0006, 0.015, size=(len(datas), len(tickers)))
@@ -72,7 +72,7 @@ def test_reamostragem_vem_desligada_e_o_walk_forward_tem_4_estrategias(app):
     assert app.sidebar.checkbox(key="reamostrar").value is False
     colunas = list(_tabela_walk_forward(app).columns)
     assert colunas[1].startswith("Otimizada")
-    assert len(colunas) == 1 + 4 + 1                      # Métrica + 4 estratégias + BOVA11
+    assert len(colunas) == 1 + 4 + 3                      # Métrica + 4 estratégias + BOVA11, SMAL11, DIVO11
     assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
 
 
@@ -88,8 +88,8 @@ def test_walk_forward_treina_na_janela_da_carteira_de_hoje(app):
 def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
     # Mesmo cfg das estratégias: compra na véspera do 1º rebalanceamento (pregão janela × 252 do download),
     # paga 10 bps uma vez (o padrão da sidebar) e segura até o fim.
-    tickers = tuple(get_tickers_by_setor([SETOR_PEQUENO])) + (BENCHMARK_ACOES,)
-    bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today()).precos[BENCHMARK_ACOES]
+    tickers = tuple(get_tickers_by_setor([SETOR_PEQUENO])) + BENCHMARKS     # o mesmo pedido do walk-forward
+    bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today(), 0).precos[BENCHMARK_ACOES]
     esperado = (1 - 10 / 10_000) * bova.iloc[-1] / bova.iloc[JANELA_ANOS * 252] - 1
 
     tabela = _tabela_walk_forward(app).set_index("Métrica")
@@ -97,12 +97,12 @@ def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
     assert tabela.loc["Retorno total", "BOVA11"] == f"{esperado * 100:.2f}%"
 
 
-def _precos_sem_historico_longo_para_a_ultima(tickers: tuple[str, ...], anos: int,
-                                              dia: date) -> market_data.DadosPrecos:
+def _precos_sem_historico_longo_para_a_ultima(tickers: tuple[str, ...], anos: int, dia: date,
+                                              versao_dados: int) -> market_data.DadosPrecos:
     """A última ação do universo não tem janela + teste anos de histórico: some só do download do walk-forward."""
-    precos = _precos_sinteticos(tickers, anos, dia).precos
+    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
     if anos > JANELA_ANOS:
-        precos = precos.drop(columns=[t for t in tickers if t != BENCHMARK_ACOES][-1])
+        precos = precos.drop(columns=[t for t in tickers if t not in BENCHMARKS][-1])
     return market_data.DadosPrecos(precos)
 
 
@@ -116,10 +116,10 @@ def test_legenda_do_walk_forward_lista_a_acao_sem_historico_para_ele(app, monkey
     assert legenda.endswith(f"Fora do walk-forward por histórico curto: {curta}.")
 
 
-def _precos_sem_nenhuma_acao_no_historico_longo(tickers: tuple[str, ...], anos: int,
-                                                dia: date) -> market_data.DadosPrecos:
+def _precos_sem_nenhuma_acao_no_historico_longo(tickers: tuple[str, ...], anos: int, dia: date,
+                                                versao_dados: int) -> market_data.DadosPrecos:
     """Nenhuma ação tem janela + teste anos de histórico: o download do walk-forward só traz o BOVA11."""
-    precos = _precos_sinteticos(tickers, anos, dia).precos
+    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
     return market_data.DadosPrecos(precos[[BENCHMARK_ACOES]] if anos > JANELA_ANOS else precos)
 
 
@@ -153,7 +153,7 @@ def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app)
     assert not app.exception
     tabela = _tabela_walk_forward(app)
     assert list(tabela.columns)[1].startswith("Reamostrada")
-    assert len(tabela.columns) == 1 + 5 + 1
+    assert len(tabela.columns) == 1 + 5 + 3
     assert {"PSR (Sharpe > 0)", "DSR (deflacionado)"} <= set(tabela["Métrica"])
     estabilidade = [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
     assert len(estabilidade) == 1
@@ -185,9 +185,10 @@ def test_aceita_valor_a_investir_abaixo_de_mil_reais(app):
     assert sobra.value.startswith("R$") and investido.value.startswith("R$")
 
 
-def _precos_com_a_ultima_acao_cara(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+def _precos_com_a_ultima_acao_cara(tickers: tuple[str, ...], anos: int, dia: date,
+                                   versao_dados: int) -> market_data.DadosPrecos:
     """A última ação do universo custa 1.000 vezes mais: 2 unidades passam de qualquer teto da sidebar."""
-    precos = _precos_sinteticos(tickers, anos, dia).precos
+    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
     acoes = [t for t in tickers if t != BENCHMARK_ACOES]
     precos[acoes[-1]] *= 1_000
     return market_data.DadosPrecos(precos)
@@ -204,8 +205,8 @@ def test_acao_cara_demais_para_o_teto_sai_antes_da_otimizacao_com_aviso(app, mon
     assert cara not in set(_plano_de_compra(app)["Ticker"])
 
 
-def _precos_todos_caros(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
-    precos = _precos_sinteticos(tickers, anos, dia).precos * 1_000
+def _precos_todos_caros(tickers: tuple[str, ...], anos: int, dia: date, versao_dados: int) -> market_data.DadosPrecos:
+    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos * 1_000
     return market_data.DadosPrecos(precos)
 
 
@@ -277,9 +278,10 @@ def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contad
 SETOR_AUXILIAR = "Telecomunicações"          # 4 ações: com teto de 70%, os dois setores ainda somam 100%
 
 
-def _precos_tecnologia_em_alta(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
+def _precos_tecnologia_em_alta(tickers: tuple[str, ...], anos: int, dia: date,
+                               versao_dados: int) -> market_data.DadosPrecos:
     """Tecnologia sobe ~0,2% ao dia a mais: sem teto por setor, o otimizador põe tudo nela."""
-    precos = _precos_sinteticos(tickers, anos, dia).precos
+    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
     tecnologia = [t for t in get_tickers_by_setor([SETOR_PEQUENO]) if t in precos.columns]
     precos[tecnologia] = precos[tecnologia].mul(np.exp(0.002 * np.arange(len(precos))), axis=0)
     return market_data.DadosPrecos(precos)
@@ -321,3 +323,39 @@ def test_reamostragem_so_vale_para_o_kelly(app):
     assert app.sidebar.checkbox(key="reamostrar").disabled
     assert list(_tabela_walk_forward(app).columns)[1].startswith("Otimizada")
     assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
+
+
+def test_a_tela_diz_que_os_precos_sao_do_lago_e_ate_que_pregao(app):
+    ultimo = _datas_sinteticas(JANELA_ANOS, date.today())[-1]
+    fontes = [c.value for c in app.caption if c.value.startswith("Preços:")]
+    assert fontes == [f"Preços: lago de dados da B3 (COTAHIST e eventos da B3/CVM, retorno total), até {ultimo:%d/%m/%Y}."]
+
+
+def test_aviso_de_descartados_explica_os_dois_motivos(app, monkeypatch):
+    def precos_com_descartes(tickers, anos, dia, versao_dados):
+        dados = _precos_sinteticos(tickers, anos, dia, versao_dados)
+        return market_data.DadosPrecos(dados.precos, descartados_sem_dados=["SHOW3.SA"],
+                                       descartados_cobertura=["XPTO3.SA"])
+
+    monkeypatch.setattr(servicos, "carregar_precos", precos_com_descartes)
+    app.run()
+    avisos = [w.value for w in app.warning if "SHOW3" in w.value]
+    assert avisos == ["Fora da análise. Sem preços no lago (não negocia mais ou não é ação): SHOW3. "
+                      "Negociou em menos de 95% dos pregões da janela (dia sem negócio fica sem preço): XPTO3."]
+
+
+def test_walk_forward_compara_com_bova11_smal11_e_divo11(app):
+    # referências de mercado: Ibovespa, small caps e dividendos (o alfa continua medido contra o BOVA11)
+    assert list(_tabela_walk_forward(app).columns)[-3:] == ["BOVA11", "SMAL11", "DIVO11"]
+
+
+def test_referencia_sem_historico_na_janela_aparece_na_legenda(app, monkeypatch):
+    # DIVO11 só existe desde 2012: num walk-forward de 20 anos ela não tem a janela inteira
+    def sem_divo11(tickers, anos, dia, versao_dados):
+        dados = _precos_sinteticos(tuple(t for t in tickers if t != "DIVO11.SA"), anos, dia, versao_dados)
+        return market_data.DadosPrecos(dados.precos, descartados_cobertura=["DIVO11.SA"] if "DIVO11.SA" in tickers else [])
+
+    monkeypatch.setattr(servicos, "carregar_precos", sem_divo11)
+    app.run()
+    legendas = [c.value for c in app.caption if c.value.startswith("Sem histórico")]
+    assert legendas == [f"Sem histórico para os {JANELA_ANOS + TESTE_ANOS} anos do walk-forward: DIVO11."]

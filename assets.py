@@ -33,6 +33,9 @@ ATIVOS_LIQUIDOS_TICKERS = [
 ]
 
 BENCHMARK_ACOES = "BOVA11.SA"   # ETF do Ibovespa: investível e de retorno total (ao contrário do ^BVSP)
+# Referências de mercado do walk-forward (ETFs que reinvestem): Ibovespa, small caps e dividendos (IDIV).
+# O alfa e o critério pré-registrado continuam contra o BOVA11.
+BENCHMARKS = (BENCHMARK_ACOES, "SMAL11.SA", "DIVO11.SA")
 
 # Lista completa de ativos da B3
 ATIVOS_B3 = [

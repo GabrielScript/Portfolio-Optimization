@@ -158,6 +158,22 @@ def _texto_motivo(ticker: str, motivo: MotivoFora, regras: RegrasCompra) -> str:
     return TEXTO_MOTIVO_FORA[motivo].format(teto=regras.peso_maximo)
 
 
+def aviso_descartados(sem_dados: list[str], cobertura: list[str]) -> str | None:
+    """Ações pedidas que ficam fora da análise, por motivo. O lago não repete preço em dia sem negócio (o Yahoo
+    repetia), então ação pouco negociada cai na exigência de cobertura de 95%."""
+    partes = []
+    if sem_dados:
+        partes.append(f"Sem preços no lago (não negocia mais ou não é ação): {_sem_sufixo(sem_dados)}.")
+    if cobertura:
+        partes.append(f"Negociou em menos de 95% dos pregões da janela (dia sem negócio fica sem preço): "
+                      f"{_sem_sufixo(cobertura)}.")
+    return " ".join(["Fora da análise.", *partes]) if partes else None
+
+
+def _sem_sufixo(tickers: list[str]) -> str:
+    return ", ".join(t.replace(".SA", "") for t in tickers)
+
+
 def tabela_estabilidade(pesos: pd.Series, frequencia: pd.Series) -> None:
     """Peso final contra a fração das reamostras em que o ativo teve peso > 1%: frequência baixa = ruído."""
     tabela = pd.DataFrame({"Peso": pesos, "% das reamostras em que aparece": frequencia})
@@ -197,10 +213,10 @@ def _momentos_do_excesso(bt: ResultadoBacktest, rf_diaria: pd.Series) -> Momento
     return momentos_sharpe(retornos - rf_diaria.reindex(retornos.index).fillna(0.0))
 
 
-def _psr_e_dsr(resultados: dict[str, ResultadoBacktest], benchmark: ResultadoBacktest | None,
+def _psr_e_dsr(resultados: dict[str, ResultadoBacktest], referencias: dict[str, ResultadoBacktest],
                rf_diaria: pd.Series) -> dict[str, tuple[float, float]]:
     """
-    PSR de todas; DSR só das estratégias (o benchmark não foi uma escolha entre tentativas).
+    PSR de todas; DSR só das estratégias (as referências de mercado não foram escolhas entre tentativas).
     Sharpe NaN (curva constante) fica fora de N e da variância, senão anularia o DSR das outras.
     """
     momentos = {nome: _momentos_do_excesso(bt, rf_diaria) for nome, bt in resultados.items()}
@@ -209,19 +225,16 @@ def _psr_e_dsr(resultados: dict[str, ResultadoBacktest], benchmark: ResultadoBac
     referencia = sharpe_referencia_deflacionado(variancia, len(sharpes))
     saida = {nome: (sharpe_probabilistico(m), sharpe_probabilistico(m, referencia))
              for nome, m in momentos.items()}
-    if benchmark is not None:
-        saida[benchmark.nome] = (sharpe_probabilistico(_momentos_do_excesso(benchmark, rf_diaria)),
-                                 float("nan"))
+    for nome, bt in referencias.items():
+        saida[nome] = (sharpe_probabilistico(_momentos_do_excesso(bt, rf_diaria)), float("nan"))
     return saida
 
 
 def tabela_comparativa(resultados: dict[str, ResultadoBacktest], rf_diaria: pd.Series,
-                       benchmark: ResultadoBacktest | None) -> dict[str, ResumoDesempenho]:
-    todos = dict(resultados)
-    if benchmark is not None:
-        todos[benchmark.nome] = benchmark
+                       referencias: dict[str, ResultadoBacktest]) -> dict[str, ResumoDesempenho]:
+    todos = {**resultados, **referencias}
     resumos = {nome: resumo_desempenho(bt.valores, rf_diaria) for nome, bt in todos.items()}
-    psr_dsr = _psr_e_dsr(resultados, benchmark, rf_diaria)
+    psr_dsr = _psr_e_dsr(resultados, referencias, rf_diaria)
     tabela = {"Métrica": ROTULOS_RESUMO}
     tabela.update({nome: _coluna_resumo(resumos[nome], bt, *psr_dsr[nome]) for nome, bt in todos.items()})
     st.dataframe(pd.DataFrame(tabela), width="stretch", hide_index=True)

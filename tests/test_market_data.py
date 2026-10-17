@@ -4,8 +4,9 @@ from datetime import date
 
 import numpy as np
 import pandas as pd
+import pytest
 
-from core import bcb, market_data
+from core import bcb, lago, market_data
 
 DIAS = pd.bdate_range("2026-01-05", periods=40)
 
@@ -47,18 +48,19 @@ def test_ativo_sem_dados_e_ativo_com_cobertura_baixa_sao_descartados_e_reportado
     assert dados.descartados_cobertura == ["POUCA.SA"]
 
 
-def test_carregar_precos_de_acoes_baixa_so_os_tickers_pedidos_e_nao_consulta_o_bcb(monkeypatch):
+def test_carregar_precos_le_do_lago_so_os_tickers_pedidos_sem_rede(monkeypatch):
     pedidos: list[list[str]] = []
 
-    def baixar(tickers, inicio, fim):
+    def ler_do_lago(tickers, inicio, fim):
         pedidos.append(list(tickers))
         dias = pd.bdate_range(inicio, fim)
         return pd.DataFrame({t: 10.0 for t in tickers}, index=dias)
 
     def proibido(*a, **k):
-        raise AssertionError("não deveria consultar o BCB")
+        raise AssertionError("não deveria ir à rede")
 
-    monkeypatch.setattr(market_data, "baixar_fechamentos", baixar)
+    monkeypatch.setattr(lago, "ler_fechamentos", ler_do_lago)
+    monkeypatch.setattr(market_data, "baixar_fechamentos", proibido)
     monkeypatch.setattr(bcb.requests, "get", proibido)
 
     dados = market_data.carregar_precos(["AAA.SA", "BBB.SA"], 2, hoje=date(2026, 10, 9))
@@ -66,6 +68,14 @@ def test_carregar_precos_de_acoes_baixa_so_os_tickers_pedidos_e_nao_consulta_o_b
     assert pedidos == [["AAA.SA", "BBB.SA"]]
     assert list(dados.precos.columns) == ["AAA.SA", "BBB.SA"]
     assert dados.precos.notna().all().all()
+
+
+def test_sem_o_arquivo_do_lago_o_erro_diz_qual_arquivo_falta(monkeypatch, tmp_path):
+    # nada de cair no Yahoo em silêncio: o app mostra o erro
+    ausente = tmp_path / "precos_diarios.parquet"
+    monkeypatch.setattr(lago, "ARQUIVO_PRECOS", ausente)
+    with pytest.raises(market_data.ErroDadosMercado, match="precos_diarios.parquet"):
+        market_data.carregar_precos(["PETR4.SA"], 2, hoje=date(2026, 10, 16))
 
 
 # --- cotações do dia ---------------------------------------------------------------------------

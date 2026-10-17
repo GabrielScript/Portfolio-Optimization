@@ -50,8 +50,9 @@ class ParametrosOtimizacao:
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
-def carregar_precos(tickers: tuple[str, ...], anos: int, dia: date) -> market_data.DadosPrecos:
-    """``dia`` entra na chave para invalidar o cache na virada do dia."""
+def carregar_precos(tickers: tuple[str, ...], anos: int, dia: date, versao_dados: int) -> market_data.DadosPrecos:
+    """``dia`` e ``versao_dados`` (``lago.versao_dos_dados()``) entram na chave: o cache vira com o dia e a cada
+    publicação do lago."""
     return market_data.carregar_precos(list(tickers), anos, hoje=dia)
 
 

@@ -51,23 +51,28 @@ mesmas condições.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com treino rolante na **mesma janela de
   estimação da carteira de hoje** e teste de N anos (sliders "Janela de estimação" e "Teste fora da amostra").
   Ele baixa janela + teste anos de preços, então ações com histórico mais curto ficam fora dele (a legenda
-  lista quais) e continuam na carteira de hoje. O BOVA11 usa a mesma janela e as mesmas datas. Compara o objetivo
-  escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra o BOVA11 e o CDI. Mostra CAGR,
+  lista quais) e continuam na carteira de hoje. As referências de mercado (BOVA11, SMAL11 e DIVO11) usam a mesma
+  janela e as mesmas datas; a que não tem histórico para a janela aparece na legenda. Compara o objetivo
+  escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra elas e o CDI; o alfa é contra o BOVA11. Mostra CAGR,
   volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade
   de o Sharpe verdadeiro ser positivo e a mesma probabilidade descontada pelo número de estratégias comparadas;
   Bailey e López de Prado), VaR/CVaR, drawdown máximo, alfa por regressão com estatística t, pesos ao longo do
   tempo e métricas rolantes.
 
 ### 🏦 Dados
-- **Preços:** Yahoo Finance (`yfinance`), alinhados ao calendário da B3, com exigência de cobertura ≥ 95%.
+- **Preços diários:** lago de dados da B3 (projeto irmão `b3-datalake`), arquivo `lago/precos_diarios.parquet`:
+  índice de retorno total por papel a partir do COTAHIST oficial e dos eventos da B3 e da CVM (cisões, bonificações,
+  JCP líquido do IR), terminando no último fechamento; ações e units negociadas nas últimas duas semanas mais BOVA11,
+  SMAL11 e DIVO11, desde 2005. Dia sem negócio fica sem preço (o Yahoo repetia o anterior), então ação pouco
+  negociada cai na exigência de cobertura ≥ 95% da janela. A tela mostra até que pregão vão os preços.
+- **Cotação do dia:** Yahoo Finance (`yfinance`), só para o plano de compra.
 - **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1, só para o painel macro),
   baixados em janelas de até 10 anos, com nova tentativa em falhas transitórias.
-- **Lago de dados da B3 (projeto irmão `b3-datalake`, ainda não ligado ao app):** exports em parquet gerados
-  a partir do COTAHIST oficial (1986–hoje) e dos eventos da B3 e da CVM: retorno total ajustado
-  desde 07/1994 de 3.948 papéis, **incluindo deslistados e em recuperação judicial** (troca de ticker,
-  como ITAU4 → ITUB4, continua a mesma série), painel mensal de liquidez/volatilidade/microestrutura e
-  índices próprios. Vai substituir o Yahoo (preços e proventos) e remover o viés de sobrevivência quando
-  for integrado; hoje o app ainda usa o Yahoo. Uma rotina diária no Windows (Agendador de Tarefas, seg–sex
+- **Lago de dados da B3 (projeto irmão `b3-datalake`):** exports em parquet gerados a partir do COTAHIST
+  oficial (1986–hoje) e dos eventos da B3 e da CVM: retorno total ajustado desde 07/1994 de 3.948 papéis,
+  **incluindo deslistados e em recuperação judicial** (troca de ticker, como ITAU4 → ITUB4, continua a mesma
+  série), painel mensal de liquidez/volatilidade/microestrutura e índices próprios. Os preços diários do app
+  já vêm dele; o universo com deslistadas (fim do viés de sobrevivência) é a próxima etapa. Uma rotina diária no Windows (Agendador de Tarefas, seg–sex
   às 21h45 com novas tentativas até 23h45 e às 8h do dia seguinte) traz o pregão do dia para o lago, confere
   com portões automáticos (troca de ticker sem revisão, arquivo truncado, retorno ≥ 50% sem revisão, gold
   reproduzível) e só atualiza os exports quando todos passam; quando algo falha, avisa no Windows.
@@ -97,7 +102,8 @@ Portfolio-Optimization/
 ├── visualizations.py         # Gráficos Plotly
 ├── core/                     # Lógica pura, sem Streamlit
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
-│   ├── market_data.py        #   Preços, calendário B3, CDI, Selic, cotação do dia
+│   ├── lago.py               #   Preços diários do lago da B3 (lago/precos_diarios.parquet)
+│   ├── market_data.py        #   Preços (lago), calendário B3, CDI, Selic, cotação do dia (Yahoo)
 │   ├── ordens.py             #   Plano de compra: pesos + cotações → quantidades inteiras
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
@@ -120,6 +126,8 @@ Portfolio-Optimization/
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   └── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
+├── lago/
+│   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
 └── requirements.txt
 ```
@@ -171,11 +179,13 @@ Portfolio-Optimization/
 ## ⚠️ Limitações
 
 - **Viés de sobrevivência.** O universo é a lista atual de tickers; empresas que quebraram ou fecharam
-  capital não aparecem, o que favorece todas as estratégias. Os dados para corrigir isso já existem no
-  lago de dados da B3 (`b3-datalake`), mas ainda não alimentam o app.
-- **Preços e proventos do Yahoo têm erros conhecidos** (cisões, JCP bruto): comparado ao COTAHIST, o Yahoo
-  registrou +112% num dia em que o retorno total real foi +14,1% (cisão do Assaí). Resultados do walk-forward
-  herdam esses erros até a integração do lago.
+  capital não aparecem, o que favorece todas as estratégias. O lago já tem as deslistadas; o universo
+  ponto no tempo é a próxima etapa.
+- **Migração de classe sem continuidade.** Quem migrou de PN para ON no Novo Mercado (PCAR4 → PCAR3 em
+  2020, SUZB5 → SUZB3) começa no lago sem a história da classe antiga e fica fora de janelas longas.
+- Os preços diários vêm do lago desde 2026-10 (antes, Yahoo: errava cisões e usava JCP bruto; registrou
+  +112% num dia em que o retorno total real foi +14,1%, cisão do Assaí). Medições publicadas antes disso
+  usaram os dados do Yahoo.
 - **Sem vantagem comprovada sobre o BOVA11.** A última medição fora da amostra deu empate estatístico; use o
   BOVA11 como núcleo e o otimizador, no máximo, como satélite pequeno.
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo

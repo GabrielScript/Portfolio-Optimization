@@ -1,8 +1,8 @@
 # Roteiro do Otimizador B3: do protótipo a uma carteira realista e competitiva
 
-_Atualizado em 2026-10-17 (lago corrigido por regras gerais, trocas de ticker travadas, gold reproduzível; teste das
-janelas na `main`).
-Produção: `main` = `f12ed03`
+_Atualizado em 2026-10-17, noite (S1-P.a na produção: preços diários do lago da B3 no app; SMAL11 e DIVO11 no
+walk-forward; rotina diária do lago agendada no Windows; flags reabertas/atrasadas e janela do FRE corrigidas).
+Produção: `main` = `4564459`
 (https://portfolio-optimization-b3.streamlit.app/).
 Branch de trabalho: `feat/s1p-precos`._
 
@@ -16,21 +16,23 @@ Branch de trabalho: `feat/s1p-precos`._
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
-| Dados de preço | **Yahoo: sem ações deslistadas (viés de sobrevivência), proventos com erro, JCP bruto.** O lago de dados da B3 já tem o retorno total corrigido de 3.948 papéis desde 07/1994, deslistados incluídos (troca de ticker continua a mesma série), mas ainda não alimenta o app (S1-P.a) |
+| Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. **Ainda com viés de sobrevivência**: o universo é a lista de hoje (S1-P.b) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
 | Execução (custo por liquidez, IR, carteira existente) | Não modelada |
 
 **Último resultado fora da amostra** (treino de 5 anos, teste de 3 anos, 11/2023 a 10/2026, teto de 30% por setor):
 
-| | Otimizada (Kelly) | BOVA11 |
-|---|---|---|
-| CAGR | 20,0% | 21,3% |
-| Sharpe | 0,42 | 0,47 |
-| Drawdown máximo | **−13,3%** | −16,2% |
+Com os preços do lago (2026-10-17, padrão da tela, 11/2023 a 10/2026):
 
-Leitura: **empate estatístico com o índice** (erro do Sharpe ≈ ±0,5 num período só), com queda menor.
-Vantagem de retorno **não comprovada** (t do alfa = 1,25). Os números ainda usam dados do Yahoo.
-Teste das janelas, tiro 1 (outro protocolo, 7,6 anos): ver §4.2.
+| | Otimizada (Kelly) | BOVA11 | SMAL11 | DIVO11 |
+|---|---|---|---|---|
+| CAGR | 20,8% | 21,1% | 9,5% | 21,6% |
+| Sharpe | 0,50 | 0,50 | −0,02 | 0,56 |
+| Drawdown máximo | **−12,3%** | −16,2% | −26,2% | −16,1% |
+
+Leitura: **empate estatístico com o índice** (erro do Sharpe ≈ ±0,5 num período só), com queda menor; o DIVO11
+(dividendos) foi a melhor referência no período. Vantagem de retorno **não comprovada**. Com o Yahoo, o mesmo
+protocolo dava 20,0% × 21,3% e Sharpe 0,42 × 0,47. Teste das janelas (outro protocolo, 7,6 anos): ver §4.2.
 
 **Kelly × outros objetivos** (2026-10-16, mesmos dados do Yahoo): o Kelly fica como opção, **não como objetivo
 principal**. Em 10 anos a Mín. Variância teve Sharpe parecido com metade do drawdown (−29% × −55%); o Kelly venceu
@@ -55,11 +57,11 @@ ou mais, rebalanceio trimestral.
 
 ```mermaid
 flowchart TD
-    A["Produção f12ed03<br/>teste das janelas na main"] --> L["Lago de dados da B3 pronto<br/>(COTAHIST + eventos B3/CVM)"]
+    A["Produção 4564459<br/>preços do lago no app (feito)"] --> L["Lago de dados da B3 pronto<br/>(COTAHIST + eventos B3/CVM)"]
     L --> R["Resíduos corrigidos por regra geral<br/>(72 → 58 dias com retorno ≥ ±50%; trocas de ticker travadas)"]
-    R --> RT["Rotina diária do lago no Windows<br/>+ FRE por regra + portão de erro pequeno"]
-    RT --> D["S1-P.a: retorno total do lago no app<br/>+ SMAL11 e DIVO11 ao lado do BOVA11"]
-    D --> E["Teste das janelas, tiro 2<br/>(mesmo script, mesmos limites)"]
+    R --> RT["Rotina diária do lago no Windows<br/>+ FRE por regra (feito)"]
+    RT --> D["S1-P.a: retorno total do lago no app<br/>+ SMAL11 e DIVO11 (feito)"]
+    D --> E["Teste das janelas, tiro 2<br/>(feito: nenhuma passou)"]
     E --> F{"Passou nos 2 tiros?"}
     F -- sim --> F1["Nova janela vira padrão"]
     F -- não --> F2["Fica 5 anos"]
@@ -104,7 +106,7 @@ flowchart TD
 - [x] Tamanho do universo ponto no tempo (pisos R$ 1 mi e R$ 5 mi, 80% e 90% dos pregões) e triagem dos resíduos do
       ajuste nesse universo (§4.3)
 
-### 4.2 Teste pré-registrado das janelas (na `main`): tiro 1 feito, tiro 2 depois do S1-P.a
+### 4.2 Teste pré-registrado das janelas: encerrado, fica a janela de 5 anos
 
 - [x] `pesos_ewma` e `covariancia_ewma` (EWMA com encolhimento Ledoit-Wolf), com TDD
 - [x] `estimar_momentos(..., meia_vida_cov=...)`: Σ EWMA também alimenta o Jorion
@@ -114,8 +116,9 @@ flowchart TD
 - [~] Revisão adversarial do pré-registro: parcial (só a sonda terminou; workflow parado por custo)
 - [x] Pré-registro no docstring do script, commitado **antes de rodar** (`7d5c6cb`)
 - [x] Tiro 1 (dados Yahoo), 2026-10-15: saída completa em `docs/janelas-tiro1-2026-10-15.txt`
-- [ ] Tiro 2 depois do S1-P.a (mesmo script, sem mudar nada, data de um pregão já fechado). Mede só a correção
-      de preços nas sobreviventes: o viés de sobrevivência fica para o teste novo do S1-P.b
+- [x] Tiro 2 (dados do lago, 2026-10-17, pregão fechado de 16/10/2026, mesmo script): saída em
+      `docs/janelas-tiro2-2026-10-16.txt`. **Nenhuma desafiante passou: fica a R5.** Mede só a correção de preços nas
+      sobreviventes: o viés de sobrevivência fica para o teste novo do S1-P.b
 
 Candidatas: R5 (controle, padrão atual), R3, R2 e EWMA (Σ com meia-vida de 6 meses e μ de 5 anos). Troca só se
 P[candidata > R5] ≥ 0,983 (Bonferroni), drawdown não piorar mais de 5 p.p. e giro ≤ 2× nos **dois** tiros.
@@ -174,6 +177,22 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
 - R5 contra o BOVA11 aqui (18,5% × 10,7%) não contradiz o §1 (20,0% × 21,3%): outro protocolo (7,6 anos × 3; 52
   ações × 57) e as estratégias rodam sobre sobreviventes, o BOVA11 não. Mesmo assim P[R5 > BOVA11] ≈ 0,915 < 0,95.
 
+**Tiro 2** (50 ações, fora da amostra de 20/03/2019 a 16/10/2026, 1.888 pregões; PCAR3 e SUZB3 saem por migração
+de classe sem continuidade no lago, SIMH3 entra com a história da JSL):
+
+| | R5 (controle) | R3 | R2 | EWMA | 1/N | BOVA11 |
+|---|---|---|---|---|---|---|
+| CAGR | 20,4% | 28,4% | 28,3% | 19,1% | 15,3% | 10,7% |
+| Sharpe | 0,49 | 0,71 | 0,70 | 0,44 | 0,32 | 0,16 |
+| Drawdown máximo | −44,3% | −54,1% | −58,1% | −49,1% | −50,0% | −46,9% |
+| Giro anual | 162% | 204% | 242% | 189% | 63% | 13% |
+| P[> R5] | — | 0,950 | 0,918 | **0,373** | 0,217 | 0,043 |
+
+Veredito: **a EWMA caiu no C1** (0,991 no tiro 1 → 0,373): sem o salto falso de +112% da PCAR3 em 2021, a vantagem
+some, como o diagnóstico do tiro 1 previa. R3 e R2 caem no C1 e no C2 (drawdown 9,8 e 13,7 p.p. pior). **A janela
+do app continua 5 anos.** O Sharpe ainda cresce com a recência (R3/R2 > R5), mas com drawdown bem pior e sem
+significância; a hipótese do viés de sobrevivência (lista de hoje favorece janela curta) só o S1-P.b testa.
+
 ### 4.3 S1-P.a: preços corrigidos no app (a partir do lago da B3)
 
 - [x] Triagem dos resíduos do ajuste no universo ponto no tempo, com deslistadas (saída completa em
@@ -193,16 +212,20 @@ com dados até 14/10 (o Yahoo mudou o 15/10 depois do tiro): mesmos MDD e mesmo 
       explicação, de 24 para 20. Saídas em `docs/universo-*-2026-10-17.*`
 - [x] Trocas de ticker travadas em `corrections/corrections.csv`: a regra só propõe ligações novas, para revisão; e
       gold reproduzível (o Polars embaralhava a ordem das linhas em três escolhas; duas rodadas agora são idênticas)
-- [ ] Rotina diária do lago no Windows: pregão do dia baixado depois das ~21h35, novas tentativas com limite,
-      portões automáticos e aviso no Windows quando algo falha (em desenho)
-- [ ] Triagem do FRE no universo por regra (9 contradições + 11 ausentes; primeiro caso: ITUB3/4 2009, bonificação
-      de 10% aplicada como dois eventos, ×1,15 e ×1,05)
-- [ ] Portão de erro pequeno: erro de 10–20% em dia de evento não aparece no portão de ±50%
-- [ ] Desenho aprovado (snapshot ou painel; quais arquivos entram no repositório; fonte mostrada na tela) → plano → TDD
-- [ ] Retorno total do lago (proventos oficiais, JCP líquido, cisões) por trás de `carregar_precos` (ler `ret_total`,
-      nulo nas quebras, nunca razões de `tr_close`)
-- [ ] SMAL11 e DIVO11 ao lado do BOVA11 no walk-forward (referências de mercado; fora do N do DSR)
-- [ ] Tiro 2 do teste das janelas (§4.2)
+- [x] Rotina diária do lago no Windows (`b3lake daily`, tarefa "b3lake daily" no Agendador): seg–sex 21h45 com novas
+      tentativas até 23h45 e às 8h; portões (troca de ticker sem revisão, arquivo truncado, |retorno| ≥ 50% em papel
+      líquido sem revisão, gold reproduzível na rodada semanal); aviso no Windows só quando falha. Aceite: o pregão
+      de 16/10/2026 entrou em 28 min (hoje ~10 min: só os emissores com flag nova buscam eventos)
+- [x] Erros pequenos em dia de evento, por regra: flag B/G reaberta em ≤ 10 dias = mesmo aviso (salvo quebra grande no
+      preço); flag atrasada ≤ 30 dias depois de evento da B3; janela do FRE de 150 dias (bancos esperam o BACEN).
+      Corrigidos: ITUB3/4 2009 (×1,15 + ×1,05 → ×1,10), SBSP3 02/01/2026 (+4,75% falso), VIVT3 28/04/2025 (+5,3%),
+      CGRA3 02/01/2026, CEBR3/5/6 2021; nenhum outro retorno mudou
+- [~] Portão de erro pequeno: medido (31 eventos pequenos suspeitos em papel líquido, 12 só com flag), sem regra que
+      separe erro de bonificação real; fica como lista de revisão
+- [x] Retorno total do lago por trás de `carregar_precos` (índice do `ret_total` ancorado no último fechamento;
+      retorno desconhecido = índice parado); a tela mostra até que pregão vão os preços (`4564459`)
+- [x] SMAL11 e DIVO11 ao lado do BOVA11 no walk-forward (mesmo cfg, fora do N do DSR; alfa contra o BOVA11)
+- [x] Tiro 2 do teste das janelas (§4.2): fica a R5
 
 ### 4.4 S1-P.b: universo sem viés de sobrevivência (teste novo)
 

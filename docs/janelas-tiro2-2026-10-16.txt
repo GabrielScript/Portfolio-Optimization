@@ -1,0 +1,31 @@
+# Tiro 2 do teste pré-registrado das janelas (scripts/avaliar_janelas.py, sem mudar uma linha desde 7d5c6cb)
+# Dados: lago da B3 (b3-datalake da0376f), lago/precos_diarios.parquet do app 4564459, preços até 16/10/2026
+# Rodado em 2026-10-17 20:31 com: .venv/Scripts/python -X utf8 scripts/avaliar_janelas.py 2026-10-16
+
+Universo: 50 de 74 ações; amostra comum 24/01/2014 a 16/10/2026 (3148 pregões); Selic 13.75% (BCB SGS 432); CDI ok
+Descartados sem dados: []
+Descartados por cobertura: ['RAIZ4.SA', 'CBAV3.SA', 'VAMO3.SA', 'ASAI3.SA', 'RAIL3.SA', 'SUZB3.SA', 'GMAT3.SA', 'CMIN3.SA', 'HAPV3.SA', 'VBBR3.SA', 'RDOR3.SA', 'PCAR3.SA', 'BPAC11.SA', 'BRAV3.SA', 'ALOS3.SA', 'SMFT3.SA', 'CEAB3.SA', 'AURE3.SA', 'HBSA3.SA', 'VIVA3.SA', 'CXSE3.SA', 'GGPS3.SA', 'LWSA3.SA', 'MOVI3.SA']
+
+Walk-forward fora da amostra, 20/03/2019 a 16/10/2026 (1888 pregões), 10 bps por lado
+          Retorno total    CAGR     Vol Sharpe Sortino      MDD CVaR95 diário Giro anual    PSR    DSR P[> R5]  Falhas
+R5              300.62%  20.35%  26.29%  0.486   0.669  -44.34%         3.75%    161.76%  0.904  0.820     nan       0
+R3              550.39%  28.39%  27.84%  0.708   0.970  -54.10%         3.92%    204.05%  0.969  0.931   0.950       0
+R2              548.46%  28.34%  28.49%  0.698   0.939  -58.08%         4.05%    241.67%  0.966  0.925   0.918       0
+EWMA            271.26%  19.13%  26.90%  0.444   0.599  -49.08%         3.84%    188.89%  0.883  0.788   0.373       0
+1/N             189.78%  15.26%  26.47%  0.321   0.442  -49.98%         3.72%     62.96%  0.808    nan   0.217       0
+BOVA11.SA       114.20%  10.70%  23.61%  0.158   0.217  -46.93%         3.38%     13.35%  0.667    nan   0.043       0
+
+Veredito pré-registrado (controle R5)
+  R3: NÃO PASSOU  C1 P[supera R5] >= 0.9833
+  R3: NÃO PASSOU  C2 drawdown no máximo 5% pior
+  R3: PASSOU      C3 giro <= 2x
+  R2: NÃO PASSOU  C1 P[supera R5] >= 0.9833
+  R2: NÃO PASSOU  C2 drawdown no máximo 5% pior
+  R2: PASSOU      C3 giro <= 2x
+  EWMA: NÃO PASSOU  C1 P[supera R5] >= 0.9833
+  EWMA: PASSOU      C2 drawdown no máximo 5% pior
+  EWMA: PASSOU      C3 giro <= 2x
+
+Nenhuma desafiante passou: fica a R5. (tempo total 13 s)
+
+# código de saída: 2 (2 = fica a R5; conferido rodando de novo, mesma saída)

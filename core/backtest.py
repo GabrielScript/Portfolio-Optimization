@@ -130,6 +130,32 @@ def walk_forward(retornos: pd.DataFrame, estrategia: Estrategia, cfg: ConfigBack
                     cfg.capital_inicial, cfg.custo_bps, nome, "walk-forward OOS")
 
 
+DIAS_SEM_NEGOCIO_NO_TREINO = 5    # o mesmo limite do ``market_data.limpar_precos``
+
+
+def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrategia: Estrategia,
+                          cfg: ConfigBacktest, nome: str) -> ResultadoBacktest:
+    """
+    Walk-forward OOS com universo ponto no tempo (deslistadas incluídas).
+
+    ``precos``: índice de retorno total (data x papel), vazio onde o papel não negociou ou não existia.
+    ``universo``: colunas ``month`` e ``security``, os papéis elegíveis no começo de cada mês (regra do lago).
+    """
+    retornos = precos.pct_change().iloc[1:].fillna(0.0)          # o 1º pregão não tem retorno
+    # treino como no app: até 5 pregões seguidos sem negócio repetem o preço; papel com buraco maior (ou que ainda
+    # não existia) na janela fica fora daquele rebalanceio
+    treino_ret = precos.ffill(limit=DIAS_SEM_NEGOCIO_NO_TREINO).pct_change().iloc[1:]
+    elegiveis = universo.groupby("month")["security"].apply(list)
+
+    def decidir(posicao: int) -> pd.Series:
+        mes = retornos.index[posicao].to_period("M").to_timestamp()
+        nomes = [p for p in elegiveis.get(mes, []) if p in retornos.columns]
+        return estrategia(treino_ret.iloc[posicao - cfg.janela_treino:posicao][nomes].dropna(axis=1))
+
+    return _simular(retornos, decidir, cfg.janela_treino, cfg.janela_teste, cfg.capital_inicial,
+                    cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo")
+
+
 def backtest_pesos_fixos(retornos: pd.DataFrame, pesos: pd.Series, cfg: ConfigBacktest,
                          nome: str) -> ResultadoBacktest:
     """

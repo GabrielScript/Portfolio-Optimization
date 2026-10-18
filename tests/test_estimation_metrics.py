@@ -131,3 +131,35 @@ def test_hrp_dois_ativos_e_inverso_variancia():
     cov = pd.DataFrame([[0.04, 0.0], [0.0, 0.01]], index=["a", "b"], columns=["a", "b"])
     pesos = otimizar_hrp(cov)
     assert pesos["a"] == pytest.approx(0.2) and pesos["b"] == pytest.approx(0.8)
+
+
+def _t_alfa_newey_west_de_referencia(y: np.ndarray, x: np.ndarray) -> float:
+    """t do intercepto por MQO com variância de Newey-West (Bartlett, L = ⌊4 (T/100)^(2/9)⌋), escrita com laços."""
+    t = len(y)
+    X = np.column_stack([np.ones(t), x])
+    beta = np.linalg.solve(X.T @ X, X.T @ y)
+    e = y - X @ beta
+    defasagens = int(np.floor(4 * (t / 100) ** (2 / 9)))
+    S = sum(e[i] ** 2 * np.outer(X[i], X[i]) for i in range(t))
+    for lag in range(1, defasagens + 1):
+        peso = 1 - lag / (defasagens + 1)
+        for i in range(lag, t):
+            cruzado = e[i] * e[i - lag] * np.outer(X[i], X[i - lag])
+            S = S + peso * (cruzado + cruzado.T)
+    inversa = np.linalg.inv(X.T @ X)
+    return float(beta[0] / np.sqrt((inversa @ S @ inversa)[0, 0]))
+
+
+def test_t_do_alfa_usa_erro_padrao_de_newey_west():
+    # resíduo AR(1) com rho 0,6: o t de MQO comum exagera a significância do alfa
+    gerador = np.random.default_rng(11)
+    r_b = gerador.normal(0.0004, 0.012, 600)
+    ruido = np.zeros(600)
+    for i in range(1, 600):
+        ruido[i] = 0.6 * ruido[i - 1] + gerador.normal(0.0, 0.004)
+    r_p = 0.0003 + 0.9 * r_b + ruido
+    datas = pd.bdate_range("2022-01-03", periods=601)
+    valores = pd.Series(np.r_[1.0, np.cumprod(1 + r_p)], index=datas)
+    referencia = pd.Series(np.r_[1.0, np.cumprod(1 + r_b)], index=datas)
+    comparacao = metrics.comparar_benchmark(valores, referencia, pd.Series(0.0, index=datas))
+    assert comparacao.t_stat_alfa == pytest.approx(_t_alfa_newey_west_de_referencia(r_p, r_b), rel=1e-6)

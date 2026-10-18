@@ -225,6 +225,23 @@ class ComparacaoBenchmark:
     t_stat_alfa: float
 
 
+def _erro_padrao_intercepto_newey_west(x: np.ndarray, y: np.ndarray, intercepto: float, inclinacao: float) -> float:
+    """
+    Erro padrão do intercepto de y = a + b x por Newey-West (1987): núcleo de Bartlett com L = ⌊4 (T/100)^(2/9)⌋
+    defasagens. Retornos diários de carteira têm resíduo autocorrelacionado; o erro de MQO comum o subestima.
+    """
+    t = len(y)
+    X = np.column_stack([np.ones(t), x])
+    momentos = X * (y - intercepto - inclinacao * x)[:, None]
+    S = momentos.T @ momentos
+    defasagens = int(np.floor(4 * (t / 100) ** (2 / 9)))
+    for lag in range(1, defasagens + 1):
+        cruzado = momentos[lag:].T @ momentos[:-lag]
+        S += (1 - lag / (defasagens + 1)) * (cruzado + cruzado.T)
+    inversa = np.linalg.inv(X.T @ X)
+    return float(np.sqrt(max((inversa @ S @ inversa)[0, 0], 0.0)))
+
+
 def comparar_benchmark(valores: pd.Series, valores_benchmark: pd.Series,
                        rf_diaria: pd.Series) -> ComparacaoBenchmark:
     """
@@ -241,8 +258,9 @@ def comparar_benchmark(valores: pd.Series, valores_benchmark: pd.Series,
     regressao = stats.linregress((r_b - rf).values, (r_p - rf).values)
     ativo = r_p - r_b
     tracking = float(ativo.std() * _RAIZ_ANO)
-    t_alfa = (regressao.intercept / regressao.intercept_stderr
-              if regressao.intercept_stderr > 0 else float("nan"))
+    erro_alfa = _erro_padrao_intercepto_newey_west((r_b - rf).to_numpy(), (r_p - rf).to_numpy(),
+                                                   regressao.intercept, regressao.slope)
+    t_alfa = regressao.intercept / erro_alfa if erro_alfa > 0 else float("nan")
     return ComparacaoBenchmark(
         alfa_anual=float(regressao.intercept * DIAS_UTEIS_ANO),
         beta=float(regressao.slope),

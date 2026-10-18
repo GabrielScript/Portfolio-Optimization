@@ -31,8 +31,8 @@ mesmas condições.
   regras não vira plano. Stop relativo do satélite (razão satélite/BOVA11 −25% desde o pico) e pausa de um pregão
   depois de perda diária de 5% já existem como funções; valem quando houver posições registradas no paper trading
   (`core/registro.py`). A rotina diária que registra o satélite e aplica as duas regras (`scripts/paper_trading.py`,
-  pré-registrada, com a decisão do item 3 do critério de pronto fixada antes) está pronta; o 1º registro, que começa
-  o relógio de 6 a 12 meses, ainda não foi feito.
+  pré-registrada, com a decisão do item 3 do critério de pronto fixada antes) roda agendada de segunda a sexta às
+  8h30. O 1º registro, no fechamento de 16/10/2026 (`paper/carteiras.csv`), começou o relógio de 6 a 12 meses.
 - **As mesmas regras no motor do walk-forward com deslistadas** (`estrategia_otimizada_nas_regras`, `Congelamento`,
   recusa = mantém a carteira), testadas num pré-registro (`docs/regras-no-motor-2026-10-18.txt`): 0 recusas em 60
   rebalanceios; o stop relativo disparou nos dois horizontes (05/2025 e 12/2025); o padrão com regras teve Sharpe
@@ -160,7 +160,7 @@ Portfolio-Optimization/
 │   ├── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
 │   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
 │   ├── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
-│   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (a agendar seg-sex 8h30)
+│   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   ├── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas

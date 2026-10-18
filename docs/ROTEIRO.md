@@ -20,7 +20,7 @@ Branch de trabalho: `feat/s1p-precos`._
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
 | Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. O walk-forward da tela ainda usa a lista de hoje; o teste sem viés de sobrevivência (S1-P.b) já rodou fora da tela (§4.4) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
-| Execução (custo por liquidez, IR, carteira existente) | Não modelada; registro do paper trading pronto (`core/registro.py`), ainda sem rotina |
+| Execução (custo por liquidez, IR, carteira existente) | Não modelada; paper trading registrado desde 16/10/2026 (`paper/carteiras.csv`, rotina agendada) |
 
 **Último resultado fora da amostra** (treino de 5 anos, teste de 3 anos, 11/2023 a 10/2026, teto de 30% por setor):
 
@@ -69,7 +69,7 @@ flowchart TD
     F -- não --> F2["Fica 5 anos"]
     F1 --> PB["S1-P.b: universo ponto no tempo<br/>com deslistadas (teste novo)"]
     F2 --> PB
-    PB --> S5["S5: paper trading 6–12 meses<br/>(início a decidir, §7)"]
+    PB --> S5["S5: paper trading 6–12 meses<br/>(começou em 16/10/2026)"]
     PB --> CAP["Contagem histórica de ações<br/>(valor de mercado e giro)"]
     CAP --> BL["Black-Litterman sem views<br/>(alvo do Jorion = mercado)"]
     BL --> S1F["S1-F: fundamentos CVM point-in-time"]
@@ -300,9 +300,10 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 
 ### 4.10 S5: paper trading
 
-- [ ] Decidir quando o relógio começa (§7)
-- [ ] Carteira registrada a cada rebalanceio, com data e preço, sem ajuste retroativo
-- [ ] 6 a 12 meses; comparar com BOVA11 e CDI pelo critério da seção 2
+- [x] Decidir quando o relógio começa (§7): depois do S1-P.b; 1º registro no fechamento de 16/10/2026
+- [x] Carteira registrada a cada rebalanceio, com data e preço, sem ajuste retroativo (`paper/carteiras.csv`, rotina
+      `scripts/paper_trading.py` agendada de segunda a sexta às 8h30)
+- [ ] 6 a 12 meses; comparar com BOVA11 e CDI pelo critério da seção 2 (leituras fixas de 126 e 252 pregões)
 
 ---
 

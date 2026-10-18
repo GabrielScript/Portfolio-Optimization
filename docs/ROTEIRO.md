@@ -16,7 +16,7 @@ Branch de trabalho: `feat/s1p-precos`._
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
-| Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. **Ainda com viés de sobrevivência**: o universo é a lista de hoje (S1-P.b) |
+| Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. O walk-forward da tela ainda usa a lista de hoje; o teste sem viés de sobrevivência (S1-P.b) já rodou fora da tela (§4.4) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
 | Execução (custo por liquidez, IR, carteira existente) | Não modelada |
 
@@ -34,9 +34,9 @@ Leitura: **empate estatístico com o índice** (erro do Sharpe ≈ ±0,5 num per
 (dividendos) foi a melhor referência no período. Vantagem de retorno **não comprovada**. Com o Yahoo, o mesmo
 protocolo dava 20,0% × 21,3% e Sharpe 0,42 × 0,47. Teste das janelas (outro protocolo, 7,6 anos): ver §4.2.
 
-**Kelly × outros objetivos** (2026-10-16, mesmos dados do Yahoo): o Kelly fica como opção, **não como objetivo
-principal**. Em 10 anos a Mín. Variância teve Sharpe parecido com metade do drawdown (−29% × −55%); o Kelly venceu
-em 5 anos. O rótulo "recomendado" do Kelly só muda depois do teste núcleo + satélite (§7).
+**Kelly × outros objetivos, sem viés de sobrevivência** (S1-P.b, 2026-10-18, §4.4): regra A = opção 3 (o Kelly
+fica como opção, não como principal) e regra B aprova o **núcleo Mín. Vol 70% + satélite Kelly 30%**, que vira o
+padrão recomendado: em 10 anos, Sharpe 0,35 × 0,36 do Kelly com drawdown de −46% × −63%.
 
 ---
 
@@ -234,10 +234,34 @@ significância; a hipótese do viés de sobrevivência (lista de hoje favorece j
 - Tamanho medido (emissores, regra D1, reais de 09/2026): R$ 1 mi e 90% → mínimo de 36 (12/1995), ≥ 50 desde 2000,
   ≥ 119 desde 2010, **173 hoje**; R$ 5 mi e 90% → menos de 30 em 56 meses (todos de 1995 a 2000), ≥ 50 desde 2005,
   **137 hoje**. 80% × 90% muda de 1 a 8 papéis. Já passaram pelo universo de R$ 1 mi 570 papéis, 57% hoje deslistados
-- [ ] Universo ponto no tempo: em cada rebalanceio, só as ações líquidas naquela data (critério fixado no pré-registro)
-- [ ] Walk-forward com universo dinâmico: a deslistada sai no último fechamento
-- [ ] Pré-registro próprio contra o BOVA11; refazer o Kelly × objetivos e o teste núcleo + satélite sobre esses dados
-- [ ] Recalcular e publicar os números novos (devem cair: o viés some)
+- [x] Universo ponto no tempo: em cada rebalanceio, só as ações líquidas naquela data (critério fixado no pré-registro)
+- [x] Walk-forward com universo dinâmico: a deslistada sai no último fechamento
+- [x] Pré-registro próprio contra o BOVA11; refazer o Kelly × objetivos e o teste núcleo + satélite sobre esses dados
+      (congelado em `d60fa21`, rodado em 2026-10-18: `docs/universo-dinamico-2026-10-18.txt`)
+- [x] Recalcular e publicar os números novos (caíram: o viés sumiu)
+
+**Resultado (2026-10-18, lago `d47f2fa`, 132–140 papéis treinados por rebalanceio, sem teto de setor).** O BCB recusou
+o CDI e a Selic na hora ("Requisição inválida"): taxa livre de risco = Selic constante de 13,75%, como o pré-registro
+manda. Os pesos do Kelly, da Mín. Vol, do HRP e do 1/N não dependem da taxa (só os do Máx. Sharpe), mas o Sharpe
+de cada um sobe Δ/σ com uma taxa Δ menor, mais para quem tem vol menor. **Regra B: robusta** (a mistura só ganha
+folga). **Regra A: a ~2,9 p.p. de taxa da opção 4** (em 10 anos a diferença de Sharpe Kelly − Mín. Vol é 0,083 e
+0,083 / (1/15,9% − 1/29,0%) = 2,9 p.p.); a Selic constante dá 12,9% a.a. na convenção aritmética, e o CDI médio de
+10/2016 a 10/2026 ficou abaixo disso. O veredito pré-registrado (opção 3, pelo fallback) vale; a rodada com o CDI,
+quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela muda igual: o padrão vem da regra B.
+
+| | 5 anos: Sharpe | 5 anos: MDD | 10 anos: Sharpe | 10 anos: MDD | 10 anos: CAGR |
+|---|---|---|---|---|---|
+| Kelly λ=2 (padrão da tela) | −0,31 | −38,8% | 0,36 | −63,1% | 21,1% |
+| Mín. Vol | 0,04 | −13,7% | 0,28 | −39,4% | 17,4% |
+| **Núcleo Mín. Vol 70% + satélite Kelly 30%** | −0,13 | −16,4% | 0,35 | −46,3% | 19,1% |
+| BOVA11 | 0,06 | −21,0% | 0,09 | −46,9% | 13,1% |
+| DIVO11 | 0,23 | −16,1% | 0,24 | −40,1% | 16,9% |
+
+- **Regra A: opção 3.** O Kelly não é o objetivo principal: perde Sharpe para a Mín. Vol em 5 anos (−0,31 × 0,04).
+- **Regra B: Núcleo Mín. Vol 70/30 aprovada** nos dois horizontes (Sharpe dentro de 0,05 do Kelly em 10 anos, MDD
+  16,8 p.p. melhor em 10 anos e 22,4 p.p. em 5): vira o padrão recomendado da tela.
+- Nenhuma estratégia tem alfa comprovado contra o BOVA11: em 5 anos todas as ativas perdem dele em Sharpe, menos a
+  Mín. Vol (empate); em 10 anos P[Kelly > BOVA11] = 0,915, abaixo do PSR ≥ 0,95 do critério de pronto.
 
 ### 4.5 Black-Litterman sem views (aguarda decisão)
 

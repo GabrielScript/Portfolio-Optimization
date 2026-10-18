@@ -35,6 +35,7 @@ import numpy as np
 import pandas as pd
 
 from core.config import LimiteGrupo
+from core.optimization import encher_ate_os_tetos
 
 LOTE_PADRAO = 100
 TOLERANCIA_SOMA_PESOS = 1e-6
@@ -112,6 +113,17 @@ def limites_do_plano(grupos: tuple[LimiteGrupo, ...], alvo: pd.Series) -> tuple[
     """
     return tuple(replace(grupo, teto=min(1.0, max(grupo.teto, float(alvo[alvo.index.isin(grupo.tickers)].sum()))))
                  for grupo in grupos)
+
+
+def redistribuir_sem_cotacao(pesos: pd.Series, com_cotacao: pd.Series | np.ndarray, peso_maximo: float,
+                             grupos: tuple[LimiteGrupo, ...]) -> pd.Series:
+    """
+    Alvo do plano sem as ações sem cotação: o peso delas vai para as outras, na proporção do otimizador, só até o
+    teto por ação e o teto de cada grupo. O que não couber fica em caixa (soma < 1). Um alvo que já passava de um
+    teto (HRP) não é cortado, só deixa de receber.
+    """
+    restantes = pesos[np.asarray(com_cotacao, dtype=bool)]
+    return encher_ate_os_tetos(restantes, min(1.0, float(pesos.sum())), peso_maximo, grupos)
 
 
 def acoes_que_cabem(precos: pd.Series, regras: RegrasCompra) -> list[str]:

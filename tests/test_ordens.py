@@ -5,7 +5,8 @@ import pandas as pd
 import pytest
 
 from core.config import LimiteGrupo
-from core.ordens import MotivoFora, RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra
+from core.ordens import (MotivoFora, RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra,
+                         redistribuir_sem_cotacao)
 
 SEM_CUSTO = dict(custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
 
@@ -279,3 +280,13 @@ def test_regras_invalidas_levantam_erro(campo, valor):
     argumentos = {"orcamento": 1_000.0, **SEM_CUSTO, campo: valor}
     with pytest.raises(ValueError):
         RegrasCompra(**argumentos)
+
+
+def test_sem_cotacao_reescala_sem_furar_teto_de_setor():
+    # F (14%) sem cotação. Reescalar tudo por 1/0,86 levaria Utilidade Pública de 30% a 34,9%: o peso de F vai
+    # só para quem tem folga (C, D, E e G, de 14% para 17,5%), e Utilidade Pública fica nos 30%.
+    pesos = pd.Series({"A": 0.15, "B": 0.15, "C": 0.14, "D": 0.14, "E": 0.14, "G": 0.14, "F": 0.14})
+    grupos = (LimiteGrupo("Utilidade Pública", frozenset({"A", "B"}), 0.30),
+              LimiteGrupo("Outros", frozenset({"C", "D", "E", "G", "F"}), 0.80))
+    alvo = redistribuir_sem_cotacao(pesos, pesos.index != "F", peso_maximo=0.20, grupos=grupos)
+    assert alvo.to_dict() == pytest.approx({"A": 0.15, "B": 0.15, "C": 0.175, "D": 0.175, "E": 0.175, "G": 0.175})

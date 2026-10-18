@@ -4,8 +4,8 @@ import pytest
 
 from core.config import ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
 from core.estimation import estimar_momentos
-from core.optimization import (ErroInviavel, fronteira_eficiente, otimizar, preparar_covariancia,
-                               projetar_pesos)
+from core.optimization import (ErroInviavel, ajustar_aos_tetos, combinar_nucleo_satelite, fronteira_eficiente,
+                               otimizar, preparar_covariancia, projetar_pesos)
 
 
 def _momentos(retornos):
@@ -205,3 +205,19 @@ def test_preparar_covariancia_simetrica_definida_positiva():
     matriz = preparar_covariancia(cov)
     np.linalg.cholesky(matriz)
     np.testing.assert_allclose(matriz, matriz.T)
+
+
+def test_nucleo_satelite_combina_os_pesos_na_fracao_do_satelite():
+    nucleo = pd.Series({"A": 0.5, "B": 0.5})
+    satelite = pd.Series({"B": 0.4, "C": 0.6})
+    pesos = combinar_nucleo_satelite(nucleo, satelite, fracao_satelite=0.3)
+    assert pesos.to_dict() == pytest.approx({"A": 0.35, "B": 0.47, "C": 0.18})
+
+
+def test_ruido_do_solver_acima_do_teto_volta_ao_teto_sem_perder_a_soma():
+    # A e B passam do teto de 20% em 3e-6 (renormalização depois de zerar pesos < 1e-4); E tem a folga exata
+    pesos = pd.Series({"A": 0.200003, "B": 0.200003, "C": 0.2, "D": 0.2, "E": 0.199994})
+    cfg = ConfigOtimizacao(peso_maximo=0.20, n_ativos_max=None, vol_maxima=None,
+                           grupos=(LimiteGrupo("Setor", frozenset({"A", "B"}), 0.40),))
+    ajustados = ajustar_aos_tetos(pesos, cfg)
+    assert ajustados.to_dict() == pytest.approx({"A": 0.2, "B": 0.2, "C": 0.2, "D": 0.2, "E": 0.2}, abs=1e-12)

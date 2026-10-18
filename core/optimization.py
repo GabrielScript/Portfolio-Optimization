@@ -33,19 +33,20 @@ restrito a eles.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Callable
 
 import cvxpy as cp
 import numpy as np
 import pandas as pd
 
-from core.config import ConfigOtimizacao, Objetivo
+from core.config import ConfigOtimizacao, LimiteGrupo, Objetivo
 from core.hierarchical import otimizar_hrp
 
 logger = logging.getLogger(__name__)
 
 LIMIAR_PESO = 1e-4               # pesos abaixo disso são ruído numérico do solver
+_FOLGA_MINIMA = 1e-12            # folga (ou falta) menor que isso já é zero ao encher até os tetos
 _STATUS_OK = (cp.OPTIMAL, cp.OPTIMAL_INACCURATE)
 _SOLVERS = ("CLARABEL", "SCS")   # CLARABEL: QP + SOCP, ponto interior; SCS: último recurso
 
@@ -111,6 +112,58 @@ def _limpar_pesos(pesos: np.ndarray) -> np.ndarray:
     if total <= 0:
         raise ErroOtimizacao("Solver devolveu vetor de pesos nulo.")
     return limpos / total
+
+
+def encher_ate_os_tetos(pesos: pd.Series, total: float, peso_maximo: float,
+                        grupos: tuple[LimiteGrupo, ...]) -> pd.Series:
+    """
+    Leva ``pesos`` até somar ``total``, dando o que falta a cada ativo na proporção do peso dele, só até o teto por
+    ativo e o teto de cada grupo. O que não couber fica de fora (soma < ``total``). Um peso que já passava de um teto
+    não é cortado, só deixa de receber. Cada rodada enche pelo menos um teto, então termina.
+    """
+    alvo = pesos.astype(float).copy()
+    membros = np.array([alvo.index.isin(grupo.tickers) for grupo in grupos],
+                       dtype=bool).reshape(len(grupos), len(alvo))
+    tetos = np.array([grupo.teto for grupo in grupos])
+    for _ in range(len(alvo) + len(grupos) + 1):
+        falta = total - float(alvo.sum())
+        folga_ativo = np.clip(peso_maximo - alvo.to_numpy(), 0.0, None)
+        folga_grupo = np.clip(tetos - membros @ alvo.to_numpy(), 0.0, None)
+        livre = np.minimum(folga_ativo, np.where(membros, folga_grupo[:, None], np.inf).min(axis=0, initial=np.inf))
+        abertos = (livre > _FOLGA_MINIMA) & (alvo.to_numpy() > 0)
+        if falta <= _FOLGA_MINIMA or not abertos.any():
+            break
+        proposta = np.where(abertos, alvo.to_numpy(), 0.0)
+        proposta = falta * proposta / proposta.sum()
+        # a maior fração da proposta que não fura nenhum teto (por ativo ou pela soma do grupo)
+        por_grupo = membros @ proposta
+        fator = min(1.0, float(np.min(livre[abertos] / proposta[abertos])),
+                    float(np.min(folga_grupo[por_grupo > 0] / por_grupo[por_grupo > 0], initial=np.inf)))
+        alvo += fator * proposta
+    return alvo
+
+
+def ajustar_aos_tetos(pesos: pd.Series, cfg: ConfigOtimizacao) -> pd.Series:
+    """
+    Tira o ruído do solver acima dos tetos (zerar pesos < ``LIMIAR_PESO`` e renormalizar empurra quem está no teto
+    para cima em ~1e-6): corta no teto por ativo e no de cada grupo e devolve o corte a quem tem folga.
+    """
+    cortados = pesos.astype(float).clip(upper=cfg.peso_maximo)
+    for grupo in cfg.grupos:
+        membros = cortados.index.isin(grupo.tickers)
+        soma = float(cortados[membros].sum())
+        if soma > grupo.teto:
+            cortados[membros] *= grupo.teto / soma
+    return encher_ate_os_tetos(cortados, float(pesos.sum()), cfg.peso_maximo, cfg.grupos)
+
+
+def combinar_nucleo_satelite(nucleo: pd.Series, satelite: pd.Series, fracao_satelite: float) -> pd.Series:
+    """Pesos de núcleo + satélite: (1 − f)·núcleo + f·satélite. Tetos lineares e de vol valem na mistura de viáveis."""
+    if not 0.0 <= fracao_satelite <= 1.0:
+        raise ValueError(f"fracao_satelite fora de [0, 1]: {fracao_satelite}")
+    tickers = nucleo.index.union(satelite.index, sort=False)
+    return ((1.0 - fracao_satelite) * nucleo.reindex(tickers, fill_value=0.0)
+            + fracao_satelite * satelite.reindex(tickers, fill_value=0.0))
 
 
 def _restricoes(w: cp.Variable, tickers: list[str], cfg: ConfigOtimizacao,
@@ -323,7 +376,7 @@ def _projetar_no_suporte(alvo: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizac
                         "projeção feita sem ele.")
     finais = np.zeros(len(alvo))
     finais[suporte] = _limpar_pesos(pesos)
-    return PesosProjetados(pd.Series(finais, index=alvo.index), status, mensagem)
+    return PesosProjetados(ajustar_aos_tetos(pd.Series(finais, index=alvo.index), cfg), status, mensagem)
 
 
 def metricas_carteira(pesos: np.ndarray, mu: np.ndarray, cov: np.ndarray,
@@ -353,6 +406,7 @@ def otimizar(mu: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao) -> Resulta
                            "HRP (López de Prado): ignora mu, teto de peso e cardinalidade.")
     else:
         solucao = _resolver_com_cardinalidade(mu, cov, cfg)
+        solucao = replace(solucao, pesos=ajustar_aos_tetos(pd.Series(solucao.pesos, index=mu.index), cfg).to_numpy())
 
     cov_np = preparar_covariancia(cov)
     retorno, vol, sharpe = metricas_carteira(solucao.pesos, mu.values, cov_np, cfg.taxa_livre_risco)

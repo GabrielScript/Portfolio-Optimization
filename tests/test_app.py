@@ -220,7 +220,7 @@ def test_valor_pequeno_demais_para_o_teto_explica_o_que_aumentar(app, monkeypatc
     assert not [df for df in app.dataframe if "Qtd." in df.value.columns]
 
 
-def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_o_peso_dela_vai_para_as_outras(app, monkeypatch):
+def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_o_peso_dela_vai_para_as_outras_ate_o_teto(app, monkeypatch):
     pedidos = []
 
     def cotacoes_sem_a_primeira(tickers, precos_recentes):
@@ -239,7 +239,9 @@ def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_o_peso_dela_vai_para_as_outra
     assert len(avisos) == 1 and tickers[0] in avisos[0]
     plano = _plano_de_compra(app)
     assert set(plano["Ticker"]) == set(tickers[1:])
-    assert plano["Peso alvo"].sum() == pytest.approx(1.0)        # reescalados: a proporção entre elas se mantém
+    # o peso dela vai para as outras só até o teto por ação (20%); o que não couber fica em caixa
+    assert plano["Peso alvo"].max() <= 0.20 + 1e-9
+    assert plano["Peso alvo"].sum() <= 1.0 + 1e-9
 
 
 @pytest.fixture

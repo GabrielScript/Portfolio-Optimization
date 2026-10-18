@@ -29,7 +29,8 @@ from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
                                fronteira_eficiente, otimizar)
-from core.ordens import RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra  # noqa: E402
+from core.ordens import (RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra,  # noqa: E402
+                         redistribuir_sem_cotacao)
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -280,10 +281,10 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     if not com_cotacao.all():
         nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
         st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o valor dela vai para as outras ações.")
-    # Reescala para 100%: o valor das ações sem cotação vai para as outras, na proporção do otimizador.
-    alvo = pesos[com_cotacao] / pesos[com_cotacao].sum()
     # O HRP ignora os tetos: o plano nunca corta um alvo abaixo do próprio peso (por ação ou por setor).
     teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
+    # O valor das ações sem cotação vai para as outras, na proporção do otimizador, sem furar os tetos.
+    alvo = redistribuir_sem_cotacao(pesos, com_cotacao, teto, limites_do_plano(entradas.params.grupos, pesos))
     regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO,
                           limites_do_plano(entradas.params.grupos, alvo))
     try:

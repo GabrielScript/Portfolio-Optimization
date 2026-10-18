@@ -12,7 +12,7 @@ Branch de trabalho: `feat/s1p-precos`._
 
 | Parte | Situação |
 |---|---|
-| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (298 testes) |
+| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (295 testes) |
 | Regras de risco fixas (`core/risco.py`: sem alavancagem, 20% por ação e emissor, 30% por setor, vol 40%) | Na tela desde 2026-10-18: a tela só aperta; carteira fora das regras não vira plano |
 | Padrão da tela | Núcleo Mín. Vol 70% + satélite Kelly λ=2 30% (regra B do S1-P.b, §4.4) |
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |

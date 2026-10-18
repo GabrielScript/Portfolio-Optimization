@@ -221,3 +221,19 @@ def test_ruido_do_solver_acima_do_teto_volta_ao_teto_sem_perder_a_soma():
                            grupos=(LimiteGrupo("Setor", frozenset({"A", "B"}), 0.40),))
     ajustados = ajustar_aos_tetos(pesos, cfg)
     assert ajustados.to_dict() == pytest.approx({"A": 0.2, "B": 0.2, "C": 0.2, "D": 0.2, "E": 0.2}, abs=1e-12)
+
+
+def test_cardinalidade_com_teto_de_setor_respeita_os_tetos():
+    # k = 5 com 20% cada só fecha 100% com um papel por setor; a etapa 1 dá 20% + 10% a A0 e A1 e 5% a E e F, então
+    # os 5 maiores pesos têm dois papéis de A (40% > 30%): a etapa 2 é inviável e cai no fallback da etapa 1
+    tickers = [f"A{i}" for i in range(5)] + ["B", "C", "D", "E", "F"]
+    mu = pd.Series([0.30, 0.29, 0.28, 0.27, 0.26, 0.12, 0.11, 0.10, 0.01, 0.01], index=tickers)
+    cov = pd.DataFrame(np.diag(np.full(10, 0.04)), index=tickers, columns=tickers)
+    setores = {t: ("A" if t.startswith("A") else t) for t in tickers}
+    cfg = ConfigOtimizacao(peso_maximo=0.20, n_ativos_max=5, vol_maxima=0.40, grupos=limites_por_setor(setores, 0.30))
+    resultado = otimizar(mu, cov, cfg)
+    pesos = resultado.pesos
+    assert resultado.status == "fallback"
+    assert pesos.max() <= 0.20 + 1e-9
+    assert pesos.groupby(pesos.index.map(setores)).sum().max() <= 0.30 + 1e-9
+    assert pesos.sum() == pytest.approx(1.0)

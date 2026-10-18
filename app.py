@@ -129,7 +129,9 @@ def ler_sidebar() -> Entradas:
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
 
         with st.expander("Avançado"):
-            n_max = st.slider("Máximo de ativos", 3, 30, 10)
+            n_max = st.slider("Máximo de ativos", 3, 30, 10, key="n_ativos_max",
+                              help="Na mistura núcleo + satélite, vale para cada parte: a carteira pode ter até o "
+                                   "dobro de ativos.")
             teto_acao = round(LIMITES.peso_maximo_acao * 100)
             peso_max = st.slider("Peso máximo por ativo (%)", 5, teto_acao, teto_acao, key="peso_maximo") / 100
             teto_setor = st.slider("Teto por setor (%)", 20, round(LIMITES.teto_setor * 100),

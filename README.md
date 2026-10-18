@@ -75,8 +75,8 @@ mesmas condições.
   já vêm dele. O lago também publica o **universo ponto no tempo**: em cada mês, as ações e units negociadas em
   ≥ 90% dos pregões dos 12 meses anteriores, com volume diário mediano ≥ R$ 1 mi corrigido pelo IPCA conhecido
   na data, um papel por emissor (417 papéis desde 2005, 186 deles hoje deslistados). O `core/backtest.py` já tem
-  o walk-forward com esse universo (`walk_forward_dinamico`); a avaliação pré-registrada está em andamento e o
-  app ainda usa a lista de hoje. Uma rotina diária no Windows (Agendador de Tarefas, seg–sex
+  o walk-forward com esse universo (`walk_forward_dinamico`); a avaliação pré-registrada rodou em 2026-10-18
+  (`docs/universo-dinamico-2026-10-18.txt`) e o app ainda usa a lista de hoje. Uma rotina diária no Windows (Agendador de Tarefas, seg–sex
   às 21h45 com novas tentativas até 23h45 e às 8h do dia seguinte) traz o pregão do dia para o lago, confere
   com portões automáticos (troca de ticker sem revisão, arquivo truncado, retorno ≥ 50% sem revisão, gold
   reproduzível) e só atualiza os exports quando todos passam; quando algo falha, avisa no Windows.
@@ -127,7 +127,7 @@ Portfolio-Optimization/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
 │   ├── avaliar_reamostragem.py   # Avaliação pré-registrada da reamostragem (usa rede, ~30 min)
 │   ├── avaliar_janelas.py        # Teste pré-registrado das janelas de estimação (usa rede)
-│   └── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (em andamento)
+│   └── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   └── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
@@ -185,8 +185,9 @@ Portfolio-Optimization/
 
 - **Viés de sobrevivência.** O walk-forward do app usa a lista atual de tickers; empresas que quebraram ou
   fecharam capital não aparecem, o que favorece todas as estratégias. O universo ponto no tempo, com as
-  deslistadas, já existe (lago + `walk_forward_dinamico`); a avaliação pré-registrada
-  (`scripts/avaliar_universo_dinamico.py`) vai medir quanto os números caem sem o viés.
+  deslistadas, já existe (lago + `walk_forward_dinamico`). Na avaliação pré-registrada sem o viés
+  (`docs/universo-dinamico-2026-10-18.txt`), o Kelly λ=2 teve Sharpe −0,31 em 5 anos e 0,36 em 10 (MDD −63%),
+  e o núcleo Mín. Vol 70% + satélite Kelly 30% teve 0,35 em 10 anos com MDD −46%: ele virou o padrão da tela.
 - **Migração de classe sem continuidade.** Quem migrou de PN para ON no Novo Mercado (PCAR4 → PCAR3 em
   2020, SUZB5 → SUZB3) começa no lago sem a história da classe antiga e fica fora de janelas longas.
 - Os preços diários vêm do lago desde 2026-10 (antes, Yahoo: errava cisões e usava JCP bruto; registrou

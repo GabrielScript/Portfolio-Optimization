@@ -9,9 +9,21 @@ do satélite e a decisão do dia; ler o lago, otimizar e gravar ficam no ``scrip
 
 from __future__ import annotations
 
+from enum import Enum
+
 import pandas as pd
 
-PASSO = 63          # pregões entre rebalanceios, o do walk-forward (trimestral)
+from core.risco import pode_negociar, stop_relativo
+
+PASSO = 63         # pregões entre rebalanceios, o do walk-forward (trimestral)
+
+
+class Acao(str, Enum):
+    AGUARDAR = "aguardar"           # nada devido: segura a carteira registrada
+    CONGELADO = "congelado"         # perda diária de 5% ou mais no último pregão: nenhuma ordem hoje
+    REBALANCEAR = "rebalancear"     # registra a carteira nova
+    STOP = "stop"                   # razão satélite/BOVA11 caiu 25% desde o pico: satélite inteiro no BOVA11
+    PARADO = "parado"               # stop já disparou: nunca mais rebalanceia (volta só com pré-registro novo)
 
 
 def curva_do_registro(carteiras: pd.DataFrame, precos: pd.DataFrame) -> pd.Series:
@@ -42,3 +54,20 @@ def curva_do_registro(carteiras: pd.DataFrame, precos: pd.DataFrame) -> pd.Serie
 def rebalanceio_devido(ultima: pd.Timestamp | None, calendario: pd.DatetimeIndex, passo: int = PASSO) -> bool:
     """True sem registro ou com ``passo`` pregões do lago ou mais depois do último registro."""
     return ultima is None or int((calendario > ultima).sum()) >= passo
+
+
+def decidir_do_dia(curva_satelite: pd.Series, curva_bova: pd.Series, devido: bool, parado: bool) -> Acao:
+    """
+    O que fazer depois do último fechamento, nesta ordem: stop já disparado (``parado``) vence tudo; perda diária de
+    5% ou mais no último pregão congela as ordens, inclusive o stop (``pode_negociar``; a rotina tenta de novo no
+    pregão seguinte); fora do dia devido, segura; no dia devido, stop se a razão satélite/BOVA11 caiu 25% desde o
+    pico (``stop_relativo``), senão rebalanceia. ``curva_satelite`` e ``curva_bova`` nas mesmas datas, desde o 1º
+    registro; vazias antes dele.
+    """
+    if parado:
+        return Acao.PARADO
+    if not pode_negociar(curva_satelite.pct_change().dropna()):
+        return Acao.CONGELADO
+    if not devido:
+        return Acao.AGUARDAR
+    return Acao.STOP if stop_relativo(curva_satelite, curva_bova) else Acao.REBALANCEAR

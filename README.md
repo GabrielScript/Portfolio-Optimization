@@ -156,12 +156,13 @@ Portfolio-Optimization/
 │   ├── avaliar_janelas.py        # Teste pré-registrado das janelas de estimação (usa rede)
 │   ├── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
 │   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
-│   └── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (ainda não rodado)
+│   └── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   ├── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
 │   ├── universo-dinamico-2026-10-18.txt  # Saída do S1-P.b (sem viés de sobrevivência)
-│   └── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
+│   ├── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
+│   └── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
 ├── lago/
 │   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
@@ -233,7 +234,10 @@ Portfolio-Optimization/
   também usa o JCP bruto; o lago da B3 já desconta o IR retido na fonte (15% até 2025 e 17,5% desde
   01/01/2026, LC 224/2025).
 - **Janelas curtas.** Com 3–5 anos de histórico, alfas e diferenças de Sharpe raramente são
-  estatisticamente significativos; o app mostra a estatística t para lembrar disso.
+  estatisticamente significativos; o app mostra a estatística t para lembrar disso. A análise de poder
+  (`docs/poder-dos-portoes-2026-10-18.txt`) mediu isso para os sinais do S2: o portão "IC médio mensal ≥ 0,02 e
+  t ≥ 2" aprova 87% dos sinais com IC 0,03 e 1% dos sinais sem valor nos 225 meses de 2008 a 2026; em 5 anos, com IC
+  que varia de mês a mês, nenhum portão passa de 47%. Por isso os sinais do S2 são julgados na janela inteira.
 
 O que falta e em que ordem: [`docs/ROTEIRO.md`](docs/ROTEIRO.md).
 

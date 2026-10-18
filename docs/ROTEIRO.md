@@ -242,7 +242,12 @@ significância; a hipótese do viés de sobrevivência (lista de hoje favorece j
 
 **Resultado (2026-10-18, lago `d47f2fa`, 132–140 papéis treinados por rebalanceio, sem teto de setor).** O BCB recusou
 o CDI e a Selic na hora ("Requisição inválida"): taxa livre de risco = Selic constante de 13,75%, como o pré-registro
-manda. Com o CDI (menor em média), quem tem vol menor ganharia mais Sharpe: as duas regras não virariam.
+manda. Os pesos do Kelly, da Mín. Vol, do HRP e do 1/N não dependem da taxa (só os do Máx. Sharpe), mas o Sharpe
+de cada um sobe Δ/σ com uma taxa Δ menor, mais para quem tem vol menor. **Regra B: robusta** (a mistura só ganha
+folga). **Regra A: a ~2,9 p.p. de taxa da opção 4** (em 10 anos a diferença de Sharpe Kelly − Mín. Vol é 0,083 e
+0,083 / (1/15,9% − 1/29,0%) = 2,9 p.p.); a Selic constante dá 12,9% a.a. na convenção aritmética, e o CDI médio de
+10/2016 a 10/2026 ficou abaixo disso. O veredito pré-registrado (opção 3, pelo fallback) vale; a rodada com o CDI,
+quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela muda igual: o padrão vem da regra B.
 
 | | 5 anos: Sharpe | 5 anos: MDD | 10 anos: Sharpe | 10 anos: MDD | 10 anos: CAGR |
 |---|---|---|---|---|---|

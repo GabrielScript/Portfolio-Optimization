@@ -70,8 +70,11 @@ def _validar_pesos(pesos: pd.Series, colunas: pd.Index) -> pd.Series:
 
 def _simular(retornos: pd.DataFrame, decidir_pesos: Callable[[int], pd.Series],
              inicio: int, passo: int, capital: float, custo_bps: float,
-             nome: str, metodologia: str) -> ResultadoBacktest:
-    """Motor comum: rebalanceia em inicio, inicio+passo, ...; buy-and-hold entre eles."""
+             nome: str, metodologia: str, falha_inicial_e_erro: bool = False) -> ResultadoBacktest:
+    """
+    Motor comum: rebalanceia em inicio, inicio+passo, ...; buy-and-hold entre eles. Falha no 1º rebalanceio (sem
+    carteira para manter) vira 1/N em todas as colunas, ou ``ErroPrimeiroRebalanceio`` com ``falha_inicial_e_erro``.
+    """
     colunas = retornos.columns
     valor = capital
     pesos_derivados = pd.Series(0.0, index=colunas)       # 0 = 100% caixa antes da montagem
@@ -85,6 +88,8 @@ def _simular(retornos: pd.DataFrame, decidir_pesos: Callable[[int], pd.Series],
         try:
             alvo = _validar_pesos(decidir_pesos(posicao), colunas)
         except _FALHAS_ESPERADAS as erro:
+            if falha_inicial_e_erro and pesos_derivados.sum() == 0:
+                raise ErroPrimeiroRebalanceio(f"{nome} falhou no 1º rebalanceio, {data:%Y-%m-%d}: {erro}") from erro
             falhas.append(f"{data:%Y-%m-%d}: {erro}")
             logger.warning("%s falhou em %s (%s); mantendo carteira.", nome, data.date(), erro)
             alvo = (pesos_derivados if pesos_derivados.sum() > 0
@@ -135,6 +140,10 @@ def walk_forward(retornos: pd.DataFrame, estrategia: Estrategia, cfg: ConfigBack
 DIAS_SEM_NEGOCIO_NO_TREINO = 5    # o mesmo limite do ``market_data.limpar_precos``
 
 
+class ErroPrimeiroRebalanceio(Exception):
+    """A estratégia falhou no 1º rebalanceio do motor dinâmico: não há carteira para manter."""
+
+
 class ErroUniverso(Exception):
     """Rebalanceio sem papel elegível: erro de dado, não falha da estratégia (fora de ``_FALHAS_ESPERADAS``)."""
 
@@ -172,8 +181,9 @@ def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrateg
                                f"inteira ({len(nomes)} elegíveis no mês)")
         return estrategia(treino)
 
+    # no universo dinâmico, 1/N em todas as colunas compraria deslistadas e papéis que ainda não existiam
     return _simular(retornos, decidir, cfg.janela_treino, cfg.janela_teste, cfg.capital_inicial,
-                    cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo")
+                    cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo", falha_inicial_e_erro=True)
 
 
 def backtest_pesos_fixos(retornos: pd.DataFrame, pesos: pd.Series, cfg: ConfigBacktest,

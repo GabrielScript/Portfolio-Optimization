@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.backtest import (ErroUniverso, estrategia_buy_and_hold_ativo, estrategia_equiponderada,
-                           retornos_da_carteira, walk_forward, walk_forward_dinamico)
+from core.backtest import (ErroPrimeiroRebalanceio, ErroUniverso, estrategia_buy_and_hold_ativo,
+                           estrategia_equiponderada, retornos_da_carteira, walk_forward, walk_forward_dinamico)
 from core.config import ConfigBacktest
 
 DATAS = pd.bdate_range("2024-01-01", periods=150)  # janeiro a julho de 2024
@@ -75,3 +75,13 @@ def test_referencia_fora_do_universo_roda_nas_mesmas_datas_da_estrategia():
                        "BOVA11")
     assert ref.valores.index.equals(bt.valores.index)
     assert ref.valores.iloc[-1] == pytest.approx(1_000.0 * precos["BOVA11"].iloc[-1] / precos["BOVA11"].iloc[60])
+
+
+def test_falha_no_primeiro_rebalanceio_dinamico_e_erro():
+    # sem carteira para manter, o plano B seria 1/N em todas as colunas (deslistadas e papéis que ainda não existiam)
+    def sempre_falha(treino):
+        raise ValueError("solver não convergiu")
+
+    precos = _precos("A", "B")
+    with pytest.raises(ErroPrimeiroRebalanceio, match="solver não convergiu"):
+        walk_forward_dinamico(precos, _universo({mes: ["A", "B"] for mes in MESES}), sempre_falha, CFG, "falha")

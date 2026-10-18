@@ -12,13 +12,15 @@ Branch de trabalho: `feat/s1p-precos`._
 
 | Parte | Situação |
 |---|---|
-| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (231 testes) |
+| Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (298 testes) |
+| Regras de risco fixas (`core/risco.py`: sem alavancagem, 20% por ação e emissor, 30% por setor, vol 40%) | Na tela desde 2026-10-18: a tela só aperta; carteira fora das regras não vira plano |
+| Padrão da tela | Núcleo Mín. Vol 70% + satélite Kelly λ=2 30% (regra B do S1-P.b, §4.4) |
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
 | Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. O walk-forward da tela ainda usa a lista de hoje; o teste sem viés de sobrevivência (S1-P.b) já rodou fora da tela (§4.4) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
-| Execução (custo por liquidez, IR, carteira existente) | Não modelada |
+| Execução (custo por liquidez, IR, carteira existente) | Não modelada; registro do paper trading pronto (`core/registro.py`), ainda sem rotina |
 
 **Último resultado fora da amostra** (treino de 5 anos, teste de 3 anos, 11/2023 a 10/2026, teto de 30% por setor):
 

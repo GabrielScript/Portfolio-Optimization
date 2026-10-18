@@ -12,14 +12,25 @@ mesmas condições.
 ## 🚀 Funcionalidades
 
 ### 🎯 Objetivos de otimização
-- **Crescimento máximo (Kelly)** — `max μ'w − (λ/2)·w'Σw`, com aversão λ ajustável (padrão λ = 2). Recomendado.
+- **Núcleo Mín. Vol + satélite Kelly (padrão, recomendado)** — (1 − f)·w_MínVol + f·w_Kelly, com o satélite f de
+  0 a 50% (padrão 30%). Foi a mistura aprovada no teste pré-registrado sem viés de sobrevivência
+  (`docs/universo-dinamico-2026-10-18.txt`): em 10 anos, Sharpe 0,35 × 0,36 do Kelly com drawdown de −46% × −63%.
+- **Crescimento máximo (Kelly)** — `max μ'w − (λ/2)·w'Σw`, com aversão λ ajustável (padrão λ = 2). Opção: no mesmo
+  teste, perdeu Sharpe para a Mínima variância em 5 anos.
 - **Máximo Sharpe** — resolvido de forma exata (transformação de Charnes-Cooper, problema convexo).
 - **Mínima variância.**
-- **HRP** — Hierarchical Risk Parity (López de Prado); ignora o retorno esperado.
+- **HRP** — Hierarchical Risk Parity (López de Prado); ignora o retorno esperado. Na tela, é projetado nos tetos
+  antes de virar plano; nas comparações do walk-forward, fica puro.
 - **Máximo retorno com teto de volatilidade** — mantido como legado: gera soluções de canto que concentram
   o erro de estimação.
 
 ### ⚙️ Restrições e parâmetros
+- **Regras de risco fixas** (`core/risco.py`), conferidas na carteira de hoje e nos pesos efetivos do plano: sem
+  alavancagem (pesos ≥ 0, soma ≤ 100%), até 20% por ação e por emissor, 30% por setor (papel sem setor também
+  recusa) e 40% a.a. de volatilidade ex-ante. A tela só aperta: os sliders param nesses valores. Carteira fora das
+  regras não vira plano. Stop relativo do satélite (razão satélite/BOVA11 −25% desde o pico) e pausa de um pregão
+  depois de perda diária de 5% já existem como funções; valem quando houver posições registradas no paper trading
+  (`core/registro.py`).
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -35,8 +46,8 @@ mesmas condições.
 
 ### 📈 Análises
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
-  com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (padrão 30%; 100% = sem
-  limite) na carteira, no plano de compra e no walk-forward; o HRP ignora.
+  com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (até 30%, regra fixa) na
+  carteira, no plano de compra e no walk-forward; o HRP da tela é projetado nele.
 - **Plano de compra:** cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último fechamento) e quantas
   ações comprar de cada uma, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
   inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma
@@ -46,7 +57,7 @@ mesmas condições.
   cada quantidade em lote padrão (múltiplos de 100) e fracionário (ticker com F) e mostra o peso efetivo, o
   valor investido e a sobra em caixa. A sobra não leva um setor além do teto, e o peso efetivo por setor
   aparece abaixo da tabela. Avisa quais ações ficaram de fora e por quê (2 ações passam do teto por ativo,
-  passariam do teto do setor ou não cabem no caixa). Ação sem cotação sai do plano com aviso, e o valor dela vai para as outras. As
+  passariam do teto do setor ou não cabem no caixa). Ação sem cotação sai do plano com aviso, e o valor dela vai para as outras só até os tetos (o resto fica em caixa). As
   cotações ficam guardadas por 5 min; o botão "Atualizar cotações" busca de novo só as da carteira na tela.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com treino rolante na **mesma janela de
   estimação da carteira de hoje** e teste de N anos (sliders "Janela de estimação" e "Teste fora da amostra").
@@ -109,6 +120,8 @@ Portfolio-Optimization/
 │   ├── lago.py               #   Preços diários do lago da B3 (lago/precos_diarios.parquet)
 │   ├── market_data.py        #   Preços (lago), calendário B3, CDI, Selic, cotação do dia (Yahoo)
 │   ├── ordens.py             #   Plano de compra: pesos + cotações → quantidades inteiras
+│   ├── risco.py              #   Regras de risco fixas: aprova ou recusa a carteira (não muda pesos)
+│   ├── registro.py           #   Registro do paper trading (CSV que só acrescenta linhas)
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
 │   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites

@@ -31,6 +31,10 @@ mesmas condições.
   regras não vira plano. Stop relativo do satélite (razão satélite/BOVA11 −25% desde o pico) e pausa de um pregão
   depois de perda diária de 5% já existem como funções; valem quando houver posições registradas no paper trading
   (`core/registro.py`).
+- **As mesmas regras no motor do walk-forward com deslistadas** (`estrategia_otimizada_nas_regras`, `Congelamento`,
+  recusa = mantém a carteira), testadas num pré-registro (`docs/regras-no-motor-2026-10-18.txt`): 0 recusas em 60
+  rebalanceios; o stop relativo disparou nos dois horizontes (05/2025 e 12/2025); o padrão com regras teve Sharpe
+  −0,06 (−0,13 sem) em 5 anos e 0,28 (0,35 sem) em 10. O teto de setor custa à Mín. Vol em 10 anos (0,19 × 0,28).
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -91,6 +95,15 @@ mesmas condições.
   às 21h45 com novas tentativas até 23h45 e às 8h do dia seguinte) traz o pregão do dia para o lago, confere
   com portões automáticos (troca de ticker sem revisão, arquivo truncado, retorno ≥ 50% sem revisão, gold
   reproduzível) e só atualiza os exports quando todos passam; quando algo falha, avisa no Windows.
+- **Setor por emissor, com as deslistadas** (`data/b3lake/sectors.parquet`, lido por `core.lago.ler_setores`):
+  `SETOR_ATIV` do cadastro da CVM mapeado nos 10 setores do app; cobre 97% dos emissores do universo. É a taxonomia
+  da CVM, mais grossa que a da B3 do `assets.py` (149 de 178 concordam): o motor dinâmico usa a do lago para vivas e
+  mortas, e a tela continua com o `assets.py`.
+- **Proventos por papel e data ex** (`data/b3lake/dividends.parquet`): dinheiro pago por ação (JCP líquido do IR),
+  com o yield sobre o fechamento do dia ex, para os sinais de payout do S2.
+- **Correção de 2026-10-18:** a B3 lista entre os proventos em dinheiro o custo atribuído das bonificações, que o
+  lago contava de novo no dia do evento de ações (AXIA3 22/12/2025 +22% em vez de −3%; CYRE3 e RENT3 também). Os
+  preços do app foram republicados sem isso.
 - **Em desenvolvimento (só no `core/`, ainda sem tela):** painel macro mensal para cenários — Focus
   (expectativas do BCB), curva prefixada do Tesouro Direto e fatores de surpresa macro.
 
@@ -128,7 +141,8 @@ Portfolio-Optimization/
 │   ├── reamostragem.py       #   Carteira reamostrada (bagging, bootstrap em blocos)
 │   ├── hierarchical.py       #   HRP e HRP-Árvore
 │   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown, PSR/DSR
-│   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time (e com universo ponto no tempo)
+│   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time (universo ponto no tempo, regras no motor)
+│   ├── poder.py              #   Poder dos portões do S2 por simulação (IC plantado no painel mensal)
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
@@ -140,10 +154,14 @@ Portfolio-Optimization/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
 │   ├── avaliar_reamostragem.py   # Avaliação pré-registrada da reamostragem (usa rede, ~30 min)
 │   ├── avaliar_janelas.py        # Teste pré-registrado das janelas de estimação (usa rede)
-│   └── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
+│   ├── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
+│   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
+│   └── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (ainda não rodado)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
-│   └── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
+│   ├── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
+│   ├── universo-dinamico-2026-10-18.txt  # Saída do S1-P.b (sem viés de sobrevivência)
+│   └── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
 ├── lago/
 │   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
@@ -201,6 +219,9 @@ Portfolio-Optimization/
   deslistadas, já existe (lago + `walk_forward_dinamico`). Na avaliação pré-registrada sem o viés
   (`docs/universo-dinamico-2026-10-18.txt`), o Kelly λ=2 teve Sharpe −0,31 em 5 anos e 0,36 em 10 (MDD −63%),
   e o núcleo Mín. Vol 70% + satélite Kelly 30% teve 0,35 em 10 anos com MDD −46%: ele virou o padrão da tela.
+  Refeito com os preços corrigidos (bonificação) no pré-registro das regras, as duas decisões não mudaram.
+- **Setor das deslistadas é o de hoje.** O `SETOR_ATIV` da CVM não tem data de vigência: empresa que mudou de
+  ramo fica com o setor atual na história toda; 10 holdings sem setor principal ficam sem setor.
 - **Migração de classe sem continuidade.** Quem migrou de PN para ON no Novo Mercado (PCAR4 → PCAR3 em
   2020, SUZB5 → SUZB3) começa no lago sem a história da classe antiga e fica fora de janelas longas.
 - Os preços diários vêm do lago desde 2026-10 (antes, Yahoo: errava cisões e usava JCP bruto; registrou

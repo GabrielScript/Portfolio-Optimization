@@ -30,7 +30,9 @@ mesmas condições.
   recusa) e 40% a.a. de volatilidade ex-ante. A tela só aperta: os sliders param nesses valores. Carteira fora das
   regras não vira plano. Stop relativo do satélite (razão satélite/BOVA11 −25% desde o pico) e pausa de um pregão
   depois de perda diária de 5% já existem como funções; valem quando houver posições registradas no paper trading
-  (`core/registro.py`).
+  (`core/registro.py`). A rotina diária que registra o satélite e aplica as duas regras (`scripts/paper_trading.py`,
+  pré-registrada, com a decisão do item 3 do critério de pronto fixada antes) está pronta; o 1º registro, que começa
+  o relógio de 6 a 12 meses, ainda não foi feito.
 - **As mesmas regras no motor do walk-forward com deslistadas** (`estrategia_otimizada_nas_regras`, `Congelamento`,
   recusa = mantém a carteira), testadas num pré-registro (`docs/regras-no-motor-2026-10-18.txt`): 0 recusas em 60
   rebalanceios; o stop relativo disparou nos dois horizontes (05/2025 e 12/2025); o padrão com regras teve Sharpe
@@ -135,6 +137,7 @@ Portfolio-Optimization/
 │   ├── ordens.py             #   Plano de compra: pesos + cotações → quantidades inteiras
 │   ├── risco.py              #   Regras de risco fixas: aprova ou recusa a carteira (não muda pesos)
 │   ├── registro.py           #   Registro do paper trading (CSV que só acrescenta linhas)
+│   ├── paper.py              #   Paper trading: curva do registro, custos, decisão do dia, leituras de 6 e 12 meses
 │   ├── bcb.py                #   Cliente SGS do Banco Central (janelas, cache, retry)
 │   ├── estimation.py         #   Retornos, Ledoit-Wolf, Jorion, tilt growth
 │   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites
@@ -156,12 +159,14 @@ Portfolio-Optimization/
 │   ├── avaliar_janelas.py        # Teste pré-registrado das janelas de estimação (usa rede)
 │   ├── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
 │   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
-│   └── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (ainda não rodado)
+│   ├── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
+│   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (a agendar seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   ├── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
 │   ├── universo-dinamico-2026-10-18.txt  # Saída do S1-P.b (sem viés de sobrevivência)
-│   └── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
+│   ├── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
+│   └── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
 ├── lago/
 │   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)

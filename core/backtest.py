@@ -12,7 +12,9 @@ Protocolo (idêntico para TODAS as estratégias, para que a comparação seja ju
    falha é registrada. A versão anterior trocava por 1/N em silêncio.
 
 O que este backtest NÃO corrige (documentado na UI):
-- Viés de sobrevivência: o universo é a lista ATUAL de tickers.
+- Viés de sobrevivência no ``walk_forward`` (o do app): o universo é a lista ATUAL de
+  tickers. O ``walk_forward_dinamico`` usa o universo ponto no tempo do lago, com as
+  deslistadas.
 - Filtro/tilt growth: usa fundamentos de hoje, não pode entrar no
   walk-forward sem dados point-in-time. A curva OOS mede só a ALOCAÇÃO.
 - Imposto de renda (15% sobre ganho; isenção de R$ 20 mil/mês em vendas de
@@ -133,6 +135,19 @@ def walk_forward(retornos: pd.DataFrame, estrategia: Estrategia, cfg: ConfigBack
 DIAS_SEM_NEGOCIO_NO_TREINO = 5    # o mesmo limite do ``market_data.limpar_precos``
 
 
+class ErroUniverso(Exception):
+    """Rebalanceio sem papel elegível: erro de dado, não falha da estratégia (fora de ``_FALHAS_ESPERADAS``)."""
+
+
+def retornos_da_carteira(precos: pd.DataFrame) -> pd.DataFrame:
+    """
+    Retornos diários de quem segura o papel: dia sem negócio rende 0 e o movimento inteiro cai no pregão em que o
+    papel volta; a deslistada fica no último fechamento (rendendo 0, não o CDI). O 1º pregão não tem retorno.
+    Antes da 1ª cotação o retorno é 0: quem usa (referências) confere que o papel já existia na 1ª decisão.
+    """
+    return precos.ffill().pct_change().iloc[1:].fillna(0.0)
+
+
 def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrategia: Estrategia,
                           cfg: ConfigBacktest, nome: str) -> ResultadoBacktest:
     """
@@ -141,16 +156,21 @@ def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrateg
     ``precos``: índice de retorno total (data x papel), vazio onde o papel não negociou ou não existia.
     ``universo``: colunas ``month`` e ``security``, os papéis elegíveis no começo de cada mês (regra do lago).
     """
-    retornos = precos.pct_change().iloc[1:].fillna(0.0)          # o 1º pregão não tem retorno
+    retornos = retornos_da_carteira(precos)        # a deslistada sai no rebalanceio seguinte, pelo último fechamento
     # treino como no app: até 5 pregões seguidos sem negócio repetem o preço; papel com buraco maior (ou que ainda
     # não existia) na janela fica fora daquele rebalanceio
     treino_ret = precos.ffill(limit=DIAS_SEM_NEGOCIO_NO_TREINO).pct_change().iloc[1:]
-    elegiveis = universo.groupby("month")["security"].apply(list)
+    meses = pd.to_datetime(universo["month"])                     # o export do lago traz datetime.date
+    elegiveis = universo["security"].groupby(meses).apply(list)
 
     def decidir(posicao: int) -> pd.Series:
         mes = retornos.index[posicao].to_period("M").to_timestamp()
         nomes = [p for p in elegiveis.get(mes, []) if p in retornos.columns]
-        return estrategia(treino_ret.iloc[posicao - cfg.janela_treino:posicao][nomes].dropna(axis=1))
+        treino = treino_ret.iloc[posicao - cfg.janela_treino:posicao][nomes].dropna(axis=1)
+        if treino.empty:
+            raise ErroUniverso(f"{retornos.index[posicao]:%Y-%m-%d}: nenhum papel elegível com a janela de treino "
+                               f"inteira ({len(nomes)} elegíveis no mês)")
+        return estrategia(treino)
 
     return _simular(retornos, decidir, cfg.janela_treino, cfg.janela_teste, cfg.capital_inicial,
                     cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo")

@@ -11,7 +11,7 @@ Jorion) -> otimização -> walk-forward de todas as estratégias. O Growth Score
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
 import pandas as pd
@@ -22,26 +22,33 @@ st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
-from core.config import DIAS_UTEIS_ANO, ConfigBacktest, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
+from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objetivo,  # noqa: E402
+                         taxa_anual_para_aritmetica)
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core import lago  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
-                               fronteira_eficiente, otimizar)
+                               combinar_nucleo_satelite, fronteira_eficiente, metricas_carteira, otimizar,
+                               preparar_covariancia, projetar_pesos)
 from core.ordens import (RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra,  # noqa: E402
                          redistribuir_sem_cotacao)
+from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
                             grafico_metricas_rolling, grafico_pesos_historicos)
 
+# Padrão da tela pela regra B do S1-P.b (docs/universo-dinamico-2026-10-18.txt): núcleo Mín. Vol + satélite
+# Kelly λ=2 com 30%. Pela regra A (opção 3), o Kelly sozinho fica como opção, sem o "recomendado".
+NUCLEO_SATELITE = "nucleo_satelite"
 ROTULOS_OBJETIVO = {
-    Objetivo.KELLY.value: "Crescimento máximo (Kelly) — recomendado p/ arrojado",
+    NUCLEO_SATELITE: "Núcleo Mín. Vol + satélite Kelly — recomendado",
+    Objetivo.KELLY.value: "Crescimento máximo (Kelly)",
     Objetivo.MAX_SHARPE.value: "Máximo Sharpe (exato)",
     Objetivo.MIN_VOL.value: "Mínima variância",
-    Objetivo.HRP.value: "HRP (hierárquico, ignora retorno esperado)",
+    Objetivo.HRP.value: "HRP (hierárquico, projetado nos tetos)",
     Objetivo.MAX_RETORNO.value: "Máximo retorno c/ teto de vol (legado, concentra no erro)",
 }
 
@@ -56,8 +63,19 @@ AJUDA_REAMOSTRAGEM = (
     "~15 min com todos os ativos."
 )
 AJUDA_TETO_SETOR = (
-    "Soma máxima dos pesos das ações de um mesmo setor (100% = sem limite). Vale para a carteira de hoje, "
-    "o plano de compra e o walk-forward; o HRP ignora."
+    "Soma máxima dos pesos das ações de um mesmo setor. Regra fixa de 30%: a tela só aperta. Vale para a carteira "
+    "de hoje (o HRP é projetado nos tetos), o plano de compra e o walk-forward."
+)
+AJUDA_SATELITE = (
+    "Parte das ações no satélite Kelly; o resto fica no núcleo de Mínima Variância. Regra fixa: no máximo 50%. "
+    "O padrão de 30% é a mistura aprovada no teste pré-registrado sem viés de sobrevivência (S1-P.b)."
+)
+AVISO_REGRAS_DE_RISCO = (
+    "Regras de risco fixas: sem alavancagem, até 20% por ação e por emissor, 30% por setor e 40% a.a. de "
+    "volatilidade ex-ante; carteira fora delas não vira plano. Com dinheiro real, o núcleo fica no BOVA11 até o "
+    "critério de pronto (alfa líquido contra o BOVA11 com PSR ≥ 0,95 e 6 a 12 meses de paper trading). O stop do "
+    "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
+    "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
@@ -90,14 +108,19 @@ class CarteiraCalculada:
 def ler_sidebar() -> Entradas:
     with st.sidebar:
         st.markdown("## Parâmetros")
-        objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get)
+        objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
+                                key="objetivo")
+        com_kelly = objetivo in (Objetivo.KELLY.value, NUCLEO_SATELITE)
         aversao = st.slider("Aversão a risco λ (1 = Kelly pleno)", 0.5, 5.0, 2.0, 0.5,
-                            disabled=objetivo != Objetivo.KELLY.value,
+                            disabled=not com_kelly,
                             help="λ=1 aproxima a carteira de maior crescimento geométrico. Como μ tem "
                                  "erro de estimação, λ≈2 é mais robusto. Sem caixa no conjunto "
                                  "viável, λ=2 NÃO equivale a 'meio Kelly'.")
-        vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, 80, 40, 5,
-                            disabled=objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value)) / 100
+        fracao_satelite = st.slider("Satélite Kelly (% das ações)", 0, round(LIMITES.fracao_maxima_satelite * 100),
+                                    round(LIMITES.fracao_padrao_satelite * 100), 5, key="fracao_satelite",
+                                    disabled=objetivo != NUCLEO_SATELITE, help=AJUDA_SATELITE) / 100
+        teto_vol = round(LIMITES.vol_maxima * 100)
+        vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, teto_vol, teto_vol, 5, key="vol_maxima") / 100
         orcamento = st.number_input("Valor a investir (R$)", 100.0, 10_000_000.0, 10_000.0, 100.0,
                                     key="orcamento")
 
@@ -107,9 +130,10 @@ def ler_sidebar() -> Entradas:
 
         with st.expander("Avançado"):
             n_max = st.slider("Máximo de ativos", 3, 30, 10)
-            peso_max = st.slider("Peso máximo por ativo (%)", 5, 50, 20) / 100
-            teto_setor = st.slider("Teto por setor (%)", 20, 100, 30, 5, key="teto_setor",
-                                   help=AJUDA_TETO_SETOR) / 100
+            teto_acao = round(LIMITES.peso_maximo_acao * 100)
+            peso_max = st.slider("Peso máximo por ativo (%)", 5, teto_acao, teto_acao, key="peso_maximo") / 100
+            teto_setor = st.slider("Teto por setor (%)", 20, round(LIMITES.teto_setor * 100),
+                                   round(LIMITES.teto_setor * 100), 5, key="teto_setor", help=AJUDA_TETO_SETOR) / 100
             anos = st.slider("Janela de estimação (anos)", 3, 10, 5, key="janela",
                              help="Histórico que estima μ e Σ: na carteira de hoje e em cada rebalanceamento "
                                   "do walk-forward (treino rolante).")
@@ -129,11 +153,12 @@ def ler_sidebar() -> Entradas:
     else:
         acoes = get_tickers_liquidos()
     info = get_ticker_info()
+    # o teto de vol vale para todo objetivo (regra fixa); na mistura, o objetivo do satélite é o Kelly
     params = servicos.ParametrosOtimizacao(
-        objetivo=objetivo, peso_maximo=peso_max, n_ativos_max=n_max,
-        vol_maxima=None if objetivo in (Objetivo.MIN_VOL.value, Objetivo.HRP.value) else vol_max,
-        aversao_risco=aversao, teto_setor=teto_setor,
+        objetivo=Objetivo.KELLY.value if objetivo == NUCLEO_SATELITE else objetivo, peso_maximo=peso_max,
+        n_ativos_max=n_max, vol_maxima=vol_max, aversao_risco=aversao, teto_setor=teto_setor,
         setores=tuple(sorted((t, info[t]["setor"]) for t in acoes)),
+        fracao_satelite=fracao_satelite if objetivo == NUCLEO_SATELITE else None,
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
@@ -147,7 +172,15 @@ def validar(entradas: Entradas) -> str | None:
                 f"{p.n_ativos_max * p.peso_maximo:.0%} < 100%. Aumente um dos dois.")
     if len(entradas.tickers_acoes) < 3:
         return "Selecione setores com pelo menos 3 ativos."
+    violacoes = validar_config(p.para_config(0.0))
+    if violacoes:
+        return "Configuração fora das regras de risco fixas: " + _descrever(violacoes)
     return None
+
+
+def _descrever(violacoes: list[Violacao]) -> str:
+    return "; ".join(f"{v.regra.value} em {v.alvo.replace('.SA', '')}: {v.valor:.2%} (limite {v.limite:.0%})"
+                     for v in violacoes) + '.'
 
 
 def main() -> None:
@@ -206,17 +239,27 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
 
     cfg = entradas.params.para_config(rf_aritmetica)
     try:
-        carteira = (_carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica)
-                    if entradas.reamostrar
-                    else CarteiraCalculada(otimizar(mu, cov, cfg), mu, cov, momentos.intensidade_shrinkage))
+        if entradas.reamostrar:
+            carteira = _carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica)
+        else:
+            resultado = (_nucleo_satelite(mu, cov, cfg, entradas.params.fracao_satelite)
+                         if entradas.params.fracao_satelite is not None else otimizar(mu, cov, cfg))
+            if resultado.objetivo is Objetivo.HRP:
+                resultado = _hrp_nos_tetos(resultado, mu, cov, cfg)
+            carteira = CarteiraCalculada(resultado, mu, cov, momentos.intensidade_shrinkage)
         fronteira = fronteira_eficiente(carteira.mu, carteira.cov, cfg)
     except ErroInviavel as erro:
-        st.error(f"Carteira inviável: {erro} Aumente o peso máximo ou o teto por setor, ou inclua mais setores.")
+        st.error(f"Carteira inviável: {erro} Inclua mais setores ou mais ativos: o teto por setor é de no máximo "
+                 f"{LIMITES.teto_setor:.0%} e o peso máximo, de {LIMITES.peso_maximo_acao:.0%} (regras fixas).")
         st.stop()
     except ErroOtimizacao as erro:
         st.error(f"Otimização falhou: {erro}")
         st.stop()
     resultado, mu, cov = carteira.resultado, carteira.mu, carteira.cov
+    violacoes = checar_carteira(resultado.pesos, dict(entradas.params.setores), cov)
+    if violacoes:
+        st.error("Carteira recusada pelas regras de risco fixas, sem plano de compra: " + _descrever(violacoes))
+        return
     if resultado.tem_aviso:
         st.warning(resultado.mensagem)
     else:
@@ -235,6 +278,7 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
     secao_plano_de_compra(entradas, pesos, precos, info)
+    st.info(AVISO_REGRAS_DE_RISCO)
 
     col_rc, col_corr = st.columns(2)
     col_rc.plotly_chart(grafico_contribuicao_risco(contribuicao_risco(pesos, cov), pesos.to_dict()),
@@ -244,6 +288,32 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     if carteira.frequencia is not None:
         with st.expander("Estabilidade nas reamostras"):
             secoes.tabela_estabilidade(resultado.pesos, carteira.frequencia)
+
+
+def _nucleo_satelite(mu: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao,
+                     fracao_satelite: float) -> ResultadoOtimizacao:
+    """Núcleo Mín. Vol + satélite (o objetivo do ``cfg``) nos mesmos μ e Σ; a mistura de viáveis é viável."""
+    nucleo = otimizar(mu, cov, replace(cfg, objetivo=Objetivo.MIN_VOL))
+    satelite = otimizar(mu, cov, cfg)
+    pesos = combinar_nucleo_satelite(nucleo.pesos, satelite.pesos, fracao_satelite).reindex(mu.index)
+    retorno, vol, sharpe = metricas_carteira(pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov),
+                                             cfg.taxa_livre_risco)
+    status = next((s for s in ("fallback", "impreciso") if s in (nucleo.status, satelite.status)), "otimo")
+    mensagem = (f"Núcleo Mín. Vol {1 - fracao_satelite:.0%} + satélite Kelly λ={cfg.aversao_risco:g} "
+                f"{fracao_satelite:.0%}. Núcleo: {nucleo.mensagem} Satélite: {satelite.mensagem}")
+    return ResultadoOtimizacao(pesos=pesos, retorno_esperado=retorno, volatilidade=vol, sharpe=sharpe,
+                               objetivo=cfg.objetivo, status=status, mensagem=mensagem)
+
+
+def _hrp_nos_tetos(resultado: ResultadoOtimizacao, mu: pd.Series, cov: pd.DataFrame,
+                   cfg: ConfigOtimizacao) -> ResultadoOtimizacao:
+    """O HRP da tela vira ordem: projetado nos tetos por ação, setor, vol e nº de ativos (o das comparações, não)."""
+    projetados = projetar_pesos(resultado.pesos, cov, cfg)
+    retorno, vol, sharpe = metricas_carteira(projetados.pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov),
+                                             cfg.taxa_livre_risco)
+    mensagem = f"HRP projetado nos tetos das regras de risco. {projetados.mensagem}".strip()
+    return replace(resultado, pesos=projetados.pesos, retorno_esperado=retorno, volatilidade=vol, sharpe=sharpe,
+                   status=projetados.status, mensagem=mensagem)
 
 
 def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
@@ -281,7 +351,7 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     if not com_cotacao.all():
         nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
         st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o valor dela vai para as outras ações.")
-    # O HRP ignora os tetos: o plano nunca corta um alvo abaixo do próprio peso (por ação ou por setor).
+    # O plano nunca corta um alvo abaixo do próprio peso (a carteira já passou pelas regras de risco).
     teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
     # O valor das ações sem cotação vai para as outras, na proporção do otimizador, sem furar os tetos.
     alvo = redistribuir_sem_cotacao(pesos, com_cotacao, teto, limites_do_plano(entradas.params.grupos, pesos))
@@ -291,6 +361,11 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
         plano = plano_de_compra(alvo, cotacoes["preco"], regras)
     except ValueError as erro:
         st.error(f"Plano de compra indisponível: {erro}")
+        return
+    # quantidades inteiras: os pesos efetivos passam de novo pelas regras (a vol ex-ante foi conferida no alvo)
+    violacoes = checar_carteira(plano.itens["peso_efetivo"], dict(entradas.params.setores))
+    if violacoes:
+        st.error("Plano de compra recusado pelas regras de risco fixas: " + _descrever(violacoes))
         return
     secoes.tabela_carteira(plano, cotacoes, info, date.today())
     secoes.legenda_por_setor(plano, info)

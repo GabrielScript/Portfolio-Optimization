@@ -1,5 +1,6 @@
 """App inteiro via AppTest, SEM rede: os carregadores de ``ui.servicos`` viram dados sintéticos."""
 
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -14,8 +15,9 @@ from core.config import Objetivo
 from ui import servicos
 
 APP = Path(__file__).resolve().parent.parent / "app.py"
-# 8 ações: viável com teto de 20% por ativo, e a reamostragem roda em segundos.
+# 35 ações em 4 setores: viável com os tetos fixos (20% por ação, 30% por setor), e a reamostragem roda em segundos.
 SETOR_PEQUENO = "Tecnologia da Informação"
+SETORES_DO_TESTE = [SETOR_PEQUENO, "Telecomunicações", "Petróleo, Gás e Biocombustíveis", "Materiais Básicos"]
 TIMEOUT_S = 300
 JANELA_ANOS, TESTE_ANOS = 3, 1           # os mínimos dos sliders: walk-forward curto e rápido
 CARREGAR_COTACOES_REAL = servicos.carregar_cotacoes      # guardada antes de a fixture trocá-la
@@ -54,8 +56,8 @@ def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
-    at.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO])
-    at.sidebar.slider(key="teto_setor").set_value(100)               # um setor só: sem teto por setor
+    at.sidebar.selectbox(key="objetivo").set_value(Objetivo.KELLY.value)   # os testes antigos são do Kelly
+    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
     at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
     at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
     return at
@@ -88,7 +90,7 @@ def test_walk_forward_treina_na_janela_da_carteira_de_hoje(app):
 def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
     # Mesmo cfg das estratégias: compra na véspera do 1º rebalanceamento (pregão janela × 252 do download),
     # paga 10 bps uma vez (o padrão da sidebar) e segura até o fim.
-    tickers = tuple(get_tickers_by_setor([SETOR_PEQUENO])) + BENCHMARKS     # o mesmo pedido do walk-forward
+    tickers = tuple(get_tickers_by_setor(SETORES_DO_TESTE)) + BENCHMARKS     # o mesmo pedido do walk-forward
     bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today(), 0).precos[BENCHMARK_ACOES]
     esperado = (1 - 10 / 10_000) * bova.iloc[-1] / bova.iloc[JANELA_ANOS * 252] - 1
 
@@ -111,7 +113,7 @@ def test_legenda_do_walk_forward_lista_a_acao_sem_historico_para_ele(app, monkey
     app.run()
 
     assert not app.exception
-    curta = get_tickers_by_setor([SETOR_PEQUENO])[-1].replace(".SA", "")
+    curta = get_tickers_by_setor(SETORES_DO_TESTE)[-1].replace(".SA", "")
     legenda = next(c.value for c in app.caption if c.value.startswith("Treino:"))
     assert legenda.endswith(f"Fora do walk-forward por histórico curto: {curta}.")
 
@@ -197,10 +199,10 @@ def _precos_com_a_ultima_acao_cara(tickers: tuple[str, ...], anos: int, dia: dat
 def test_acao_cara_demais_para_o_teto_sai_antes_da_otimizacao_com_aviso(app, monkeypatch):
     monkeypatch.setattr(servicos, "carregar_precos", _precos_com_a_ultima_acao_cara)
     # HRP dá peso a todas: sem o filtro, a ação cara entraria no plano (com 0 ações e o peso em caixa).
-    app.sidebar.selectbox[0].set_value(Objetivo.HRP.value).run()
+    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.HRP.value).run()
 
     assert not app.exception
-    cara = get_tickers_by_setor([SETOR_PEQUENO])[-1].replace(".SA", "")
+    cara = get_tickers_by_setor(SETORES_DO_TESTE)[-1].replace(".SA", "")
     assert len([i.value for i in app.info if cara in i.value]) == 1
     assert cara not in set(_plano_de_compra(app)["Ticker"])
 
@@ -277,9 +279,6 @@ def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contad
     assert yahoo_contador.count(("OUTRA.SA",)) == 1      # a entrada da outra carteira continua no cache
 
 
-SETOR_AUXILIAR = "Telecomunicações"          # 4 ações: com teto de 70%, os dois setores ainda somam 100%
-
-
 def _precos_tecnologia_em_alta(tickers: tuple[str, ...], anos: int, dia: date,
                                versao_dados: int) -> market_data.DadosPrecos:
     """Tecnologia sobe ~0,2% ao dia a mais: sem teto por setor, o otimizador põe tudo nela."""
@@ -294,23 +293,24 @@ def _peso_por_setor(plano: pd.DataFrame, coluna: str) -> pd.Series:
 
 
 def test_teto_por_setor_limita_o_peso_alvo_de_cada_setor(app, monkeypatch):
+    # a tela pode apertar a regra fixa de 30%: com 25%, nem a Tecnologia em alta passa disso
     monkeypatch.setattr(servicos, "carregar_precos", _precos_tecnologia_em_alta)
-    app.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO, SETOR_AUXILIAR])
-    app.sidebar.slider(key="teto_setor").set_value(70).run()
+    app.sidebar.slider(key="teto_setor").set_value(25).run()
 
     assert not app.exception
-    assert (_peso_por_setor(_plano_de_compra(app), "Peso alvo") <= 0.70 + 1e-6).all()
+    assert (_peso_por_setor(_plano_de_compra(app), "Peso alvo") <= 0.25 + 1e-6).all()
 
 
 def test_plano_mostra_o_peso_efetivo_de_cada_setor(app):
     assert not app.exception
-    efetivo = _peso_por_setor(_plano_de_compra(app), "Peso efetivo")[SETOR_PEQUENO]
+    por_setor = _peso_por_setor(_plano_de_compra(app), "Peso efetivo")
+    maior = por_setor.idxmax()
     legendas = [c.value for c in app.caption if c.value.startswith("Por setor")]
-    assert len(legendas) == 1 and f"{SETOR_PEQUENO} {efetivo:.1%}" in legendas[0]
+    assert len(legendas) == 1 and f"{maior} {por_setor[maior]:.1%}" in legendas[0]
 
 
 def test_um_setor_so_com_teto_por_setor_explica_o_que_aumentar(app):
-    app.sidebar.slider(key="teto_setor").set_value(30).run()
+    app.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO]).run()      # 30% num setor só não soma 100%
 
     assert not app.exception
     erros = [e.value for e in app.error]
@@ -319,7 +319,7 @@ def test_um_setor_so_com_teto_por_setor_explica_o_que_aumentar(app):
 
 def test_reamostragem_so_vale_para_o_kelly(app):
     app.sidebar.checkbox(key="reamostrar").check().run()
-    app.sidebar.selectbox[0].set_value(Objetivo.MIN_VOL.value).run()
+    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.MIN_VOL.value).run()
 
     assert not app.exception
     assert app.sidebar.checkbox(key="reamostrar").disabled
@@ -361,3 +361,70 @@ def test_referencia_sem_historico_na_janela_aparece_na_legenda(app, monkeypatch)
     app.run()
     legendas = [c.value for c in app.caption if c.value.startswith("Sem histórico")]
     assert legendas == [f"Sem histórico para os {JANELA_ANOS + TESTE_ANOS} anos do walk-forward: DIVO11."]
+
+
+@pytest.fixture
+def app_padrao(monkeypatch) -> AppTest:
+    """A tela como o usuário abre (sem escolher objetivo), com os 4 setores do teste."""
+    monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
+    monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
+    monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
+    monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
+    at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
+    at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
+    return at
+
+
+def test_padrao_da_tela_e_o_nucleo_satelite_da_regra_b(app_padrao):
+    # S1-P.b (2026-10-18): a regra B aprovou núcleo Mín. Vol 70% + satélite Kelly λ=2 30%
+    assert not app_padrao.exception
+    assert app_padrao.sidebar.selectbox(key="objetivo").value == "nucleo_satelite"
+    assert app_padrao.sidebar.slider(key="fracao_satelite").value == 30
+    assert list(_tabela_walk_forward(app_padrao).columns)[1] == "Otimizada (núcleo Mín. Vol + satélite Kelly 30%)"
+
+
+def test_rotulo_recomendado_segue_a_regra_a(app_padrao):
+    # regra A, opção 3: o Kelly sozinho não é o principal; o recomendado é a mistura da regra B
+    opcoes = app_padrao.sidebar.selectbox(key="objetivo").options
+    assert [o for o in opcoes if "recomendado" in o] == ["Núcleo Mín. Vol + satélite Kelly — recomendado"]
+
+
+def test_sliders_nao_afrouxam_as_regras(app):
+    assert app.sidebar.slider(key="peso_maximo").max == 20
+    assert app.sidebar.slider(key="teto_setor").max == 30
+    assert app.sidebar.slider(key="vol_maxima").max == 40
+
+
+def test_mistura_da_tela_nao_passa_de_50_por_cento_de_satelite(app_padrao):
+    assert app_padrao.sidebar.slider(key="fracao_satelite").max == 50
+
+
+def test_carteira_com_violacao_nao_mostra_plano(app, monkeypatch):
+    from core import optimization
+    otimizar_real = optimization.otimizar
+
+    def concentrada_em_tres(mu, cov, cfg):
+        # 1/3 em cada uma das 3 primeiras (Tecnologia): passa de 20% por ação e de 30% no setor
+        pesos = pd.Series(0.0, index=mu.index)
+        pesos[mu.index[:3]] = 1 / 3
+        return replace(otimizar_real(mu, cov, cfg), pesos=pesos)
+
+    monkeypatch.setattr(optimization, "otimizar", concentrada_em_tres)
+    app.run()
+
+    assert not app.exception
+    assert len([e.value for e in app.error if "recusada pelas regras de risco" in e.value]) == 1
+    assert not [df for df in app.dataframe if "Qtd." in df.value.columns]
+
+
+def test_hrp_da_tela_respeita_teto_de_setor(app):
+    # o HRP espalha por número de papéis: Materiais Básicos (14 de 35) passaria de 30% sem a projeção
+    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.HRP.value).run()
+
+    assert not app.exception
+    plano = _plano_de_compra(app)
+    assert (_peso_por_setor(plano, "Peso alvo") <= 0.30 + 1e-6).all()
+    assert (plano["Peso alvo"] <= 0.20 + 1e-6).all()

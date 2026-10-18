@@ -10,14 +10,14 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 
 import pandas as pd
 import streamlit as st
 
 from core import market_data, reamostragem
-from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp,
+from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
 
@@ -36,6 +36,7 @@ class ParametrosOtimizacao:
     aversao_risco: float
     teto_setor: float = 1.0
     setores: tuple[tuple[str, str], ...] = ()
+    fracao_satelite: float | None = None      # núcleo Mín. Vol + satélite com este objetivo; None = só o objetivo
 
     @property
     def grupos(self) -> tuple[LimiteGrupo, ...]:
@@ -108,8 +109,15 @@ def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg
     estrategias = {}
     if reamostrar:
         estrategias[f"Reamostrada ({params.objetivo})"] = estrategia_reamostrada(cfg_opt, shrink_mu, rf)
+    if params.fracao_satelite is None:
+        principal = {f"Otimizada ({params.objetivo})": estrategia_otimizada(cfg_opt, shrink_mu, rf)}
+    else:
+        nucleo = estrategia_otimizada(replace(cfg_opt, objetivo=Objetivo.MIN_VOL), shrink_mu, rf)
+        satelite = estrategia_otimizada(cfg_opt, shrink_mu, rf)
+        principal = {f"Otimizada (núcleo Mín. Vol + satélite Kelly {params.fracao_satelite:.0%})":
+                     estrategia_nucleo_satelite(nucleo, satelite, params.fracao_satelite)}
+    estrategias.update(principal)
     estrategias.update({
-        f"Otimizada ({params.objetivo})": estrategia_otimizada(cfg_opt, shrink_mu, rf),
         "1/N": estrategia_equiponderada(),
         "HRP": estrategia_hrp(arvore=False),
         "HRP-Árvore": estrategia_hrp(arvore=True),

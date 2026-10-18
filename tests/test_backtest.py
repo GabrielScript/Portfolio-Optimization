@@ -4,7 +4,7 @@ import pytest
 
 from core import reamostragem
 from core.backtest import (backtest_pesos_fixos, com_janela, estrategia_equiponderada, estrategia_hrp,
-                           estrategia_otimizada, estrategia_reamostrada, walk_forward)
+                           estrategia_nucleo_satelite, estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
 from core.estimation import estimar_momentos
 from core.optimization import ErroOtimizacao, otimizar
@@ -133,3 +133,11 @@ def test_com_janela_rejeita_treino_mais_curto_que_a_janela(retornos_sinteticos):
 def test_historico_curto_rejeitado(retornos_sinteticos):
     with pytest.raises(ValueError):
         walk_forward(retornos_sinteticos.iloc[:200], estrategia_equiponderada(), CFG_BT, "x")
+
+
+def test_estrategia_nucleo_satelite_combina_os_pesos_das_duas_no_mesmo_treino():
+    treino = pd.DataFrame(0.001, index=pd.bdate_range("2024-01-01", periods=70), columns=["A", "B", "C"])
+    nucleo = lambda t: pd.Series({"A": 0.5, "B": 0.5})            # noqa: E731
+    satelite = lambda t: pd.Series({"C": 1.0})                     # noqa: E731
+    pesos = estrategia_nucleo_satelite(nucleo, satelite, fracao_satelite=0.3)(treino)
+    assert pesos.to_dict() == pytest.approx({"A": 0.35, "B": 0.35, "C": 0.30})

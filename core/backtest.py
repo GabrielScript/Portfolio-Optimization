@@ -31,7 +31,7 @@ import pandas as pd
 from core.config import DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao
 from core.estimation import covariancia_ledoit_wolf, estimar_momentos
 from core.hierarchical import otimizar_hrp, otimizar_hrp_arvore
-from core.optimization import ErroOtimizacao, otimizar
+from core.optimization import ErroOtimizacao, combinar_nucleo_satelite, otimizar
 from core.reamostragem import ConfigReamostragem, otimizar_reamostrado
 
 logger = logging.getLogger(__name__)
@@ -190,6 +190,14 @@ def com_janela(estrategia: Estrategia, pregoes: int) -> Estrategia:
             raise ValueError(f"Treino de {len(treino)} pregões para uma janela de {pregoes}.")
         return estrategia(treino.iloc[-pregoes:])
     return _estrategia
+
+
+def estrategia_nucleo_satelite(nucleo: Estrategia, satelite: Estrategia, fracao_satelite: float) -> Estrategia:
+    """
+    Núcleo + satélite decididos no mesmo treino, pesos combinados (``combinar_nucleo_satelite``). Igual, nos
+    rebalanceios, às duas curvas levadas de volta ao alvo; o custo sai um pouco menor (compras e vendas se compensam).
+    """
+    return lambda treino: combinar_nucleo_satelite(nucleo(treino), satelite(treino), fracao_satelite)
 
 
 def estrategia_equiponderada() -> Estrategia:

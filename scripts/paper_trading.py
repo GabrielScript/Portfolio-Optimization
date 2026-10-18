@@ -63,7 +63,8 @@ from core.config import ConfigOtimizacao, Objetivo, limites_por_setor, taxa_anua
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.optimization import otimizar  # noqa: E402
 from core.paper import (CUSTO_BPS, LEITURA_FINAL, LEITURA_INTERMEDIARIA, NUCLEO, Acao, Leitura,  # noqa: E402
-                        curva_do_registro, decidir_do_dia, item_3_cumprido, ler_o_paper, rebalanceio_devido)
+                        curva_do_registro, decidir_do_dia, e_o_stop, item_3_cumprido, ler_o_paper,
+                        rebalanceio_devido)
 from core.registro import registrar_carteira  # noqa: E402
 from core.risco import LIMITES, Violacao, checar_carteira  # noqa: E402
 
@@ -85,6 +86,11 @@ class Rodada:
     acao: Acao
     carteira: pd.Series | None = None   # a registrar nesta rodada (sem ".SA"); None = nada entra no arquivo
     nota: str = ""
+
+    @property
+    def desfecho(self) -> str:
+        """O que vai para o runs.csv: rebalanceio devido sem carteira a registrar é a recusa pelas regras."""
+        return "recusada" if self.acao is Acao.REBALANCEAR and self.carteira is None else self.acao.value
 
 
 def ler_precos(arquivo: Path) -> pd.DataFrame:
@@ -121,11 +127,8 @@ def satelite_do_dia(data: pd.Timestamp, selic: float, universo: list[str],
 
 
 def _parado(registro: pd.DataFrame, ultima: pd.Timestamp | None) -> bool:
-    """O stop já disparou se a última carteira registrada é 100% BOVA11 (o Kelly da lista líquida não tem ETF)."""
-    if ultima is None:
-        return False
-    pesos = registro[registro["data"] == ultima].set_index("ticker")["peso"]
-    return list(pesos.index) == [NUCLEO] and abs(float(pesos.iloc[0]) - 1.0) < 1e-9
+    """O stop já disparou se a última carteira registrada é a do stop."""
+    return ultima is not None and e_o_stop(registro[registro["data"] == ultima].set_index("ticker")["peso"])
 
 
 def rodar(precos: pd.DataFrame, registro: pd.DataFrame, escolher: Escolha) -> Rodada:
@@ -192,11 +195,14 @@ def relatorio(rodada: Rodada, arquivo_precos: Path, arquivo_registro: Path) -> s
         return "\n".join(partes)
     precos = ler_precos(arquivo_precos)
     cdi = _cdi(registro["data"].min().date(), rodada.data.date())
-    partes.append(texto_da_leitura(ler_o_paper(registro, precos, cdi)))
+    leituras = [(ler_o_paper(registro, precos, cdi), "Até hoje")]
     for pregoes, titulo in ((LEITURA_INTERMEDIARIA, "Leitura de 6 meses"), (LEITURA_FINAL, "Leitura de 12 meses")):
         leitura = ler_o_paper(registro, precos, cdi, ate=pregoes)
         if leitura.pregoes == pregoes:
-            partes.append(texto_da_leitura(leitura, titulo))
+            leituras.append((leitura, titulo))
+    for leitura, titulo in leituras:
+        partes += [texto_da_leitura(leitura, titulo),
+                   f"  Recusas pelas regras (runs.csv): {contar_recusas(PASTA_ESTADO / 'runs.csv', leitura.fim)}"]
     return "\n".join(partes)
 
 
@@ -208,8 +214,8 @@ def _cdi(inicio: date, hoje: date) -> pd.Series | None:
         return None
 
 
-def _git(*argumentos: str) -> str:
-    return subprocess.run(["git", "-C", str(RAIZ), *argumentos], check=True, capture_output=True, text=True,
+def _git(*argumentos: str, raiz: Path = RAIZ) -> str:
+    return subprocess.run(["git", "-C", str(raiz), *argumentos], check=True, capture_output=True, text=True,
                           creationflags=_SEM_JANELA).stdout.strip()
 
 
@@ -218,6 +224,24 @@ def commitar_no_git(arquivo: Path, rodada: Rodada) -> None:
     caminho = arquivo.relative_to(RAIZ).as_posix()
     _git("add", "--", caminho)
     _git("commit", "-m", f"paper: {rodada.acao.value} no fechamento de {rodada.data:%d/%m/%Y}", "--", caminho)
+
+
+def commitar_pendente(arquivo: Path, raiz: Path = RAIZ) -> bool:
+    """Commita o registro que ficou só no disco (o commit da rodada que o gravou falhou: sem isso, a rodada seguinte
+    vê a data registrada, segura a carteira e a linha nunca entra no git). True se havia o que commitar. Só linhas
+    acrescentadas: uma linha já commitada que mudou é ValueError e nada entra."""
+    caminho = arquivo.relative_to(raiz).as_posix()
+    if not _git("status", "--porcelain", "--", caminho, raiz=raiz):
+        return False
+    try:
+        commitado = _git("show", f"HEAD:{caminho}", raiz=raiz)
+    except subprocess.CalledProcessError:          # nem o 1º registro chegou ao git
+        commitado = ""
+    if not arquivo.read_text(encoding="utf-8").startswith(commitado):
+        raise ValueError(f"{caminho} foi reescrito fora da rotina (o arquivo só cresce): conferir com git diff.")
+    _git("add", "--", caminho, raiz=raiz)
+    _git("commit", "-m", "paper: registro que ficou fora do git na rodada anterior", "--", caminho, raiz=raiz)
+    return True
 
 
 def _escolha_do_dia(notas: list[str]) -> Escolha:
@@ -243,6 +267,16 @@ def anotar(inicio: datetime, fechamento: str, desfecho: str, nota: str) -> None:
             escritor.writerow(["inicio", "fim", "fechamento", "desfecho", "nota"])
         escritor.writerow([inicio.isoformat(timespec="seconds"), datetime.now().isoformat(timespec="seconds"),
                            fechamento, desfecho, nota])
+
+
+def contar_recusas(arquivo: Path, ate: pd.Timestamp) -> int:
+    """Fechamentos até ``ate`` em que a carteira nova foi recusada pelas regras, pelo ``runs.csv`` (rodar de novo no
+    mesmo fechamento conta uma vez); 0 sem o arquivo."""
+    if not arquivo.exists():
+        return 0
+    rodadas = pd.read_csv(arquivo, dtype=str, keep_default_na=False)
+    recusadas = pd.to_datetime(rodadas.loc[rodadas["desfecho"] == "recusada", "fechamento"].unique())
+    return int((recusadas <= ate).sum())
 
 
 # Aviso do Windows pelo WinRT, como o do lago: o texto vai em variáveis de ambiente, nunca no script nem no XML.
@@ -290,15 +324,18 @@ def main() -> int:
             raise RuntimeError(f"checkout do app em '{ramo}', não na {RAMO_DA_ROTINA}: o registro não pode ir para "
                                "outro ramo")
         notas: list[str] = []
+        if commitar_pendente(ARQUIVO_REGISTRO):
+            logging.warning("registro que ficou fora do git na rodada anterior: commitado agora")
+            notas.append("registro pendente commitado")
         rodada = executar(lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO, TRAVA_DO_LAGO, _escolha_do_dia(notas),
                           commitar_no_git)
         if rodada is None:
             logging.info("lago rodando (daily.lock): nada decidido")
             anotar(inicio, "", "lago rodando", "")
             return 0
+        anotar(inicio, rodada.data.date().isoformat(), rodada.desfecho, "; ".join(filter(None, [*notas, rodada.nota])))
         logging.info("\n%s", relatorio(rodada, lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO))
-        anotar(inicio, rodada.data.date().isoformat(), rodada.acao.value, "; ".join(filter(None, [*notas, rodada.nota])))
-        if rodada.nota.startswith("recusada"):
+        if rodada.desfecho == "recusada":
             avisar("paper trading: carteira recusada", f"{rodada.nota[:180]} Log: {log}")
         return 0
     except Exception as erro:         # qualquer falha da rotina vira aviso; o log tem o traceback

@@ -111,6 +111,14 @@ def test_leitura_mede_o_satelite_liquido_contra_o_bova11_e_o_cdi_nos_mesmos_preg
         4, pytest.approx(1.1 * 0.999 - 1), pytest.approx(0.05), pytest.approx(1.0005 ** 4 - 1), None)
 
 
+def test_cdi_do_ultimo_pregao_ainda_nao_publicado_repete_o_do_dia_anterior():
+    # às 8h30 o SGS 12 ainda não tem o CDI do último fechamento: o CDI do período não pode sumir por isso
+    precos = _lago([10.0, 10.2, 10.5, 10.8, 11.0], [100.0, 101.0, 102.0, 104.0, 105.0])
+    registro = _registro((str(precos.index[0].date()), "A", 1.0))
+    leitura = ler_o_paper(registro, precos, pd.Series(0.0005, index=precos.index[:-1]))
+    assert leitura.cdi == pytest.approx(1.0005 ** 4 - 1)
+
+
 def test_item_3_do_criterio_sai_so_com_252_pregoes_e_na_janela_fixa():
     # o satélite rende 0,02%/dia e o BOVA11 0,01% até o 252º pregão; depois o satélite cai 20%: vale a janela fixa
     n = 300
@@ -124,6 +132,16 @@ def test_item_3_do_criterio_sai_so_com_252_pregoes_e_na_janela_fixa():
         126, None, 252, True)
 
 
+def test_leitura_ate_hoje_depois_dos_252_pregoes_nao_da_veredito():
+    # no 300º pregão o satélite já caiu 20% (depois do 260º): a leitura até hoje não decide, só a janela fixa de 252
+    n = 300
+    satelite = 10.0 * 1.0002 ** np.arange(n + 1)
+    satelite[260:] *= 0.8
+    precos = _lago(list(satelite), list(100.0 * 1.0001 ** np.arange(n + 1)))
+    ate_hoje = ler_o_paper(_registro((str(precos.index[0].date()), "A", 1.0)), precos, None)
+    assert (ate_hoje.pregoes, item_3_cumprido(ate_hoje)) == (300, None)
+
+
 def test_stop_disparado_reprova_o_item_3_mesmo_com_o_satelite_a_frente():
     # o satélite subiu 0,1%/dia até o stop do 63º pregão (registro de 100% BOVA11) e ficou à frente em 252 pregões
     ruido = 1.0 + np.random.default_rng(3).normal(0.0, 0.01, 253)
@@ -131,6 +149,13 @@ def test_stop_disparado_reprova_o_item_3_mesmo_com_o_satelite_a_frente():
     registro = _registro((str(precos.index[0].date()), "A", 1.0), (str(precos.index[63].date()), "BOVA11", 1.0))
     leitura = ler_o_paper(registro, precos, None, ate=252)
     assert (leitura.stop, leitura.satelite > leitura.bova, item_3_cumprido(leitura)) == (precos.index[63], True, False)
+
+
+def test_stop_com_ruido_de_ponto_flutuante_no_peso_ainda_e_o_stop():
+    # 100% BOVA11 gravado como 0,9999999999: a rotina já o trata como stop (fica parada), a leitura também tem de tratar
+    precos = _lago([10.0, 10.0, 10.0, 10.0], [100.0, 100.0, 100.0, 100.0])
+    registro = _registro((str(precos.index[0].date()), "A", 1.0), (str(precos.index[2].date()), "BOVA11", 1 - 1e-10))
+    assert ler_o_paper(registro, precos, None).stop == precos.index[2]
 
 
 def test_leitura_conta_os_registros_e_os_pregoes_de_perda_de_5_por_cento_do_satelite():

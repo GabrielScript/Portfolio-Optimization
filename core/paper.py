@@ -124,15 +124,17 @@ class Leitura:
 def ler_o_paper(carteiras: pd.DataFrame, precos: pd.DataFrame, cdi_diario: pd.Series | None,
                 ate: int | None = None) -> Leitura:
     """
-    ``cdi_diario``: decimal ao dia por data (SGS 12); sem ele, a regressão usa taxa livre de risco zero. ``ate``: corta
-    a janela nesse número de pregões depois do 1º registro (as leituras de 6 e 12 meses ficam fixas); None = até hoje.
+    ``cdi_diario``: decimal ao dia por data (SGS 12); sem ele, a regressão usa taxa livre de risco zero. Pregão sem CDI
+    publicado (às 8h30 o SGS ainda não tem o do último fechamento) repete o anterior. ``ate``: corta a janela nesse
+    número de pregões depois do 1º registro (as leituras de 6 e 12 meses ficam fixas); None = até hoje.
     """
     satelite = curva_liquida(carteiras, precos, CUSTO_BPS)
     if ate is not None:
         satelite = satelite.iloc[:ate + 1]
     fim = satelite.index[-1]
     bova = precos[NUCLEO].ffill().reindex(satelite.index)
-    rf = (pd.Series(dtype=float) if cdi_diario is None else cdi_diario).reindex(satelite.index[1:])
+    rf = (pd.Series(float("nan"), index=satelite.index[1:]) if cdi_diario is None
+          else cdi_diario.reindex(cdi_diario.index.union(satelite.index)).ffill().reindex(satelite.index[1:]))
     comparacao = (comparar_benchmark(satelite, bova, rf.fillna(0.0)) if len(satelite) > MINIMO_PARA_REGRESSAO
                   else None)
     diferenca = retornos_de_valores(satelite) - retornos_de_valores(bova)
@@ -149,16 +151,22 @@ def _pregoes_congelados(curva: pd.Series) -> int:
     return int((curva.pct_change().dropna() <= -LIMITES.perda_diaria_maxima + TOLERANCIA).sum())
 
 
+def e_o_stop(pesos: pd.Series) -> bool:
+    """A carteira registrada do stop: 100% BOVA11 (o Kelly da lista líquida não tem ETF), com tolerância de 1e-9."""
+    return list(pesos.index) == [NUCLEO] and abs(float(pesos.iloc[0]) - 1.0) < 1e-9
+
+
 def _data_do_stop(carteiras: pd.DataFrame, fim: pd.Timestamp) -> pd.Timestamp | None:
     for data, carteira in carteiras[carteiras["data"] <= fim].groupby("data"):
-        if carteira.set_index("ticker")["peso"].to_dict() == {NUCLEO: 1.0}:
+        if e_o_stop(carteira.set_index("ticker")["peso"]):
             return pd.Timestamp(data)
     return None
 
 
 def item_3_cumprido(leitura: Leitura) -> bool | None:
-    """Regra pré-registrada (``scripts/paper_trading.py``): com ``LEITURA_FINAL`` pregões, cumprido se o stop não
-    disparou e o satélite líquido rendeu pelo menos o BOVA11; antes disso, None."""
-    if leitura.pregoes < LEITURA_FINAL:
+    """Regra pré-registrada (``scripts/paper_trading.py``): na janela fixa de ``LEITURA_FINAL`` pregões, cumprido se
+    o stop não disparou e o satélite líquido rendeu pelo menos o BOVA11; em qualquer outra janela, None (a leitura
+    até hoje depois dos 252 pregões não decide de novo)."""
+    if leitura.pregoes != LEITURA_FINAL:
         return None
     return leitura.stop is None and leitura.satelite >= leitura.bova

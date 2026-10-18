@@ -1,5 +1,9 @@
 """Rotina do paper trading (S5): decisão, registro e commit sem rede, sobre o formato real do export do lago."""
 
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -8,7 +12,9 @@ from core import lago
 from core.paper import Acao, Leitura
 from core.registro import registrar_carteira
 from core.risco import Regra, Violacao
-from scripts.paper_trading import executar, ler_precos, ler_registro, rodar, satelite_do_dia, texto_da_leitura
+from scripts import paper_trading
+from scripts.paper_trading import (commitar_pendente, contar_recusas, executar, ler_precos, ler_registro, rodar,
+                                   satelite_do_dia, texto_da_leitura)
 
 DATAS = pd.bdate_range("2026-07-01", periods=70)
 
@@ -78,6 +84,72 @@ def test_carteira_nova_recusada_pelas_regras_nao_entra_e_diz_por_que(precos, tmp
     rodada = rodar(precos, ler_registro(tmp_path / "carteiras.csv"), lambda data: (pd.Series({"A": 1.0}), [violacao]))
     assert (rodada.acao, rodada.carteira is None, "Utilidade Pública" in rodada.nota) == (Acao.REBALANCEAR, True,
                                                                                          True)
+
+
+def test_recusa_vai_para_o_runs_csv_como_recusada_e_nao_como_rebalanceio(precos, tmp_path):
+    # o pré-registro conta as recusas: o desfecho da rodada tem de separá-las de um rebalanceio que entrou
+    violacao = Violacao(Regra.SETOR, "Utilidade Pública", 0.36, 0.30)
+    recusada = rodar(precos, ler_registro(tmp_path / "carteiras.csv"), lambda data: (pd.Series({"A": 1.0}), [violacao]))
+    entrou = rodar(precos, ler_registro(tmp_path / "carteiras.csv"), _escolher({"A": 1.0}))
+    assert (recusada.desfecho, entrou.desfecho) == ("recusada", "rebalancear")
+
+
+def test_recusas_contam_os_fechamentos_recusados_ate_o_fim_da_leitura(tmp_path, monkeypatch):
+    # 2 rodadas no mesmo fechamento contam 1; recusa depois do fim da janela e rodada sem fechamento não contam
+    monkeypatch.setattr(paper_trading, "PASTA_ESTADO", tmp_path)
+    inicio = datetime(2026, 10, 19, 8, 30)
+    for fechamento, desfecho in [("2026-10-16", "recusada"), ("2026-10-16", "recusada"), ("", "falhou"),
+                                 ("2026-10-19", "aguardar"), ("2026-10-20", "recusada"), ("2026-10-23", "recusada")]:
+        paper_trading.anotar(inicio, fechamento, desfecho, "")
+    assert contar_recusas(tmp_path / "runs.csv", pd.Timestamp("2026-10-20")) == 2
+
+
+def test_relatorio_traz_as_recusas_da_leitura(arquivo_precos, tmp_path, monkeypatch):
+    monkeypatch.setattr(paper_trading, "PASTA_ESTADO", tmp_path)
+    monkeypatch.setattr(paper_trading, "_cdi", lambda inicio, hoje: None)          # sem rede
+    paper_trading.anotar(datetime(2026, 10, 1, 8, 30), str(DATAS[-2].date()), "recusada", "")
+    registro = tmp_path / "carteiras.csv"
+    registrar_carteira(DATAS[0].date(), pd.Series({"A": 1.0}), pd.Series({"A": 10.0}), registro)
+    texto = paper_trading.relatorio(paper_trading.Rodada(DATAS[-1], Acao.AGUARDAR), arquivo_precos, registro)
+    assert "Recusas pelas regras (runs.csv): 1" in texto
+
+
+def _git(raiz: Path, *argumentos: str) -> str:
+    return subprocess.run(["git", "-C", str(raiz), *argumentos], check=True, capture_output=True,
+                          text=True).stdout.strip()
+
+
+@pytest.fixture
+def registro_no_git(tmp_path) -> Path:
+    """``paper/carteiras.csv`` com a 1ª carteira commitada num repositório git de verdade."""
+    raiz = tmp_path / "repo"
+    raiz.mkdir()
+    _git(raiz, "init", "-q", "-b", "main")
+    _git(raiz, "config", "user.email", "teste@exemplo.com")
+    _git(raiz, "config", "user.name", "teste")
+    arquivo = raiz / "paper" / "carteiras.csv"
+    registrar_carteira(DATAS[0].date(), pd.Series({"A": 1.0}), pd.Series({"A": 10.0}), arquivo)
+    _git(raiz, "add", "--", "paper/carteiras.csv")
+    _git(raiz, "commit", "-q", "-m", "1º registro")
+    return arquivo
+
+
+def test_registro_gravado_cujo_commit_falhou_entra_no_git_na_rodada_seguinte(registro_no_git):
+    # o commit da rodada anterior falhou depois de gravar (index.lock, por ex.): a linha nova está só no disco
+    raiz = registro_no_git.parent.parent
+    registrar_carteira(DATAS[5].date(), pd.Series({"B": 1.0}), pd.Series({"B": 20.0}), registro_no_git)
+    feitos = (commitar_pendente(registro_no_git, raiz), commitar_pendente(registro_no_git, raiz))
+    assert (feitos, _git(raiz, "status", "--porcelain"), _git(raiz, "rev-list", "--count", "HEAD")) == (
+        (True, False), "", "2")
+
+
+def test_registro_reescrito_fora_da_rotina_nao_e_commitado(registro_no_git):
+    # o arquivo só cresce: uma linha já commitada que mudou é erro (o aviso chama alguém), não um commit pendente
+    raiz = registro_no_git.parent.parent
+    registro_no_git.write_bytes(registro_no_git.read_bytes().replace(b",1.0,", b",0.9,"))
+    with pytest.raises(ValueError, match="reescrito"):
+        commitar_pendente(registro_no_git, raiz)
+    assert _git(raiz, "rev-list", "--count", "HEAD") == "1"
 
 
 def test_satelite_do_dia_e_o_kelly_da_tela_dentro_das_regras(tmp_path, monkeypatch):

@@ -55,3 +55,12 @@ def test_versao_dos_dados_muda_quando_o_lago_republica_o_arquivo(monkeypatch, ar
 def test_sem_arquivo_a_versao_e_zero_e_o_erro_claro_vem_da_leitura(monkeypatch, tmp_path):
     monkeypatch.setattr(lago, "ARQUIVO_PRECOS", tmp_path / "precos_diarios.parquet")
     assert lago.versao_dos_dados() == 0
+
+
+def test_ler_setores_traz_o_setor_por_emissor_e_deixa_de_fora_quem_nao_tem(tmp_path):
+    # formato do sectors.parquet do lago; setor nulo = holding sem setor principal, que o lago não adivinha
+    caminho = tmp_path / "sectors.parquet"
+    pd.DataFrame({"issuer": ["CESP", "GGPS"], "code_cvm": [2577, 25712],
+                  "setor_ativ": ["Energia Elétrica", "Emp. Adm. Part. - Sem Setor Principal"],
+                  "sector": ["Utilidade Pública", None]}).to_parquet(caminho)
+    assert lago.ler_setores(caminho).to_dict() == {"CESP": "Utilidade Pública"}

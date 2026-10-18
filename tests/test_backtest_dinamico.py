@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.backtest import (ErroPrimeiroRebalanceio, ErroUniverso, estrategia_buy_and_hold_ativo,
-                           estrategia_equiponderada, retornos_da_carteira, walk_forward, walk_forward_dinamico)
+from core.backtest import (CarteiraRecusada, Congelamento, ErroPrimeiroRebalanceio, ErroUniverso,
+                           backtest_pesos_fixos, estrategia_buy_and_hold_ativo, estrategia_equiponderada,
+                           retornos_da_carteira, walk_forward, walk_forward_dinamico)
 from core.config import ConfigBacktest
+from core.risco import Regra, Violacao
 
 DATAS = pd.bdate_range("2024-01-01", periods=150)  # janeiro a julho de 2024
 CFG = ConfigBacktest(janela_treino=60, janela_teste=30, capital_inicial=1_000.0, custo_bps=0.0)
@@ -85,3 +87,51 @@ def test_falha_no_primeiro_rebalanceio_dinamico_e_erro():
     precos = _precos("A", "B")
     with pytest.raises(ErroPrimeiroRebalanceio, match="solver não convergiu"):
         walk_forward_dinamico(precos, _universo({mes: ["A", "B"] for mes in MESES}), sempre_falha, CFG, "falha")
+
+
+def test_carteira_recusada_pelas_regras_mantem_a_atual_e_conta_a_parte_das_falhas():
+    # 2º rebalanceio (07/05) recusado: a carteira derivada fica, e a recusa não se mistura com falha de solver
+    chamadas = []
+
+    def recusa_a_segunda(treino):
+        chamadas.append(treino.index[-1])
+        if len(chamadas) == 2:
+            raise CarteiraRecusada([Violacao(Regra.SETOR, "Financeiro", 0.36, 0.30)])
+        return pd.Series(0.5, index=treino.columns)
+
+    bt = walk_forward_dinamico(_precos("A", "B"), _universo({mes: ["A", "B"] for mes in MESES}), recusa_a_segunda,
+                               CFG, "regras")
+    segundo = bt.pesos_alvo.index[1]
+    assert list(bt.recusas) == [f"{segundo:%Y-%m-%d}"] and bt.recusas[f"{segundo:%Y-%m-%d}"][0].regra is Regra.SETOR
+    assert bt.falhas == [] and bt.turnover.iloc[1] == 0.0
+
+
+def test_rebalanceio_depois_de_perda_de_5_por_cento_vai_para_o_primeiro_pregao_livre():
+    # a carteira perde 6% no pregão de decisão do 2º rebalanceio (posição 90): nenhuma ordem no seguinte, o
+    # rebalanceio vai para a posição 91; o 3º continua na data dele (120)
+    precos = pd.DataFrame(10.0, index=DATAS, columns=["A", "B"])
+    precos.iloc[90:] = 9.4
+    universo = _universo({mes: ["A", "B"] for mes in MESES})
+    bt = walk_forward_dinamico(precos, universo, estrategia_equiponderada(), CFG, "1/N", Congelamento())
+    retornos = retornos_da_carteira(precos)
+    assert list(bt.pesos_alvo.index) == [retornos.index[60], retornos.index[91], retornos.index[120]]
+    assert bt.adiamentos == {f"{retornos.index[90]:%Y-%m-%d}": f"{retornos.index[91]:%Y-%m-%d}"}
+
+
+def test_mistura_congela_pelos_retornos_do_satelite():
+    # núcleo e satélite parados; o satélite (série de fora) perde 6% no pregão 29: a volta aos pesos de 30 vai a 31
+    retornos = pd.DataFrame(0.0, index=DATAS[:90], columns=["núcleo", "satélite"])
+    satelite = pd.Series(0.0, index=retornos.index)
+    satelite.iloc[29] = -0.06
+    bt = backtest_pesos_fixos(retornos, pd.Series({"núcleo": 0.7, "satélite": 0.3}), CFG, "mistura",
+                              Congelamento(retornos=satelite))
+    assert list(bt.pesos_alvo.index) == [retornos.index[0], retornos.index[31], retornos.index[60]]
+
+
+def test_sem_perda_grande_o_congelamento_nao_muda_nada():
+    # vol diária de ~0,7% na carteira: nenhum pregão de -5%, e a curva tem de sair igual, bit a bit
+    universo = _universo({mes: ["A", "B"] for mes in MESES})
+    sem = walk_forward_dinamico(_precos("A", "B"), universo, estrategia_equiponderada(), CFG, "1/N")
+    com = walk_forward_dinamico(_precos("A", "B"), universo, estrategia_equiponderada(), CFG, "1/N", Congelamento())
+    pd.testing.assert_series_equal(com.valores, sem.valores, check_exact=True)
+    assert com.adiamentos == {} and list(com.pesos_alvo.index) == list(sem.pesos_alvo.index)

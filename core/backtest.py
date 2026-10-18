@@ -8,8 +8,9 @@ Protocolo (idêntico para TODAS as estratégias, para que a comparação seja ju
    lados (compra e venda) e a montagem inicial a partir do caixa.
 3. Entre rebalanceamentos a carteira é buy-and-hold: os pesos derivam com os
    preços.
-4. Se a estratégia falha (solver, amostra curta), a carteira é mantida e a
-   falha é registrada. A versão anterior trocava por 1/N em silêncio.
+4. Se a estratégia falha (solver, amostra curta) ou a carteira-alvo é recusada
+   pelas regras fixas (``CarteiraRecusada``), a carteira é mantida e o motivo
+   registrado (``falhas`` x ``recusas``). A versão anterior trocava por 1/N em silêncio.
 
 O que este backtest NÃO corrige (documentado na UI):
 - Viés de sobrevivência no ``walk_forward`` (o do app): o universo é a lista ATUAL de
@@ -25,16 +26,17 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field, replace
-from typing import Callable
+from typing import Callable, Mapping
 
 import numpy as np
 import pandas as pd
 
-from core.config import DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao
+from core.config import DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, limites_por_setor
 from core.estimation import covariancia_ledoit_wolf, estimar_momentos
 from core.hierarchical import otimizar_hrp, otimizar_hrp_arvore
 from core.optimization import ErroOtimizacao, combinar_nucleo_satelite, otimizar
 from core.reamostragem import ConfigReamostragem, otimizar_reamostrado
+from core.risco import LIMITES, Limites, Violacao, checar_carteira, pode_negociar
 
 logger = logging.getLogger(__name__)
 
@@ -51,11 +53,40 @@ class ResultadoBacktest:
     turnover: pd.Series                     # sum |delta w| por rebalanceamento
     custos_totais: float
     falhas: list[str] = field(default_factory=list)
+    recusas: dict[str, tuple[Violacao, ...]] = field(default_factory=dict)   # data -> violações das regras fixas
+    adiamentos: dict[str, str] = field(default_factory=dict)   # rebalanceio congelado: data marcada -> data feita
 
     @property
     def turnover_anual_medio(self) -> float:
         anos = max((len(self.valores) - 1) / DIAS_UTEIS_ANO, 1e-9)
         return float(self.turnover.sum() / anos)
+
+
+class CarteiraRecusada(ValueError):
+    """A carteira-alvo viola as regras fixas (``core.risco``): o motor mantém a atual, como numa falha."""
+
+    def __init__(self, violacoes: list[Violacao]) -> None:
+        self.violacoes = tuple(violacoes)
+        super().__init__("recusada pelas regras: " + "; ".join(
+            f"{v.regra.value} {v.alvo} {v.valor:.4f} > {v.limite:.4f}" for v in self.violacoes))
+
+
+@dataclass(frozen=True)
+class Congelamento:
+    """
+    Regra fixa da perda diária no motor, a mesma do ``pode_negociar``: perda de ``limites.perda_diaria_maxima`` ou
+    mais no pregão da decisão (os pesos decididos no fechamento de t-1 valem a partir de t) = nenhuma ordem no
+    pregão seguinte; o rebalanceio vai para o 1º pregão livre e nunca se vende por causa disso. ``retornos`` = os
+    diários do satélite, que congelam tudo (núcleo e volta aos pesos da mistura); None = os da própria carteira.
+    """
+
+    limites: Limites = LIMITES
+    retornos: pd.Series | None = None
+
+    def libera(self, ultima_data: pd.Timestamp, retornos_proprios: np.ndarray) -> bool:
+        recentes = (self.retornos.loc[:ultima_data] if self.retornos is not None
+                    else pd.Series(retornos_proprios, dtype=float))
+        return pode_negociar(recentes, self.limites)
 
 
 def _validar_pesos(pesos: pd.Series, colunas: pd.Index) -> pd.Series:
@@ -70,27 +101,35 @@ def _validar_pesos(pesos: pd.Series, colunas: pd.Index) -> pd.Series:
 
 def _simular(retornos: pd.DataFrame, decidir_pesos: Callable[[int], pd.Series],
              inicio: int, passo: int, capital: float, custo_bps: float,
-             nome: str, metodologia: str, falha_inicial_e_erro: bool = False) -> ResultadoBacktest:
+             nome: str, metodologia: str, falha_inicial_e_erro: bool = False,
+             congelamento: Congelamento | None = None) -> ResultadoBacktest:
     """
     Motor comum: rebalanceia em inicio, inicio+passo, ...; buy-and-hold entre eles. Falha no 1º rebalanceio (sem
     carteira para manter) vira 1/N em todas as colunas, ou ``ErroPrimeiroRebalanceio`` com ``falha_inicial_e_erro``.
+    Com ``congelamento``, o rebalanceio que cai num pregão congelado vai para o 1º livre; os seguintes ficam nas
+    datas marcadas.
     """
     colunas = retornos.columns
     valor = capital
     pesos_derivados = pd.Series(0.0, index=colunas)       # 0 = 100% caixa antes da montagem
     data_inicial = retornos.index[inicio - 1] if inicio > 0 else retornos.index[0] - pd.Timedelta(days=1)
     datas, valores = [data_inicial], [valor]
-    registros_pesos, registros_turnover, falhas = {}, {}, []
+    registros_pesos, registros_turnover, falhas, recusas, adiamentos = {}, {}, [], {}, {}
     custos = 0.0
+    retornos_proprios = np.empty(0)
 
-    for posicao in range(inicio, len(retornos), passo):
+    posicao = inicio
+    while posicao < len(retornos):
         data = retornos.index[posicao]
         try:
             alvo = _validar_pesos(decidir_pesos(posicao), colunas)
         except _FALHAS_ESPERADAS as erro:
             if falha_inicial_e_erro and pesos_derivados.sum() == 0:
                 raise ErroPrimeiroRebalanceio(f"{nome} falhou no 1º rebalanceio, {data:%Y-%m-%d}: {erro}") from erro
-            falhas.append(f"{data:%Y-%m-%d}: {erro}")
+            if isinstance(erro, CarteiraRecusada):
+                recusas[f"{data:%Y-%m-%d}"] = erro.violacoes
+            else:
+                falhas.append(f"{data:%Y-%m-%d}: {erro}")
             logger.warning("%s falhou em %s (%s); mantendo carteira.", nome, data.date(), erro)
             alvo = (pesos_derivados if pesos_derivados.sum() > 0
                     else pd.Series(1.0 / len(colunas), index=colunas))
@@ -101,22 +140,36 @@ def _simular(retornos: pd.DataFrame, decidir_pesos: Callable[[int], pd.Series],
         custos += custo
         registros_pesos[data], registros_turnover[data] = alvo, giro
 
-        bloco = retornos.iloc[posicao:posicao + passo]
-        crescimento = (1.0 + bloco).cumprod()
-        curva = valor * (crescimento.values @ alvo.values)
+        marcada = inicio + ((posicao - inicio) // passo + 1) * passo
+        fim = min(marcada, len(retornos))
+        while True:
+            bloco = retornos.iloc[posicao:fim]
+            crescimento = (1.0 + bloco).cumprod()
+            curva = valor * (crescimento.values @ alvo.values)
+            if congelamento is None or fim >= len(retornos):
+                break
+            do_bloco = curva / np.r_[valor, curva[:-1]] - 1.0
+            if congelamento.libera(bloco.index[-1], np.r_[retornos_proprios, do_bloco]):
+                break
+            fim += 1
+        if fim > marcada and fim < len(retornos):
+            adiamentos[f"{retornos.index[marcada]:%Y-%m-%d}"] = f"{retornos.index[fim]:%Y-%m-%d}"
+        if congelamento is not None:
+            retornos_proprios = np.r_[retornos_proprios, curva / np.r_[valor, curva[:-1]] - 1.0]
         datas.extend(bloco.index)
         valores.extend(curva)
 
         final = alvo.values * crescimento.values[-1]
         pesos_derivados = pd.Series(final / final.sum(), index=colunas)
         valor = float(curva[-1])
+        posicao = fim
 
     return ResultadoBacktest(
         nome=nome, metodologia=metodologia,
         valores=pd.Series(valores, index=pd.DatetimeIndex(datas)),
         pesos_alvo=pd.DataFrame(registros_pesos).T,
         turnover=pd.Series(registros_turnover),
-        custos_totais=custos, falhas=falhas,
+        custos_totais=custos, falhas=falhas, recusas=recusas, adiamentos=adiamentos,
     )
 
 
@@ -158,7 +211,7 @@ def retornos_da_carteira(precos: pd.DataFrame) -> pd.DataFrame:
 
 
 def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrategia: Estrategia,
-                          cfg: ConfigBacktest, nome: str) -> ResultadoBacktest:
+                          cfg: ConfigBacktest, nome: str, congelamento: Congelamento | None = None) -> ResultadoBacktest:
     """
     Walk-forward OOS com universo ponto no tempo (deslistadas incluídas).
 
@@ -183,18 +236,19 @@ def walk_forward_dinamico(precos: pd.DataFrame, universo: pd.DataFrame, estrateg
 
     # no universo dinâmico, 1/N em todas as colunas compraria deslistadas e papéis que ainda não existiam
     return _simular(retornos, decidir, cfg.janela_treino, cfg.janela_teste, cfg.capital_inicial,
-                    cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo", falha_inicial_e_erro=True)
+                    cfg.custo_bps, nome, "walk-forward OOS, universo ponto no tempo", falha_inicial_e_erro=True,
+                    congelamento=congelamento)
 
 
 def backtest_pesos_fixos(retornos: pd.DataFrame, pesos: pd.Series, cfg: ConfigBacktest,
-                         nome: str) -> ResultadoBacktest:
+                         nome: str, congelamento: Congelamento | None = None) -> ResultadoBacktest:
     """
     Aplica pesos fixos a todo o histórico, rebalanceando a cada janela_teste.
     Se os pesos foram estimados nesse mesmo histórico, o resultado é
     IN-SAMPLE e otimista por construção. Serve só para ilustrar.
     """
     return _simular(retornos, lambda _: pesos, 0, cfg.janela_teste,
-                    cfg.capital_inicial, cfg.custo_bps, nome, "in-sample")
+                    cfg.capital_inicial, cfg.custo_bps, nome, "in-sample", congelamento=congelamento)
 
 
 # ---------------------------------------------------------------- estratégias
@@ -222,6 +276,26 @@ def estrategia_otimizada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,
         momentos = estimar_momentos(treino, shrink_mu=shrink_mu, meia_vida_cov=meia_vida_cov)
         cfg = _cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1])
         return otimizar(momentos.mu, momentos.cov, cfg).pesos
+    return _estrategia
+
+
+def estrategia_otimizada_nas_regras(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool, setores: Mapping[str, str],
+                                    rf_diaria: pd.Series | None = None, limites: Limites = LIMITES) -> Estrategia:
+    """
+    O que vira ordem no motor: só papéis com setor (sem setor não é elegível), teto de setor no otimizador
+    (``limites_por_setor`` dos papéis do treino, que muda a cada rebalanceio) e a carteira conferida por
+    ``checar_carteira`` com a cov do treino; violação = ``CarteiraRecusada`` (o motor mantém a atual).
+    """
+    def _estrategia(treino: pd.DataFrame) -> pd.Series:
+        treino = treino[[papel for papel in treino.columns if setores.get(papel)]]
+        momentos = estimar_momentos(treino, shrink_mu=shrink_mu)
+        grupos = limites_por_setor({papel: setores[papel] for papel in treino.columns}, limites.teto_setor)
+        cfg = replace(_cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1]), grupos=grupos)
+        pesos = otimizar(momentos.mu, momentos.cov, cfg).pesos
+        violacoes = checar_carteira(pesos, setores, momentos.cov, limites)
+        if violacoes:
+            raise CarteiraRecusada(violacoes)
+        return pesos
     return _estrategia
 
 

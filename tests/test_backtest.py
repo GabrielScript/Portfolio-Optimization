@@ -3,8 +3,9 @@ import pandas as pd
 import pytest
 
 from core import reamostragem
-from core.backtest import (backtest_pesos_fixos, com_janela, estrategia_equiponderada, estrategia_hrp,
-                           estrategia_nucleo_satelite, estrategia_otimizada, estrategia_reamostrada, walk_forward)
+from core.backtest import (CarteiraRecusada, backtest_pesos_fixos, com_janela, estrategia_equiponderada, estrategia_hrp,
+                           estrategia_nucleo_satelite, estrategia_otimizada, estrategia_otimizada_nas_regras,
+                           estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo
 from core.estimation import estimar_momentos
 from core.optimization import ErroOtimizacao, otimizar
@@ -141,3 +142,30 @@ def test_estrategia_nucleo_satelite_combina_os_pesos_das_duas_no_mesmo_treino():
     satelite = lambda t: pd.Series({"C": 1.0})                     # noqa: E731
     pesos = estrategia_nucleo_satelite(nucleo, satelite, fracao_satelite=0.3)(treino)
     assert pesos.to_dict() == pytest.approx({"A": 0.35, "B": 0.35, "C": 0.30})
+
+
+def _treino_com_setores() -> tuple[pd.DataFrame, dict[str, str]]:
+    """X1-X3 (setor X) e C (sem setor) rendem mais: o Kelly sem regras os concentraria."""
+    gerador = np.random.default_rng(11)
+    medias = {"X1": 0.002, "X2": 0.002, "X3": 0.002, "C": 0.003, "Y1": 0.0005, "Z1": 0.0005, "W1": 0.0005,
+              "V1": 0.0005}
+    treino = pd.DataFrame({p: gerador.normal(m, 0.01, 300) for p, m in medias.items()},
+                          index=pd.bdate_range("2020-01-01", periods=300))
+    setores = {"X1": "X", "X2": "X", "X3": "X", "Y1": "Y", "Z1": "Z", "W1": "W", "V1": "V"}
+    return treino, setores
+
+
+def test_estrategia_nas_regras_respeita_o_teto_de_setor_e_deixa_fora_papel_sem_setor():
+    treino, setores = _treino_com_setores()
+    pesos = estrategia_otimizada_nas_regras(ConfigOtimizacao(), True, setores)(treino)
+    assert pesos.get("C", 0.0) == 0.0
+    assert pesos[["X1", "X2", "X3"]].sum() <= 0.30 + 1e-6 and pesos.sum() == pytest.approx(1.0)
+
+
+def test_estrategia_nas_regras_recusa_carteira_que_ainda_viola(monkeypatch):
+    # o otimizador devolve 100% num papel (acima dos 20%): a carteira não vira ordem
+    treino, setores = _treino_com_setores()
+    concentrada = pd.Series(0.0, index=list(setores)).add(pd.Series({"Y1": 1.0}), fill_value=0.0)
+    monkeypatch.setattr("core.backtest.otimizar", lambda mu, cov, cfg: type("R", (), {"pesos": concentrada})())
+    with pytest.raises(CarteiraRecusada, match="peso por ação Y1"):
+        estrategia_otimizada_nas_regras(ConfigOtimizacao(), True, setores)(treino)

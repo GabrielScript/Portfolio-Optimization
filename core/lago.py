@@ -15,6 +15,7 @@ from pathlib import Path
 import pandas as pd
 
 ARQUIVO_PRECOS = Path(__file__).resolve().parents[1] / "lago" / "precos_diarios.parquet"
+ARQUIVO_SETORES = Path(__file__).resolve().parents[1] / "data" / "b3lake" / "sectors.parquet"
 SUFIXO_B3 = ".SA"
 
 
@@ -35,3 +36,12 @@ def versao_dos_dados() -> int:
         return ARQUIVO_PRECOS.stat().st_mtime_ns
     except FileNotFoundError:
         return 0
+
+
+def ler_setores(arquivo: Path | None = None) -> pd.Series:
+    """Emissor (4 letras) -> setor do lago: ``SETOR_ATIV`` do cadastro da CVM, com as deslistadas, mapeado nos setores
+    do app. Emissor sem setor fica de fora (``checar_carteira`` o trata como ``SEM_SETOR``). A taxonomia da CVM é mais
+    grossa que a da B3 do ``assets.py``; o motor dinâmico usa esta para vivas e mortas, a tela segue com o ``assets.py``.
+    """
+    tabela = pd.read_parquet(arquivo or ARQUIVO_SETORES, columns=["issuer", "sector"]).dropna(subset=["sector"])
+    return tabela.set_index("issuer")["sector"].rename_axis(None).rename(None)

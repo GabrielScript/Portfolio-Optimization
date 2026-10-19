@@ -1,6 +1,7 @@
 """Rotina do paper trading (S5): decisão, registro e commit sem rede, sobre o formato real do export do lago."""
 
 import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -14,9 +15,10 @@ from core.paper import Acao, Leitura
 from core.registro import registrar_carteira
 from core.risco import Regra, Violacao
 from scripts import paper_trading
-from scripts.paper_trading import (codigo_mudado_desde_o_paper, commitar_no_git, commitar_pendente, contar_recusas,
-                                   definicoes_mudadas, executar, ler_precos, ler_registro, mudancas_desde_o_paper,
-                                   rodar, satelite_do_dia, texto_da_leitura, versao_do_codigo)
+from scripts.paper_trading import (IMPORTS_DO_PROJETO, codigo_mudado_desde_o_paper, commitar_no_git,
+                                   commitar_pendente, contar_recusas, definicoes_mudadas, executar, ler_precos,
+                                   ler_registro, mudancas_desde_o_paper, rodar, satelite_do_dia, situacao_do_codigo,
+                                   texto_da_leitura, versao_do_codigo)
 
 DATAS = pd.bdate_range("2026-07-01", periods=70)
 
@@ -300,3 +302,51 @@ def test_satelite_do_dia_congelado_no_pre_registro(monkeypatch):
     pesos, violacoes = satelite_do_dia(pd.Timestamp("2026-10-16"), 0.1375, universo,
                                        {ticker: info[ticker]["setor"] for ticker in universo})
     assert (violacoes, pesos.to_dict()) == ([], pytest.approx(SATELITE_DE_16_10_2026, abs=1e-6))
+
+
+def test_guarda_le_o_script_da_tag_em_utf8_mesmo_fora_do_modo_utf8(repo_com_tag):
+    # pythonw sem -X utf8 decodifica a saída do git com a página de código do Windows (cp1252), que não lê o 0x8d
+    script = repo_com_tag / "scripts" / "paper_trading.py"
+    script.parent.mkdir()
+    script.write_text('"""Índice de retorno total (o Í é C3 8D em UTF-8)."""\nANOS_DE_PRECOS = 5\n', encoding="utf-8")
+    _git(repo_com_tag, "add", "--", "scripts/paper_trading.py")
+    _git(repo_com_tag, "commit", "-q", "-m", "script")
+    _git(repo_com_tag, "tag", "-f", "paper-v1")
+    codigo = ("import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); "
+              "from scripts.paper_trading import codigo_mudado_desde_o_paper; "
+              "print(codigo_mudado_desde_o_paper(Path(sys.argv[2])))")
+    saida = subprocess.run([sys.executable, "-X", "utf8=0", "-c", codigo, str(paper_trading.RAIZ), str(repo_com_tag)],
+                           capture_output=True, text=True, encoding="utf-8", errors="replace")
+    assert (saida.returncode, saida.stdout.strip()) == (0, "[]"), saida.stderr[-500:]
+
+
+def test_docstring_corrigida_nao_conta_como_satelite_mudado():
+    antes = 'def satelite(x):\n    """Pesos do dai."""\n    return x * 2\n'
+    depois = 'def satelite(x):\n    """Pesos do dia."""\n    return x * 2\n'
+    assert definicoes_mudadas(antes, depois, ["satelite"]) == []
+
+
+def test_import_do_projeto_trocado_conta_como_satelite_mudado():
+    # o corpo de satelite_do_dia fica igual, mas o "otimizar" passa a vir de outro módulo
+    antes = "import math\nfrom core.optimization import otimizar\n"
+    depois = "import ast\nimport math\nfrom core.reamostragem import otimizar_reamostrado as otimizar\n"
+    assert definicoes_mudadas(antes, depois, [IMPORTS_DO_PROJETO]) == [IMPORTS_DO_PROJETO]
+
+
+def test_guarda_funciona_com_o_script_chamado_por_um_caminho_nao_resolvido(repo_com_tag, monkeypatch):
+    # a tarefa do Windows pode chamar o script por junção, subst ou "..": o caminho do script na tag é sempre o real
+    script = repo_com_tag / "scripts" / "paper_trading.py"
+    script.parent.mkdir()
+    script.write_text("ANOS_DE_PRECOS = 5\n", encoding="utf-8")
+    _git(repo_com_tag, "add", "--", "scripts/paper_trading.py")
+    _git(repo_com_tag, "commit", "-q", "-m", "script")
+    _git(repo_com_tag, "tag", "-f", "paper-v1")
+    monkeypatch.setattr(paper_trading, "__file__", str(paper_trading.RAIZ / "scripts" / ".." / "scripts" /
+                                                       "paper_trading.py"))
+    assert codigo_mudado_desde_o_paper(repo_com_tag) == []
+
+
+def test_guarda_sem_a_tag_vira_aviso_e_nao_erro(registro_no_git):
+    # clone ou worktree sem as tags: a guarda não pode derrubar a decisão do dia, só avisar que não conferiu
+    situacao = situacao_do_codigo(registro_no_git.parent.parent)
+    assert (situacao.mudancas, "paper-v1" in situacao.erro) == ([], True)

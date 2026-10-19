@@ -77,11 +77,13 @@ TRAVA_DO_LAGO = _LOCAL / "b3lake" / "daily.lock"
 RAMO_DA_ROTINA = "main"     # o registro só entra na main: trabalho novo do app vai num worktree, como no lago
 TAG_DO_PAPER = "paper-v1"   # o código do pré-registro (0ccfeeb): o satélite medido é o que sai dele
 # o que define o satélite registrado: os módulos que o caminho importa e, neste script, as definições da decisão
-CAMINHO_DO_SATELITE = ["assets.py", "core/bcb.py", "core/config.py", "core/estimation.py", "core/hierarchical.py",
-                       "core/lago.py", "core/market_data.py", "core/metrics.py", "core/optimization.py",
-                       "core/paper.py", "core/registro.py", "core/risco.py"]
-DEFINICOES_DO_SATELITE = ["ANOS_DE_PRECOS", "ler_precos", "ler_registro", "satelite_do_dia", "_parado", "rodar",
-                          "executar", "_escolha_do_dia"]
+CAMINHO_DO_SATELITE = ["assets.py", "core/__init__.py", "core/bcb.py", "core/config.py", "core/estimation.py",
+                       "core/hierarchical.py", "core/lago.py", "core/market_data.py", "core/metrics.py",
+                       "core/optimization.py", "core/paper.py", "core/registro.py", "core/risco.py"]
+IMPORTS_DO_PROJETO = "imports do projeto"     # de onde vêm otimizar, estimar_momentos etc. (não os da stdlib)
+MODULOS_DO_PROJETO = {"assets", "core", "scripts"}
+DEFINICOES_DO_SATELITE = [IMPORTS_DO_PROJETO, "ANOS_DE_PRECOS", "Escolha", "Rodada", "ler_precos", "ler_registro",
+                          "satelite_do_dia", "_parado", "rodar", "executar", "_escolha_do_dia", "contar_recusas"]
 ANOS_DE_PRECOS = 5
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)     # pythonw: não abrir console a cada git
 
@@ -223,8 +225,9 @@ def _cdi(inicio: date, hoje: date) -> pd.Series | None:
 
 
 def _git(*argumentos: str, raiz: Path = RAIZ) -> str:
+    # UTF-8 explícito: sem -X utf8, o Windows decodificaria com a página de código (cp1252 não lê o 0x8d do "Í")
     return subprocess.run(["git", "-C", str(raiz), *argumentos], check=True, capture_output=True, text=True,
-                          creationflags=_SEM_JANELA).stdout.strip()
+                          encoding="utf-8", creationflags=_SEM_JANELA).stdout.strip()
 
 
 def versao_do_codigo(raiz: Path = RAIZ) -> str:
@@ -240,10 +243,24 @@ def mudancas_desde_o_paper(raiz: Path, caminhos: list[str], tag: str = TAG_DO_PA
     return _git("diff", "--name-only", tag, "--", *caminhos, raiz=raiz).splitlines()
 
 
+def _sem_docstrings(arvore: ast.AST) -> ast.AST:
+    """A árvore sem as docstrings de funções e classes (texto, não decisão)."""
+    for no in ast.walk(arvore):
+        if (isinstance(no, ast.FunctionDef | ast.ClassDef) and no.body and isinstance(no.body[0], ast.Expr)
+                and isinstance(no.body[0].value, ast.Constant) and isinstance(no.body[0].value.value, str)):
+            no.body = no.body[1:] or [ast.Pass()]
+    return arvore
+
+
 def _definicoes(fonte: str) -> dict[str, str]:
-    """Funções, classes e constantes do nível do módulo pela árvore sintática (comentário e espaço não contam)."""
-    definicoes = {}
-    for no in ast.parse(fonte).body:
+    """Funções, classes e constantes do nível do módulo pela árvore sintática (comentário, espaço e docstring não
+    contam)."""
+    definicoes: dict[str, str] = {}
+    arvore = _sem_docstrings(ast.parse(fonte))
+    do_projeto = [no for no in arvore.body if isinstance(no, ast.ImportFrom) and no.module
+                  and no.module.split(".")[0] in MODULOS_DO_PROJETO]
+    definicoes[IMPORTS_DO_PROJETO] = ast.dump(ast.Module(body=do_projeto, type_ignores=[]))
+    for no in arvore.body:
         if isinstance(no, ast.FunctionDef | ast.ClassDef):
             definicoes[no.name] = ast.dump(no)
         elif isinstance(no, ast.Assign):
@@ -262,11 +279,28 @@ def definicoes_mudadas(antes: str, depois: str, nomes: list[str]) -> list[str]:
 def codigo_mudado_desde_o_paper(raiz: Path = RAIZ, tag: str = TAG_DO_PAPER) -> list[str]:
     """O que mudou desde a ``tag`` no caminho do satélite: os módulos inteiros e, neste script, só as definições do
     satélite (o ``main()`` e o commit mudam sem mudar a estratégia medida)."""
-    script = Path(__file__).relative_to(RAIZ).as_posix()
+    script = Path(__file__).resolve().relative_to(RAIZ).as_posix()
     antes = _git("show", f"{tag}:{script}", raiz=raiz)
     depois = (raiz / script).read_text(encoding="utf-8")
     return (mudancas_desde_o_paper(raiz, CAMINHO_DO_SATELITE, tag)
             + [f"{script}: {nome}" for nome in definicoes_mudadas(antes, depois, DEFINICOES_DO_SATELITE)])
+
+
+@dataclass(frozen=True)
+class SituacaoDoCodigo:
+    versao: str             # versao_do_codigo, ou "?" se o git falhou
+    mudancas: list[str]     # codigo_mudado_desde_o_paper: não vazia = o satélite medido deixou de ser o do paper
+    erro: str = ""          # a guarda não conseguiu conferir (ex.: checkout sem a tag)
+
+
+def situacao_do_codigo(raiz: Path = RAIZ) -> SituacaoDoCodigo:
+    """Versão e mudanças desde a tag, sem nunca levantar: a guarda avisa, não derruba a decisão do dia."""
+    try:
+        versao = versao_do_codigo(raiz)
+        return SituacaoDoCodigo(versao, codigo_mudado_desde_o_paper(raiz))
+    except (OSError, subprocess.CalledProcessError, SyntaxError, ValueError) as erro:
+        detalhe = getattr(erro, "stderr", None) or str(erro)
+        return SituacaoDoCodigo("?", [], f"guarda do {TAG_DO_PAPER} indisponível: {detalhe.strip()[:200]}")
 
 
 def commitar_no_git(arquivo: Path, rodada: Rodada, versao: str, raiz: Path = RAIZ) -> None:
@@ -379,16 +413,20 @@ def main() -> int:
         if commitar_pendente(ARQUIVO_REGISTRO):
             logging.warning("registro que ficou fora do git na rodada anterior: commitado agora")
             notas.append("registro pendente commitado")
-        versao = versao_do_codigo()
-        notas.append(f"código {versao}")
-        mudancas = codigo_mudado_desde_o_paper()
-        if mudancas:            # o satélite registrado deixa de ser o do pré-registro: alguém precisa decidir
-            notas.append(f"satélite fora do {TAG_DO_PAPER}: " + ", ".join(mudancas))
-            logging.warning("código do satélite mudou desde %s: %s", TAG_DO_PAPER, mudancas)
-            avisar("paper trading: código do satélite mudou", f"Desde {TAG_DO_PAPER}: {', '.join(mudancas)[:150]}. "
-                   f"Log: {log}")
+        codigo = situacao_do_codigo()
+        notas.append(f"código {codigo.versao}")
+        if codigo.erro:
+            logging.warning(codigo.erro)
+            notas.append(codigo.erro)
+            avisar("paper trading: guarda do código indisponível", f"{codigo.erro[:150]} Log: {log}")
+        if codigo.mudancas:     # o registro só cresce: uma carteira de outro código misturaria duas estratégias
+            nota = f"satélite fora do {TAG_DO_PAPER}: " + ", ".join(codigo.mudancas)
+            logging.error("%s; nada decidido (reverter o código ou pré-registro novo)", nota)
+            anotar(inicio, "", "bloqueada", "; ".join([*notas, nota]))
+            avisar("paper trading: bloqueada, código do satélite mudou", f"{nota[:150]} Log: {log}")
+            return 1
         rodada = executar(lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO, TRAVA_DO_LAGO, _escolha_do_dia(notas),
-                          lambda arquivo, rodada: commitar_no_git(arquivo, rodada, versao))
+                          lambda arquivo, rodada: commitar_no_git(arquivo, rodada, codigo.versao))
         if rodada is None:
             logging.info("lago rodando (daily.lock): nada decidido")
             anotar(inicio, "", "lago rodando", "; ".join(notas))

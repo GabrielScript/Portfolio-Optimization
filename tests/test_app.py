@@ -450,6 +450,12 @@ def test_plano_padrao_e_o_dinheiro_real_com_bova11_e_o_satelite_do_paper(app_pad
     assert 0.6 <= plano.at["BOVA11", "Valor (R$)"] / 10_000 <= 0.75
 
 
+def test_titulo_do_plano_do_dinheiro_real_nao_se_confunde_com_o_padrao_do_estudo(app_padrao):
+    # "padrão do estudo" é o objetivo da barra lateral (só ações); o padrão da tela é a regra do dinheiro real
+    titulos = [m.value for m in app_padrao.markdown if m.value.startswith("### Plano de compra")]
+    assert titulos == ["### Plano de compra: dinheiro real (a regra até o critério de pronto)"]
+
+
 def test_dinheiro_real_com_100_reais_mostra_o_bova11_e_o_satelite_em_caixa(app_padrao):
     # R$ 100 (teto de R$ 20 por ação): no estudo a tela para ("Aumente o valor"); no dinheiro real, BOVA11 e caixa
     app_padrao.sidebar.number_input(key="orcamento").set_value(100.0).run()

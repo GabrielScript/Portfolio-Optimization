@@ -392,7 +392,7 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
 
 
 def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
-    st.markdown("### Plano de compra: dinheiro real (padrão do estudo)")
+    st.markdown("### Plano de compra: dinheiro real (a regra até o critério de pronto)")
     data, satelite = servicos.carregar_satelite_registrado()
     st.warning(secoes.aviso_dinheiro_real(data))
     tickers = (*satelite.index, BENCHMARK_ACOES)

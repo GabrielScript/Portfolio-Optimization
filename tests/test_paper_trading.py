@@ -8,13 +8,15 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from assets import get_ticker_info, get_tickers_liquidos
 from core import lago
 from core.paper import Acao, Leitura
 from core.registro import registrar_carteira
 from core.risco import Regra, Violacao
 from scripts import paper_trading
-from scripts.paper_trading import (commitar_pendente, contar_recusas, executar, ler_precos, ler_registro, rodar,
-                                   satelite_do_dia, texto_da_leitura)
+from scripts.paper_trading import (codigo_mudado_desde_o_paper, commitar_no_git, commitar_pendente, contar_recusas,
+                                   definicoes_mudadas, executar, ler_precos, ler_registro, mudancas_desde_o_paper,
+                                   rodar, satelite_do_dia, texto_da_leitura, versao_do_codigo)
 
 DATAS = pd.bdate_range("2026-07-01", periods=70)
 
@@ -152,6 +154,47 @@ def test_registro_reescrito_fora_da_rotina_nao_e_commitado(registro_no_git):
     assert _git(raiz, "rev-list", "--count", "HEAD") == "1"
 
 
+def test_versao_do_codigo_limpo_e_o_hash_curto_do_head(registro_no_git):
+    raiz = registro_no_git.parent.parent
+    assert versao_do_codigo(raiz) == _git(raiz, "rev-parse", "--short", "HEAD")
+
+
+def test_versao_do_codigo_com_arquivo_versionado_alterado_vem_marcada_suja(registro_no_git):
+    # arquivo não versionado (os soltos da raiz do app) não suja: só mudança no que o git guarda
+    raiz = registro_no_git.parent.parent
+    (raiz / "solto.txt").write_text("fora do git", encoding="utf-8")
+    registro_no_git.write_text(registro_no_git.read_text(encoding="utf-8") + "x\n", encoding="utf-8")
+    assert versao_do_codigo(raiz) == _git(raiz, "rev-parse", "--short", "HEAD") + " (sujo)"
+
+
+
+def test_versao_do_codigo_ignora_os_precos_que_o_lago_publica_todo_dia(registro_no_git):
+    # lago/precos_diarios.parquet é versionado nos marcos e a rotina do lago o reescreve a cada pregão: não é código
+    raiz = registro_no_git.parent.parent
+    (raiz / "lago").mkdir()
+    (raiz / "lago" / "precos_diarios.parquet").write_bytes(b"v1")
+    _git(raiz, "add", "--", "lago/precos_diarios.parquet")
+    _git(raiz, "commit", "-q", "-m", "marco")
+    (raiz / "lago" / "precos_diarios.parquet").write_bytes(b"v2")
+    assert versao_do_codigo(raiz) == _git(raiz, "rev-parse", "--short", "HEAD")
+
+@pytest.fixture
+def repo_com_tag(registro_no_git) -> Path:
+    """O repositório do registro com ``core/estimation.py`` commitado e a tag ``paper-v1`` nesse commit."""
+    raiz = registro_no_git.parent.parent
+    (raiz / "core").mkdir()
+    (raiz / "core" / "estimation.py").write_text("JANELA = 1260\n", encoding="utf-8")
+    _git(raiz, "add", "--", "core/estimation.py")
+    _git(raiz, "commit", "-q", "-m", "código do paper")
+    _git(raiz, "tag", "paper-v1")
+    return raiz
+
+
+def test_arquivo_do_caminho_do_satelite_mudado_desde_a_tag_e_apontado(repo_com_tag):
+    (repo_com_tag / "core" / "estimation.py").write_text("JANELA = 2520\n", encoding="utf-8")
+    assert mudancas_desde_o_paper(repo_com_tag, ["core/estimation.py", "assets.py"]) == ["core/estimation.py"]
+
+
 def test_satelite_do_dia_e_o_kelly_da_tela_dentro_das_regras(tmp_path, monkeypatch):
     # 8 papéis em 4 setores, 5 anos e meio de pregões no formato do lago: pesos sem ".SA", até 20% cada, 30% por setor
     gerador = np.random.default_rng(7)
@@ -208,3 +251,52 @@ def test_texto_da_leitura_traz_o_veredito_so_com_252_pregoes():
     assert "Item 3 do critério de pronto: cumprido" in texto_da_leitura(_leitura(252, 0.12, 0.10))
     assert "Item 3 do critério de pronto: não cumprido" in texto_da_leitura(_leitura(252, 0.08, 0.10))
     assert "Item 3" not in texto_da_leitura(_leitura(251, 0.12, 0.10))
+
+
+def test_definicao_do_satelite_com_corpo_mudado_e_apontada():
+    antes = "ANOS = 5\n\ndef satelite(x):\n    return x * 2\n\ndef main():\n    return 0\n"
+    depois = "ANOS = 5\n\ndef satelite(x):\n    return x * 3\n\ndef main():\n    return 1\n"
+    assert definicoes_mudadas(antes, depois, ["ANOS", "satelite"]) == ["satelite"]
+
+
+def test_constante_do_satelite_com_valor_mudado_e_apontada():
+    assert definicoes_mudadas("ANOS_DE_PRECOS = 5\n", "ANOS_DE_PRECOS = 10\n", ["ANOS_DE_PRECOS"]) == ["ANOS_DE_PRECOS"]
+
+
+def test_mudanca_numa_definicao_do_satelite_no_script_aponta_o_nome_e_nao_o_arquivo(repo_com_tag):
+    # o script também tem o main() e o commit, que mudam sem mexer no satélite: só as definições do satélite contam
+    script = repo_com_tag / "scripts" / "paper_trading.py"
+    script.parent.mkdir()
+    script.write_text("ANOS_DE_PRECOS = 5\n\ndef main():\n    return 0\n", encoding="utf-8")
+    _git(repo_com_tag, "add", "--", "scripts/paper_trading.py")
+    _git(repo_com_tag, "commit", "-q", "-m", "script")
+    _git(repo_com_tag, "tag", "-f", "paper-v1")
+    script.write_text("ANOS_DE_PRECOS = 10\n\ndef main():\n    return 1\n", encoding="utf-8")
+    assert codigo_mudado_desde_o_paper(repo_com_tag) == ["scripts/paper_trading.py: ANOS_DE_PRECOS"]
+
+
+def test_commit_do_registro_leva_a_versao_do_codigo_na_mensagem(registro_no_git):
+    raiz = registro_no_git.parent.parent
+    registrar_carteira(DATAS[5].date(), pd.Series({"B": 1.0}), pd.Series({"B": 20.0}), registro_no_git)
+    rodada = paper_trading.Rodada(DATAS[5], Acao.REBALANCEAR, pd.Series({"B": 1.0}))
+    commitar_no_git(registro_no_git, rodada, "abc1234 (sujo)", raiz=raiz)
+    assert _git(raiz, "log", "-1", "--format=%s") == (
+        f"paper: rebalancear no fechamento de {DATAS[5]:%d/%m/%Y} (código abc1234 (sujo))")
+
+
+FIXTURE_DO_PAPER = Path(__file__).parent / "dados" / "precos_paper_v1.parquet"
+SATELITE_DE_16_10_2026 = {"PETR4": 0.2, "CPLE3": 0.005133815417867128, "POMO4": 0.0025401517695010484,
+                          "DIRR3": 0.028102690416543997, "CXSE3": 0.19184461280332027, "BBSE3": 0.1081553871966797,
+                          "EMBJ3": 0.16935715781395497, "SBSP3": 0.09486619281037109, "CSMG3": 0.19999999177176178}
+
+
+def test_satelite_do_dia_congelado_no_pre_registro(monkeypatch):
+    # golden: os preços que o 1º registro leu (lago/precos_diarios.parquet do 260fd9a, universo + BOVA11, desde
+    # 09/2021) e a Selic do fallback dão a carteira do paper/carteiras.csv de 16/10/2026. Falhou = o satélite medido
+    # mudou (código, universo do assets.py ou versão de biblioteca): pré-registro novo e relógio do zero.
+    monkeypatch.setattr(lago, "ARQUIVO_PRECOS", FIXTURE_DO_PAPER)
+    universo = get_tickers_liquidos()
+    info = get_ticker_info()
+    pesos, violacoes = satelite_do_dia(pd.Timestamp("2026-10-16"), 0.1375, universo,
+                                       {ticker: info[ticker]["setor"] for ticker in universo})
+    assert (violacoes, pesos.to_dict()) == ([], pytest.approx(SATELITE_DE_16_10_2026, abs=1e-6))

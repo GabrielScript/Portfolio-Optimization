@@ -42,6 +42,7 @@ Pré-registro (2026-10-18, escrito e commitado antes do 1º registro; depois des
 
 from __future__ import annotations
 
+import ast
 import csv
 import logging
 import math
@@ -74,6 +75,13 @@ _LOCAL = Path(os.environ.get("LOCALAPPDATA", Path.home()))
 PASTA_ESTADO = _LOCAL / "paper-trading"            # runs.csv e logs, fora do repositório (como os do lago)
 TRAVA_DO_LAGO = _LOCAL / "b3lake" / "daily.lock"
 RAMO_DA_ROTINA = "main"     # o registro só entra na main: trabalho novo do app vai num worktree, como no lago
+TAG_DO_PAPER = "paper-v1"   # o código do pré-registro (0ccfeeb): o satélite medido é o que sai dele
+# o que define o satélite registrado: os módulos que o caminho importa e, neste script, as definições da decisão
+CAMINHO_DO_SATELITE = ["assets.py", "core/bcb.py", "core/config.py", "core/estimation.py", "core/hierarchical.py",
+                       "core/lago.py", "core/market_data.py", "core/metrics.py", "core/optimization.py",
+                       "core/paper.py", "core/registro.py", "core/risco.py"]
+DEFINICOES_DO_SATELITE = ["ANOS_DE_PRECOS", "ler_precos", "ler_registro", "satelite_do_dia", "_parado", "rodar",
+                          "executar", "_escolha_do_dia"]
 ANOS_DE_PRECOS = 5
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)     # pythonw: não abrir console a cada git
 
@@ -219,11 +227,55 @@ def _git(*argumentos: str, raiz: Path = RAIZ) -> str:
                           creationflags=_SEM_JANELA).stdout.strip()
 
 
-def commitar_no_git(arquivo: Path, rodada: Rodada) -> None:
-    """Commit local só do registro (sem push: push na main é produção, feito à mão)."""
-    caminho = arquivo.relative_to(RAIZ).as_posix()
-    _git("add", "--", caminho)
-    _git("commit", "-m", f"paper: {rodada.acao.value} no fechamento de {rodada.data:%d/%m/%Y}", "--", caminho)
+def versao_do_codigo(raiz: Path = RAIZ) -> str:
+    """Hash curto do HEAD do checkout que rodou, com " (sujo)" se algum arquivo versionado mudou desde ele (os soltos
+    não versionados da raiz e os preços que o lago publica a cada pregão não contam)."""
+    sujo = _git("status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)lago/precos_diarios.parquet",
+                raiz=raiz)
+    return _git("rev-parse", "--short", "HEAD", raiz=raiz) + (" (sujo)" if sujo else "")
+
+
+def mudancas_desde_o_paper(raiz: Path, caminhos: list[str], tag: str = TAG_DO_PAPER) -> list[str]:
+    """Arquivos de ``caminhos`` que diferem da ``tag`` no checkout (commitados ou não)."""
+    return _git("diff", "--name-only", tag, "--", *caminhos, raiz=raiz).splitlines()
+
+
+def _definicoes(fonte: str) -> dict[str, str]:
+    """Funções, classes e constantes do nível do módulo pela árvore sintática (comentário e espaço não contam)."""
+    definicoes = {}
+    for no in ast.parse(fonte).body:
+        if isinstance(no, ast.FunctionDef | ast.ClassDef):
+            definicoes[no.name] = ast.dump(no)
+        elif isinstance(no, ast.Assign):
+            for alvo in no.targets:
+                if isinstance(alvo, ast.Name):
+                    definicoes[alvo.id] = ast.dump(no)
+    return definicoes
+
+
+def definicoes_mudadas(antes: str, depois: str, nomes: list[str]) -> list[str]:
+    """Quais de ``nomes`` mudaram (ou sumiram) entre duas versões da fonte de um módulo."""
+    velhas, novas = _definicoes(antes), _definicoes(depois)
+    return [nome for nome in nomes if velhas.get(nome) != novas.get(nome)]
+
+
+def codigo_mudado_desde_o_paper(raiz: Path = RAIZ, tag: str = TAG_DO_PAPER) -> list[str]:
+    """O que mudou desde a ``tag`` no caminho do satélite: os módulos inteiros e, neste script, só as definições do
+    satélite (o ``main()`` e o commit mudam sem mudar a estratégia medida)."""
+    script = Path(__file__).relative_to(RAIZ).as_posix()
+    antes = _git("show", f"{tag}:{script}", raiz=raiz)
+    depois = (raiz / script).read_text(encoding="utf-8")
+    return (mudancas_desde_o_paper(raiz, CAMINHO_DO_SATELITE, tag)
+            + [f"{script}: {nome}" for nome in definicoes_mudadas(antes, depois, DEFINICOES_DO_SATELITE)])
+
+
+def commitar_no_git(arquivo: Path, rodada: Rodada, versao: str, raiz: Path = RAIZ) -> None:
+    """Commit local só do registro, com a ``versao_do_codigo`` que decidiu (sem push: push na main é produção, feito
+    à mão)."""
+    caminho = arquivo.relative_to(raiz).as_posix()
+    _git("add", "--", caminho, raiz=raiz)
+    _git("commit", "-m", f"paper: {rodada.acao.value} no fechamento de {rodada.data:%d/%m/%Y} (código {versao})",
+         "--", caminho, raiz=raiz)
 
 
 def commitar_pendente(arquivo: Path, raiz: Path = RAIZ) -> bool:
@@ -327,11 +379,19 @@ def main() -> int:
         if commitar_pendente(ARQUIVO_REGISTRO):
             logging.warning("registro que ficou fora do git na rodada anterior: commitado agora")
             notas.append("registro pendente commitado")
+        versao = versao_do_codigo()
+        notas.append(f"código {versao}")
+        mudancas = codigo_mudado_desde_o_paper()
+        if mudancas:            # o satélite registrado deixa de ser o do pré-registro: alguém precisa decidir
+            notas.append(f"satélite fora do {TAG_DO_PAPER}: " + ", ".join(mudancas))
+            logging.warning("código do satélite mudou desde %s: %s", TAG_DO_PAPER, mudancas)
+            avisar("paper trading: código do satélite mudou", f"Desde {TAG_DO_PAPER}: {', '.join(mudancas)[:150]}. "
+                   f"Log: {log}")
         rodada = executar(lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO, TRAVA_DO_LAGO, _escolha_do_dia(notas),
-                          commitar_no_git)
+                          lambda arquivo, rodada: commitar_no_git(arquivo, rodada, versao))
         if rodada is None:
             logging.info("lago rodando (daily.lock): nada decidido")
-            anotar(inicio, "", "lago rodando", "")
+            anotar(inicio, "", "lago rodando", "; ".join(notas))
             return 0
         anotar(inicio, rodada.data.date().isoformat(), rodada.desfecho, "; ".join(filter(None, [*notas, rodada.nota])))
         logging.info("\n%s", relatorio(rodada, lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO))

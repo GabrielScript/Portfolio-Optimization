@@ -4,9 +4,11 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from assets import get_ticker_info
 from core.config import LimiteGrupo
-from core.ordens import (MotivoFora, RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra,
-                         redistribuir_sem_cotacao)
+from core.ordens import (MotivoFora, PlanoDinheiroReal, RegrasCompra, RegrasDinheiroReal, acoes_que_cabem,
+                         limites_do_plano, plano_de_compra, plano_dinheiro_real, redistribuir_sem_cotacao)
+from tests.test_paper_trading import FIXTURE_DO_PAPER, SATELITE_DE_16_10_2026
 
 SEM_CUSTO = dict(custo_bps=0.0, peso_maximo=1.0, quantidade_minima=2)
 
@@ -290,3 +292,62 @@ def test_sem_cotacao_reescala_sem_furar_teto_de_setor():
               LimiteGrupo("Outros", frozenset({"C", "D", "E", "G", "F"}), 0.80))
     alvo = redistribuir_sem_cotacao(pesos, pesos.index != "F", peso_maximo=0.20, grupos=grupos)
     assert alvo.to_dict() == pytest.approx({"A": 0.15, "B": 0.15, "C": 0.175, "D": 0.175, "E": 0.175, "G": 0.175})
+
+
+# Dinheiro real (DECISOES 69): BOVA11 + o satélite registrado no paper, com os fechamentos de 16/10/2026 que o 1º
+# registro leu (BOVA11 202,30). Os números conferem com a .backup/boleta.py (DECISOES 60(3)).
+FECHAMENTOS_16_10 = (pd.read_parquet(FIXTURE_DO_PAPER).set_index("date").iloc[-1]
+                     .rename(lambda papel: papel + ".SA").astype(float))
+SATELITE_REGISTRADO = pd.Series(SATELITE_DE_16_10_2026).rename(lambda papel: papel + ".SA")
+SETORES_DO_SATELITE = {ticker: get_ticker_info()[ticker]["setor"] for ticker in SATELITE_REGISTRADO.index}
+
+
+def _dinheiro_real(total: float) -> PlanoDinheiroReal:
+    return plano_dinheiro_real(SATELITE_REGISTRADO, FECHAMENTOS_16_10, SETORES_DO_SATELITE,
+                               RegrasDinheiroReal(total=total, custo_bps=10.0))
+
+
+def test_dinheiro_real_com_300_reais_compra_1_bova11_e_deixa_o_satelite_em_caixa():
+    # 1 cota de R$ 202,30 (67% do total); com R$ 97,50 o teto por ação é R$ 19,50 e só a POMO4 cabe com 2 unidades
+    plano = _dinheiro_real(300.0)
+    assert (plano.cotas_nucleo, plano.satelite, plano.caixa) == (1, None, pytest.approx(97.50, abs=0.01))
+
+
+def test_dinheiro_real_deixa_o_satelite_em_caixa_quando_o_plano_fica_mais_longe_do_alvo_que_o_caixa():
+    # R$ 1.300: 4 cotas; os R$ 489,99 do satélite comprariam papéis com desvio Σ|efetivo − alvo| = 1,22 > 1,00 (caixa)
+    plano = _dinheiro_real(1300.0)
+    assert (plano.cotas_nucleo, plano.satelite, plano.caixa) == (4, None, pytest.approx(489.99, abs=0.01))
+
+
+def test_dinheiro_real_com_3000_reais_compra_o_satelite_registrado():
+    # 10 cotas (R$ 2.023,00); satélite de R$ 974,98 com desvio 0,11; a CPLE3 (0,5% do alvo) fica de fora
+    plano = _dinheiro_real(3000.0)
+    quantidades = plano.satelite.itens["quantidade"].rename(lambda ticker: ticker.removesuffix(".SA")).to_dict()
+    assert (plano.cotas_nucleo, plano.caixa) == (10, pytest.approx(1.19, abs=0.01))
+    assert quantidades == {"PETR4": 3, "CPLE3": 0, "POMO4": 4, "DIRR3": 3, "CXSE3": 9, "BBSE3": 2, "EMBJ3": 2,
+                           "SBSP3": 3, "CSMG3": 3}
+
+
+def test_dinheiro_real_abaixo_de_uma_cota_do_bova11_fica_todo_em_caixa():
+    plano = _dinheiro_real(150.0)
+    assert (plano.cotas_nucleo, plano.valor_nucleo, plano.satelite, plano.caixa) == (0, 0.0, None, 150.0)
+
+
+def test_dinheiro_real_com_satelite_acima_de_50_por_cento_do_total_fica_em_caixa():
+    # núcleo a R$ 300: R$ 620 pagam 1 cota (round(0,7 × 620 / 300) = 1) e sobram R$ 319,70 = 51,6% para o satélite
+    pesos = pd.Series(0.2, index=[f"P{i}.SA" for i in range(5)])
+    cotacoes = pd.concat([pd.Series(1.0, index=pesos.index), pd.Series({"NUC.SA": 300.0})])
+    plano = plano_dinheiro_real(pesos, cotacoes, {t: f"Setor {i}" for i, t in enumerate(pesos.index)},
+                                RegrasDinheiroReal(total=620.0, custo_bps=10.0, nucleo="NUC.SA"))
+    assert (plano.cotas_nucleo, plano.satelite, "50%" in plano.motivo_caixa) == (1, None, True)
+
+
+def test_dinheiro_real_com_plano_que_fura_o_teto_por_emissor_fica_em_caixa():
+    # alvo AAAA3 12% + AAAA4 8% = 20% do emissor; a sobra compra mais 1 AAAA4 (R$ 30) e o emissor vai a ~21,5%
+    pesos = pd.Series({"AAAA3.SA": 0.12, "AAAA4.SA": 0.08, "B.SA": 0.2, "C.SA": 0.2, "D.SA": 0.2, "E.SA": 0.2})
+    cotacoes = pd.Series({"AAAA3.SA": 1.0, "AAAA4.SA": 30.0, "B.SA": 7.0, "C.SA": 7.0, "D.SA": 7.0, "E.SA": 7.0,
+                          "NUC.SA": 300.0})
+    setores = {"AAAA3.SA": "S0", "AAAA4.SA": "S0", "B.SA": "S1", "C.SA": "S2", "D.SA": "S3", "E.SA": "S4"}
+    plano = plano_dinheiro_real(pesos, cotacoes, setores, RegrasDinheiroReal(total=3400.0, custo_bps=10.0,
+                                                                              nucleo="NUC.SA"))
+    assert (plano.cotas_nucleo, plano.satelite, "emissor" in plano.motivo_caixa) == (8, None, True)

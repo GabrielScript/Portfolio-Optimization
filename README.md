@@ -76,7 +76,7 @@ mesmas condições.
 - **Walk-forward fora da amostra:** rebalanceamento trimestral com treino rolante na **mesma janela de
   estimação da carteira de hoje** e teste de N anos (sliders "Janela de estimação" e "Teste fora da amostra").
   Ele baixa janela + teste anos de preços, então ações com histórico mais curto ficam fora dele (a legenda
-  lista quais) e continuam na carteira de hoje. As referências de mercado (BOVA11, SMAL11 e DIVO11) usam a mesma
+  lista quais) e continuam na carteira de hoje. As referências de mercado (BOVA11, SMAL11, DIVO11 e IVVB11) usam a mesma
   janela e as mesmas datas; a que não tem histórico para a janela aparece na legenda. Compara o objetivo
   escolhido (e a versão reamostrada, se ligada), 1/N, HRP e HRP-Árvore contra elas e o CDI; o alfa é contra o BOVA11. Mostra CAGR,
   volatilidade, Sharpe e Sortino (sobre o CDI vigente em cada data), Calmar, Omega, **PSR e DSR** (probabilidade
@@ -88,7 +88,7 @@ mesmas condições.
 - **Preços diários:** lago de dados da B3 (projeto irmão `b3-datalake`), arquivo `lago/precos_diarios.parquet`:
   índice de retorno total por papel a partir do COTAHIST oficial e dos eventos da B3 e da CVM (cisões, bonificações,
   JCP líquido do IR), terminando no último fechamento; ações e units negociadas nas últimas duas semanas mais BOVA11,
-  SMAL11 e DIVO11, desde 2005. Dia sem negócio fica sem preço (o Yahoo repetia o anterior), então ação pouco
+  SMAL11, DIVO11 e IVVB11 (este desde 29/04/2014), desde 2005. Dia sem negócio fica sem preço (o Yahoo repetia o anterior), então ação pouco
   negociada cai na exigência de cobertura ≥ 95% da janela. A tela mostra até que pregão vão os preços.
 - **Cotação do dia:** Yahoo Finance (`yfinance`), só para o plano de compra.
 - **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1, só para o painel macro),

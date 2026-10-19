@@ -40,6 +40,10 @@ from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
                             grafico_metricas_rolling, grafico_pesos_historicos)
 
+# Referências da tela: as do assets.py e o IVVB11 (S&P 500 em reais, no lago desde 29/04/2014). Tupla local: o assets.py
+# está no caminho do satélite do paper e não muda (DECISOES 68).
+REFERENCIAS_DA_TELA = (*BENCHMARKS, "IVVB11.SA")
+
 # Padrão da carteira do estudo pela regra B do S1-P.b (docs/universo-dinamico-2026-10-18.txt): núcleo Mín. Vol +
 # satélite Kelly λ=2 com 30%. Nenhum objetivo é "recomendado": com dinheiro real vale o plano BOVA11 + satélite do
 # paper (DECISOES 69); pela regra A (opção 3), o Kelly sozinho fica como opção.
@@ -218,8 +222,8 @@ def main() -> None:
     versao_dados = lago.versao_dos_dados()
     with st.spinner("Carregando preços, CDI e Selic..."):
         dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje, versao_dados)
-        precos_walk_forward = servicos.carregar_precos(universo + BENCHMARKS, anos_walk_forward,
-                                                       hoje, versao_dados).precos
+        precos_walk_forward = servicos.carregar_precos(universo + REFERENCIAS_DA_TELA, anos_walk_forward, hoje,
+                                                       versao_dados).precos
         cdi = servicos.carregar_cdi(anos_walk_forward, hoje)
         selic = servicos.carregar_selic(hoje)
     aviso = secoes.aviso_descartados(dados.descartados_sem_dados, dados.descartados_cobertura)
@@ -466,7 +470,7 @@ def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[st
         st.warning(f"{len(otimizada.falhas)} rebalanceamento(s) mantiveram a carteira por falha: "
                    + "; ".join(otimizada.falhas[:3]))
     secoes.tabela_comparativa(resultados, rf_diaria, referencias)
-    sem_historico = [_nome(t) for t in BENCHMARKS if _nome(t) not in referencias]
+    sem_historico = [_nome(t) for t in REFERENCIAS_DA_TELA if _nome(t) not in referencias]
     if sem_historico:
         st.caption(f"Sem histórico para os {anos_historico} anos do walk-forward: {', '.join(sem_historico)}.")
     if _nome(BENCHMARK_ACOES) in referencias:          # o critério pré-registrado é o alfa contra o BOVA11
@@ -496,7 +500,7 @@ def _referencias_de_mercado(precos: pd.DataFrame, datas: pd.DatetimeIndex,
                             cfg_bt: ConfigBacktest) -> dict[str, ResultadoBacktest]:
     """Walk-forward de cada referência com histórico na janela: mesmas datas, mesmo cfg (treino, custos)."""
     referencias = {}
-    for ticker in BENCHMARKS:
+    for ticker in REFERENCIAS_DA_TELA:
         if ticker not in precos.columns:
             continue
         retornos = retornos_simples(precos[[ticker]]).reindex(datas).dropna()

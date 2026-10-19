@@ -76,7 +76,7 @@ def test_reamostragem_vem_desligada_e_o_walk_forward_tem_4_estrategias(app):
     assert app.sidebar.checkbox(key="reamostrar").value is False
     colunas = list(_tabela_walk_forward(app).columns)
     assert colunas[1].startswith("Otimizada")
-    assert len(colunas) == 1 + 4 + 3                      # Métrica + 4 estratégias + BOVA11, SMAL11, DIVO11
+    assert len(colunas) == 1 + 4 + 4                      # Métrica + 4 estratégias + BOVA11, SMAL11, DIVO11, IVVB11
     assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
 
 
@@ -101,12 +101,15 @@ def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
     assert tabela.loc["Retorno total", "BOVA11"] == f"{esperado * 100:.2f}%"
 
 
+REFERENCIAS_DA_TELA = (*BENCHMARKS, "IVVB11.SA")        # as do app.py (o IVVB11 é só da tela)
+
+
 def _precos_sem_historico_longo_para_a_ultima(tickers: tuple[str, ...], anos: int, dia: date,
                                               versao_dados: int) -> market_data.DadosPrecos:
     """A última ação do universo não tem janela + teste anos de histórico: some só do download do walk-forward."""
     precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
     if anos > JANELA_ANOS:
-        precos = precos.drop(columns=[t for t in tickers if t not in BENCHMARKS][-1])
+        precos = precos.drop(columns=[t for t in tickers if t not in REFERENCIAS_DA_TELA][-1])
     return market_data.DadosPrecos(precos)
 
 
@@ -348,9 +351,9 @@ def test_aviso_de_descartados_explica_os_dois_motivos(app, monkeypatch):
                       "Negociou em menos de 95% dos pregões da janela (dia sem negócio fica sem preço): XPTO3."]
 
 
-def test_walk_forward_compara_com_bova11_smal11_e_divo11(app):
-    # referências de mercado: Ibovespa, small caps e dividendos (o alfa continua medido contra o BOVA11)
-    assert list(_tabela_walk_forward(app).columns)[-3:] == ["BOVA11", "SMAL11", "DIVO11"]
+def test_walk_forward_compara_com_bova11_smal11_divo11_e_ivvb11(app):
+    # referências de mercado: Ibovespa, small caps, dividendos e S&P 500 em reais (o alfa segue contra o BOVA11)
+    assert list(_tabela_walk_forward(app).columns)[-4:] == ["BOVA11", "SMAL11", "DIVO11", "IVVB11"]
 
 
 def test_referencia_sem_historico_na_janela_aparece_na_legenda(app, monkeypatch):

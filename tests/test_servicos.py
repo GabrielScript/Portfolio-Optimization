@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from core.config import ConfigBacktest, Objetivo, limites_por_setor
-from ui.servicos import ParametrosOtimizacao, rodar_walk_forward
+from ui.servicos import ParametrosOtimizacao, carregar_satelite_registrado, rodar_walk_forward
 
 
 def test_parametros_so_de_acoes_viram_config_sem_limites_de_grupo():
@@ -35,3 +35,11 @@ def test_teto_por_setor_vira_um_limite_de_grupo_por_setor():
                                   setores=(("A.SA", "Energia"), ("B.SA", "Bancos"), ("C.SA", "Energia")))
     cfg = params.para_config(0.12)
     assert cfg.grupos == limites_por_setor({"A.SA": "Energia", "B.SA": "Bancos", "C.SA": "Energia"}, 0.3)
+
+
+def test_sem_registro_do_paper_nao_ha_satelite(tmp_path):
+    # deploy sem o paper/carteiras.csv, ou com só o cabeçalho: a tela avisa em vez de quebrar
+    so_cabecalho = tmp_path / "vazio.csv"
+    so_cabecalho.write_text("data,ticker,peso,preco\n", encoding="utf-8")
+    assert carregar_satelite_registrado(tmp_path / "nao_existe.csv") is None
+    assert carregar_satelite_registrado(so_cabecalho) is None

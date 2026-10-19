@@ -24,8 +24,7 @@ from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, 
                           resumo_desempenho, retornos_de_valores, sharpe_probabilistico,
                           sharpe_referencia_deflacionado)
 from core.optimization import ResultadoOtimizacao
-from core.ordens import MotivoFora, PlanoCompra, PlanoDinheiroReal, RegrasCompra
-from core.risco import LIMITES
+from core.ordens import MotivoFora, PlanoCompra, PlanoDinheiroReal, RegrasCompra, RegrasDinheiroReal
 
 CSS = """
 <style>
@@ -132,16 +131,17 @@ def aviso_dinheiro_real(data: date) -> str:
             "rebalanceio trimestral.")
 
 
-def tabela_dinheiro_real(plano: PlanoDinheiroReal, cotacoes: pd.DataFrame, info: dict, hoje: date, total: float,
-                         nucleo: str) -> None:
+def tabela_dinheiro_real(plano: PlanoDinheiroReal, regras: RegrasDinheiroReal, cotacoes: pd.DataFrame, info: dict,
+                         hoje: date) -> None:
     """O núcleo na 1ª linha e as ordens do satélite embaixo; satélite em caixa vira aviso com o motivo."""
-    linhas = [_linha_real(nucleo, "Núcleo", 1 - LIMITES.fracao_padrao_satelite, plano.cotas_nucleo,
+    total, nucleo = regras.total, regras.nucleo
+    # peso alvo = a regra (núcleo 1 − f, satélite f × peso registrado), não o que as cotas inteiras deixaram
+    linhas = [_linha_real(nucleo, "Núcleo", 1.0 if plano.stop else 1 - regras.fracao_satelite, plano.cotas_nucleo,
                           plano.valor_nucleo, cotacoes, hoje, total)]
     satelite = plano.satelite
     if satelite is not None:
-        orcamento = satelite.investido + satelite.custo_estimado + satelite.sobra
         for ticker, item in satelite.itens[satelite.itens["quantidade"] > 0].iterrows():
-            linhas.append(_linha_real(ticker, "Satélite", item["peso_alvo"] * orcamento / total,
+            linhas.append(_linha_real(ticker, "Satélite", item["peso_alvo"] * regras.fracao_satelite,
                                       int(item["quantidade"]), item["valor"], cotacoes, hoje, total))
     st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True, column_config=COLUNAS_PLANO,
                  alt="Plano do dinheiro real: cotas do BOVA11 e ordens do satélite registrado")
@@ -152,8 +152,13 @@ def tabela_dinheiro_real(plano: PlanoDinheiroReal, cotacoes: pd.DataFrame, info:
               delta_arrow="off", border=True)
     c2.metric("Custo estimado", f"R$ {custo:,.2f}", border=True)
     c3.metric("Caixa", f"R$ {plano.caixa:,.2f}", border=True)
-    if satelite is None:
-        st.info(f"Satélite em caixa: {plano.motivo_caixa}. O dinheiro fica no caixa (CDB de liquidez diária ou "
+    if satelite is not None and satelite.fora:
+        st.warning(_aviso_fora(satelite, plano.compra, tetos_ajustaveis=False))
+    if plano.stop:
+        st.info(f"Satélite no núcleo: {plano.motivo_caixa}. Fica assim até o fim do horizonte (a regra do stop).")
+    elif satelite is None:
+        parte = "Tudo" if plano.cotas_nucleo == 0 else "Satélite"
+        st.info(f"{parte} em caixa: {plano.motivo_caixa}. O dinheiro fica no caixa (CDB de liquidez diária ou "
                 "Tesouro Selic) até os aportes montarem o satélite.")
     st.caption("Lote padrão = múltiplos de 100; o resto no fracionário (ticker terminado em F). Confira o preço no "
                "book da corretora antes de enviar a ordem. Compra a partir de carteira zerada.")
@@ -183,12 +188,13 @@ TEXTO_MOTIVO_FORA = {
 AJUSTE_POR_MOTIVO = {MotivoFora.TETO: "o peso máximo", MotivoFora.GRUPO: "o teto por setor"}
 
 
-def _aviso_fora(plano: PlanoCompra, regras: RegrasCompra) -> str:
+def _aviso_fora(plano: PlanoCompra, regras: RegrasCompra, tetos_ajustaveis: bool = True) -> str:
+    """Quem ficou de fora e o que aumentar; no dinheiro real os tetos são as regras fixas e só o valor muda."""
     linhas = [f"- **{ticker.replace('.SA', '')}**: {regras.quantidade_minima} ações "
               + _texto_motivo(ticker, motivo, regras)
               for ticker, motivo in plano.motivos_fora.items()]
     ajustes = ["o valor a investir"] + [ajuste for motivo, ajuste in AJUSTE_POR_MOTIVO.items()
-                                        if motivo in plano.motivos_fora.values()]
+                                        if tetos_ajustaveis and motivo in plano.motivos_fora.values()]
     conselho = "Aumente " + ", ".join(ajustes[:-1]) + (" ou " if len(ajustes) > 1 else "") + ajustes[-1] + "."
     return "\n".join(["Ficaram de fora (o dinheiro delas foi para as outras ações, até o teto de cada uma):",
                       *linhas, "", conselho])

@@ -131,3 +131,74 @@ def test_investido_e_custo_estimado_nao_mostram_seta():
 def test_sem_acao_descartada_nao_ha_aviso():
     from ui.secoes import aviso_descartados
     assert aviso_descartados([], []) is None
+
+
+def _tabela_dinheiro_real(total: float, preco_nucleo: float, precos_satelite: list[float]) -> None:
+    """O satélite registrado com pesos iguais nos papéis P0, P1, ... (cotações ``precos_satelite``) e o núcleo NUC."""
+    from datetime import date
+
+    import pandas as pd
+
+    from core.market_data import FONTE_FECHAMENTO
+    from core.ordens import RegrasDinheiroReal, plano_dinheiro_real
+    from ui.secoes import tabela_dinheiro_real
+
+    pesos = pd.Series(1 / len(precos_satelite), index=[f"P{i}.SA" for i in range(len(precos_satelite))])
+    precos = pd.concat([pd.Series(precos_satelite, index=pesos.index), pd.Series({"NUC.SA": preco_nucleo})])
+    regras = RegrasDinheiroReal(total=total, custo_bps=0.0, nucleo="NUC.SA")
+    plano = plano_dinheiro_real(pesos, precos, {t: f"Setor {i}" for i, t in enumerate(pesos.index)}, regras)
+    cotacoes = pd.DataFrame({"preco": precos, "horario": pd.Timestamp("2026-10-16"), "fonte": FONTE_FECHAMENTO})
+    tabela_dinheiro_real(plano, regras, cotacoes, {}, date(2026, 10, 16))
+
+
+def test_peso_alvo_do_dinheiro_real_e_a_regra_70_30_e_soma_100_por_cento():
+    # núcleo a R$ 300 com R$ 1.000: 2 cotas (60%) e R$ 400 (40%) no satélite; o alvo segue 70% + 30% × peso registrado
+    at = AppTest.from_function(_tabela_dinheiro_real, kwargs={"total": 1_000.0, "preco_nucleo": 300.0,
+                                                                "precos_satelite": [1.0] * 5},
+                               default_timeout=60).run()
+    assert not at.exception
+    alvo = at.dataframe[0].value.set_index("Ticker")["Peso alvo"]
+    assert alvo["NUC"] == pytest.approx(0.70) and alvo.drop("NUC").tolist() == pytest.approx([0.06] * 5)
+
+
+def test_dinheiro_real_avisa_o_papel_do_satelite_que_ficou_sem_acoes():
+    # 6 papéis com 1/6 cada e R$ 300 no satélite: 2 ações de P5 (R$ 2.000) não cabem no teto de R$ 60; os outros 5
+    # bastam para 100% (teto de 20%) e o plano sai, sem a P5 na tabela
+    at = AppTest.from_function(_tabela_dinheiro_real, kwargs={"total": 1_000.0, "preco_nucleo": 100.0,
+                                                                "precos_satelite": [1.0] * 5 + [1_000.0]},
+                               default_timeout=60).run()
+    assert not at.exception
+    assert "P5" not in at.dataframe[0].value["Ticker"].tolist()
+    avisos = [w.value for w in at.warning if "P5" in w.value and "teto de 20%" in w.value]
+    assert len(avisos) == 1
+    assert "peso máximo" not in avisos[0]       # no dinheiro real os tetos são fixos: só o valor a investir muda
+
+
+def test_dinheiro_real_sem_uma_cota_do_nucleo_diz_que_esta_tudo_em_caixa():
+    at = AppTest.from_function(_tabela_dinheiro_real, kwargs={"total": 100.0, "preco_nucleo": 300.0,
+                                                                "precos_satelite": [1.0] * 5},
+                               default_timeout=60).run()
+    assert not at.exception
+    assert [i.value.split(":")[0] for i in at.info] == ["Tudo em caixa"]
+
+
+def test_dinheiro_real_depois_do_stop_diz_que_o_satelite_esta_no_nucleo():
+    def script():
+        from datetime import date
+
+        import pandas as pd
+
+        from core.market_data import FONTE_FECHAMENTO
+        from core.ordens import RegrasDinheiroReal, plano_dinheiro_real
+        from ui.secoes import tabela_dinheiro_real
+
+        regras = RegrasDinheiroReal(total=1_000.0, custo_bps=0.0, nucleo="NUC.SA")
+        precos = pd.Series({"NUC.SA": 100.0})
+        plano = plano_dinheiro_real(pd.Series({"NUC.SA": 1.0}), precos, {}, regras)
+        cotacoes = pd.DataFrame({"preco": precos, "horario": pd.Timestamp("2026-10-16"), "fonte": FONTE_FECHAMENTO})
+        tabela_dinheiro_real(plano, regras, cotacoes, {}, date(2026, 10, 16))
+
+    at = AppTest.from_function(script, default_timeout=60).run()
+    assert not at.exception
+    assert [i.value.split(":")[0] for i in at.info] == ["Satélite no núcleo"]
+    assert at.dataframe[0].value.set_index("Ticker").at["NUC", "Peso alvo"] == pytest.approx(1.0)

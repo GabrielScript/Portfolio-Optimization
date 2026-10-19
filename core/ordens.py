@@ -246,6 +246,9 @@ def _montar_itens(alvo: pd.Series, precos: np.ndarray, quantidades: np.ndarray,
     }, index=alvo.index)
 
 
+MOTIVO_STOP = "o stop relativo disparou no paper trading e o satélite inteiro foi para o núcleo"
+
+
 @dataclass(frozen=True)
 class RegrasDinheiroReal:
     """O padrão do dinheiro real até o critério de pronto: BOVA11 no núcleo, satélite com ~30% do total."""
@@ -266,6 +269,8 @@ class PlanoDinheiroReal:
     satelite: PlanoCompra | None        # None = satélite em caixa, pelo ``motivo_caixa``
     motivo_caixa: str
     caixa: float
+    compra: RegrasCompra | None = None  # as regras do plano do satélite: explicam quem ficou de fora
+    stop: bool = False                  # o stop relativo disparou no paper: o satélite inteiro está no núcleo
 
 
 def plano_dinheiro_real(pesos_satelite: pd.Series, cotacoes: pd.Series, setores: Mapping[str, str],
@@ -274,19 +279,24 @@ def plano_dinheiro_real(pesos_satelite: pd.Series, cotacoes: pd.Series, setores:
     BOVA11 + satélite (as regras da boleta, DECISOES 60(3) e 69): as cotas inteiras do núcleo mais perto de
     ``1 - fracao_satelite`` do total; o resto vai ao satélite, que fica em caixa quando passaria do máximo do total,
     quando não cabem papéis bastantes para somar 100% dentro do teto por ação, quando as quantidades inteiras furariam
-    uma regra de risco ou quando o plano ficaria mais longe dos pesos registrados do que o próprio caixa.
+    uma regra de risco ou quando o plano ficaria mais longe dos pesos registrados do que o próprio caixa. Depois do
+    stop relativo o registro do paper é o próprio núcleo, e tudo vai para ele.
     """
     preco = float(cotacoes[regras.nucleo])
-    cotas = _cotas_do_nucleo(preco, regras)
+    stop = list(pesos_satelite.index) == [regras.nucleo]
+    cotas = _cotas_do_nucleo(preco, replace(regras, fracao_satelite=0.0) if stop else regras)
     if cotas == 0:
         return PlanoDinheiroReal(0, 0.0, 0.0, None, f"o total não paga 1 cota do núcleo (R$ {preco:,.2f})",
                                  regras.total)
     valor_nucleo = cotas * preco
     custo_nucleo = valor_nucleo * regras.custo_bps / 10_000
-    orcamento = round(regras.total - valor_nucleo - custo_nucleo, 2)
-    plano, motivo = _satelite_ou_caixa(pesos_satelite, cotacoes, setores, orcamento, regras)
-    caixa = orcamento if plano is None else orcamento - plano.investido - plano.custo_estimado
-    return PlanoDinheiroReal(cotas, valor_nucleo, custo_nucleo, plano, motivo, caixa)
+    # centavos para baixo: arredondar para cima deixaria o satélite gastar até meio centavo além do total
+    orcamento = math.floor((regras.total - valor_nucleo - custo_nucleo) * 100 + 1e-6) / 100
+    if stop:
+        return PlanoDinheiroReal(cotas, valor_nucleo, custo_nucleo, None, MOTIVO_STOP, orcamento, stop=True)
+    plano, compra, motivo = _satelite_ou_caixa(pesos_satelite, cotacoes, setores, orcamento, regras)
+    caixa = orcamento if plano is None else plano.sobra
+    return PlanoDinheiroReal(cotas, valor_nucleo, custo_nucleo, plano, motivo, caixa, compra)
 
 
 def _cotas_do_nucleo(preco: float, regras: RegrasDinheiroReal) -> int:
@@ -301,10 +311,19 @@ def _cotas_do_nucleo(preco: float, regras: RegrasDinheiroReal) -> int:
 
 
 def _satelite_ou_caixa(pesos: pd.Series, cotacoes: pd.Series, setores: Mapping[str, str], orcamento: float,
-                       regras: RegrasDinheiroReal) -> tuple[PlanoCompra | None, str]:
-    """O plano do satélite, ou None e o motivo de ele ficar em caixa (as travas na ordem da boleta)."""
+                       regras: RegrasDinheiroReal) -> tuple[PlanoCompra | None, RegrasCompra | None, str]:
+    """O plano do satélite e as regras dele, ou None e o motivo de ele ficar em caixa (as travas na ordem da
+    boleta)."""
+    if orcamento <= 0:
+        return None, None, "não sobra valor para o satélite depois das cotas do núcleo"
+    sem_cotacao = [t.removesuffix(".SA") for t in pesos.index if not cotacoes.get(t, float("nan")) > 0]
+    if sem_cotacao:                 # comprar o resto mudaria os pesos registrados
+        return None, None, f"sem cotação: {', '.join(sem_cotacao)}"
+    sem_setor = [t.removesuffix(".SA") for t in pesos.index if not setores.get(t)]
+    if sem_setor:                   # sem setor não há teto de setor a conferir (regra do checar_carteira)
+        return None, None, f"papel sem setor: {', '.join(sem_setor)}"
     if orcamento > regras.fracao_maxima_satelite * regras.total + TOLERANCIA_REAIS:
-        return None, (f"o satélite ficaria com {orcamento / regras.total:.1%} do total, acima do máximo de "
+        return None, None, (f"o satélite ficaria com {orcamento / regras.total:.1%} do total, acima do máximo de "
                       f"{regras.fracao_maxima_satelite:.0%}")
     teto = min(1.0, max(LIMITES.peso_maximo_acao, float(pesos.max())))
     compra = RegrasCompra(orcamento, regras.custo_bps, teto, regras.quantidade_minima,
@@ -312,15 +331,15 @@ def _satelite_ou_caixa(pesos: pd.Series, cotacoes: pd.Series, setores: Mapping[s
     cabem = acoes_que_cabem(cotacoes.reindex(pesos.index), compra)
     necessarias = math.ceil(1.0 / teto - 1e-9)
     if len(cabem) < necessarias:
-        return None, (f"só {len(cabem)} papel(éis) do satélite cabem no teto de R$ {teto * orcamento:,.2f} com "
+        return None, None, (f"só {len(cabem)} papel(éis) do satélite cabem no teto de R$ {teto * orcamento:,.2f} com "
                       f"{regras.quantidade_minima} unidades, e a carteira precisa de {necessarias}")
     plano = plano_de_compra(pesos, cotacoes, compra)
     violacoes = checar_carteira(plano.itens["peso_efetivo"], dict(setores))
     if violacoes:                   # quantidades inteiras podem furar uma regra que o alvo respeitava
-        return None, "o plano furaria as regras de risco: " + "; ".join(
+        return None, None, "o plano furaria as regras de risco: " + "; ".join(
             f"{v.regra.value} em {v.alvo.removesuffix('.SA')} {v.valor:.1%} (limite {v.limite:.0%})" for v in violacoes)
     desvio = float((plano.itens["peso_efetivo"] - plano.itens["peso_alvo"]).abs().sum())
     if desvio >= float(pesos.sum()):          # só caixa tem desvio = Σ pesos
-        return None, (f"o plano ficaria mais longe do satélite registrado (desvio {desvio:.2f}) do que o caixa "
+        return None, None, (f"o plano ficaria mais longe do satélite registrado (desvio {desvio:.2f}) do que o caixa "
                       f"({float(pesos.sum()):.2f})")
-    return plano, ""
+    return plano, compra, ""

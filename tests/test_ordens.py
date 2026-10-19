@@ -308,9 +308,10 @@ def _dinheiro_real(total: float) -> PlanoDinheiroReal:
 
 
 def test_dinheiro_real_com_300_reais_compra_1_bova11_e_deixa_o_satelite_em_caixa():
-    # 1 cota de R$ 202,30 (67% do total); com R$ 97,50 o teto por ação é R$ 19,50 e só a POMO4 cabe com 2 unidades
+    # 1 cota de R$ 202,30 (67% do total); com R$ 97,49 (centavos para baixo) o teto por ação é R$ 19,50 e só a POMO4
+    # cabe com 2 unidades
     plano = _dinheiro_real(300.0)
-    assert (plano.cotas_nucleo, plano.satelite, plano.caixa) == (1, None, pytest.approx(97.50, abs=0.01))
+    assert (plano.cotas_nucleo, plano.satelite, plano.caixa) == (1, None, pytest.approx(97.49, abs=1e-9))
 
 
 def test_dinheiro_real_deixa_o_satelite_em_caixa_quando_o_plano_fica_mais_longe_do_alvo_que_o_caixa():
@@ -320,7 +321,7 @@ def test_dinheiro_real_deixa_o_satelite_em_caixa_quando_o_plano_fica_mais_longe_
 
 
 def test_dinheiro_real_com_3000_reais_compra_o_satelite_registrado():
-    # 10 cotas (R$ 2.023,00); satélite de R$ 974,98 com desvio 0,11; a CPLE3 (0,5% do alvo) fica de fora
+    # 10 cotas (R$ 2.023,00); satélite de R$ 974,97 com desvio 0,11; a CPLE3 (0,5% do alvo) fica de fora
     plano = _dinheiro_real(3000.0)
     quantidades = plano.satelite.itens["quantidade"].rename(lambda ticker: ticker.removesuffix(".SA")).to_dict()
     assert (plano.cotas_nucleo, plano.caixa) == (10, pytest.approx(1.19, abs=0.01))
@@ -351,3 +352,49 @@ def test_dinheiro_real_com_plano_que_fura_o_teto_por_emissor_fica_em_caixa():
     plano = plano_dinheiro_real(pesos, cotacoes, setores, RegrasDinheiroReal(total=3400.0, custo_bps=10.0,
                                                                               nucleo="NUC.SA"))
     assert (plano.cotas_nucleo, plano.satelite, "emissor" in plano.motivo_caixa) == (8, None, True)
+
+
+def test_dinheiro_real_depois_do_stop_poe_o_satelite_no_bova11():
+    # o stop relativo do paper registra {BOVA11: 1,0}: tudo vai ao BOVA11, as cotas mais perto do total (15 passariam)
+    plano = plano_dinheiro_real(pd.Series({"BOVA11.SA": 1.0}), FECHAMENTOS_16_10, {},
+                                RegrasDinheiroReal(total=3000.0, custo_bps=10.0))
+    assert (plano.cotas_nucleo, plano.satelite, "stop" in plano.motivo_caixa) == (14, None, True)
+    assert plano.caixa == pytest.approx(3000.0 - 14 * 202.30 * 1.001, abs=0.01)
+
+
+def test_dinheiro_real_sem_sobra_para_o_satelite_nao_quebra():
+    # 1 cota de R$ 200 com R$ 200 e 0 bps: o satélite fica com R$ 0,00 (RegrasCompra recusaria orçamento 0)
+    pesos = pd.Series(0.2, index=[f"P{i}.SA" for i in range(5)])
+    cotacoes = pd.concat([pd.Series(1.0, index=pesos.index), pd.Series({"NUC.SA": 200.0})])
+    plano = plano_dinheiro_real(pesos, cotacoes, {t: f"Setor {i}" for i, t in enumerate(pesos.index)},
+                                RegrasDinheiroReal(total=200.0, custo_bps=0.0, nucleo="NUC.SA"))
+    assert (plano.cotas_nucleo, plano.satelite, plano.caixa) == (1, None, 0.0)
+    assert plano.motivo_caixa
+
+
+def test_dinheiro_real_nunca_soma_mais_que_o_total():
+    # 2 cotas de R$ 300,502 = R$ 601,004: sobram R$ 398,996, que arredondados a R$ 399,00 passariam do total
+    pesos = pd.Series(0.2, index=[f"P{i}.SA" for i in range(5)])
+    cotacoes = pd.concat([pd.Series(1_000.0, index=pesos.index), pd.Series({"NUC.SA": 300.502})])
+    plano = plano_dinheiro_real(pesos, cotacoes, {t: f"Setor {i}" for i, t in enumerate(pesos.index)},
+                                RegrasDinheiroReal(total=1000.0, custo_bps=0.0, nucleo="NUC.SA"))
+    assert plano.cotas_nucleo == 2 and plano.satelite is None
+    assert plano.valor_nucleo + plano.custo_nucleo + plano.caixa <= 1000.0
+
+
+def test_dinheiro_real_com_papel_do_satelite_sem_cotacao_compra_o_nucleo_e_deixa_o_satelite_em_caixa():
+    # a CPLE3 sem cotação não pode travar o BOVA11; comprar o resto do satélite sem ela mudaria os pesos registrados
+    cotacoes = FECHAMENTOS_16_10.drop("CPLE3.SA")
+    plano = plano_dinheiro_real(SATELITE_REGISTRADO, cotacoes, SETORES_DO_SATELITE,
+                                RegrasDinheiroReal(total=3000.0, custo_bps=10.0))
+    assert (plano.cotas_nucleo, plano.satelite) == (10, None)
+    assert "sem cotação" in plano.motivo_caixa and "CPLE3" in plano.motivo_caixa
+
+
+def test_dinheiro_real_com_papel_do_satelite_sem_setor_fica_em_caixa():
+    # papel registrado que sumiu do assets.py (renomeado ou deslistado): sem setor não há teto de setor a conferir
+    setores = {**SETORES_DO_SATELITE, "PETR4.SA": None}
+    plano = plano_dinheiro_real(SATELITE_REGISTRADO, FECHAMENTOS_16_10, setores,
+                                RegrasDinheiroReal(total=3000.0, custo_bps=10.0))
+    assert (plano.cotas_nucleo, plano.satelite) == (10, None)
+    assert "sem setor" in plano.motivo_caixa and "PETR4" in plano.motivo_caixa

@@ -470,3 +470,17 @@ def test_limitacoes_dizem_que_o_vies_favorece_as_estrategias_e_mostram_o_teste_s
     expanders = [e for e in app_padrao.expander if e.label.startswith("Teste sem viés de sobrevivência")]
     assert "favorece as estratégias contra o BOVA11" in textos and "melhor evidência" not in textos
     assert len(expanders) == 1 and "BOVA11" in expanders[0].dataframe[0].value["Estratégia"].tolist()
+
+
+def test_plano_do_dinheiro_real_aparece_mesmo_com_o_estudo_invalido(app_padrao):
+    # o plano padrão usa só o valor e o custo da barra lateral: um estudo inviável (3 × 20% < 100%) não o esconde
+    app_padrao.sidebar.slider(key="n_ativos_max").set_value(3).run()
+    assert not app_padrao.exception
+    assert [e for e in app_padrao.error if e.value.startswith("Inviável")]
+    assert _plano_de_compra(app_padrao)["Ticker"].iloc[0] == "BOVA11"
+
+
+def test_carteira_de_hoje_se_diz_estudo_quando_o_plano_e_o_do_dinheiro_real(app_padrao):
+    # o gráfico em R$ da carteira otimizada fica logo abaixo de um plano diferente para o mesmo valor
+    legendas = [c.value for c in app_padrao.caption if c.value.startswith("Estudo, só ações")]
+    assert len(legendas) == 1 and "plano acima" in legendas[0]

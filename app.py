@@ -64,8 +64,9 @@ AJUDA_REAMOSTRAGEM = (
     "~15 min com todos os ativos."
 )
 AJUDA_TETO_SETOR = (
-    "Soma máxima dos pesos das ações de um mesmo setor. Regra fixa de 30%: a tela só aperta. Vale para a carteira "
-    "de hoje (o HRP é projetado nos tetos), o plano de compra e o walk-forward."
+    "Soma máxima dos pesos das ações de um mesmo setor. Regra fixa de 30%: a tela só aperta. Vale para o estudo: "
+    "a carteira de hoje (o HRP é projetado nos tetos), o plano dela e o walk-forward. O plano do dinheiro real usa "
+    "as regras fixas (20% por ação, 30% por setor)."
 )
 AJUDA_SATELITE = (
     "Parte das ações no satélite Kelly; o resto fica no núcleo de Mínima Variância. Regra fixa: no máximo 50%. "
@@ -203,6 +204,9 @@ def main() -> None:
                 '<p class="subtitle">Kelly/Markowitz robusto · Ledoit-Wolf + Jorion · '
                 'Walk-forward com custos · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     entradas = ler_sidebar()
+    if entradas.modo_plano == MODO_DINHEIRO_REAL:   # o plano padrão usa só o valor e o custo: vem antes do estudo
+        secao_dinheiro_real(entradas, get_ticker_info())
+        st.markdown("---")
     erro = validar(entradas)
     if erro:
         st.error(erro)
@@ -246,6 +250,9 @@ def main() -> None:
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
                   rf_aritmetica: float) -> None:
     st.markdown("## Carteira de hoje")
+    if entradas.modo_plano == MODO_DINHEIRO_REAL:
+        st.caption("Estudo, só ações: a carteira otimizada pela barra lateral, para comparar. O dinheiro real segue o "
+                   "plano acima (BOVA11 + satélite registrado).")
     acoes = list(retornos.columns)
     # a trava do orçamento só vale para o plano da carteira otimizada: no dinheiro real, o satélite é o registrado
     compraveis = acoes_compraveis(entradas, precos[acoes]) if entradas.modo_plano == MODO_ESTUDO else acoes
@@ -295,8 +302,6 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
     if entradas.modo_plano == MODO_ESTUDO:
         secao_plano_de_compra(entradas, pesos, precos, info)
-    else:
-        secao_dinheiro_real(entradas, info)
     st.info(AVISO_REGRAS_DE_RISCO)
 
     col_rc, col_corr = st.columns(2)
@@ -393,25 +398,28 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
 
 def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
     st.markdown("### Plano de compra: dinheiro real (a regra até o critério de pronto)")
-    data, satelite = servicos.carregar_satelite_registrado()
+    registrado = servicos.carregar_satelite_registrado()
+    if registrado is None:
+        st.error("Sem carteira registrada no paper trading (paper/carteiras.csv): o plano do dinheiro real usa o "
+                 "satélite de lá.")
+        return
+    data, satelite = registrado
     st.warning(secoes.aviso_dinheiro_real(data))
-    tickers = (*satelite.index, BENCHMARK_ACOES)
+    tickers = tuple(dict.fromkeys((*satelite.index, BENCHMARK_ACOES)))     # depois do stop o satélite é o BOVA11
     hoje = date.today()
     janela = servicos.carregar_precos(tickers, 1, hoje, lago.versao_dos_dados()).precos.tail(PREGOES_PARA_FECHAMENTO)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_real"):
         servicos.descartar_cotacoes(tickers, janela)
     with st.spinner("Buscando as cotações do dia…"):
         cotacoes = servicos.carregar_cotacoes(tickers, janela)
-    sem_cotacao = [t.removesuffix(".SA") for t in tickers if not cotacoes["preco"].get(t, float("nan")) > 0]
-    if sem_cotacao:
-        st.error(f"Plano indisponível, sem cotação: {', '.join(sem_cotacao)}.")
+    if not cotacoes["preco"].get(BENCHMARK_ACOES, float("nan")) > 0:   # sem cotação no satélite: ele fica em caixa
+        st.error(f"Plano indisponível, sem cotação do {BENCHMARK_ACOES.removesuffix('.SA')}.")
         return
-    setores = {ticker: info.get(ticker, {}).get("setor", "—") for ticker in satelite.index}
-    plano = plano_dinheiro_real(satelite, cotacoes["preco"], setores,
-                                RegrasDinheiroReal(total=entradas.orcamento, custo_bps=entradas.custo_bps,
-                                                   quantidade_minima=QUANTIDADE_MINIMA_POR_ACAO,
-                                                   nucleo=BENCHMARK_ACOES))
-    secoes.tabela_dinheiro_real(plano, cotacoes, info, hoje, entradas.orcamento, BENCHMARK_ACOES)
+    setores = {ticker: info.get(ticker, {}).get("setor") for ticker in satelite.index}    # sem setor: em caixa
+    regras = RegrasDinheiroReal(total=entradas.orcamento, custo_bps=entradas.custo_bps,
+                                quantidade_minima=QUANTIDADE_MINIMA_POR_ACAO, nucleo=BENCHMARK_ACOES)
+    plano = plano_dinheiro_real(satelite, cotacoes["preco"], setores, regras)
+    secoes.tabela_dinheiro_real(plano, regras, cotacoes, info, hoje)
 
 
 def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float) -> CarteiraCalculada:

@@ -332,6 +332,12 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 - Ação sem cotação: a reescala dos pesos pode levar um setor acima do teto no plano.
 - Cosmético: a legenda do walk-forward diz "ano(s)".
 - Limite de N ações junto com o teto por setor pode cair no caminho alternativo (fallback) da otimização.
+- Plano do dinheiro real (revisão de 19/10/2026): o teto por emissor não entra no preenchimento guloso (o plano que
+  fura o emissor por arredondamento vai inteiro para o caixa; um `LimiteGrupo` por emissor em `RegrasCompra.grupos`
+  resolveria nos dois planos); a conta "papéis que cabem no teto" e a descrição das violações estão repetidas em
+  `app.py` e `core/ordens.py`; o plano não avisa quando o rebalanceio trimestral do paper está vencido; o app na
+  nuvem lê o `paper/carteiras.csv` da `origin/main`, e o commit do registro é só local (o push fica com o usuário).
+- `tests/test_ordens.py` importa constantes de `tests/test_paper_trading.py`, que lê a fixture do paper na importação.
 - Lago da B3: triagem do FRE no universo e portão de erro pequeno pendentes (§4.3); direitos de subscrição fora do
   retorno total (AMER3 2024); ligações por regra sem fonte aberta (5 de 10 na amostra); sem IPCA; sem rotina
   agendada (um pregão atrás); BDRs e ETFs só com preço cru (fora do universo e das auditorias); debêntures quase

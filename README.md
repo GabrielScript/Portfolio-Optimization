@@ -56,10 +56,12 @@ mesmas condições.
   carteira, no plano de compra e no walk-forward; o HRP da tela é projetado nele.
 - **Plano de compra, padrão = dinheiro real:** a regra até o critério de pronto, BOVA11 com as cotas inteiras mais
   perto de 70% do valor e, no satélite, a carteira registrada no paper trading (`paper/carteiras.csv`), sem
-  reotimizar. O satélite fica em caixa quando passaria de 50% do valor, quando não cabem papéis bastantes com 2
-  unidades no teto, quando as quantidades inteiras furariam uma regra de risco ou quando o plano ficaria mais longe
-  dos pesos registrados que o próprio caixa (com o registro de 16/10/2026: R$ 300 e R$ 1.300 → 1 e 4 BOVA11 +
-  caixa; R$ 3.000 → 10 BOVA11 + 8 papéis). Aviso do dinheiro real antes do plano.
+  reotimizar, antes da carteira do estudo (um estudo inválido não esconde o plano). O satélite fica em caixa quando
+  algum papel registrado está sem cotação ou sem setor, quando passaria de 50% do valor, quando não cabem papéis
+  bastantes com 2 unidades no teto, quando as quantidades inteiras furariam uma regra de risco ou quando o plano
+  ficaria mais longe dos pesos registrados que o próprio caixa; depois do stop relativo do paper, tudo vai ao BOVA11
+  (com o registro de 16/10/2026: R$ 300 e R$ 1.300 → 1 e 4 BOVA11 + caixa; R$ 3.000 → 10 BOVA11 + 8 papéis). Aviso
+  do dinheiro real antes do plano.
 - **Plano de compra do estudo** (escolha "Estudo"): cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último
   fechamento) e quantas ações comprar de cada uma da carteira otimizada, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
   inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma

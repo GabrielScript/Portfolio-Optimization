@@ -54,9 +54,14 @@ class ParametrosOtimizacao:
 ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
 
 
-def carregar_satelite_registrado() -> tuple[date, pd.Series]:
-    """O último satélite registrado no paper trading (``paper/carteiras.csv``): data e pesos com ".SA"."""
-    registro = pd.read_csv(ARQUIVO_PAPER, parse_dates=["data"])
+def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
+    """O último satélite registrado no paper trading (``paper/carteiras.csv``): data e pesos com ".SA". None sem
+    registro (arquivo ausente ou só com o cabeçalho)."""
+    if not arquivo.exists():
+        return None
+    registro = pd.read_csv(arquivo, parse_dates=["data"])
+    if registro.empty:
+        return None
     ultimo = registro[registro["data"] == registro["data"].max()]
     return ultimo["data"].iloc[0].date(), ultimo.set_index("ticker")["peso"].rename(lambda papel: papel + ".SA")
 

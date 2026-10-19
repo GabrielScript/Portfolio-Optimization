@@ -12,7 +12,7 @@ mesmas condições.
 ## 🚀 Funcionalidades
 
 ### 🎯 Objetivos de otimização
-- **Núcleo Mín. Vol + satélite Kelly (padrão, recomendado)** — (1 − f)·w_MínVol + f·w_Kelly, com o satélite f de
+- **Núcleo Mín. Vol + satélite Kelly (padrão do estudo, só ações)** — (1 − f)·w_MínVol + f·w_Kelly, com o satélite f de
   0 a 50% (padrão 30%). Foi a mistura aprovada no teste pré-registrado sem viés de sobrevivência
   (`docs/universo-dinamico-2026-10-18.txt`): em 10 anos, Sharpe 0,35 × 0,36 do Kelly com drawdown de −46% × −63%.
 - **Crescimento máximo (Kelly)** — `max μ'w − (λ/2)·w'Σw`, com aversão λ ajustável (padrão λ = 2). Opção: no mesmo
@@ -54,8 +54,14 @@ mesmas condições.
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
   com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (até 30%, regra fixa) na
   carteira, no plano de compra e no walk-forward; o HRP da tela é projetado nele.
-- **Plano de compra:** cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último fechamento) e quantas
-  ações comprar de cada uma, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
+- **Plano de compra, padrão = dinheiro real:** a regra até o critério de pronto, BOVA11 com as cotas inteiras mais
+  perto de 70% do valor e, no satélite, a carteira registrada no paper trading (`paper/carteiras.csv`), sem
+  reotimizar. O satélite fica em caixa quando passaria de 50% do valor, quando não cabem papéis bastantes com 2
+  unidades no teto, quando as quantidades inteiras furariam uma regra de risco ou quando o plano ficaria mais longe
+  dos pesos registrados que o próprio caixa (com o registro de 16/10/2026: R$ 300 e R$ 1.300 → 1 e 4 BOVA11 +
+  caixa; R$ 3.000 → 10 BOVA11 + 8 papéis). Aviso do dinheiro real antes do plano.
+- **Plano de compra do estudo** (escolha "Estudo"): cotação do dia (Yahoo, atraso de ~15 min; sem negócio, o último
+  fechamento) e quantas ações comprar de cada uma da carteira otimizada, a partir de carteira zerada e de qualquer valor a partir de R$ 100. Quantidades
   inteiras com **mínimo de 2 ações por posição**; o custo estimado sai do valor antes da divisão; nenhuma
   posição passa do peso máximo. **Investe o valor todo:** antes de otimizar, tira as ações cujas 2 unidades
   passam do peso máximo × valor (com aviso); depois de comprar o piso de cada alvo, segue comprando a ação
@@ -237,9 +243,9 @@ Portfolio-Optimization/
   mesmo dia (são uma história só: ganho forte em 2016–2021, perda em 2021–2026); com tracking error de 16–19%,
   provar o alfa contra o BOVA11 com PSR ≥ 0,95 pediria ~14–30 anos de histórico. A coluna P[> BOVA11] usa a média
   aritmética dos retornos diários, não a riqueza final, e favorece as curvas mais voláteis.
-- **O plano de compra só compra ações.** O BOVA11 é referência do walk-forward, não ativo do plano; com valores
-  pequenos (R$ 300) o plano para em "Aumente o valor a investir" porque cabem menos de 5 papéis. O modo "BOVA11 +
-  satélite" (satélite em caixa abaixo de ~R$ 1.000) está desenhado e aguarda aprovação.
+- **O plano do estudo só compra ações.** No modo "Estudo", com valores pequenos (R$ 300) o plano para em "Aumente
+  o valor a investir" porque cabem menos de 5 papéis, e o filtro por preço reotimiza num universo menor. O padrão da
+  tela é o plano do dinheiro real (BOVA11 + satélite registrado), que não reotimiza.
 - **Paper trading próprio, sem plataforma de corretora.** A rotina usa os fechamentos oficiais do lago, o mesmo código
   do walk-forward e um registro versionado que só cresce (auditável; uma conta demo pode ser zerada). Não mede a
   execução: spread, slippage, ordens parciais e a liquidez do fracionário ficam fora (custo fixo de 10 bps por lado).

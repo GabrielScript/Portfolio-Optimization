@@ -50,6 +50,7 @@ def _cotacoes_sinteticas(tickers: tuple[str, ...], precos_recentes: pd.DataFrame
 
 @pytest.fixture
 def app(monkeypatch) -> AppTest:
+    monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
@@ -57,6 +58,7 @@ def app(monkeypatch) -> AppTest:
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     at.sidebar.selectbox(key="objetivo").set_value(Objetivo.KELLY.value)   # os testes antigos são do Kelly
+    at.sidebar.segmented_control(key="modo_plano").set_value("estudo")    # e do plano da carteira otimizada
     at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
     at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
     at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
@@ -363,9 +365,17 @@ def test_referencia_sem_historico_na_janela_aparece_na_legenda(app, monkeypatch)
     assert legendas == [f"Sem histórico para os {JANELA_ANOS + TESTE_ANOS} anos do walk-forward: DIVO11."]
 
 
+def _satelite_sintetico() -> tuple[date, pd.Series]:
+    """Um registro do paper com papéis dos 4 setores do teste (Tecnologia com 2 papéis, 30%): soma 90%."""
+    por_setor = [get_tickers_by_setor([setor]) for setor in SETORES_DO_TESTE]
+    return date(2026, 10, 16), pd.Series({por_setor[0][0]: 0.2, por_setor[0][1]: 0.1, por_setor[1][0]: 0.2,
+                                          por_setor[2][0]: 0.2, por_setor[3][0]: 0.2})
+
+
 @pytest.fixture
 def app_padrao(monkeypatch) -> AppTest:
     """A tela como o usuário abre (sem escolher objetivo), com os 4 setores do teste."""
+    monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
@@ -386,10 +396,11 @@ def test_padrao_da_tela_e_o_nucleo_satelite_da_regra_b(app_padrao):
     assert list(_tabela_walk_forward(app_padrao).columns)[1] == "Otimizada (núcleo Mín. Vol + satélite Kelly 30%)"
 
 
-def test_rotulo_recomendado_segue_a_regra_a(app_padrao):
-    # regra A, opção 3: o Kelly sozinho não é o principal; o recomendado é a mistura da regra B
+def test_nenhum_objetivo_da_barra_lateral_se_diz_recomendado(app_padrao):
+    # DECISOES 69: a carteira da barra lateral é o estudo (100% ações); o padrão do dinheiro real é o plano BOVA11 +
+    # satélite do paper. A regra A (opção 3) segue: o Kelly sozinho não é o principal
     opcoes = app_padrao.sidebar.selectbox(key="objetivo").options
-    assert [o for o in opcoes if "recomendado" in o] == ["Núcleo Mín. Vol + satélite Kelly — recomendado"]
+    assert [o for o in opcoes if "recomendado" in o] == []
 
 
 def test_sliders_nao_afrouxam_as_regras(app):
@@ -428,3 +439,28 @@ def test_hrp_da_tela_respeita_teto_de_setor(app):
     plano = _plano_de_compra(app)
     assert (_peso_por_setor(plano, "Peso alvo") <= 0.30 + 1e-6).all()
     assert (plano["Peso alvo"] <= 0.20 + 1e-6).all()
+
+
+def test_plano_padrao_e_o_dinheiro_real_com_bova11_e_o_satelite_do_paper(app_padrao):
+    # DECISOES 69: o plano que a tela abre é o da regra do dinheiro real, não a carteira otimizada da barra lateral
+    assert not app_padrao.exception
+    plano = _plano_de_compra(app_padrao).set_index("Ticker")
+    _, satelite = _satelite_sintetico()
+    assert plano.index[0] == "BOVA11" and set(plano.index[1:]) <= {t.removesuffix(".SA") for t in satelite.index}
+    assert 0.6 <= plano.at["BOVA11", "Valor (R$)"] / 10_000 <= 0.75
+
+
+def test_dinheiro_real_com_100_reais_mostra_o_bova11_e_o_satelite_em_caixa(app_padrao):
+    # R$ 100 (teto de R$ 20 por ação): no estudo a tela para ("Aumente o valor"); no dinheiro real, BOVA11 e caixa
+    app_padrao.sidebar.number_input(key="orcamento").set_value(100.0).run()
+    assert not app_padrao.exception and not [e for e in app_padrao.error if "Aumente" in e.value]
+    assert _plano_de_compra(app_padrao)["Ticker"].tolist() == ["BOVA11"]
+    assert len([i.value for i in app_padrao.info if i.value.startswith("Satélite em caixa")]) == 1
+
+
+def test_limitacoes_dizem_que_o_vies_favorece_as_estrategias_e_mostram_o_teste_sem_vies(app_padrao):
+    # auditoria App-R4: o viés de sobrevivência favorece as estratégias CONTRA o BOVA11 (o índice não tem o viés)
+    textos = " ".join(m.value for m in app_padrao.markdown)
+    expanders = [e for e in app_padrao.expander if e.label.startswith("Teste sem viés de sobrevivência")]
+    assert "favorece as estratégias contra o BOVA11" in textos and "melhor evidência" not in textos
+    assert len(expanders) == 1 and "BOVA11" in expanders[0].dataframe[0].value["Estratégia"].tolist()

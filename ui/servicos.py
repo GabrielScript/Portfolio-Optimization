@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from datetime import date
+from pathlib import Path
 
 import pandas as pd
 import streamlit as st
@@ -48,6 +49,16 @@ class ParametrosOtimizacao:
             n_ativos_max=self.n_ativos_max, vol_maxima=self.vol_maxima,
             aversao_risco=self.aversao_risco, taxa_livre_risco=taxa_livre_risco, grupos=self.grupos,
         )
+
+
+ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
+
+
+def carregar_satelite_registrado() -> tuple[date, pd.Series]:
+    """O último satélite registrado no paper trading (``paper/carteiras.csv``): data e pesos com ".SA"."""
+    registro = pd.read_csv(ARQUIVO_PAPER, parse_dates=["data"])
+    ultimo = registro[registro["data"] == registro["data"].max()]
+    return ultimo["data"].iloc[0].date(), ultimo.set_index("ticker")["peso"].rename(lambda papel: papel + ".SA")
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

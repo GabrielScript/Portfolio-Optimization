@@ -332,8 +332,6 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 - Ação sem cotação: a reescala dos pesos pode levar um setor acima do teto no plano.
 - Cosmético: a legenda do walk-forward diz "ano(s)".
 - Limite de N ações junto com o teto por setor pode cair no caminho alternativo (fallback) da otimização.
-- O README e o rótulo do objetivo no app ainda chamam o Kelly de "recomendado" (conflita com o §1; muda depois do
-  teste núcleo + satélite).
 - Lago da B3: triagem do FRE no universo e portão de erro pequeno pendentes (§4.3); direitos de subscrição fora do
   retorno total (AMER3 2024); ligações por regra sem fonte aberta (5 de 10 na amostra); sem IPCA; sem rotina
   agendada (um pregão atrás); BDRs e ETFs só com preço cru (fora do universo e das auditorias); debêntures quase

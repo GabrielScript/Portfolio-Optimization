@@ -24,7 +24,8 @@ from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, 
                           resumo_desempenho, retornos_de_valores, sharpe_probabilistico,
                           sharpe_referencia_deflacionado)
 from core.optimization import ResultadoOtimizacao
-from core.ordens import MotivoFora, PlanoCompra, RegrasCompra
+from core.ordens import MotivoFora, PlanoCompra, PlanoDinheiroReal, RegrasCompra
+from core.risco import LIMITES
 
 CSS = """
 <style>
@@ -122,6 +123,48 @@ def resumo_plano(plano: PlanoCompra, regras: RegrasCompra) -> None:
                "terminado em F (ex.: PETR4F). Cotações do Yahoo com atraso de ~15 min, guardadas por 5 min "
                "(o botão Atualizar cotações busca de novo): confira o preço no book da corretora antes de "
                "enviar a ordem. Compra a partir de carteira zerada.")
+
+
+def aviso_dinheiro_real(data: date) -> str:
+    return (f"Dinheiro real segue a regra do estudo até o critério de pronto: BOVA11 no núcleo (~70%) e, no satélite "
+            f"(~30%), a carteira registrada no paper trading em {data:%d/%m/%Y}. O otimizador ainda não provou alfa "
+            "contra o BOVA11 (PSR ≥ 0,95 fora da amostra e 6 a 12 meses de paper). Só dinheiro de 5 anos ou mais; "
+            "rebalanceio trimestral.")
+
+
+def tabela_dinheiro_real(plano: PlanoDinheiroReal, cotacoes: pd.DataFrame, info: dict, hoje: date, total: float,
+                         nucleo: str) -> None:
+    """O núcleo na 1ª linha e as ordens do satélite embaixo; satélite em caixa vira aviso com o motivo."""
+    linhas = [_linha_real(nucleo, "Núcleo", 1 - LIMITES.fracao_padrao_satelite, plano.cotas_nucleo,
+                          plano.valor_nucleo, cotacoes, hoje, total)]
+    satelite = plano.satelite
+    if satelite is not None:
+        orcamento = satelite.investido + satelite.custo_estimado + satelite.sobra
+        for ticker, item in satelite.itens[satelite.itens["quantidade"] > 0].iterrows():
+            linhas.append(_linha_real(ticker, "Satélite", item["peso_alvo"] * orcamento / total,
+                                      int(item["quantidade"]), item["valor"], cotacoes, hoje, total))
+    st.dataframe(pd.DataFrame(linhas), width="stretch", hide_index=True, column_config=COLUNAS_PLANO,
+                 alt="Plano do dinheiro real: cotas do BOVA11 e ordens do satélite registrado")
+    investido = plano.valor_nucleo + (satelite.investido if satelite is not None else 0.0)
+    custo = plano.custo_nucleo + (satelite.custo_estimado if satelite is not None else 0.0)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Investido", f"R$ {investido:,.2f}", f"{investido / total:.1%} do valor", delta_color="off",
+              delta_arrow="off", border=True)
+    c2.metric("Custo estimado", f"R$ {custo:,.2f}", border=True)
+    c3.metric("Caixa", f"R$ {plano.caixa:,.2f}", border=True)
+    if satelite is None:
+        st.info(f"Satélite em caixa: {plano.motivo_caixa}. O dinheiro fica no caixa (CDB de liquidez diária ou "
+                "Tesouro Selic) até os aportes montarem o satélite.")
+    st.caption("Lote padrão = múltiplos de 100; o resto no fracionário (ticker terminado em F). Confira o preço no "
+               "book da corretora antes de enviar a ordem. Compra a partir de carteira zerada.")
+
+
+def _linha_real(ticker: str, parte: str, peso_alvo: float, quantidade: int, valor: float, cotacoes: pd.DataFrame,
+                hoje: date, total: float) -> dict:
+    return {"Ticker": ticker.replace(".SA", ""), "Parte": parte, "Peso alvo": peso_alvo,
+            "Cotação (R$)": float(cotacoes.at[ticker, "preco"]),
+            "Cotação de": _rotulo_cotacao(cotacoes.at[ticker, "horario"], cotacoes.at[ticker, "fonte"], hoje),
+            "Qtd.": quantidade, "Valor (R$)": valor, "Peso efetivo": valor / total}
 
 
 def legenda_por_setor(plano: PlanoCompra, info: dict) -> None:
@@ -268,10 +311,38 @@ LIMITACOES = """
 - **Walk-forward fora da amostra.** Cada rebalanceamento trimestral usa só a janela de estimação anterior,
   a mesma da carteira de hoje. Ações com histórico menor que janela + teste ficam fora dele.
   A taxa livre de risco é o CDI vigente na data. Todas as estratégias usam as mesmas datas e custos.
-- **Viés de sobrevivência.** O universo é a lista atual de tickers. Empresas que quebraram ou
-  fecharam capital não aparecem, o que favorece todas as estratégias.
+- **Viés de sobrevivência.** O walk-forward desta tela usa a lista atual de tickers: empresas que quebraram ou
+  fecharam capital não aparecem, o que favorece as estratégias contra o BOVA11 (o índice não tem o viés). O teste
+  sem o viés, com as deslistadas, está logo abaixo.
 - **Custos.** O custo em bps é cobrado sobre o giro (compra e venda). **Imposto de renda não é modelado**
   (15% sobre ganho líquido; isenção para vendas de ações até R$ 20 mil/mês).
 - **Estimativas, não garantias.** μ, Sharpe ex-ante e a faixa de ±1σ vêm do histórico e carregam erro de
-  estimação grande. Confira o walk-forward OOS antes de alocar: é a melhor evidência de que o método funciona.
+  estimação grande. Nem o walk-forward nem o teste sem viés provam alfa: o critério de pronto pede PSR ≥ 0,95
+  contra o BOVA11 fora da amostra e 6 a 12 meses de paper trading.
 """
+
+# Teste pré-registrado sem viés de sobrevivência (S1-P.b) nos dados corrigidos de 18/10/2026: universo ponto no tempo
+# com as deslistadas, treino de 5 anos, rebalanceio trimestral, 10 bps (docs/regras-no-motor-2026-10-18.txt, Parte 1).
+# Números fixos: mudam só com um teste novo.
+TABELA_SEM_VIES = pd.DataFrame({
+    "Estratégia": ["BOVA11 70% + Kelly λ=2 30% (dinheiro real)", "Kelly λ=2 (o satélite)",
+                   "Núcleo Mín. Vol 70/30 (estudo)", "Mínima variância", "BOVA11"],
+    "CAGR 5 anos": [0.1041, 0.0386, 0.1058, 0.1328, 0.1302],
+    "MDD 5 anos": [-0.2299, -0.3876, -0.1637, -0.1367, -0.2103],
+    "P[> BOVA11] 5 anos": [0.128, 0.140, 0.282, 0.461, None],
+    "CAGR 10 anos": [0.1588, 0.2108, 0.1909, 0.1742, 0.1313],
+    "MDD 10 anos": [-0.5160, -0.6305, -0.4625, -0.3940, -0.4693],
+    "P[> BOVA11] 10 anos": [0.912, 0.915, 0.831, 0.682, None],
+})
+COLUNAS_SEM_VIES = {coluna: st.column_config.NumberColumn(format="percent") for coluna in TABELA_SEM_VIES
+                    if coluna.startswith(("CAGR", "MDD"))}
+
+
+def tabela_sem_vies() -> None:
+    with st.expander("Teste sem viés de sobrevivência (com as deslistadas)"):
+        st.dataframe(TABELA_SEM_VIES, width="stretch", hide_index=True, column_config=COLUNAS_SEM_VIES,
+                     alt="CAGR, drawdown máximo e probabilidade de bater o BOVA11 em 5 e 10 anos, sem viés")
+        st.caption("Fora da amostra até 16/10/2026: 5 anos desde 15/10/2021 e 10 anos desde 14/10/2016 (os dois "
+                   "terminam no mesmo dia: são uma história só). P[> BOVA11] = PSR da diferença diária, sem deflação "
+                   "pelas tentativas e em média aritmética (favorece a curva mais volátil). Em 5 anos nada bate o "
+                   "BOVA11 com confiança; em 10, nada chega a 0,95.")

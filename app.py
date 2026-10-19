@@ -31,8 +31,8 @@ from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
                                combinar_nucleo_satelite, fronteira_eficiente, metricas_carteira, otimizar,
                                preparar_covariancia, projetar_pesos)
-from core.ordens import (RegrasCompra, acoes_que_cabem, limites_do_plano, plano_de_compra,  # noqa: E402
-                         redistribuir_sem_cotacao)
+from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limites_do_plano,  # noqa: E402
+                         plano_de_compra, plano_dinheiro_real, redistribuir_sem_cotacao)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
 from ui import secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
@@ -40,11 +40,12 @@ from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
                             grafico_metricas_rolling, grafico_pesos_historicos)
 
-# Padrão da tela pela regra B do S1-P.b (docs/universo-dinamico-2026-10-18.txt): núcleo Mín. Vol + satélite
-# Kelly λ=2 com 30%. Pela regra A (opção 3), o Kelly sozinho fica como opção, sem o "recomendado".
+# Padrão da carteira do estudo pela regra B do S1-P.b (docs/universo-dinamico-2026-10-18.txt): núcleo Mín. Vol +
+# satélite Kelly λ=2 com 30%. Nenhum objetivo é "recomendado": com dinheiro real vale o plano BOVA11 + satélite do
+# paper (DECISOES 69); pela regra A (opção 3), o Kelly sozinho fica como opção.
 NUCLEO_SATELITE = "nucleo_satelite"
 ROTULOS_OBJETIVO = {
-    NUCLEO_SATELITE: "Núcleo Mín. Vol + satélite Kelly — recomendado",
+    NUCLEO_SATELITE: "Núcleo Mín. Vol + satélite Kelly (padrão do estudo, só ações)",
     Objetivo.KELLY.value: "Crescimento máximo (Kelly)",
     Objetivo.MAX_SHARPE.value: "Máximo Sharpe (exato)",
     Objetivo.MIN_VOL.value: "Mínima variância",
@@ -77,6 +78,14 @@ AVISO_REGRAS_DE_RISCO = (
     "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
     "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
+# Plano de compra (DECISOES 69): o padrão é a regra do dinheiro real até o critério de pronto, BOVA11 + o satélite
+# registrado no paper; a carteira otimizada da barra lateral é o estudo, com o plano dela por escolha.
+MODO_DINHEIRO_REAL, MODO_ESTUDO = "dinheiro_real", "estudo"
+ROTULOS_MODO = {MODO_DINHEIRO_REAL: "Dinheiro real", MODO_ESTUDO: "Estudo"}
+AJUDA_MODO = (
+    "Dinheiro real: BOVA11 com ~70% e o satélite registrado no paper trading com ~30% (a regra até o critério de "
+    "pronto). Estudo: o plano da carteira otimizada pela barra lateral, só ações, para comparar."
+)
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
 PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
@@ -92,6 +101,7 @@ class Entradas:
     shrink_mu: bool
     custo_bps: float
     reamostrar: bool
+    modo_plano: str = MODO_DINHEIRO_REAL
 
 
 @dataclass(frozen=True)
@@ -123,6 +133,8 @@ def ler_sidebar() -> Entradas:
         vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, teto_vol, teto_vol, 5, key="vol_maxima") / 100
         orcamento = st.number_input("Valor a investir (R$)", 100.0, 10_000_000.0, 10_000.0, 100.0,
                                     key="orcamento")
+        modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
+                                          default=MODO_DINHEIRO_REAL, key="modo_plano", help=AJUDA_MODO)
 
         st.markdown("### Universo")
         setores = st.multiselect("Setores (vazio = lista líquida)", SETORES, key="setores")
@@ -164,7 +176,7 @@ def ler_sidebar() -> Entradas:
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
-                    reamostrar and objetivo == Objetivo.KELLY.value)
+                    reamostrar and objetivo == Objetivo.KELLY.value, modo_plano or MODO_DINHEIRO_REAL)
 
 
 def validar(entradas: Entradas) -> str | None:
@@ -228,13 +240,15 @@ def main() -> None:
     secao_backtest(entradas, precos_walk_forward, colunas, cdi, selic.valor)
     st.markdown("---")
     st.markdown(secoes.LIMITACOES)
+    secoes.tabela_sem_vies()
 
 
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
                   rf_aritmetica: float) -> None:
     st.markdown("## Carteira de hoje")
     acoes = list(retornos.columns)
-    compraveis = acoes_compraveis(entradas, precos[acoes])
+    # a trava do orçamento só vale para o plano da carteira otimizada: no dinheiro real, o satélite é o registrado
+    compraveis = acoes_compraveis(entradas, precos[acoes]) if entradas.modo_plano == MODO_ESTUDO else acoes
     momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
     mu, cov = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis]
     info = get_ticker_info()
@@ -279,7 +293,10 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
         col1.caption("A carteira reamostrada fica dentro da fronteira estimada, por construção.")
     col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
     st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
-    secao_plano_de_compra(entradas, pesos, precos, info)
+    if entradas.modo_plano == MODO_ESTUDO:
+        secao_plano_de_compra(entradas, pesos, precos, info)
+    else:
+        secao_dinheiro_real(entradas, info)
     st.info(AVISO_REGRAS_DE_RISCO)
 
     col_rc, col_corr = st.columns(2)
@@ -372,6 +389,29 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     secoes.tabela_carteira(plano, cotacoes, info, date.today())
     secoes.legenda_por_setor(plano, info)
     secoes.resumo_plano(plano, regras)
+
+
+def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
+    st.markdown("### Plano de compra: dinheiro real (padrão do estudo)")
+    data, satelite = servicos.carregar_satelite_registrado()
+    st.warning(secoes.aviso_dinheiro_real(data))
+    tickers = (*satelite.index, BENCHMARK_ACOES)
+    hoje = date.today()
+    janela = servicos.carregar_precos(tickers, 1, hoje, lago.versao_dos_dados()).precos.tail(PREGOES_PARA_FECHAMENTO)
+    if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_real"):
+        servicos.descartar_cotacoes(tickers, janela)
+    with st.spinner("Buscando as cotações do dia…"):
+        cotacoes = servicos.carregar_cotacoes(tickers, janela)
+    sem_cotacao = [t.removesuffix(".SA") for t in tickers if not cotacoes["preco"].get(t, float("nan")) > 0]
+    if sem_cotacao:
+        st.error(f"Plano indisponível, sem cotação: {', '.join(sem_cotacao)}.")
+        return
+    setores = {ticker: info.get(ticker, {}).get("setor", "—") for ticker in satelite.index}
+    plano = plano_dinheiro_real(satelite, cotacoes["preco"], setores,
+                                RegrasDinheiroReal(total=entradas.orcamento, custo_bps=entradas.custo_bps,
+                                                   quantidade_minima=QUANTIDADE_MINIMA_POR_ACAO,
+                                                   nucleo=BENCHMARK_ACOES))
+    secoes.tabela_dinheiro_real(plano, cotacoes, info, hoje, entradas.orcamento, BENCHMARK_ACOES)
 
 
 def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float) -> CarteiraCalculada:

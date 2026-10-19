@@ -46,7 +46,20 @@ def psr_da_diferenca(valores: pd.Series, valores_referencia: pd.Series, log: boo
     return sharpe_probabilistico(momentos_sharpe(diferenca))
 
 
-COLUNAS_JANELAS = ["inicio", "fim", "curva", "cagr", "excesso_cagr", "p_aritmetica", "p_log", "mdd"]
+COLUNAS_MEDIDAS = ["cagr", "excesso_cagr", "p_aritmetica", "p_log", "mdd"]
+COLUNAS_JANELAS = ["inicio", "fim", "curva", *COLUNAS_MEDIDAS]
+
+
+def pares_de_janelas(datas: pd.DatetimeIndex, meses: int) -> list[tuple[pd.Timestamp, pd.Timestamp]]:
+    """(início, fim) das janelas de ``meses`` meses: do último pregão de cada mês ao último pregão ``meses`` depois."""
+    fins_de_mes = datas.to_series().groupby(datas.to_period("M")).max()
+    return list(zip(fins_de_mes.iloc[:-meses], fins_de_mes.iloc[meses:]))
+
+
+def medir(valores: pd.Series, valores_referencia: pd.Series) -> list[float]:
+    """Uma curva contra a referência no mesmo trecho, na ordem de ``COLUNAS_MEDIDAS``."""
+    return [cagr(valores), cagr(valores) - cagr(valores_referencia), psr_da_diferenca(valores, valores_referencia),
+            psr_da_diferenca(valores, valores_referencia, log=True), drawdown(valores)[1]]
 
 
 def janelas_moveis(curvas: pd.DataFrame, referencia: str, meses: int) -> pd.DataFrame:
@@ -56,17 +69,33 @@ def janelas_moveis(curvas: pd.DataFrame, referencia: str, meses: int) -> pd.Data
     (``psr_da_diferenca``) e drawdown máximo. Janelas sobrepostas não são amostras independentes: descrevem, não
     testam. Curva (ou referência) sem valor em algum pregão da janela fica fora dela.
     """
-    datas = curvas.index.to_series()
-    fins_de_mes = datas.groupby(curvas.index.to_period("M")).max()
     linhas = []
-    for inicio, fim in zip(fins_de_mes.iloc[:-meses], fins_de_mes.iloc[meses:]):
+    for inicio, fim in pares_de_janelas(curvas.index, meses):
         recorte = curvas.loc[inicio:fim]
         bova = recorte[referencia]
         for nome in curvas.columns.drop(referencia):
             valores = recorte[nome]
             if valores.isna().any() or bova.isna().any():
                 continue
-            linhas.append([inicio, fim, nome, cagr(valores), cagr(valores) - cagr(bova),
-                           psr_da_diferenca(valores, bova), psr_da_diferenca(valores, bova, log=True),
-                           drawdown(valores)[1]])
+            linhas.append([inicio, fim, nome, *medir(valores, bova)])
     return pd.DataFrame(linhas, columns=COLUNAS_JANELAS)
+
+
+CONFIANCA = 0.95
+
+
+def resumir_janelas(janelas: pd.DataFrame) -> pd.DataFrame:
+    """
+    Por curva: nº de janelas, fração com CAGR acima da referência (riqueza), mediana e percentil 10 do excesso de
+    CAGR, fração com P[> referência] ≥ 0,95 (aritmético e em log) e o pior drawdown.
+    """
+    por_curva = janelas.groupby("curva", sort=False)
+    return pd.DataFrame({
+        "janelas": por_curva.size(),
+        "acima_do_bova": por_curva["excesso_cagr"].apply(lambda x: float((x > 0).mean())),
+        "excesso_mediano": por_curva["excesso_cagr"].median(),
+        "excesso_p10": por_curva["excesso_cagr"].quantile(0.10),
+        "p_aritmetica_095": por_curva["p_aritmetica"].apply(lambda p: float((p >= CONFIANCA).mean())),
+        "p_log_095": por_curva["p_log"].apply(lambda p: float((p >= CONFIANCA).mean())),
+        "pior_mdd": por_curva["mdd"].min(),
+    })

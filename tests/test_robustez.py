@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 
 from core.metrics import MomentosSharpe
-from core.robustez import anos_minimos_para_psr, janelas_moveis, psr_da_diferenca
+from core.robustez import anos_minimos_para_psr, janelas_moveis, psr_da_diferenca, resumir_janelas
 
 
 def test_anos_minimos_para_psr_conferido_a_mao():
@@ -25,7 +25,8 @@ def test_sharpe_que_nao_passa_da_referencia_nunca_chega_ao_psr(sharpe):
 
 
 def _curva(retornos: list[float]) -> pd.Series:
-    return pd.Series(np.cumprod([1.0, *(1.0 + np.array(retornos))]), index=pd.bdate_range("2020-01-01", periods=len(retornos) + 1))
+    datas = pd.bdate_range("2020-01-01", periods=len(retornos) + 1)
+    return pd.Series(np.cumprod([1.0, *(1.0 + np.array(retornos))]), index=datas)
 
 
 def test_p_em_log_retorno_ve_a_riqueza_que_a_media_aritmetica_esconde():
@@ -48,8 +49,9 @@ def test_janelas_moveis_comecam_em_cada_fim_de_mes_e_medem_contra_a_referencia()
     janelas = janelas_moveis(curvas, "BOVA11", meses=12)
     assert janelas["curva"].unique().tolist() == ["A"]
     assert len(janelas) == 24
-    assert (janelas["inicio"].iloc[0], janelas["fim"].iloc[0]) == (pd.Timestamp("2020-01-31"), pd.Timestamp("2021-01-29"))
-    assert (janelas["inicio"].iloc[-1], janelas["fim"].iloc[-1]) == (pd.Timestamp("2021-12-31"), pd.Timestamp("2022-12-30"))
+    primeira, ultima = janelas.iloc[0], janelas.iloc[-1]
+    assert (primeira["inicio"], primeira["fim"]) == (pd.Timestamp("2020-01-31"), pd.Timestamp("2021-01-29"))
+    assert (ultima["inicio"], ultima["fim"]) == (pd.Timestamp("2021-12-31"), pd.Timestamp("2022-12-30"))
     assert janelas["excesso_cagr"].to_numpy() == pytest.approx(1.001**252 - 1.0005**252, abs=1e-9)
 
 
@@ -61,3 +63,15 @@ def test_curva_que_ainda_nao_existia_fica_fora_das_janelas_em_que_falta():
     janelas = janelas_moveis(curvas, "BOVA11", meses=12)
     assert janelas["inicio"].min() == pd.Timestamp("2021-06-30")
     assert janelas["cagr"].notna().all()
+
+
+def test_resumo_das_janelas_conta_e_mede_por_curva():
+    """4 janelas da curva A: excessos −20, −5, +2 e +10 p.p. → metade acima, mediana −1,5 p.p., p10 (interpolado)
+    −15,5 p.p.; P ≥ 0,95 em 1 de 4 (0,95 conta); pior MDD −50%."""
+    janelas = pd.DataFrame({"curva": ["A"] * 4, "excesso_cagr": [0.10, -0.05, 0.02, -0.20],
+                            "p_aritmetica": [0.96, 0.50, 0.70, 0.10], "p_log": [0.95, 0.40, 0.60, 0.05],
+                            "mdd": [-0.1, -0.3, -0.2, -0.5]})
+    resumo = resumir_janelas(janelas).loc["A"]
+    assert resumo["janelas"] == 4 and resumo["acima_do_bova"] == 0.5
+    assert resumo["excesso_mediano"] == pytest.approx(-0.015) and resumo["excesso_p10"] == pytest.approx(-0.155)
+    assert (resumo["p_aritmetica_095"], resumo["p_log_095"], resumo["pior_mdd"]) == (0.25, 0.25, -0.5)

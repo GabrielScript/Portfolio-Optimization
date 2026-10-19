@@ -1,0 +1,28 @@
+# Tentativas para o DSR (PLAN §11, passo 3). Uma linha por configuração DISTINTA de estratégia avaliada fora da
+# amostra num teste pré-registrado: objetivo, parâmetros, janela de estimação, regras e mistura. A mesma configuração
+# em outros dados ou noutro universo (tiro 2, dados corrigidos, linha de base repetida) não conta de novo; o Kelly
+# λ=2 com janela de 1.260 conta uma vez só. Referências de mercado (BOVA11, SMAL11, DIVO11, IVVB11) não contam.
+# Comparações na tela antes do 1º pré-registro não foram registradas e não estão aqui: o N é um piso e o DSR com ele,
+# otimista. Ler com pandas.read_csv(..., comment="#").
+data,script,configuracao
+2026-10-13,avaliar_reamostragem.py,"Kelly λ=2 reamostrado (B=100, blocos de 21 pregões)"
+2026-10-13,avaliar_reamostragem.py,"réplica do otimizador antigo"
+2026-10-15,avaliar_janelas.py,"Kelly λ=2, janela de 1.260 pregões (R5)"
+2026-10-15,avaliar_janelas.py,"Kelly λ=2, janela de 756 pregões (R3)"
+2026-10-15,avaliar_janelas.py,"Kelly λ=2, janela de 504 pregões (R2)"
+2026-10-15,avaliar_janelas.py,"Kelly λ=2, μ em 1.260 pregões e Σ EWMA com meia-vida de 126"
+2026-10-17,avaliar_universo_dinamico.py,"Kelly λ=1"
+2026-10-17,avaliar_universo_dinamico.py,"Kelly λ=4"
+2026-10-17,avaliar_universo_dinamico.py,"Máx. Sharpe"
+2026-10-17,avaliar_universo_dinamico.py,"Mín. Vol"
+2026-10-17,avaliar_universo_dinamico.py,"HRP"
+2026-10-17,avaliar_universo_dinamico.py,"1/N"
+2026-10-17,avaliar_universo_dinamico.py,"Núcleo Mín. Vol 70/30 (satélite Kelly λ=2)"
+2026-10-17,avaliar_universo_dinamico.py,"Núcleo Mín. Vol 50/50 (satélite Kelly λ=2)"
+2026-10-17,avaliar_universo_dinamico.py,"Núcleo BOVA11 70/30 (satélite Kelly λ=2)"
+2026-10-17,avaliar_universo_dinamico.py,"Núcleo BOVA11 50/50 (satélite Kelly λ=2)"
+2026-10-18,avaliar_regras_no_motor.py,"Kelly λ=2 com regras"
+2026-10-18,avaliar_regras_no_motor.py,"Mín. Vol com regras"
+2026-10-18,avaliar_regras_no_motor.py,"Núcleo Mín. Vol 70/30 com regras"
+2026-10-19,avaliar_robustez.py,"Dinheiro real: BOVA11 70% + Kelly λ=2 com regras e stop 30%"
+2026-10-19,avaliar_robustez.py,"Kelly λ=2 com regras, janela de 2.520 pregões (R10)"

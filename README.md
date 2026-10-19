@@ -37,6 +37,14 @@ mesmas condições.
   recusa = mantém a carteira), testadas num pré-registro (`docs/regras-no-motor-2026-10-18.txt`): 0 recusas em 60
   rebalanceios; o stop relativo disparou nos dois horizontes (05/2025 e 12/2025); o padrão com regras teve Sharpe
   −0,06 (−0,13 sem) em 5 anos e 0,28 (0,35 sem) em 10. O teto de setor custa à Mín. Vol em 10 anos (0,19 × 0,28).
+- **Robustez fora da amostra, 2010–2026** (`scripts/avaliar_robustez.py`, pré-registrado; saída em
+  `docs/robustez-2026-10-19.txt`): janelas móveis de 3 e 5 anos, subperíodos, P[> BOVA11] também em log-retorno,
+  DSR com as tentativas de `docs/tentativas.csv` e MinTRL, em 3 fases de rebalanceio. O satélite com regras teve IR
+  de 0,32 a 0,37 contra o BOVA11 (P 0,90–0,93, MinTRL de 20 a 27 anos); o plano do dinheiro real, com o stop
+  relativo, de 0,04 a 0,18 (o stop dispara em 2 a 3 anos na maioria das janelas de 5 anos); o Núcleo Mín. Vol 70/30
+  chegou a P 0,95–0,96 no período inteiro, mas só por causa de 2010–2014 e com DSR abaixo de 0,95: não cumpre o
+  critério de pronto. A janela de estimação de 10 anos não passou (P[R10 > R5] de 0,20 a 0,48). Detalhes no
+  ROTEIRO §4.11.
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -152,6 +160,7 @@ Portfolio-Optimization/
 │   ├── reamostragem.py       #   Carteira reamostrada (bagging, bootstrap em blocos)
 │   ├── hierarchical.py       #   HRP e HRP-Árvore
 │   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown, PSR/DSR
+│   ├── robustez.py           #   MinTRL, P[> referência] em log-retorno, janelas móveis
 │   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time (universo ponto no tempo, regras no motor)
 │   ├── poder.py              #   Poder dos portões do S2 por simulação (IC plantado no painel mensal)
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
@@ -168,13 +177,17 @@ Portfolio-Optimization/
 │   ├── avaliar_universo_dinamico.py  # Teste pré-registrado com o universo ponto no tempo do lago (rodado)
 │   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
 │   ├── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
+│   ├── avaliar_robustez.py           # Robustez 2010–2026 e janela de 10 anos, pré-registrado (rodado)
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
 │   ├── janelas-tiro1-*.txt       # Saídas do tiro 1 do teste das janelas
 │   ├── universo-dinamico-2026-10-18.txt  # Saída do S1-P.b (sem viés de sobrevivência)
 │   ├── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
-│   └── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
+│   ├── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
+│   ├── robustez-2026-10-19.txt   # Saída do teste de robustez
+│   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
+│   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/
 │   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)

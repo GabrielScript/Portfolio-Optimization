@@ -305,6 +305,31 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
       `scripts/paper_trading.py` agendada de segunda a sexta às 8h30)
 - [ ] 6 a 12 meses; comparar com BOVA11 e CDI pelo critério da seção 2 (leituras fixas de 126 e 252 pregões)
 
+### 4.11 Robustez fora da amostra (PLAN §11, passo 3): descritivo, o critério não muda
+
+Pré-registro e script em `scripts/avaliar_robustez.py`, saída em `docs/robustez-2026-10-19.txt`: universo ponto no
+tempo com as deslistadas, regras de risco no motor, 2010 a 16/10/2026 (16,7 anos), 3 fases de rebalanceio.
+
+| Curva (contra o BOVA11) | IR | P aritmético | DSR (N = 21) | MinTRL | 60 meses acima do BOVA11 |
+|---|---|---|---|---|---|
+| Satélite Kelly λ=2 com regras, sem stop | 0,32–0,37 | 0,90–0,93 | 0,41–0,70 | 20–27 anos | 72–76% |
+| Dinheiro real (BOVA11 70% + satélite com stop 30%) | 0,04–0,18 | 0,56–0,75 | 0,08–0,41 | 100+ anos | 47–54% |
+| Núcleo Mín. Vol 70/30 com regras (estudo) | 0,42–0,44 | 0,95–0,96 | 0,56–0,76 | 14–16 anos | 96% |
+
+- **O Núcleo Mín. Vol 70/30 com P ≥ 0,95 não cumpre o item 1 do critério.** As 3 fases são a mesma história deslocada
+  em semanas; o P vem de 2010–2014 (0,97–0,98), e de 2015 em diante não é significativo (0,55–0,79); o DSR fica
+  abaixo de 0,95 com um N que é piso; o IR sobre o ganho de capital (giro de 110–145% ao ano) não está no teste; e não
+  é a estratégia do paper. O teste do critério continua o do S1-P.b mais o paper trading.
+- **O stop relativo custa quase todo o excesso do satélite.** Sem stop, a mistura 70/30 teria o IR do satélite
+  (0,32–0,37); com ele, 0,04–0,18. Numa conta feita depois da rodada (fora do pré-registro), o stop dispara no período
+  inteiro entre 2011 e 2014 e em 59–100% das janelas de 5 anos, com mediana de 2 a 3 anos. No paper, depois do stop o
+  satélite vira BOVA11 até o fim, e o paper deixa de medir o otimizador. O paper-v1 não muda; rever o stop pede um
+  pré-registro novo (§7).
+- **Janela de 10 anos (R10) não passa**: P[R10 > R5] de 0,20 a 0,48 (o C1 pede 0,95). Rende menos, mas com drawdown
+  menor (−43% contra −58% em 10 anos) e giro ~30% menor.
+- **IVVB11** ficou acima do BOVA11 em 94,5% das janelas de 5 anos desde 2014, num regime só (o real foi de ~2,2 a
+  mais de 5 por dólar). Motiva o núcleo BOVA11 + IVVB11 (PLAN §11), que pede pré-registro próprio.
+
 ---
 
 ## 5. Realista × competitivo
@@ -338,6 +363,8 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
   `app.py` e `core/ordens.py`; o plano não avisa quando o rebalanceio trimestral do paper está vencido; o app na
   nuvem lê o `paper/carteiras.csv` da `origin/main`, e o commit do registro é só local (o push fica com o usuário).
 - `tests/test_ordens.py` importa constantes de `tests/test_paper_trading.py`, que lê a fixture do paper na importação.
+- A linha "BOVA11 70% + Kelly λ=2 30% (dinheiro real)" da tabela sem viés da tela é a mistura sem regras e sem stop do
+  S1-P.b; o teste de robustez mostra que o stop muda esse quadro. Trocar a linha pede uma tabela nova pré-registrada.
 - Lago da B3: triagem do FRE no universo e portão de erro pequeno pendentes (§4.3); direitos de subscrição fora do
   retorno total (AMER3 2024); ligações por regra sem fonte aberta (5 de 10 na amostra); sem IPCA; sem rotina
   agendada (um pregão atrás); BDRs e ETFs só com preço cru (fora do universo e das auditorias); debêntures quase
@@ -359,6 +386,11 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
    no S4 como teto por posição, que depende do capital).
 8. "Comparar todas as estratégias possíveis": cada estratégia comparada entra no N do DSR (mais tentativas, mais chance
    de a melhor ganhar por sorte). Recomendado: lista fechada no pré-registro do S1-P.b.
+9. Stop relativo do satélite (25% contra o BOVA11, até o fim do horizonte): no teste de robustez (§4.11) ele dispara
+   em 2 a 3 anos na maioria das janelas de 5 anos e leva quase todo o excesso do satélite; no paper, depois dele o
+   otimizador deixa de ser medido. Manter, ou fazer um pré-registro novo (paper-v2) com outra regra, como reentrada
+   depois de N meses ou sem stop e só com o teto do satélite? Recomendado: o paper-v1 segue como está até a leitura
+   de 126 pregões; a regra nova, se houver, entra num pré-registro próprio.
 
 Decidido em 2026-10-17: terminar a B3 primeiro; depois, alocação entre classes (ações B3 × ETFs e BDRs de exterior ×
 ETFs de cripto × CDI) com dados que já estão no lago; dados crus dos EUA e de cripto só se essa camada mostrar que vale.

@@ -1,0 +1,15 @@
+# Otimizador de Carteiras B3 - dependências diretas (faixas). O requirements.txt é gerado daqui, travado nas versões
+# do .venv onde a suíte passou (Python 3.12), e serve também a 3.11 com marcadores (versões mais antigas, não testadas):
+#   uv pip freeze --python .venv/Scripts/python.exe > freeze.txt
+#   uv pip compile requirements.in -c freeze.txt --universal --python-version 3.11 -o requirements.txt
+
+streamlit>=1.65        # delta_arrow, cache.clear(args), alt= (só conferidos na 1.65)
+yfinance>=0.2.50
+pandas>=2.2
+numpy>=2.1,<3          # cvxpy 1.9 exige numpy 2
+scipy>=1.11
+plotly>=5.20
+cvxpy>=1.6             # traz CLARABEL e SCS
+scikit-learn>=1.5
+requests>=2.31
+pyarrow>=16            # lê lago/precos_diarios.parquet (já vem com o streamlit; aqui por ser uso direto)

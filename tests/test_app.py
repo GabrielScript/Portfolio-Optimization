@@ -92,7 +92,7 @@ def test_walk_forward_treina_na_janela_da_carteira_de_hoje(app):
 def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
     # Mesmo cfg das estratégias: compra na véspera do 1º rebalanceamento (pregão janela × 252 do download),
     # paga 10 bps uma vez (o padrão da sidebar) e segura até o fim.
-    tickers = tuple(get_tickers_by_setor(SETORES_DO_TESTE)) + BENCHMARKS     # o mesmo pedido do walk-forward
+    tickers = tuple(get_tickers_by_setor(SETORES_DO_TESTE)) + REFERENCIAS_DA_TELA   # o pedido do walk-forward
     bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today(), 0).precos[BENCHMARK_ACOES]
     esperado = (1 - 10 / 10_000) * bova.iloc[-1] / bova.iloc[JANELA_ANOS * 252] - 1
 
@@ -160,7 +160,7 @@ def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app)
     assert not app.exception
     tabela = _tabela_walk_forward(app)
     assert list(tabela.columns)[1].startswith("Reamostrada")
-    assert len(tabela.columns) == 1 + 5 + 3
+    assert len(tabela.columns) == 1 + 5 + 4
     assert {"PSR (Sharpe > 0)", "DSR (deflacionado)"} <= set(tabela["Métrica"])
     estabilidade = [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
     assert len(estabilidade) == 1

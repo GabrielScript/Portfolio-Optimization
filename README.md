@@ -237,6 +237,14 @@ Portfolio-Optimization/
   mesmo dia (são uma história só: ganho forte em 2016–2021, perda em 2021–2026); com tracking error de 16–19%,
   provar o alfa contra o BOVA11 com PSR ≥ 0,95 pediria ~14–30 anos de histórico. A coluna P[> BOVA11] usa a média
   aritmética dos retornos diários, não a riqueza final, e favorece as curvas mais voláteis.
+- **O plano de compra só compra ações.** O BOVA11 é referência do walk-forward, não ativo do plano; com valores
+  pequenos (R$ 300) o plano para em "Aumente o valor a investir" porque cabem menos de 5 papéis. O modo "BOVA11 +
+  satélite" (satélite em caixa abaixo de ~R$ 1.000) está desenhado e aguarda aprovação.
+- **Paper trading próprio, sem plataforma de corretora.** A rotina usa os fechamentos oficiais do lago, o mesmo código
+  do walk-forward e um registro versionado que só cresce (auditável; uma conta demo pode ser zerada). Não mede a
+  execução: spread, slippage, ordens parciais e a liquidez do fracionário ficam fora (custo fixo de 10 bps por lado).
+- **Sem alavancagem.** A regra fixa é 1,0×: com o empréstimo a CDI + spread perto do retorno histórico do BOVA11, a
+  alavancagem custaria mais do que rende enquanto o alfa não estiver provado.
 - **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago só em retorno mensal desde
   2014: 20,1% a.a. × 12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18.
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo

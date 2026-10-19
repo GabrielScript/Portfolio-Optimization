@@ -220,7 +220,7 @@ Portfolio-Optimization/
 ## ⚠️ Limitações
 
 - **Viés de sobrevivência.** O walk-forward do app usa a lista atual de tickers; empresas que quebraram ou
-  fecharam capital não aparecem, o que favorece todas as estratégias. O universo ponto no tempo, com as
+  fecharam capital não aparecem, o que favorece as estratégias contra o BOVA11 (o índice não tem o viés). O universo ponto no tempo, com as
   deslistadas, já existe (lago + `walk_forward_dinamico`). Na avaliação pré-registrada sem o viés
   (`docs/universo-dinamico-2026-10-18.txt`), o Kelly λ=2 teve Sharpe −0,31 em 5 anos e 0,36 em 10 (MDD −63%),
   e o núcleo Mín. Vol 70% + satélite Kelly 30% teve 0,35 em 10 anos com MDD −46%: ele virou o padrão da tela.
@@ -233,7 +233,12 @@ Portfolio-Optimization/
   +112% num dia em que o retorno total real foi +14,1%, cisão do Assaí). Medições publicadas antes disso
   usaram os dados do Yahoo.
 - **Sem vantagem comprovada sobre o BOVA11.** A última medição fora da amostra deu empate estatístico; use o
-  BOVA11 como núcleo e o otimizador, no máximo, como satélite pequeno.
+  BOVA11 como núcleo e o otimizador, no máximo, como satélite pequeno. Os horizontes de 5 e 10 anos terminam no
+  mesmo dia (são uma história só: ganho forte em 2016–2021, perda em 2021–2026); com tracking error de 16–19%,
+  provar o alfa contra o BOVA11 com PSR ≥ 0,95 pediria ~14–30 anos de histórico. A coluna P[> BOVA11] usa a média
+  aritmética dos retornos diários, não a riqueza final, e favorece as curvas mais voláteis.
+- **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago só em retorno mensal desde
+  2014: 20,1% a.a. × 12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18.
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo
   também usa o JCP bruto; o lago da B3 já desconta o IR retido na fonte (15% até 2025 e 17,5% desde
   01/01/2026, LC 224/2025).

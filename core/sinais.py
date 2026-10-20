@@ -11,12 +11,18 @@ próprio ``mes``) e ao walk-forward (decisão dentro do ``mes``, com o mês corr
 
 from __future__ import annotations
 
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 
 import pandas as pd
 
+from core.backtest import CarteiraRecusada, Estrategia
+from core.estimation import estimar_momentos
+from core.risco import LIMITES, Limites, checar_carteira, emissor
+
 MESES_DO_MOMENTUM = 11      # 12-1: do mês m-12 ao m-2; o m-1, o último fechado, fica de fora (reversão de curto prazo)
 MESES_DA_VOL = 36           # vol de 3 anos de retornos mensais (Blitz e van Vliet, 2018)
+NOMES = 15                  # papéis da carteira, pesos iguais (PLAN §5, S2: fixo no pré-registro)
+POR_SETOR = 4               # 4/15 = 26,7%, abaixo do teto de 30% por setor
 
 
 def _meses_antes(retornos_mensais: pd.DataFrame, mes: pd.Timestamp, meses: int, pulando: int = 0) -> pd.DataFrame:
@@ -71,3 +77,46 @@ def conservadora(retornos_mensais: pd.DataFrame, proventos: pd.DataFrame, mes: p
         grupo = medidas[metade]
         postos[grupo.index] = (grupo["dy"].rank(pct=True) + grupo["momentum"].rank(pct=True)) / 2.0
     return postos + menor_vol.astype(float)
+
+
+def carteira_da_nota(nota: pd.Series, setores: Mapping[str, str], nomes: int, por_setor: int) -> pd.Series:
+    """
+    Pesos iguais nos ``nomes`` papéis de maior nota, pulando: papel sem setor (a regra fixa SEM_SETOR), a 2ª classe
+    de um emissor já escolhido (fica a de nota maior) e o papel de um setor que já tem ``por_setor`` (com 15 nomes e
+    4 por setor, 26,7% < 30%, o teto de setor). Com menos candidatos que ``nomes``, pesos iguais nos que houver.
+    """
+    escolhidos: list[str] = []
+    emissores: set[str] = set()
+    contagem: dict[str, int] = {}
+    for papel in nota.sort_values(ascending=False, kind="stable").index:
+        setor = setores.get(papel)
+        if not setor or emissor(papel) in emissores or contagem.get(setor, 0) >= por_setor:
+            continue
+        escolhidos.append(papel)
+        emissores.add(emissor(papel))
+        contagem[setor] = contagem.get(setor, 0) + 1
+        if len(escolhidos) == nomes:
+            break
+    return pd.Series(1.0 / len(escolhidos), index=escolhidos) if escolhidos else pd.Series(dtype=float)
+
+
+def estrategia_conservadora(retornos_mensais: pd.DataFrame, proventos: pd.DataFrame, setores: Mapping[str, str],
+                            nomes: int = NOMES, por_setor: int = POR_SETOR, limites: Limites = LIMITES) -> Estrategia:
+    """
+    A Conservadora no motor de walk-forward: na decisão (último pregão do treino), a carteira da nota do mês dela,
+    que usa só os meses e proventos antes desse mês (o sinal do IC daquele mês), nos papéis que o motor deixa
+    elegíveis. A carteira passa por ``checar_carteira`` com a cov de Ledoit-Wolf do treino; violação =
+    ``CarteiraRecusada`` (o motor mantém a atual).
+    """
+    def _estrategia(treino: pd.DataFrame) -> pd.Series:
+        mes = treino.index[-1].to_period("M").to_timestamp()
+        pesos = carteira_da_nota(conservadora(retornos_mensais, proventos, mes, treino.columns), setores, nomes,
+                                 por_setor)
+        if pesos.empty:
+            raise ValueError(f"{treino.index[-1]:%Y-%m-%d}: nenhum papel elegível com a nota da Conservadora")
+        violacoes = checar_carteira(pesos, setores, estimar_momentos(treino[pesos.index], shrink_mu=False).cov,
+                                    limites)
+        if violacoes:
+            raise CarteiraRecusada(violacoes)
+        return pesos
+    return _estrategia

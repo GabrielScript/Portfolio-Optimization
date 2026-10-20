@@ -4,7 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.sinais import conservadora, dividend_yield_12m, momentum_12_1, volatilidade_36m
+from core.backtest import CarteiraRecusada
+from core.sinais import (carteira_da_nota, conservadora, dividend_yield_12m, estrategia_conservadora, momentum_12_1,
+                         volatilidade_36m)
 
 MESES = pd.date_range("2020-01-01", periods=40, freq="MS")     # o índice do monthly_total_returns: 1º dia do mês
 MES = MESES[-1]                                                  # sinal do mês 2023-04: só meses até 2023-03
@@ -85,3 +87,41 @@ def test_sinal_nao_muda_com_dados_depois_da_data():
     antes = conservadora(retornos.loc[:MES - pd.DateOffset(months=1)], proventos, MES, list("ABCDEFGH"))
     depois = conservadora(com_futuro, proventos_futuros, MES, list("ABCDEFGH"))
     pd.testing.assert_series_equal(antes, depois)
+
+
+def test_carteira_pega_as_maiores_notas_um_papel_por_emissor_e_ate_4_por_setor():
+    # 20 papéis com nota decrescente: ITUB4 perde para ITUB3 (mesmo emissor), o 5º do setor "Bancos" fica de fora e o
+    # papel sem setor não entra; os 15 primeiros que sobram levam 1/15 cada
+    outros = [f"O{chr(65 + i)}TR3" for i in range(13)]          # emissores distintos (as 4 primeiras letras)
+    papeis = ["ITUB3", "ITUB4", "BBAS3", "BBDC4", "SANB11", "BPAC11", "SEMS3", *outros]
+    nota = pd.Series(np.linspace(2.0, 1.0, len(papeis)), index=papeis)
+    setores = {papel: "Bancos" for papel in papeis[:6]} | {papel: f"Setor {i % 4}" for i, papel in enumerate(outros)}
+    pesos = carteira_da_nota(nota, setores, nomes=15, por_setor=4)
+    esperados = ["ITUB3", "BBAS3", "BBDC4", "SANB11", *outros[:11]]
+    assert (list(pesos.index), pesos.to_numpy().tolist()) == (esperados, [1.0 / 15] * 15)
+
+
+SETORES_DOS_8 = {papel: f"Setor {i}" for i, papel in enumerate("ABCDEFGH")}
+
+
+def _treino(desvio: float) -> pd.DataFrame:
+    """Retornos diários do motor até o meio do mês do sinal (a decisão cai num pregão qualquer do mês)."""
+    datas = pd.bdate_range(end=MES + pd.Timedelta(days=13), periods=300)
+    gerador = np.random.default_rng(5)
+    return pd.DataFrame(gerador.normal(0.0, desvio, (len(datas), 8)), index=datas, columns=list("ABCDEFGH"))
+
+
+def test_estrategia_no_motor_e_a_carteira_da_nota_do_mes_da_decisao():
+    # decisão em 13/04: o sinal é o de abril (meses até março), igual ao do IC daquele mês
+    retornos, proventos = _painel_de_8_papeis()
+    estrategia = estrategia_conservadora(retornos, proventos, SETORES_DOS_8, nomes=5, por_setor=4)
+    esperado = carteira_da_nota(conservadora(retornos, proventos, MES, list("ABCDEFGH")), SETORES_DOS_8, 5, 4)
+    pd.testing.assert_series_equal(estrategia(_treino(0.01)), esperado)
+
+
+def test_carteira_com_vol_ex_ante_acima_do_teto_e_recusada_pelas_regras():
+    # 8% ao dia em cada papel: 5 papéis com pesos iguais passam dos 40% ao ano da regra fixa; o motor mantém a atual
+    retornos, proventos = _painel_de_8_papeis()
+    estrategia = estrategia_conservadora(retornos, proventos, SETORES_DOS_8, nomes=5, por_setor=4)
+    with pytest.raises(CarteiraRecusada, match="vol"):
+        estrategia(_treino(0.08))

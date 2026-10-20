@@ -34,3 +34,4 @@ data,script,configuracao
 2026-10-20,avaliar_vol_alvo.py,"Trending Value com alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
 2026-10-20,avaliar_vol_alvo.py,"Conservadora com alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
 2026-10-20,avaliar_vol_alvo.py,"Kelly λ=2 com regras e alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
+2026-10-20,avaliar_views.py,"Kelly λ=2 com views de Black-Litterman (Conservadora e valor; Ω pelo IC ponto no tempo, δ = 2) e regras"

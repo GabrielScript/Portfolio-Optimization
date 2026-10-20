@@ -117,6 +117,6 @@ def test_estrategia_com_views_pede_a_nota_do_mes_da_decisao_e_puxa_o_peso_para_o
 
 
 def test_carteira_com_views_e_vol_acima_do_teto_e_recusada_pelas_regras():
-    # 8% ao dia em cada papel: qualquer carteira de 8 passa dos 40% ao ano; o otimizador cai no fallback e a regra recusa
+    # 8% ao dia em cada papel: qualquer carteira passa dos 40% ao ano; o otimizador cai no fallback e a regra recusa
     with pytest.raises(CarteiraRecusada):
         estrategia_com_views(KELLY, SETORES_DO_MOTOR, [], VALOR_DO_MOTOR)(_treino(0.08))

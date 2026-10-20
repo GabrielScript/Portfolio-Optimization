@@ -85,6 +85,12 @@ mesmas condições.
   matriz de distâncias (d~), e o app clusteriza a própria d. Com d~, o HRP empata (P[d~ > d] 0,50–0,71, retorno total
   até 2 p.p. menor nas fases 0 e 21) e o HRP-Árvore reprova (P 0,03–0,39): o app fica com a d. A opção do paper está
   em `core/hrp_paper.py`, fora dos caminhos vigiados do paper.
+- **Paired test, Núcleo Mín. Vol 70/30 + Kelly 30% vs HRP, BOVA11 and IVVB11** (descriptive, not counted in the DSR's
+  N; DECISOES 90): vs BOVA11 +8.6–8.9 p.p./yr and P 0.95–0.99 as a single test, but deflated for 32 trials 0.51–0.73,
+  60–68% of the excess from 2010–2014 and behind BOVA11 over the last 5 years; vs HRP P log 0.93–0.98 (≥ 0.95 only in
+  phase 0 under the conservative methods); vs IVVB11 (since 2014) −3 to −5 p.p./yr. Probable, not established; no
+  income-tax test and no paper trading. The screen's PSR/DSR test "beats the CDI", deflated only by the strategies on
+  screen.
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.

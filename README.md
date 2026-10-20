@@ -45,6 +45,11 @@ mesmas condições.
   chegou a P 0,95–0,96 no período inteiro, mas só por causa de 2010–2014 e com DSR abaixo de 0,95: não cumpre o
   critério de pronto. A janela de estimação de 10 anos não passou (P[R10 > R5] de 0,20 a 0,48). Detalhes no
   ROTEIRO §4.11.
+- **S2.1, Conservadora de Blitz e van Vliet** (`scripts/avaliar_conservadora.py`, pré-registrado; saída em
+  `docs/conservadora-2026-10-20.txt`): baixa vol + dividend yield + momentum 12−1, 15 nomes com pesos iguais. IC
+  mensal de 0,081 (t 5,9) em 2008–2026 e 0,059 em 1998–2007; no walk-forward 2010–2026, 16,3–17,3% a.a. contra
+  6,7–7,2% do BOVA11 e 13,0–14,3% do satélite Kelly, P[> BOVA11] 0,99 e DSR 0,80–0,88. Aprovada e candidata à prova
+  final, mas ainda sem IR, com DSR abaixo de 0,95 e sem paper trading: não cumpre o critério de pronto. ROTEIRO §4.7.
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -163,6 +168,7 @@ Portfolio-Optimization/
 │   ├── robustez.py           #   MinTRL, P[> referência] em log-retorno, janelas móveis
 │   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time (universo ponto no tempo, regras no motor)
 │   ├── poder.py              #   Poder dos portões do S2 por simulação (IC plantado no painel mensal)
+│   ├── sinais.py             #   Sinais do S2: Conservadora (vol 36m, DY 12m, momentum 12−1) e a carteira dela
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
@@ -178,6 +184,7 @@ Portfolio-Optimization/
 │   ├── avaliar_regras_no_motor.py    # Regras de risco no motor, pré-registrado (rodado)
 │   ├── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
 │   ├── avaliar_robustez.py           # Robustez 2010–2026 e janela de 10 anos, pré-registrado (rodado)
+│   ├── avaliar_conservadora.py       # S2.1, Conservadora de Blitz e van Vliet, pré-registrado (rodado)
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
@@ -186,6 +193,7 @@ Portfolio-Optimization/
 │   ├── regras-no-motor-2026-10-18.txt    # Saída das regras de risco no motor
 │   ├── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
 │   ├── robustez-2026-10-19.txt   # Saída do teste de robustez
+│   ├── conservadora-2026-10-20.txt  # Saída do S2.1 (Conservadora)
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/

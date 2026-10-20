@@ -283,6 +283,25 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 - [ ] Bancos e seguradoras com métricas próprias (não usar "receita" e "FCF" de empresa não financeira)
 - [ ] 10+ anos, pré-registro, custos; conferir contra os fatores NEFIN
 - [ ] Reescrever ou aposentar o Growth Score atual (P&D quase constante na B3, "TAM" sem evidência)
+- [x] **S2.1, Conservadora de Blitz e van Vliet (2018)** (`scripts/avaliar_conservadora.py`, pré-registrado; saída
+      em `docs/conservadora-2026-10-20.txt`): baixa vol de 36 meses + dividend yield de 12 meses + momentum 12−1, 15
+      nomes com pesos iguais, 1 por emissor, até 4 por setor. **Aprovada e candidata à prova final.**
+
+| 2010–2026, 3 fases (contra o BOVA11) | CAGR | MDD | IR | P aritmético (log) | DSR (N = 22) | MinTRL |
+|---|---|---|---|---|---|---|
+| Conservadora com regras | 16,3–17,3% | −40 a −42% | 0,58–0,63 | 0,99 (0,996–0,998) | 0,80–0,88 | 7–8 anos |
+| Kelly λ=2 com regras (o satélite) | 13,0–14,3% | −62 a −63% | 0,32–0,37 | 0,90–0,93 | 0,35–0,64 | 20–27 anos |
+| BOVA11 | 6,7–7,2% | −50% | — | — | — | — |
+
+- IC mensal da nota: 0,081 (t 5,9) de 2008 a 2026 e 0,059 (t 3,1) de 1998 a 2007, acima da expectativa registrada
+  (0,01–0,04); 2015–2019 é o trecho fraco (0,039, t 1,7). P[Conservadora > Kelly] 0,51–0,69; giro ~300% a.a.; 0
+  recusas.
+- Ainda não cumpre o item 1 do critério: DSR abaixo de 0,95, sem IR no teste e sem paper trading. Entra nas views do
+  S3 e na prova final.
+- Contas feitas depois da rodada (fora do pré-registro, não mudam a decisão): 1/N do universo elegível no mesmo
+  motor fez 8,95% (P 0,68), então o excesso não vem só de pesos iguais contra o Ibovespa; com 30 bps por lado, 16,6%
+  (P 0,988); cada componente sozinho tem IC de 0,06 a 0,07 (t 4,8–6,7), positivo também em 1998–2007. Setor: 97% das
+  deslistadas têm setor, contra 99% das vivas (9 papéis sem setor desde 2009).
 
 ### 4.8 S3: Black-Litterman com views
 

@@ -42,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Estrategia, ResultadoBacktest, walk_forward_dinamico  # noqa: E402
 from core.estimation import covariancia_ledoit_wolf  # noqa: E402
-from core.hierarchical import otimizar_hrp, otimizar_hrp_arvore  # noqa: E402
+from core.hrp_paper import otimizar_hrp_arvore_paper, otimizar_hrp_paper  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
 from core.robustez import psr_da_diferenca  # noqa: E402
 from scripts.avaliar_robustez import (FASES, _acoes, _tabela, carregar, contar_tentativas,  # noqa: E402
@@ -53,7 +53,9 @@ P_MINIMO = 0.50             # C1: P[d~ > d], aritmético
 PIORA_MAXIMA_MDD = 0.02     # C2: MDD com d~ no máximo 2 p.p. pior
 GIRO_MAXIMO = 1.25          # C3: giro anual com d~ <= 1,25x o com d
 _TOLERANCIA = 1e-9
-FAMILIAS = {"HRP": otimizar_hrp, "HRP-Árvore": otimizar_hrp_arvore}
+# o core.hierarchical está no caminho vigiado do paper-v1: a opção da distância vive no core.hrp_paper, que com
+# distancia="d" dá os mesmos pesos do core.hierarchical (tests/test_hrp_paper.py)
+FAMILIAS = {"HRP": otimizar_hrp_paper, "HRP-Árvore": otimizar_hrp_arvore_paper}
 DISTANCIAS = {"d": "d", "d~": "d_til"}
 
 

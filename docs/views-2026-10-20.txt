@@ -1,0 +1,36 @@
+CDI: BCB SGS 12, janela 2020-2029: Expecting value: line 1 column 1 (char 0) (Selic constante)
+Arquivos (sha256): {'universe_prices.parquet': 'f00869357593c6268b8997c9a668234a6f963c50993b636ea691c5737be4c811', 'universe_monthly.parquet': '2e1799cfea40d506e5f271ce7604ea342c008f01fd86d78a438f88524a268b0f', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': '32cd68c7f5e81dbcb9ae0ad9fba3d28717ae1b4130de9b1bcd902aa660fa0522', 'dividends.parquet': '083af1e9f0331a72b2cb671dd745dd257516f9776cf998d9e80fb8daade21e67', 'fundamentals.parquet': '3a9681ba6ebd9d11a87ccc2ef1532d538016fa9d0af4a1f0612680d4e6397e16', 'market_caps.parquet': 'a9cc0ad31b50939e4954ba78653969a019575b8e969f12480d84dfa950d4db35'}
+Manifest: {'generated_at': '2026-10-19T16:51:23', 'data_from': '1994-07-01', 'data_through': '2026-10-16'}; Selic meta 13,75% (BCB SGS 432); CDI indisponível; N do DSR = 30; preços desde 23/11/2006
+View Conservadora: entra em 01/2012; IC usado: 01/2012 0.062, 01/2015 0.068, 01/2020 0.061, 09/2026 0.074
+View Valor (Fórmula Mágica + Trending Value): entra em 03/2014; IC usado: 01/2012 nan, 01/2015 0.112, 01/2020 0.075, 09/2026 0.079
+(ICs prontos em 104 s)
+
+=== Fase 0: 1ª decisão 02/01/2012, fim 16/10/2026, 59 rebalanceios; adiados Kelly λ=2 com views 0, Kelly λ=2 com regras 1, Conservadora 0 ===
+                                                     CAGR      MDD Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly] P[> Conservadora]
+Kelly λ=2 com views (Black-Litterman) e regras     12,24%  -63,14%    245,67%       0      0  0.096  0.262        0.841  0.748  0.424        39.357      0.551             0.343
+Kelly λ=2 com regras                               12,32%  -62,89%    213,15%       0      0  0.080  0.179        0.752  0.714  0.305        84.590          —                 —
+Conservadora (15 nomes, pesos iguais, com regras)  16,94%  -41,15%    301,29%       0      0  0.243  0.472        0.963  0.982  0.727        12.323          —                 —
+IVVB11                                             21,06%  -30,71%      6,87%       0      0      —      —            —      —      —             —          —                 —
+BOVA11                                              9,22%  -46,93%      6,87%       0      0      —      —            —      —      —             —          —                 —
+(fase 0 pronta em 148 s)
+
+=== Fase 21: 1ª decisão 01/02/2012, fim 16/10/2026, 58 rebalanceios; adiados Kelly λ=2 com views 0, Kelly λ=2 com regras 0, Conservadora 0 ===
+                                                     CAGR      MDD Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly] P[> Conservadora]
+Kelly λ=2 com views (Black-Litterman) e regras     14,43%  -62,54%    244,63%       0      0  0.164  0.428        0.948  0.903  0.647        14.811      0.561             0.383
+Kelly λ=2 com regras                               14,42%  -61,48%    210,91%       0      0  0.151  0.312        0.883  0.863  0.476        27.735          —                 —
+Conservadora (15 nomes, pesos iguais, com regras)  18,53%  -40,71%    300,80%       0      0  0.314  0.626        0.991  0.996  0.869         7.028          —                 —
+IVVB11                                             21,06%  -30,71%      6,91%       0      0      —      —            —      —      —             —          —                 —
+BOVA11                                              8,48%  -46,93%      6,91%       0      0      —      —            —      —      —             —          —                 —
+(fase 21 pronta em 185 s)
+
+=== Fase 42: 1ª decisão 05/03/2012, fim 16/10/2026, 58 rebalanceios; adiados Kelly λ=2 com views 0, Kelly λ=2 com regras 0, Conservadora 0 ===
+                                                     CAGR      MDD Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly] P[> Conservadora]
+Kelly λ=2 com views (Black-Litterman) e regras     10,74%  -60,91%    257,11%       0      0  0.049  0.245        0.823  0.727  0.330        45.242      0.464             0.252
+Kelly λ=2 com regras                               12,15%  -62,44%    221,21%       0      0  0.074  0.230        0.808  0.775  0.310        51.214          —                 —
+Conservadora (15 nomes, pesos iguais, com regras)  16,72%  -41,15%    312,01%       0      0  0.232  0.538        0.979  0.990  0.748         9.492          —                 —
+IVVB11                                             21,06%  -30,71%      6,95%       0      0      —      —            —      —      —             —          —                 —
+BOVA11                                              8,00%  -46,93%      6,95%       0      0      —      —            —      —      —             —          —                 —
+(fase 42 pronta em 229 s)
+
+Kelly λ=2 com views (Black-Litterman) e regras: candidata à prova final (P[> BOVA11] >= 0,95 nas 3 fases): não
+(tempo total 229 s)

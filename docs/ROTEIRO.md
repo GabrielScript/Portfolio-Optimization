@@ -330,7 +330,22 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 
 ### 4.8 S3: Black-Litterman com views
 
-- [ ] Views dos sinais aprovados no S2, confiança Ω pelo IC histórico de cada sinal
+- [x] Views dos sinais aprovados no S2, confiança Ω pelo IC histórico de cada sinal (`scripts/avaliar_views.py`,
+      pré-registrado; módulo `core/views.py`; saída em `docs/views-2026-10-20.txt`): prior Π = 2Σw de mercado, views
+      da Conservadora e do valor (Fórmula Mágica + Trending Value) com Q = Π + σz e Ω = τσ²(1 − IC)/IC (o peso da view
+      é o IC ponto no tempo, 36 meses ou mais), o otimizador do Kelly atual. **Não candidata à prova final.**
+
+| 2012–2026, 3 fases (contra o BOVA11) | CAGR | MDD | IR | P aritmético (log) | DSR (N = 30) | P[> Kelly] | P[> Conservadora] |
+|---|---|---|---|---|---|---|---|
+| Kelly com views | 10,7–14,4% | −61 a −63% | 0,25–0,43 | 0,82–0,95 (0,73–0,90) | 0,33–0,65 | 0,46–0,56 | 0,25–0,38 |
+| Kelly λ=2 com regras | 12,2–14,4% | −61 a −63% | 0,18–0,31 | 0,75–0,88 | 0,31–0,48 | — | — |
+| Conservadora com regras | 16,7–18,5% | −41% | 0,47–0,63 | 0,96–0,99 | 0,73–0,87 | — | — |
+
+- As views mexem nos pesos (IR um pouco maior que o do Kelly, giro de 245–257% contra 211–221%), mas o retorno fica
+  o do Kelly: com no máximo 10 papéis e 20% por papel, o otimizador concentra do mesmo jeito, e o MDD continua em
+  −61 a −63%. A view do valor entrou em 03/2014; o IC usado ficou entre 0,06 e 0,11.
+- O CDI do BCB não respondeu nesta rodada: o Sharpe saiu com a Selic meta constante (13,75%), não comparável ao das
+  outras saídas; P[> BOVA11], IR e DSR não dependem da taxa livre.
 - [ ] Opcional: Plano B macro (views de setor por juros, câmbio e commodities)
 
 ### 4.9 S4: execução realista

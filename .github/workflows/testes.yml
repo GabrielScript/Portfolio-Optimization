@@ -1,0 +1,34 @@
+# Suíte do app a cada push e pull request, sem os testes da tela inteira (tests/test_app.py: ~40 s cada, rodam no PC).
+# Windows + Python 3.12 = o PC que roda o paper trading e o vigia; Linux + Python 3.13 = o Streamlit Cloud.
+name: testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            python: "3.12"
+          - os: ubuntu-latest
+            python: "3.13"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+      - name: Dependências travadas
+        run: python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: pytest
+        run: python -X utf8 -m pytest -q --ignore=tests/test_app.py

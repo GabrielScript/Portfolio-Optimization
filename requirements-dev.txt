@@ -1,0 +1,6 @@
+# Só para os testes (PC e CI); o Streamlit Cloud instala só o requirements.txt. Versões do .venv onde a suíte passou.
+-c requirements.txt
+pytest==9.1.1
+iniconfig==2.3.1
+pluggy==1.6.0
+colorama==0.4.6 ; sys_platform == "win32"

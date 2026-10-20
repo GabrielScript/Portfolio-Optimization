@@ -70,3 +70,19 @@ def test_a_lake_file_that_starts_after_the_window_is_not_used(tmp_path):
     path = lake_file(tmp_path, ["2026-10-15", "2026-10-16", "2026-10-19"])
     cdi = daily_cdi(1, TODAY, path, fetch_tail=no_network, download_all=live)
     assert cdi.to_dict() == {pd.Timestamp("2026-10-19"): 0.0005}
+
+
+@pytest.mark.parametrize("content", [b"", b"PAR1 cut off mid-copy"])
+def test_an_unreadable_lake_file_falls_back_to_the_bcb(tmp_path, content):
+    # the nightly publish rewrites the file in place: a page load during the copy sees it empty or torn
+    path = tmp_path / "cdi_daily.parquet"
+    path.write_bytes(content)
+    cdi = daily_cdi(1, TODAY, path, fetch_tail=no_network, download_all=live)
+    assert cdi.to_dict() == {pd.Timestamp("2026-10-19"): 0.0005}
+
+
+def test_a_lake_file_with_other_columns_falls_back_to_the_bcb(tmp_path):
+    path = tmp_path / "cdi_daily.parquet"
+    pd.DataFrame({"date": pd.to_datetime(["2026-10-19"]).date, "rate": 0.05}).to_parquet(path)
+    cdi = daily_cdi(1, TODAY, path, fetch_tail=no_network, download_all=live)
+    assert cdi.to_dict() == {pd.Timestamp("2026-10-19"): 0.0005}

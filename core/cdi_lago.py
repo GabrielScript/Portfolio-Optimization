@@ -39,14 +39,17 @@ def daily_cdi(years: int, today: date, path: Path | None = None,
     """
     CDI in decimal per day from the lake file, in date order. The CDI of a day comes out on the next one, so the
     lake is current when it has the last weekday before ``today``; otherwise the BCB is asked for the days after it.
-    Without the lake file, the whole window from the BCB as before (``download_all``, which raises
-    ``market_data.ErroDadosMercado``).
+    Without a usable lake file (missing, torn, another schema, or starting after the window), the whole window from
+    the BCB as before (``download_all``, which raises ``market_data.ErroDadosMercado``).
     """
     try:
         table = pd.read_parquet(path or LAKE_CDI_FILE)
+        cdi = pd.Series(table["cdi_pct"].to_numpy() / 100.0, index=pd.to_datetime(table["date"]), name="cdi_diario")
     except FileNotFoundError:
         return download_all(years, today)
-    cdi = pd.Series(table["cdi_pct"].to_numpy() / 100.0, index=pd.to_datetime(table["date"]), name="cdi_diario")
+    except (OSError, ValueError, KeyError) as error:  # torn mid-copy, or another schema (ArrowInvalid: ValueError)
+        logger.warning("Lake CDI file unusable (%s); downloading the window from the BCB.", error)
+        return download_all(years, today)
     cdi = cdi.sort_index()
     start = pd.Timestamp(_window_start(years, today))
     if cdi.empty or cdi.index[0] > start + pd.Timedelta(days=_START_SLACK_DAYS):

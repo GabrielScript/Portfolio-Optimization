@@ -119,8 +119,9 @@ def test_relatorio_traz_as_recusas_da_leitura(arquivo_precos, tmp_path, monkeypa
 
 
 def _git(raiz: Path, *argumentos: str) -> str:
+    # UTF-8 explícito, como o _git da rotina: fora do modo UTF-8 o Windows leria o "ó" de "código" em cp1252
     return subprocess.run(["git", "-C", str(raiz), *argumentos], check=True, capture_output=True,
-                          text=True).stdout.strip()
+                          text=True, encoding="utf-8").stdout.strip()
 
 
 @pytest.fixture

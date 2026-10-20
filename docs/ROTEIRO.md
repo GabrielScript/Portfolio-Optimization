@@ -364,6 +364,11 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 - [x] Carteira registrada a cada rebalanceio, com data e preço, sem ajuste retroativo (`paper/carteiras.csv`, rotina
       `scripts/paper_trading.py` agendada de segunda a sexta às 8h30)
 - [ ] 6 a 12 meses; comparar com BOVA11 e CDI pelo critério da seção 2 (leituras fixas de 126 e 252 pregões)
+- [x] Paper-v2 da Conservadora, aprovada na prova final (§4.14): `scripts/paper_v2.py`, pré-registrado, registro em
+      `paper-v2/carteiras.csv`, separado do paper-v1. A decisão é a do motor (conferida contra ele); no dia devido a
+      rotina roda o `universe` do lago. Leituras em 126 e 252 pregões com custo e IR de R$ 10 mil contra o BOVA11
+      depois do IR (`--leitura`).
+- [ ] Agendar a rotina do paper-v2 (de segunda a sexta, depois da das 8h30): **espera o seu OK**
 
 ### 4.11 Robustez fora da amostra (PLAN §11, passo 3): descritivo, o critério não muda
 

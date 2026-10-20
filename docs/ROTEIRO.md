@@ -273,8 +273,10 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 
 ### 4.6 S1-F: fundamentos point-in-time
 
-- [ ] Demonstrações da CVM (DFP + ITR) com **data de entrega** (sem look-ahead)
-- [ ] Permite pôr indicadores contábeis no walk-forward pela primeira vez
+- [x] Demonstrações da CVM (DFP + ITR desde 2010) com **data de entrega** (sem look-ahead), fluxos em 12 meses e
+      valor de mercado com a contagem de ações da composição do capital (2020+) e do FRE (antes): lago `b3-datalake`
+      `72f06c1`, comando `fundamentals`; cópia fixada em `docs/dados/2026-10-20-cvm/`
+- [x] Permite pôr indicadores contábeis no walk-forward pela primeira vez (S2.2 e S2.3, §4.7)
 
 ### 4.7 S2: laboratório de sinais (onde pode nascer o alfa)
 
@@ -302,6 +304,29 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
   motor fez 8,95% (P 0,68), então o excesso não vem só de pesos iguais contra o Ibovespa; com 30 bps por lado, 16,6%
   (P 0,988); cada componente sozinho tem IC de 0,06 a 0,07 (t 4,8–6,7), positivo também em 1998–2007. Setor: 97% das
   deslistadas têm setor, contra 99% das vivas (9 papéis sem setor desde 2009).
+
+- [x] **S2.2 e S2.3, Fórmula Mágica de Greenblatt e Trending Value de O'Shaughnessy** (`scripts/avaliar_valor.py`,
+      pré-registrado; saída em `docs/valor-2026-10-20.txt`): EBIT/EV + EBIT/capital empregado; 6 rendimentos de
+      valor, os 30% mais baratos e o momentum de 6 meses dentro deles; 15 nomes com pesos iguais, sem Financeiro.
+      **As duas aprovadas como sinal; nenhuma candidata à prova final.**
+
+| 2012–2026, 3 fases (contra o BOVA11) | CAGR | MDD | IR | P aritmético (log) | DSR (N = 25) | P[> Conservadora] |
+|---|---|---|---|---|---|---|
+| Fórmula Mágica com regras | 10,2–12,1% | −53 a −55% | 0,06–0,27 | 0,59–0,85 (0,60–0,85) | 0,14–0,46 | 0,05–0,17 |
+| Trending Value com regras | 11,1–13,5% | −52 a −57% | 0,17–0,27 | 0,75–0,85 (0,75–0,86) | 0,18–0,40 | 0,04–0,25 |
+| Conservadora com regras (mesmas datas) | 16,7–18,5% | −41% | 0,47–0,63 | 0,96–0,99 (0,98–0,996) | 0,68–0,82 | — |
+| Kelly λ=2 com regras (o satélite) | 12,2–14,4% | −61 a −63% | 0,18–0,31 | 0,75–0,88 | 0,26–0,40 | — |
+| BOVA11 | 8,0–9,2% | −47% | — | — | — | — |
+
+- IC mensal de 0,059 nas duas (t 5,4 na Fórmula Mágica e 5,5 no Trending Value), positivo nos três subperíodos
+  (o mais fraco: Fórmula Mágica em 2017–2021, 0,037, t 1,9), acima da expectativa registrada (0,00–0,04; a
+  expectativa de que uma das duas reprovasse errou). Com ~120 papéis com nota por mês, o sinal ordena bem o
+  universo, mas a carteira de 15 nomes a cada 63 pregões captura menos que a Conservadora: MDD maior, giro de
+  260–400% a.a. e P[> Kelly] 0,23–0,52. 0 recusas e 0 falhas.
+- Entram como views do S3 (com a Conservadora) e nas provas seguintes como sinal, não como carteira própria.
+- Conta feita depois da rodada (fora do pré-registro, não muda a decisão): o IC não vem da reversão de curto prazo
+  pelo preço de m-1. Com o valor de mercado do fechamento de m-2, 0,061 (Fórmula Mágica) e 0,060 (Trending Value);
+  o retorno de m-1 com sinal trocado tem IC de −0,033 aqui (a B3 tem continuação, não reversão, de 1 mês).
 
 ### 4.8 S3: Black-Litterman com views
 

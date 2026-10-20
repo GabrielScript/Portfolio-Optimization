@@ -32,8 +32,10 @@ def test_tentativas_contam_as_linhas_sem_os_comentarios(tmp_path):
     assert contar_tentativas(arquivo) == 2
 
 
-def test_tentativas_do_pre_registro_sao_21():
-    assert contar_tentativas(ARQUIVO_TENTATIVAS) == 21
+def test_tentativas_ate_o_pre_registro_da_robustez_sao_21():
+    # o arquivo só ganha linhas: as de até 19/10/2026 são as 21 que a rodada do passo 3 contou no N
+    tentativas = pd.read_csv(ARQUIVO_TENTATIVAS, comment="#")
+    assert int((tentativas["data"] <= "2026-10-19").sum()) == 21
 
 
 DATAS = pd.bdate_range("2024-01-01", periods=10)

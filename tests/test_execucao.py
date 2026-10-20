@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.backtest import ResultadoBacktest, retornos_da_carteira, walk_forward_dinamico
+from core.backtest import (ResultadoBacktest, estrategia_buy_and_hold_ativo, retornos_da_carteira, walk_forward,
+                           walk_forward_dinamico)
 from core.config import ConfigBacktest
 from core.execucao import SEM_CUSTOS, Custos, Liquidez, custo_da_ordem, refazer
 
@@ -34,6 +35,18 @@ def test_sem_custo_e_sem_ir_a_curva_refeita_e_a_do_motor():
     refeita = refazer(resultado, retornos, capital=100.0, custos=SEM_CUSTOS, com_ir=False)
     assert len(resultado.pesos_alvo) == 7
     pd.testing.assert_series_equal(refeita.valores, resultado.valores, check_names=False, rtol=1e-10)
+
+
+def test_o_buy_and_hold_das_referencias_tambem_e_refeito_sem_diferenca():
+    # as referências vêm do ``walk_forward`` (amostra comum), não do dinâmico: mesma convenção de pesos_alvo
+    datas = pd.bdate_range("2020-01-01", periods=150)
+    precos = pd.DataFrame({"BOVA11": 100 * np.cumprod(1 + np.random.default_rng(3).normal(0.0004, 0.015, 150)),
+                           "IVVB11": 100.0}, index=datas)
+    retornos = retornos_da_carteira(precos)
+    cfg = ConfigBacktest(janela_treino=60, janela_teste=21, capital_inicial=100.0, custo_bps=0.0)
+    curva = walk_forward(retornos, estrategia_buy_and_hold_ativo("BOVA11"), cfg, "BOVA11")
+    refeita = refazer(curva, retornos, capital=100.0, com_ir=False)
+    pd.testing.assert_series_equal(refeita.valores, curva.valores, check_names=False, rtol=1e-10)
 
 
 def test_custo_da_ordem_e_emolumentos_meio_spread_e_impacto_pela_raiz_do_tamanho():

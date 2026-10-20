@@ -6,7 +6,7 @@ import pytest
 
 from core.backtest import CarteiraRecusada
 from core.sinais import (carteira_da_nota, conservadora, dividend_yield_12m, estrategia_conservadora, momentum_12_1,
-                         volatilidade_36m)
+                         painel_de_notas, volatilidade_36m)
 
 MESES = pd.date_range("2020-01-01", periods=40, freq="MS")     # o índice do monthly_total_returns: 1º dia do mês
 MES = MESES[-1]                                                  # sinal do mês 2023-04: só meses até 2023-03
@@ -125,3 +125,15 @@ def test_carteira_com_vol_ex_ante_acima_do_teto_e_recusada_pelas_regras():
     estrategia = estrategia_conservadora(retornos, proventos, SETORES_DOS_8, nomes=5, por_setor=4)
     with pytest.raises(CarteiraRecusada, match="vol"):
         estrategia(_treino(0.08))
+
+
+def test_painel_de_notas_tem_a_nota_de_cada_mes_nos_papeis_do_universo_daquele_mes():
+    # o universo ponto no tempo do lago: em cada mês só os papéis elegíveis nele têm nota
+    retornos, proventos = _painel_de_8_papeis()
+    meses = MESES[-2:]
+    universo = pd.DataFrame({"month": [meses[0].date()] * 8 + [meses[1].date()] * 5,
+                             "security": list("ABCDEFGH") + list("ABCEF")})
+    painel = painel_de_notas(retornos, proventos, universo, meses)
+    pd.testing.assert_series_equal(painel.loc[meses[1]].dropna(), conservadora(retornos, proventos, meses[1],
+                                                                              list("ABCEF")), check_names=False)
+    assert painel.loc[meses[0]].notna().sum() == 8

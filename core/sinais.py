@@ -120,3 +120,12 @@ def estrategia_conservadora(retornos_mensais: pd.DataFrame, proventos: pd.DataFr
             raise CarteiraRecusada(violacoes)
         return pesos
     return _estrategia
+
+
+def painel_de_notas(retornos_mensais: pd.DataFrame, proventos: pd.DataFrame, universo: pd.DataFrame,
+                    meses: Iterable[pd.Timestamp]) -> pd.DataFrame:
+    """A nota da Conservadora de cada mês (linha) nos papéis do universo ponto no tempo daquele mês (``universo``:
+    ``month``, ``security``, como o ``universe_monthly`` do lago); vazio fora do universo ou sem histórico."""
+    elegiveis = universo["security"].groupby(pd.to_datetime(universo["month"])).apply(list)
+    notas = {mes: conservadora(retornos_mensais, proventos, mes, elegiveis.get(mes, [])) for mes in meses}
+    return pd.DataFrame(notas).T.reindex(columns=retornos_mensais.columns)

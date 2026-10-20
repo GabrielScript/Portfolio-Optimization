@@ -5,13 +5,14 @@ Windows quando não.
 
 .DESCRIPTION
 Lê o runs.csv do lago (%LOCALAPPDATA%\b3lake, formato do b3lake) e o do paper (%LOCALAPPDATA%\paper-trading,
-formato do anotar da rotina) e o state.json do lago. Problemas: rotina sem linha hoje; última rodada de hoje do lago
-"failed" ou "missing_overdue"; última de hoje do paper "falhou", "bloqueada" ou "lago rodando"; paper decidido num
-fechamento mais velho que o último que o lago já tem. Tarefa "paper vigia", seg-sex 12h. Antes de conferir, espera
-as rotinas que estiverem rodando: com o PC ligado depois do horário, as tarefas atrasadas rodam juntas.
+formato do anotar da rotina). Problemas: rotina sem linha hoje; última rodada de hoje do lago "failed" ou
+"missing_overdue"; última de hoje do paper "falhou", "bloqueada" ou "lago rodando"; paper decidido num fechamento
+mais velho que o que o lago já tinha publicado quando o paper rodou. Tarefa "paper vigia", seg-sex 12h. Antes de
+conferir, espera as rotinas que estiverem rodando: com o PC ligado depois do horário, as tarefas atrasadas rodam
+juntas.
 
 .EXAMPLE
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar -SemEspera
 #>
 param(
     [string]$Hoje = (Get-Date -Format 'yyyy-MM-dd'),
@@ -22,11 +23,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-[Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
 $RotinasVigiadas = @('b3lake daily', 'paper trading')
 $EsperaMaxima = [TimeSpan]::FromMinutes(45)
 $FalhasDoLago = @('failed', 'missing_overdue')
+$ProntosDoLago = @('done', 'up_to_date')
 $FalhasDoPaper = @('falhou', 'bloqueada', 'lago rodando')
 $AppDoPowerShell = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
@@ -47,13 +48,7 @@ function Ler-Rodadas([string]$Arquivo) {
     return @(Import-Csv -LiteralPath $Arquivo -Encoding UTF8)
 }
 
-function Ler-UltimoDoLago([string]$Pasta) {
-    $estado = Join-Path $Pasta 'state.json'
-    if (-not (Test-Path -LiteralPath $estado)) { return $null }
-    return (Get-Content -LiteralPath $estado -Raw -Encoding UTF8 | ConvertFrom-Json).last_done
-}
-
-function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [string]$UltimoDoLago) {
+function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper) {
     $problemas = New-Object System.Collections.Generic.List[string]
     $lagoHoje = @($DoLago | Where-Object { "$($_.started)".StartsWith($Dia) })
     if ($lagoHoje.Count -eq 0) {
@@ -67,14 +62,18 @@ function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [s
     } elseif ($FalhasDoPaper -contains $paperHoje[-1].desfecho) {
         $problemas.Add("paper trading: $($paperHoje[-1].desfecho) ($($paperHoje[-1].nota))")
     }
-    if (-not $UltimoDoLago) {
-        $problemas.Add('lago: sem o state.json (último fechamento desconhecido)')
-        return $problemas
-    }
+    if ($paperHoje.Count -eq 0) { return $problemas }
+    # o fechamento que o paper podia ver: o maior "expected" das rodadas certas do lago que começaram antes da rodada
+    # de hoje do paper (o state.json não serve: depois das 21h45 ele já tem o fechamento de hoje)
+    $inicioDoPaper = "$($paperHoje[-1].inicio)"
+    $publicados = @($DoLago | Where-Object { $ProntosDoLago -contains $_.outcome -and "$($_.started)" -lt $inicioDoPaper } |
+                    ForEach-Object { "$($_.expected)" } | Sort-Object)
+    if ($publicados.Count -eq 0) { return $problemas }
+    $doLago = $publicados[-1]
     $fechamentos = @($DoPaper | ForEach-Object { "$($_.fechamento)" } | Where-Object { $_ } | Sort-Object)
     $ultimoDoPaper = if ($fechamentos.Count -gt 0) { $fechamentos[-1] } else { $null }
-    if (-not $ultimoDoPaper -or $ultimoDoPaper -lt $UltimoDoLago) {
-        $problemas.Add("paper trading: último fechamento decidido $ultimoDoPaper, o lago já tem o de $UltimoDoLago")
+    if (-not $ultimoDoPaper -or $ultimoDoPaper -lt $doLago) {
+        $problemas.Add("paper trading: último fechamento decidido $ultimoDoPaper, o lago já tem o de $doLago")
     }
     return $problemas
 }
@@ -100,10 +99,12 @@ function Anotar([string]$Pasta, [string]$Texto) {
 }
 
 try {
+    # sem console (tarefa agendada escondida) o setter pode falhar: a saída só importa no -SoMostrar
+    try { [Console]::OutputEncoding = [System.Text.Encoding]::UTF8 } catch { }
     if (-not $SemEspera) { Esperar-Rotinas }
     $doLago = Ler-Rodadas (Join-Path $PastaLago 'runs.csv')
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
-    $problemas = @(Problemas-DoDia $Hoje $doLago $doPaper (Ler-UltimoDoLago $PastaLago))
+    $problemas = @(Problemas-DoDia $Hoje $doLago $doPaper)
     $texto = $problemas -join '; '
     if ($SoMostrar) {
         if ($problemas.Count -eq 0) { 'vigia: tudo em dia' } else { $problemas | ForEach-Object { "vigia: $_" } }

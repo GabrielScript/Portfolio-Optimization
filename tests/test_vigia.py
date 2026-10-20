@@ -1,6 +1,5 @@
-"""Vigia das 12h (``scripts/vigia.ps1``): lê o runs.csv do lago e do paper e o estado do lago, e diz o que está errado."""
+"""Vigia das 12h (``scripts/vigia.ps1``): lê o runs.csv do lago e o do paper e diz o que está errado."""
 
-import json
 import subprocess
 import sys
 from pathlib import Path
@@ -13,15 +12,13 @@ VIGIA = Path(__file__).resolve().parent.parent / "scripts" / "vigia.ps1"
 HOJE = "2026-10-20"
 
 
-def _pastas(tmp_path, lago: list[str], paper: list[str], ultimo_do_lago: str = "2026-10-19") -> tuple[Path, Path]:
-    """runs.csv do lago (formato do b3lake) e do paper (formato do ``anotar``) e o state.json do lago."""
+def _pastas(tmp_path, lago: list[str], paper: list[str]) -> tuple[Path, Path]:
+    """runs.csv do lago (formato do b3lake) e do paper (formato do ``anotar``)."""
     pasta_lago, pasta_paper = tmp_path / "b3lake", tmp_path / "paper-trading"
     for pasta, cabecalho, linhas in ((pasta_lago, "started,finished,expected,outcome,detail", lago),
                                      (pasta_paper, "inicio,fim,fechamento,desfecho,nota", paper)):
         pasta.mkdir()
         (pasta / "runs.csv").write_text("\n".join([cabecalho, *linhas]) + "\n", encoding="utf-8")
-    (pasta_lago / "state.json").write_text(json.dumps({"last_done": ultimo_do_lago, "last_alert": None}),
-                                           encoding="utf-8")
     return pasta_lago, pasta_paper
 
 
@@ -70,6 +67,14 @@ def test_lago_sem_rodada_hoje_avisa(tmp_path):
 def test_paper_decidido_num_fechamento_mais_velho_que_o_do_lago_avisa(tmp_path):
     # a rotina rodou e "aguardou", mas o lago já publicou o fechamento de 19/10 e ela decidiu no de 16/10
     atrasado = "2026-10-20T08:30:05,2026-10-20T08:30:31,2026-10-16,aguardar,"
-    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [atrasado], ultimo_do_lago="2026-10-19"))
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [atrasado]))
     assert saida.stdout.strip() == (
         "vigia: paper trading: último fechamento decidido 2026-10-16, o lago já tem o de 2026-10-19"), saida.stderr
+
+
+def test_vigia_atrasado_a_noite_nao_cobra_o_fechamento_que_o_lago_publicou_depois_do_paper(tmp_path):
+    # PC desligado às 12h e ligado às 22h: o lago das 21h45 já tem o fechamento de hoje, mas o paper das 8h30 só
+    # podia decidir no de ontem (o que o lago tinha às 8h00)
+    noite = "2026-10-20T21:45:02,2026-10-20T22:05:40,2026-10-20,done,new zip: [2026]"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE, noite], [PAPER_HOJE]))
+    assert (saida.returncode, saida.stdout.strip()) == (0, "vigia: tudo em dia"), saida.stderr

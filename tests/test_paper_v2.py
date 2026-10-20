@@ -151,3 +151,15 @@ def test_a_leitura_refaz_o_registro_e_o_bova11_nos_valores_de_saida():
     assert list(medidas.index) == [CONSERVADORA, "BOVA11"]
     assert 0.0 < medidas.loc[CONSERVADORA, "P aritmético"] < 1.0
     assert medidas.loc["BOVA11", "IR na saída (R$)"] > 0.0 or precos["BOVA11"].iloc[-1] <= precos["BOVA11"].iloc[0]
+
+
+def test_atualizar_universo_chama_o_python_do_venv_do_lago_e_nao_o_uv(monkeypatch, tmp_path):
+    # a tarefa agendada roda com o PATH do sistema, onde o uv (em ~/.local/bin) não está
+    import subprocess
+
+    from scripts.paper_v2 import atualizar_universo
+    chamadas = []
+    monkeypatch.setattr(subprocess, "run", lambda comando, **opcoes: chamadas.append((comando, opcoes["cwd"])))
+    atualizar_universo(tmp_path)
+    assert chamadas == [([str(tmp_path / ".venv" / "Scripts" / "python.exe"), "-m", "b3lake.cli", "universe"],
+                         tmp_path)]

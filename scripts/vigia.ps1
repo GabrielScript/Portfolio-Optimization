@@ -19,13 +19,14 @@ param(
     [string]$Agora = (Get-Date -Format 's'),
     [string]$PastaLago = (Join-Path $env:LOCALAPPDATA 'b3lake'),
     [string]$PastaPaper = (Join-Path $env:LOCALAPPDATA 'paper-trading'),
+    [string]$PastaPaperV2 = (Join-Path $env:LOCALAPPDATA 'paper-v2'),
     [switch]$SoMostrar,     # escreve os problemas na saída em vez de avisar no Windows (teste e conferência à mão)
     [switch]$SemEspera      # não espera as rotinas que estiverem rodando (teste)
 )
 
 $ErrorActionPreference = 'Stop'
 
-$RotinasVigiadas = @('b3lake daily', 'paper trading')
+$RotinasVigiadas = @('b3lake daily', 'paper trading', 'paper v2')
 $EsperaMaxima = [TimeSpan]::FromMinutes(45)
 $FalhasDoLago = @('failed', 'missing_overdue')
 $ProntosDoLago = @('done', 'up_to_date')
@@ -62,8 +63,15 @@ function Ler-Rodadas([string]$Arquivo) {
     return @(Import-Csv -LiteralPath $Arquivo -Encoding UTF8)
 }
 
-function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper) {
+function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2) {
     $problemas = New-Object System.Collections.Generic.List[string]
+    # paper-v2: só rodou e não falhou (o fechamento vem do mesmo precos_diarios do paper, conferido abaixo)
+    $v2Hoje = @($DoPaperV2 | Where-Object { "$($_.quando)".StartsWith($Dia) })
+    if ($v2Hoje.Count -eq 0) {
+        $problemas.Add('paper v2: nenhuma rodada hoje (tarefa "paper v2")')
+    } elseif ($FalhasDoPaper -contains $v2Hoje[-1].desfecho) {
+        $problemas.Add("paper v2: $($v2Hoje[-1].desfecho) ($($v2Hoje[-1].nota))")
+    }
     $lagoHoje = @($DoLago | Where-Object { "$($_.started)".StartsWith($Dia) })
     if ($lagoHoje.Count -eq 0) {
         $problemas.Add('lago: nenhuma rodada hoje (tarefa "b3lake daily")')
@@ -119,8 +127,9 @@ try {
     if (-not $SemEspera) { Esperar-Rotinas }
     $doLago = Ler-Rodadas (Join-Path $PastaLago 'runs.csv')
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
+    $doPaperV2 = Ler-Rodadas (Join-Path $PastaPaperV2 'runs.csv')
     $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
-    $problemas = @(Problemas-DoDia $dia $doLago $doPaper)
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2)
     $texto = $problemas -join '; '
     if ($SoMostrar) {
         if ($problemas.Count -eq 0) { 'vigia: tudo em dia' } else { $problemas | ForEach-Object { "vigia: $_" } }

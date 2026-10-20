@@ -67,3 +67,17 @@ def test_runs_csv_travado_fica_registrado_no_log_do_lancador(checkout, tmp_path)
     logs = list((local / "paper-trading" / "logs").glob("*-lancador.log"))
     texto = logs[0].read_text(encoding="utf-8")
     assert (saida.returncode, saida.stderr, "pandas quebrado" in texto, "runs.csv" in texto) == (1, "", True, True)
+
+
+def test_paper_v2_que_falha_na_importacao_vira_linha_falhou_no_runs_csv_dele(checkout, tmp_path):
+    # a tarefa "paper v2" chama o lançador com "paper_v2": a falha vai para a pasta e o cabeçalho do paper-v2
+    local = tmp_path / "local"
+    (checkout / "scripts" / "paper_v2.py").write_text("raise ImportError('arch quebrado')\n", encoding="utf-8")
+    ambiente = {**os.environ, "LOCALAPPDATA": str(local)}
+    saida = subprocess.run([sys.executable, "-X", "utf8", str(checkout / "scripts" / "rodar_paper.py"), "paper_v2"],
+                           env=ambiente, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    with (local / "paper-v2" / "runs.csv").open(encoding="utf-8", newline="") as entrada:
+        linhas = list(csv.DictReader(entrada))
+    assert (saida.returncode, len(linhas), list(linhas[0])) == (
+        1, 1, ["quando", "fechamento", "desfecho", "nota", "codigo", "guarda"])
+    assert (linhas[0]["desfecho"], "arch quebrado" in linhas[0]["nota"]) == ("falhou", True)

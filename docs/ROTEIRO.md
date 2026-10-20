@@ -369,7 +369,9 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
       rotina roda o `universe` do lago. Leituras em 126 e 252 pregões com custo e IR de R$ 10 mil contra o BOVA11
       depois do IR (`--leitura`). 1º registro no fechamento de 19/10/2026: 15 nomes com pesos iguais (relógio do
       paper-v2 começa aqui; leituras em ~abril e ~outubro de 2027).
-- [ ] Agendar a rotina do paper-v2 (de segunda a sexta, depois da das 8h30): **espera o seu OK**
+- [x] Agendar a rotina do paper-v2: tarefa "paper v2", de segunda a sexta às 8h45, pelo lançador
+      (`scripts/rodar_paper.py paper_v2`), no vigia das 12h (OK do usuário em 20/10/2026). O `universe` do lago
+      roda toda noite na rotina do lago (publicado depois dos portões) e de novo no dia devido do paper-v2.
 
 ### 4.11 Robustez fora da amostra (PLAN §11, passo 3): descritivo, o critério não muda
 

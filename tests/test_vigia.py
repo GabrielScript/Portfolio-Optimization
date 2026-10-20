@@ -12,21 +12,27 @@ VIGIA = Path(__file__).resolve().parent.parent / "scripts" / "vigia.ps1"
 HOJE = "2026-10-20"
 
 
-def _pastas(tmp_path, lago: list[str], paper: list[str]) -> tuple[Path, Path]:
-    """runs.csv do lago (formato do b3lake) e do paper (formato do ``anotar``)."""
-    pasta_lago, pasta_paper = tmp_path / "b3lake", tmp_path / "paper-trading"
+def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = None) -> tuple[Path, Path, Path]:
+    """runs.csv do lago (formato do b3lake), do paper (formato do ``anotar``) e do paper-v2 (formato do ``_anotar``
+    dele); sem ``v2``, uma rodada "aguardar" do paper-v2 hoje e em cada dia em que o paper rodou (os testes do
+    paper-v1 não dependem dele)."""
+    if v2 is None:
+        v2 = [f"{dia}T08:45:05,,aguardar,,abc1234," for dia in sorted({HOJE, *(linha[:10] for linha in paper)})]
+    pasta_lago, pasta_paper, pasta_v2 = tmp_path / "b3lake", tmp_path / "paper-trading", tmp_path / "paper-v2"
     for pasta, cabecalho, linhas in ((pasta_lago, "started,finished,expected,outcome,detail", lago),
-                                     (pasta_paper, "inicio,fim,fechamento,desfecho,nota", paper)):
+                                     (pasta_paper, "inicio,fim,fechamento,desfecho,nota", paper),
+                                     (pasta_v2, "quando,fechamento,desfecho,nota,codigo,guarda", v2)):
         pasta.mkdir()
         (pasta / "runs.csv").write_text("\n".join([cabecalho, *linhas]) + "\n", encoding="utf-8")
-    return pasta_lago, pasta_paper
+    return pasta_lago, pasta_paper, pasta_v2
 
 
-def _vigiar(pasta_lago: Path, pasta_paper: Path, *quando: str) -> subprocess.CompletedProcess:
+def _vigiar(pasta_lago: Path, pasta_paper: Path, pasta_v2: Path, *quando: str) -> subprocess.CompletedProcess:
     """``quando``: "-Hoje", dia (o padrão, 20/10/2026) ou "-Agora", data e hora da rodada (sem -Hoje)."""
     return subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                            str(VIGIA), *(quando or ("-Hoje", HOJE)), "-PastaLago", str(pasta_lago),
-                           "-PastaPaper", str(pasta_paper), "-SoMostrar", "-SemEspera"],
+                           "-PastaPaper", str(pasta_paper), "-PastaPaperV2", str(pasta_v2), "-SoMostrar",
+                           "-SemEspera"],
                           capture_output=True, text=True, encoding="utf-8", timeout=120)
 
 
@@ -91,3 +97,17 @@ def test_vigia_que_roda_atrasado_noutro_dia_confere_o_dia_util_anterior(tmp_path
     lago, paper = ([LAGO_HOJE], [PAPER_HOJE]) if agora.startswith("2026-10-21") else (sexta, paper_sexta)
     saida = _vigiar(*_pastas(tmp_path, lago, paper), "-Agora", agora)
     assert (saida.returncode, saida.stdout.strip()) == (0, "vigia: tudo em dia"), saida.stderr
+
+
+def test_paper_v2_sem_rodada_hoje_avisa(tmp_path):
+    ontem = "2026-10-19T08:45:05,2026-10-16,aguardar,,abc1234,"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], [ontem]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, 'vigia: paper v2: nenhuma rodada hoje (tarefa "paper v2")'), saida.stderr
+
+
+def test_paper_v2_que_falhou_hoje_avisa_com_a_nota(tmp_path):
+    falhou = "2026-10-20T08:45:05,,falhou,importação da rotina: ImportError: arch,,"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], [falhou]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, "vigia: paper v2: falhou (importação da rotina: ImportError: arch)"), saida.stderr

@@ -3,7 +3,7 @@ Paper-v2 da Conservadora (S5, depois da prova final, DECISOES 82): rotina diári
 Conservadora no último fechamento do lago, como o motor decide, e registra em ``paper-v2/carteiras.csv``. Separado do
 paper-v1 (o satélite Kelly, ``scripts/paper_trading.py``), que segue igual. Sem rede, fora o ``universe`` do lago.
 
-Uso: .venv/Scripts/python -X utf8 scripts/paper_v2.py             (a rotina; agendar só com o OK do usuário)
+Uso: .venv/Scripts/python -X utf8 scripts/paper_v2.py             (a rotina; a tarefa "paper v2" usa o rodar_paper.py)
      .venv/Scripts/python -X utf8 scripts/paper_v2.py --leitura   (a leitura do registro até o último fechamento)
 
 Pré-registro (2026-10-20, escrito e commitado antes do 1º registro; depois desse commit o texto não muda):
@@ -226,7 +226,9 @@ def rodar(dados: DadosDoLago, registro: pd.DataFrame, data: pd.Timestamp) -> Rod
 
 def atualizar_universo(projeto: Path = PROJETO_DO_LAGO) -> None:
     """O ``universe`` do lago: preços e universo ponto no tempo até o último fechamento, copiados para o app."""
-    subprocess.run(["uv", "run", "python", "-m", "b3lake.cli", "universe"], cwd=projeto, check=True,
+    # o Python do venv do lago, como a tarefa "b3lake daily": o uv fica fora do PATH da tarefa agendada
+    python_do_lago = str(projeto / ".venv" / "Scripts" / "python.exe")
+    subprocess.run([python_do_lago, "-m", "b3lake.cli", "universe"], cwd=projeto, check=True,
                    capture_output=True, text=True, encoding="utf-8", timeout=3600, creationflags=_SEM_JANELA)
 
 

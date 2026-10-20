@@ -28,3 +28,5 @@ data,script,configuracao
 2026-10-19,avaliar_robustez.py,"Kelly λ=2 com regras, janela de 2.520 pregões (R10)"
 2026-10-20,avaliar_conservadora.py,"Conservadora de Blitz e van Vliet (vol 36m, DY 12m, momentum 12-1; 15 nomes, pesos iguais, 4 por setor) com regras"
 2026-10-20,avaliar_nucleo.py,"Núcleo BOVA11 50% + IVVB11 50%, pesos fixos, de volta ao alvo a cada 63 pregões"
+2026-10-20,avaliar_valor.py,"Fórmula Mágica de Greenblatt (EBIT/EV e EBIT/capital empregado; 15 nomes, pesos iguais, 4 por setor) com regras"
+2026-10-20,avaliar_valor.py,"Trending Value de O'Shaughnessy (6 rendimentos, 30% mais baratos, momentum 6m; 15 nomes, pesos iguais, 4 por setor) com regras"

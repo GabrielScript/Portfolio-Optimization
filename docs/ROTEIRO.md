@@ -392,6 +392,28 @@ fases.
   acima do BOVA11 em 99% das janelas de 5 anos e 83–90% das de 3. Tudo num regime de câmbio só, e o teste não é cego
   (o IVVB11 entrou na lista depois de ganhar do BOVA11 desde 2014).
 
+### 4.13 Alvo de vol com EGARCH (PLAN §11, depois do S2): reprovado nas quatro
+
+Pré-registro e script em `scripts/avaliar_vol_alvo.py` (módulo `core/vol_alvo.py`), saída em
+`docs/vol-alvo-2026-10-20.txt`: em cada estratégia do S2.2/S2.3, um EGARCH(1,1) com assimetria e t de Student nos 504
+retornos diários da curva prevê a vol dos 21 pregões seguintes; a exposição vira vol realizada da janela / vol
+prevista (até 100%), o resto fica no CDI, reajuste a cada 21 pregões, de 2014 a 16/10/2026, 3 fases. Regra da R10:
+P[com alvo > original] ≥ 0,95, MDD até 5 p.p. pior e giro até 2x, nas 3 fases.
+
+| 2014–2026, 3 fases | P[com alvo > original] | MDD com alvo (original) | CAGR com alvo (original) | Exposição média |
+|---|---|---|---|---|
+| Conservadora | 0,31–0,59 | −32 a −33% (−41%) | 18,6–20,6% (18,1–20,7%) | 95% |
+| Trending Value | 0,65–0,89 | −39 a −41% (−49 a −52%) | 17,4–18,7% (15,9–16,4%) | 91–96% |
+| Fórmula Mágica | 0,56–0,66 | −41 a −45% (−53 a −55%) | 12,8–17,3% (11,6–16,2%) | 93–95% |
+| Kelly λ=2 com regras | 0,14–0,52 | −52 a −56% (−61 a −63%) | 14,3–19,5% (14,9–18,5%) | 94–98% |
+| BOVA11 | — | −47% | 12,0–12,9% | — |
+
+- **Reprovado nas quatro** (C1 não passa em nenhuma fase); ficam as originais. O alvo corta 7 a 13 p.p. do MDD com
+  pouca troca de retorno, mas não melhora a média de forma provável.
+- O ajuste falhou (sem convergência ou previsão degenerada, mantendo a exposição) em 5 a 13% dos reajustes. A
+  exposição média ficou acima da expectativa registrada (0,8–0,9): a vol de 2 anos já carrega as crises.
+- No trecho de 2014 a 2026, a própria Conservadora tem P[> BOVA11] de 0,89 a 0,96 (0,96–0,99 desde 2012).
+
 ---
 
 ## 5. Realista × competitivo

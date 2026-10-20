@@ -55,6 +55,10 @@ mesmas condições.
   do lago: IC mensal de 0,059 nas duas (t 5,4 e 5,5) em 2012–2026, as duas aprovadas como sinal; no walk-forward
   2012–2026, 10,2–12,1% e 11,1–13,5% a.a. contra 8,0–9,2% do BOVA11 e 16,7–18,5% da Conservadora nas mesmas datas,
   P[> BOVA11] 0,59–0,85: nenhuma candidata à prova final. ROTEIRO §4.7.
+- **Alvo de vol com EGARCH** (`scripts/avaliar_vol_alvo.py`, pré-registrado; saída em `docs/vol-alvo-2026-10-20.txt`):
+  a exposição de cada estratégia do S2 cai quando a vol prevista por um EGARCH passa da vol de 2 anos, e o resto
+  fica no CDI. Corta 7 a 13 p.p. do MDD (Conservadora de −41% para −32/−33%), mas P[com alvo > original] de 0,14 a
+  0,89: reprovado nas quatro, ficam as originais. ROTEIRO §4.13.
 - **Núcleo BOVA11 + IVVB11** (`scripts/avaliar_nucleo.py`, pré-registrado; saída em `docs/nucleo-2026-10-20.txt`):
   metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
   23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não
@@ -179,6 +183,7 @@ Portfolio-Optimization/
 │   ├── poder.py              #   Poder dos portões do S2 por simulação (IC plantado no painel mensal)
 │   ├── sinais.py             #   Sinais do S2: Conservadora (vol 36m, DY 12m, momentum 12−1) e a carteira dela
 │   ├── valor.py              #   Sinais do S2 com fundamentos da CVM: Fórmula Mágica e Trending Value
+│   ├── vol_alvo.py           #   Alvo de vol com EGARCH sobre uma curva fora da amostra (pesquisa)
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
@@ -197,6 +202,7 @@ Portfolio-Optimization/
 │   ├── avaliar_conservadora.py       # S2.1, Conservadora de Blitz e van Vliet, pré-registrado (rodado)
 │   ├── avaliar_nucleo.py             # Núcleo BOVA11 + IVVB11, pré-registrado (rodado)
 │   ├── avaliar_valor.py              # S2.2 e S2.3, Fórmula Mágica e Trending Value, pré-registrado (rodado)
+│   ├── avaliar_vol_alvo.py           # Alvo de vol com EGARCH, pré-registrado (rodado)
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
@@ -208,6 +214,7 @@ Portfolio-Optimization/
 │   ├── conservadora-2026-10-20.txt  # Saída do S2.1 (Conservadora)
 │   ├── nucleo-2026-10-20.txt     # Saída do teste do núcleo BOVA11 + IVVB11
 │   ├── valor-2026-10-20.txt      # Saída do S2.2 e do S2.3 (Fórmula Mágica e Trending Value)
+│   ├── vol-alvo-2026-10-20.txt   # Saída do teste do alvo de vol com EGARCH
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/

@@ -349,6 +349,24 @@ tempo com as deslistadas, regras de risco no motor, 2010 a 16/10/2026 (16,7 anos
 - **IVVB11** ficou acima do BOVA11 em 94,5% das janelas de 5 anos desde 2014, num regime só (o real foi de ~2,2 a
   mais de 5 por dólar). Motiva o núcleo BOVA11 + IVVB11 (PLAN §11), que pede pré-registro próprio.
 
+### 4.12 Núcleo BOVA11 + IVVB11 (PLAN §11, alavanca 1): não candidato
+
+Pré-registro e script em `scripts/avaliar_nucleo.py`, saída em `docs/nucleo-2026-10-20.txt`: 50% BOVA11 + 50%
+IVVB11 com pesos fixos, de volta ao alvo a cada 63 pregões, de 29/04/2014 (1ª cotação do IVVB11) a 16/10/2026, 3
+fases.
+
+| 2014–2026, 3 fases | CAGR | Vol | MDD | P[> BOVA11] em log | DSR (N = 23) | MinTRL |
+|---|---|---|---|---|---|---|
+| Núcleo BOVA11 50% + IVVB11 50% | 17,6–18,0% | 15,7% | −33 a −34% | 0,87–0,89 | 0,77–0,79 | 47–55 anos |
+| IVVB11 sozinho | 20,9–21,1% | 19,7% | −31% | 0,82 | 0,77–0,79 | 51–53 anos |
+| BOVA11 | 11,9–12,0% | 23,8% | −47% | — | — | — |
+
+- **Não candidato**: a condição 1 (P em log ≥ 0,95 nas 3 fases) não passa; a 2 passa (excesso de CAGR positivo nos 3
+  subperíodos, 2023–2026 por pouco: 0,8–1,9% a.a.). O núcleo do dinheiro real segue BOVA11.
+- Diversifica: vol de 15,7% contra 23,8% e MDD de −34% contra −47% do BOVA11; correlação diária 0,05 e mensal −0,20;
+  acima do BOVA11 em 99% das janelas de 5 anos e 83–90% das de 3. Tudo num regime de câmbio só, e o teste não é cego
+  (o IVVB11 entrou na lista depois de ganhar do BOVA11 desde 2014).
+
 ---
 
 ## 5. Realista × competitivo

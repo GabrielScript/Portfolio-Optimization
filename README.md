@@ -50,6 +50,10 @@ mesmas condições.
   mensal de 0,081 (t 5,9) em 2008–2026 e 0,059 em 1998–2007; no walk-forward 2010–2026, 16,3–17,3% a.a. contra
   6,7–7,2% do BOVA11 e 13,0–14,3% do satélite Kelly, P[> BOVA11] 0,99 e DSR 0,80–0,88. Aprovada e candidata à prova
   final, mas ainda sem IR, com DSR abaixo de 0,95 e sem paper trading: não cumpre o critério de pronto. ROTEIRO §4.7.
+- **Núcleo BOVA11 + IVVB11** (`scripts/avaliar_nucleo.py`, pré-registrado; saída em `docs/nucleo-2026-10-20.txt`):
+  metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
+  23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não
+  candidato, o núcleo segue BOVA11. ROTEIRO §4.12.
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -185,6 +189,7 @@ Portfolio-Optimization/
 │   ├── poder_dos_portoes.py          # Poder dos portões do S2, pré-registrado (rodado)
 │   ├── avaliar_robustez.py           # Robustez 2010–2026 e janela de 10 anos, pré-registrado (rodado)
 │   ├── avaliar_conservadora.py       # S2.1, Conservadora de Blitz e van Vliet, pré-registrado (rodado)
+│   ├── avaliar_nucleo.py             # Núcleo BOVA11 + IVVB11, pré-registrado (rodado)
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
@@ -194,6 +199,7 @@ Portfolio-Optimization/
 │   ├── poder-dos-portoes-2026-10-18.txt  # Saída do poder dos portões do S2
 │   ├── robustez-2026-10-19.txt   # Saída do teste de robustez
 │   ├── conservadora-2026-10-20.txt  # Saída do S2.1 (Conservadora)
+│   ├── nucleo-2026-10-20.txt     # Saída do teste do núcleo BOVA11 + IVVB11
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/
@@ -274,8 +280,9 @@ Portfolio-Optimization/
   execução: spread, slippage, ordens parciais e a liquidez do fracionário ficam fora (custo fixo de 10 bps por lado).
 - **Sem alavancagem.** A regra fixa é 1,0×: com o empréstimo a CDI + spread perto do retorno histórico do BOVA11, a
   alavancagem custaria mais do que rende enquanto o alfa não estiver provado.
-- **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago só em retorno mensal desde
-  2014: 20,1% a.a. × 12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18.
+- **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago desde 2014: 20,1% a.a. ×
+  12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18. O núcleo metade BOVA11, metade IVVB11
+  não passou no teste pré-registrado (ROTEIRO §4.12).
 - **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo
   também usa o JCP bruto; o lago da B3 já desconta o IR retido na fonte (15% até 2025 e 17,5% desde
   01/01/2026, LC 224/2025).

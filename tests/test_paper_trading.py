@@ -351,3 +351,81 @@ def test_guarda_sem_a_tag_vira_aviso_e_nao_erro(registro_no_git):
     # clone ou worktree sem as tags: a guarda não pode derrubar a decisão do dia, só avisar que não conferiu
     situacao = situacao_do_codigo(registro_no_git.parent.parent)
     assert (situacao.mudancas, "paper-v1" in situacao.erro) == ([], True)
+
+
+def test_commit_do_registro_leva_os_arquivos_junto_no_mesmo_commit(registro_no_git):
+    # a proveniência (e o marco dos preços) entram no commit da carteira: um commit = uma decisão completa
+    raiz = registro_no_git.parent.parent
+    registrar_carteira(DATAS[5].date(), pd.Series({"B": 1.0}), pd.Series({"B": 20.0}), registro_no_git)
+    proveniencia = raiz / "paper" / "proveniencia.csv"
+    proveniencia.write_text("fechamento\n2026-07-08\n", encoding="utf-8")
+    rodada = paper_trading.Rodada(DATAS[5], Acao.REBALANCEAR, pd.Series({"B": 1.0}))
+    commitar_no_git(registro_no_git, rodada, "abc1234", raiz=raiz, junto=[proveniencia])
+    assert (_git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines(), _git(raiz, "status", "--porcelain")) == (
+        ["paper/carteiras.csv", "paper/proveniencia.csv"], "")
+
+
+@pytest.mark.parametrize("gravado", ["paper/diario.csv", "paper/proveniencia.csv"])
+def test_versao_do_codigo_ignora_os_dados_que_a_rotina_grava(registro_no_git, gravado):
+    # o commit deles pode falhar (index.lock): o arquivo no disco à frente do HEAD não é código mudado
+    raiz = registro_no_git.parent.parent
+    arquivo = raiz / gravado
+    arquivo.write_text("fechamento\n", encoding="utf-8")
+    _git(raiz, "add", "--", gravado)
+    _git(raiz, "commit", "-q", "-m", gravado)
+    arquivo.write_text("fechamento\n2026-07-01\n", encoding="utf-8")
+    assert versao_do_codigo(raiz) == _git(raiz, "rev-parse", "--short", "HEAD")
+
+
+def test_diario_do_dia_entra_num_commit_e_rodar_de_novo_nao_commita(registro_no_git, arquivo_precos):
+    raiz = registro_no_git.parent.parent
+    diario = raiz / "paper" / "diario.csv"
+    rodada = paper_trading.Rodada(DATAS[-1], Acao.AGUARDAR)
+    for _ in range(2):
+        revistos = paper_trading.conferir_o_diario(rodada, diario, registro_no_git, arquivo_precos,
+                                                   datetime(2026, 10, 9, 8, 30), raiz=raiz)
+    assert (revistos, _git(raiz, "rev-list", "--count", "HEAD"), _git(raiz, "log", "-1", "--format=%s")) == (
+        [], "2", f"paper: diário do fechamento de {DATAS[-1]:%d/%m/%Y}")
+
+
+def test_registro_commita_a_proveniencia_e_o_marco_dos_precos_lidos(registro_no_git, arquivo_precos):
+    # os preços que decidiram vão no mesmo commit (marco versionado): o registro se refaz pelo git, sem o lago
+    raiz = registro_no_git.parent.parent
+    precos_no_app = raiz / "lago" / "precos_diarios.parquet"
+    precos_no_app.parent.mkdir()
+    precos_no_app.write_bytes(b"marco antigo")
+    _git(raiz, "add", "--", "lago/precos_diarios.parquet")
+    _git(raiz, "commit", "-q", "-m", "marco")
+    precos_no_app.write_bytes(arquivo_precos.read_bytes())
+    registrar_carteira(DATAS[-1].date(), pd.Series({"B": 1.0}), pd.Series({"B": 19.0}), registro_no_git)
+    rodada = paper_trading.Rodada(DATAS[-1], Acao.REBALANCEAR, pd.Series({"B": 1.0}))
+    paper_trading.commitar_registro(registro_no_git, rodada, "abc1234", ["código abc1234", "Selic 15.00% (bcb)"],
+                                    precos_no_app, raiz=raiz)
+    proveniencia = pd.read_csv(raiz / "paper" / "proveniencia.csv", dtype=str)
+    assert _git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines() == [
+        "lago/precos_diarios.parquet", "paper/carteiras.csv", "paper/proveniencia.csv"]
+    assert proveniencia[["fechamento", "codigo", "selic"]].values.tolist() == [
+        [str(DATAS[-1].date()), "abc1234", "Selic 15.00% (bcb)"]]
+
+
+def test_diario_que_falha_vira_nota_e_aviso_sem_derrubar_a_rodada(monkeypatch):
+    avisos = []
+
+    def falhar(*argumentos, **opcoes):
+        raise OSError("index.lock")
+
+    monkeypatch.setattr(paper_trading, "conferir_o_diario", falhar)
+    monkeypatch.setattr(paper_trading, "avisar", lambda titulo, corpo: avisos.append(titulo))
+    notas = paper_trading.notas_do_diario(paper_trading.Rodada(DATAS[-1], Acao.AGUARDAR), datetime.now(), Path("x.log"))
+    assert (notas, avisos) == (["diário falhou: index.lock"], ["paper trading: o diário falhou"])
+
+
+def test_registro_pendente_leva_a_proveniencia_pendente_no_mesmo_commit(registro_no_git):
+    # o commit do registro falhou depois de gravar a carteira e a proveniência: os dois entram juntos depois
+    raiz = registro_no_git.parent.parent
+    registrar_carteira(DATAS[5].date(), pd.Series({"B": 1.0}), pd.Series({"B": 20.0}), registro_no_git)
+    proveniencia = raiz / "paper" / "proveniencia.csv"
+    proveniencia.write_text("fechamento\n2026-07-08\n", encoding="utf-8")
+    assert commitar_pendente(registro_no_git, raiz, junto=[proveniencia])
+    assert (_git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines(), _git(raiz, "status", "--porcelain")) == (
+        ["paper/carteiras.csv", "paper/proveniencia.csv"], "")

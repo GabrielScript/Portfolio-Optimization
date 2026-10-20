@@ -49,7 +49,7 @@ import math
 import os
 import subprocess
 import sys
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
@@ -71,6 +71,8 @@ from core.risco import LIMITES, Violacao, checar_carteira  # noqa: E402
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARQUIVO_REGISTRO = RAIZ / "paper" / "carteiras.csv"
+ARQUIVO_DIARIO = RAIZ / "paper" / "diario.csv"     # core.diario: avisa quando o lago muda um fechamento já visto
+ARQUIVO_PROVENIENCIA = RAIZ / "paper" / "proveniencia.csv"     # core.proveniencia: uma linha por registro
 _LOCAL = Path(os.environ.get("LOCALAPPDATA", Path.home()))
 PASTA_ESTADO = _LOCAL / "paper-trading"            # runs.csv e logs, fora do repositório (como os do lago)
 TRAVA_DO_LAGO = _LOCAL / "b3lake" / "daily.lock"
@@ -232,9 +234,10 @@ def _git(*argumentos: str, raiz: Path = RAIZ) -> str:
 
 def versao_do_codigo(raiz: Path = RAIZ) -> str:
     """Hash curto do HEAD do checkout que rodou, com " (sujo)" se algum arquivo versionado mudou desde ele (os soltos
-    não versionados da raiz e os preços que o lago publica a cada pregão não contam)."""
+    não versionados da raiz, os preços que o lago publica a cada pregão e o diário e a proveniência que a rotina
+    grava não contam)."""
     sujo = _git("status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)lago/precos_diarios.parquet",
-                raiz=raiz)
+                ":(exclude)paper/diario.csv", ":(exclude)paper/proveniencia.csv", raiz=raiz)
     return _git("rev-parse", "--short", "HEAD", raiz=raiz) + (" (sujo)" if sujo else "")
 
 
@@ -303,20 +306,40 @@ def situacao_do_codigo(raiz: Path = RAIZ) -> SituacaoDoCodigo:
         return SituacaoDoCodigo("?", [], f"guarda do {TAG_DO_PAPER} indisponível: {detalhe.strip()[:200]}")
 
 
-def commitar_no_git(arquivo: Path, rodada: Rodada, versao: str, raiz: Path = RAIZ) -> None:
-    """Commit local só do registro, com a ``versao_do_codigo`` que decidiu (sem push: push na main é produção, feito
-    à mão)."""
-    caminho = arquivo.relative_to(raiz).as_posix()
-    _git("add", "--", caminho, raiz=raiz)
+def commitar_no_git(arquivo: Path, rodada: Rodada, versao: str, raiz: Path = RAIZ,
+                    junto: Sequence[Path] = ()) -> None:
+    """Commit local do registro e dos arquivos ``junto`` (a proveniência e o marco dos preços), com a
+    ``versao_do_codigo`` que decidiu (sem push: push na main é produção, feito à mão)."""
+    caminhos = [caminho.relative_to(raiz).as_posix() for caminho in (arquivo, *junto)]
+    _git("add", "--", *caminhos, raiz=raiz)
     _git("commit", "-m", f"paper: {rodada.acao.value} no fechamento de {rodada.data:%d/%m/%Y} (código {versao})",
-         "--", caminho, raiz=raiz)
+         "--", *caminhos, raiz=raiz)
 
 
-def commitar_pendente(arquivo: Path, raiz: Path = RAIZ) -> bool:
+def commitar_registro(arquivo: Path, rodada: Rodada, versao: str, notas: Sequence[str], arquivo_precos: Path,
+                      raiz: Path = RAIZ) -> None:
+    """O commit da rodada que registrou: a carteira, a linha dela no ``paper/proveniencia.csv`` (código, hash dos
+    preços, Selic das ``notas`` e versões) e, se versionado no app, o arquivo de preços lido (marco)."""
+    from core.diario import sha256_do_arquivo         # aqui dentro: ver conferir_o_diario
+    from core.proveniencia import registrar_proveniencia
+
+    proveniencia = arquivo.parent / ARQUIVO_PROVENIENCIA.name
+    selic = next((nota for nota in notas if nota.startswith("Selic ")), "")
+    registrar_proveniencia(proveniencia, rodada.data.date(), versao, sha256_do_arquivo(arquivo_precos), selic,
+                           datetime.now())
+    junto = [proveniencia]
+    if arquivo_precos.is_relative_to(raiz):
+        junto.append(arquivo_precos)
+    commitar_no_git(arquivo, rodada, versao, raiz=raiz, junto=junto)
+
+
+def commitar_pendente(arquivo: Path, raiz: Path = RAIZ, junto: Sequence[Path] = ()) -> bool:
     """Commita o registro que ficou só no disco (o commit da rodada que o gravou falhou: sem isso, a rodada seguinte
-    vê a data registrada, segura a carteira e a linha nunca entra no git). True se havia o que commitar. Só linhas
-    acrescentadas: uma linha já commitada que mudou é ValueError e nada entra."""
+    vê a data registrada, segura a carteira e a linha nunca entra no git), com os arquivos ``junto`` que existirem
+    (a proveniência gravada na mesma rodada). True se havia o que commitar. Só linhas acrescentadas: uma linha já
+    commitada que mudou é ValueError e nada entra."""
     caminho = arquivo.relative_to(raiz).as_posix()
+    caminhos = [caminho, *(extra.relative_to(raiz).as_posix() for extra in junto if extra.exists())]
     if not _git("status", "--porcelain", "--", caminho, raiz=raiz):
         return False
     try:
@@ -325,9 +348,43 @@ def commitar_pendente(arquivo: Path, raiz: Path = RAIZ) -> bool:
         commitado = ""
     if not arquivo.read_text(encoding="utf-8").startswith(commitado):
         raise ValueError(f"{caminho} foi reescrito fora da rotina (o arquivo só cresce): conferir com git diff.")
-    _git("add", "--", caminho, raiz=raiz)
-    _git("commit", "-m", "paper: registro que ficou fora do git na rodada anterior", "--", caminho, raiz=raiz)
+    _git("add", "--", *caminhos, raiz=raiz)
+    _git("commit", "-m", "paper: registro que ficou fora do git na rodada anterior", "--", *caminhos, raiz=raiz)
     return True
+
+
+def conferir_o_diario(rodada: Rodada, arquivo_diario: Path, arquivo_registro: Path, arquivo_precos: Path,
+                      agora: datetime, raiz: Path = RAIZ) -> list[pd.Timestamp]:
+    """Acrescenta ao diário os fechamentos novos e as revisões que o lago fez no passado, commita se algo entrou e
+    devolve os fechamentos revistos (vazio = o lago não mudou o que a rotina já tinha visto)."""
+    # aqui dentro: um import do projeto no topo do script mudaria o que a guarda do paper-v1 compara
+    from core.diario import atualizar_diario, sha256_do_arquivo
+
+    revistos = atualizar_diario(arquivo_diario, ler_registro(arquivo_registro), ler_precos(arquivo_precos),
+                                sha256_do_arquivo(arquivo_precos), agora)
+    caminho = arquivo_diario.relative_to(raiz).as_posix()
+    if arquivo_diario.exists() and _git("status", "--porcelain", "--", caminho, raiz=raiz):
+        _git("add", "--", caminho, raiz=raiz)
+        _git("commit", "-m", f"paper: diário do fechamento de {rodada.data:%d/%m/%Y}", "--", caminho, raiz=raiz)
+    return revistos
+
+
+def notas_do_diario(rodada: Rodada, agora: datetime, log: Path) -> list[str]:
+    """O diário do dia sem nunca derrubar a rodada: falha dele ou passado mudado pelo lago viram nota e aviso."""
+    try:
+        from core.diario import texto_das_revisoes     # aqui dentro: ver conferir_o_diario
+
+        revistos = conferir_o_diario(rodada, ARQUIVO_DIARIO, ARQUIVO_REGISTRO, lago.ARQUIVO_PRECOS, agora)
+    except Exception as erro:
+        logging.exception("diário do paper trading falhou")
+        avisar("paper trading: o diário falhou", f"{str(erro)[:150]} Log: {log}")
+        return [f"diário falhou: {str(erro)[:150]}"]
+    if not revistos:
+        return []
+    texto = texto_das_revisoes(revistos)
+    logging.warning("%s (conferir no lago; o registro não muda)", texto)
+    avisar("paper trading: o lago mudou dados passados", f"{texto}. Log: {log}")
+    return [texto]
 
 
 def _escolha_do_dia(notas: list[str]) -> Escolha:
@@ -410,7 +467,7 @@ def main() -> int:
             raise RuntimeError(f"checkout do app em '{ramo}', não na {RAMO_DA_ROTINA}: o registro não pode ir para "
                                "outro ramo")
         notas: list[str] = []
-        if commitar_pendente(ARQUIVO_REGISTRO):
+        if commitar_pendente(ARQUIVO_REGISTRO, junto=[ARQUIVO_PROVENIENCIA]):
             logging.warning("registro que ficou fora do git na rodada anterior: commitado agora")
             notas.append("registro pendente commitado")
         codigo = situacao_do_codigo()
@@ -426,11 +483,13 @@ def main() -> int:
             avisar("paper trading: bloqueada, código do satélite mudou", f"{nota[:150]} Log: {log}")
             return 1
         rodada = executar(lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO, TRAVA_DO_LAGO, _escolha_do_dia(notas),
-                          lambda arquivo, rodada: commitar_no_git(arquivo, rodada, codigo.versao))
+                          lambda arquivo, rodada: commitar_registro(arquivo, rodada, codigo.versao, notas,
+                                                                    lago.ARQUIVO_PRECOS))
         if rodada is None:
             logging.info("lago rodando (daily.lock): nada decidido")
             anotar(inicio, "", "lago rodando", "; ".join(notas))
             return 0
+        notas += notas_do_diario(rodada, inicio, log)
         anotar(inicio, rodada.data.date().isoformat(), rodada.desfecho, "; ".join(filter(None, [*notas, rodada.nota])))
         logging.info("\n%s", relatorio(rodada, lago.ARQUIVO_PRECOS, ARQUIVO_REGISTRO))
         if rodada.desfecho == "recusada":

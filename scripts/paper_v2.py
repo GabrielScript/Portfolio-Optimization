@@ -311,6 +311,7 @@ def main() -> int:
         aviso = f"guarda do {TAG_DO_PAPER} indisponível: {str(erro)[:200]}"
     if "--leitura" in sys.argv[1:]:
         registro = ler_registro(ARQUIVO_REGISTRO)
+        atualizar_universo()        # fora do dia devido o universe_prices para no último rebalanceio
         dados = ler_dados()
         dividendos = pd.read_parquet(PASTA_DO_LAGO / "dividends.parquet",
                                      columns=["security", "ex_date", "corporate_action", "yield"])
@@ -319,7 +320,7 @@ def main() -> int:
             print("Paper-v2: nenhum pregão depois do 1º registro (ou nenhum registro)")
             return 0
         tabela = leitura(registro, dados, dividendos, liquidez_do_lago())
-        print(f"Paper-v2 desde {registro['data'].min():%d/%m/%Y}: {pregoes} pregões, "
+        print(f"Paper-v2 de {registro['data'].min():%d/%m/%Y} a {dados.precos.index[-1]:%d/%m/%Y}: {pregoes} pregões, "
               f"{registro['data'].nunique()} registros; guarda: {aviso or 'sem mudança'}")
         print(_tabela(tabela.assign(**{coluna: tabela[coluna].round().astype("int64") for coluna in EM_REAIS}),
                       EM_PORCENTO))

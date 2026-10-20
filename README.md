@@ -219,6 +219,7 @@ Portfolio-Optimization/
 │   ├── avaliar_vol_alvo.py           # Alvo de vol com EGARCH, pré-registrado (rodado)
 │   ├── avaliar_views.py              # S3, Black-Litterman com views, pré-registrado (rodado)
 │   ├── avaliar_execucao.py           # Prova final com execução realista (S4), pré-registrada (rodada)
+│   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes

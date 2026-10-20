@@ -63,6 +63,13 @@ mesmas condições.
   a exposição de cada estratégia do S2 cai quando a vol prevista por um EGARCH passa da vol de 2 anos, e o resto
   fica no CDI. Corta 7 a 13 p.p. do MDD (Conservadora de −41% para −32/−33%), mas P[com alvo > original] de 0,14 a
   0,89: reprovado nas quatro, ficam as originais. ROTEIRO §4.13.
+- **Prova final com execução realista (S4)** (`scripts/avaliar_execucao.py`, pré-registrada; saída em
+  `docs/execucao-2026-10-20.txt`): a Conservadora refeita em reais com emolumentos da B3, meio spread e impacto pela
+  raiz do tamanho da ordem, e com o IR de pessoa física (15%, isenção de vendas até R$ 20 mil no mês, preço médio,
+  prejuízo acumulado), contra o BOVA11 que paga 15% do ganho na venda. Com R$ 10 mil, de 2012 a 2026: 16,1–17,8% a.a.
+  líquidos de custo e de IR contra 7,2–8,4% do BOVA11, P[> BOVA11] da saída 0,981–0,995: **aprovada**, candidata ao
+  paper-v2. Com R$ 1 milhão o custo sobe para 1,1–1,2% a.a. e o P cai para 0,94–0,98. Não cumpre ainda o critério de
+  pronto (falta o paper trading). ROTEIRO §4.14.
 - **Núcleo BOVA11 + IVVB11** (`scripts/avaliar_nucleo.py`, pré-registrado; saída em `docs/nucleo-2026-10-20.txt`):
   metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
   23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não
@@ -189,6 +196,8 @@ Portfolio-Optimization/
 │   ├── valor.py              #   Sinais do S2 com fundamentos da CVM: Fórmula Mágica e Trending Value
 │   ├── vol_alvo.py           #   Alvo de vol com EGARCH sobre uma curva fora da amostra (pesquisa)
 │   ├── views.py              #   Black-Litterman com views dos sinais do S2 (S3)
+│   ├── impostos.py           #   IR de pessoa física em ações: apuração mensal, isenção e prejuízo (S4)
+│   ├── execucao.py           #   Curva refeita em reais com custo por liquidez, IR e valor de saída (S4)
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
@@ -209,6 +218,7 @@ Portfolio-Optimization/
 │   ├── avaliar_valor.py              # S2.2 e S2.3, Fórmula Mágica e Trending Value, pré-registrado (rodado)
 │   ├── avaliar_vol_alvo.py           # Alvo de vol com EGARCH, pré-registrado (rodado)
 │   ├── avaliar_views.py              # S3, Black-Litterman com views, pré-registrado (rodado)
+│   ├── avaliar_execucao.py           # Prova final com execução realista (S4), pré-registrada (rodada)
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
 │   ├── ROTEIRO.md                # Roteiro: critério de pronto, fases, riscos e decisões pendentes
@@ -222,6 +232,7 @@ Portfolio-Optimization/
 │   ├── valor-2026-10-20.txt      # Saída do S2.2 e do S2.3 (Fórmula Mágica e Trending Value)
 │   ├── vol-alvo-2026-10-20.txt   # Saída do teste do alvo de vol com EGARCH
 │   ├── views-2026-10-20.txt      # Saída do S3 (Black-Litterman com views)
+│   ├── execucao-2026-10-20.txt   # Saída da prova final com custo por liquidez e IR (S4)
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/

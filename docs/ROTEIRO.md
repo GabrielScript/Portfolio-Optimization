@@ -350,9 +350,10 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 
 ### 4.9 S4: execução realista
 
-- [ ] Custo por liquidez (proporcional a √(ordem / volume)), não 10 bps fixos
+- [x] Custo por liquidez (proporcional a √(ordem / volume)), não 10 bps fixos (`core/execucao.py`; §4.14)
 - [ ] Zona de não negociação (só rebalancear quando o desvio compensa o custo)
-- [ ] IR: 15% sobre ganho; isenção de vendas até R$ 20 mil/mês; JCP e dividendos
+- [x] IR: 15% sobre ganho; isenção de vendas até R$ 20 mil/mês; JCP e dividendos (`core/impostos.py`; JCP líquido de
+      15% como o lago guarda, dividendo reinvestido na base; §4.14)
 - [ ] Partir da **carteira que já existe** (posições atuais) e rebalancear a partir dela
 - [ ] **Fração Kelly ações × CDI**: quanto do dinheiro vai para ações, considerando a incerteza do prêmio de risco
       (hoje o app fica sempre 100% em ações)
@@ -428,6 +429,38 @@ P[com alvo > original] ≥ 0,95, MDD até 5 p.p. pior e giro até 2x, nas 3 fase
 - O ajuste falhou (sem convergência ou previsão degenerada, mantendo a exposição) em 5 a 13% dos reajustes. A
   exposição média ficou acima da expectativa registrada (0,8–0,9): a vol de 2 anos já carrega as crises.
 - No trecho de 2014 a 2026, a própria Conservadora tem P[> BOVA11] de 0,89 a 0,96 (0,96–0,99 desde 2012).
+
+### 4.14 Prova final com execução realista (S4): aprovada com R$ 10 mil
+
+Pré-registro e script em `scripts/avaliar_execucao.py` (módulos `core/execucao.py` e `core/impostos.py`), saída em
+`docs/execucao-2026-10-20.txt`: a mesma sequência de carteiras do motor (2012 a 16/10/2026, 3 fases), refeita em reais
+com R$ 10 mil, R$ 100 mil e R$ 1 milhão. Cada ordem paga 0,030% de emolumentos da B3, o meio spread cotado do mês
+anterior e o impacto vol diária × √(ordem / volume mediano diário); o IR é o de pessoa física (15% do ganho líquido
+do mês pelo preço médio, isenção com vendas de até R$ 20 mil no mês, prejuízo acumulado), e o BOVA11 paga 15% do ganho
+na venda, sem isenção. A curva que conta é o valor de saída (o que sobraria vendendo tudo e pagando o IR). Regra:
+P[> BOVA11] aritmético da saída ≥ 0,95 com R$ 10 mil nas 3 fases.
+
+| 2012–2026, 3 fases | P[> BOVA11] da saída | CAGR da saída | MDD | Custo por ano | IR (pago + na saída) / saída |
+|---|---|---|---|---|---|
+| Conservadora, R$ 10 mil | **0,981–0,995** | 16,1–17,8% | −39 a −40% | 0,57–0,62% | 2,5–4,0% |
+| Conservadora, R$ 100 mil | 0,951–0,986 | 14,9–16,5% | −39 a −40% | 0,70–0,76% | 7,4–8,4% |
+| Conservadora, R$ 1 milhão | 0,938–0,981 | 14,4–16,0% | −39 a −40% | 1,10–1,21% | 7,6–8,5% |
+| Kelly λ=2 com regras, R$ 10 mil | 0,80–0,91 | 11,7–14,0% | −59 a −60% | 0,49–0,53% | 0% |
+| BOVA11 | — | 7,2–8,4% | −44 a −46% | 0,01% | 11–12% |
+
+- **Aprovada**: a Conservadora vira a candidata ao paper-v2 (registro novo, separado do paper-v1; o agendamento espera
+  o seu OK). Ainda não cumpre o critério de pronto: falta o paper trading.
+- Com R$ 10 mil o IR ajuda: as vendas de cada mês ficam quase sempre abaixo de R$ 20 mil (isentas), enquanto o BOVA11
+  paga 15% do ganho inteiro na saída. Por isso o P com IR (0,981–0,995) fica acima do P do motor sem IR
+  (0,963–0,991). Com R$ 1 milhão o custo dobra (impacto) e o IR passa a sair a cada rebalanceio.
+- Desde 2014 (descritivo, R$ 10 mil): P de 0,945 a 0,985, contra 0,89–0,96 no motor sem IR.
+- Fora da expectativa registrada: custo da Conservadora maior que o previsto (0,57–0,62% contra 0,2–0,6% com
+  R$ 10 mil; 1,10–1,21% contra 0,3–0,8% com R$ 1 milhão), IR com R$ 1 milhão menor (7,6–8,5% contra 10–25%) e o do
+  BOVA11 maior (11–12% contra 7–10%).
+- Simplificações (no pré-registro): sem corretagem; o IR sai da carteira na proporção de cada posição no último pregão
+  do mês; a isenção só conta as vendas desta carteira (a lei soma todas as vendas de ações da pessoa); com R$ 10 mil as
+  ordens vão para o mercado fracionário, cujo spread pode ser maior que o do lote padrão usado aqui; JCP a 15% (17,5%
+  desde 2026 não entra); a saída não paga o custo das ordens de venda.
 
 ---
 

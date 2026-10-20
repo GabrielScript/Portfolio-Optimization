@@ -133,6 +133,60 @@ def test_hrp_dois_ativos_e_inverso_variancia():
     assert pesos["a"] == pytest.approx(0.2) and pesos["b"] == pytest.approx(0.8)
 
 
+def _hrp_do_paper(cov: pd.DataFrame) -> pd.Series:
+    """
+    Apêndice A.3 de López de Prado (2016), portado para Python 3 sem mudar a lógica: ``linkage`` recebe a matriz
+    quadrada de distâncias, que o scipy trata como observações (daí a distância euclidiana entre colunas, d~).
+    """
+    from scipy.cluster.hierarchy import linkage
+
+    def variancia_cluster(itens):
+        sub = cov.loc[itens, itens].values
+        w = 1.0 / np.diag(sub)
+        w /= w.sum()
+        return float(w @ sub @ w)
+
+    sigma = np.sqrt(np.diag(cov.values))
+    corr = cov.values / np.outer(sigma, sigma)
+    link = linkage(np.clip((1.0 - corr) / 2.0, 0.0, None) ** 0.5, "single").astype(int)  # -1e-16 na diagonal
+    n = link[-1, 3]
+    ordem = [link[-1, 0], link[-1, 1]]
+    while max(ordem) >= n:
+        ordem = [x for i in ordem for x in ((link[i - n, 0], link[i - n, 1]) if i >= n else (i,))]
+    ordem = [cov.index[i] for i in ordem]
+    pesos = pd.Series(1.0, index=ordem)
+    grupos = [ordem]
+    while grupos:
+        grupos = [g[j:k] for g in grupos for j, k in ((0, len(g) // 2), (len(g) // 2, len(g))) if len(g) > 1]
+        for i in range(0, len(grupos), 2):
+            v0, v1 = variancia_cluster(grupos[i]), variancia_cluster(grupos[i + 1])
+            alpha = 1.0 - v0 / (v0 + v1)
+            pesos[grupos[i]] *= alpha
+            pesos[grupos[i + 1]] *= 1.0 - alpha
+    return pesos.reindex(cov.index)
+
+
+@pytest.fixture
+def retornos_em_blocos() -> pd.DataFrame:
+    """O ``generateData`` do paper: 5 séries independentes + 5 cópias ruidosas delas (sigma 0,25), 1.000 pregões."""
+    gerador = np.random.default_rng(3)
+    x = gerador.normal(0.0, 0.01, (1_000, 5))
+    copias = x[:, [0, 2, 2, 4, 1]] + gerador.normal(0.0, 0.0025, (1_000, 5))
+    return pd.DataFrame(np.hstack([x, copias]), columns=[f"P{i}" for i in range(10)])
+
+
+def test_hrp_com_d_til_reproduz_o_codigo_do_paper(retornos_em_blocos):
+    cov = retornos_em_blocos.cov()
+    pd.testing.assert_series_equal(otimizar_hrp(cov, distancia="d_til"), _hrp_do_paper(cov), check_names=False,
+                                   rtol=1e-12, atol=1e-14)
+
+
+@pytest.mark.parametrize("alocador", [otimizar_hrp, otimizar_hrp_arvore])
+def test_hrp_rejeita_distancia_desconhecida(retornos_sinteticos, alocador):
+    with pytest.raises(ValueError, match="distancia"):
+        alocador(retornos_sinteticos.cov(), distancia="euclidiana")
+
+
 def _t_alfa_newey_west_de_referencia(y: np.ndarray, x: np.ndarray) -> float:
     """t do intercepto por MQO com variância de Newey-West (Bartlett, L = ⌊4 (T/100)^(2/9)⌋), escrita com laços."""
     t = len(y)

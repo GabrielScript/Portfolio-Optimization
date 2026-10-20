@@ -5,6 +5,11 @@ HRP (López de Prado, 2016): clusterização por distância de correlação,
 quasi-diagonalização e bissecção recursiva com inverso-variância. Não inverte
 Sigma nem estima mu, por isso é robusta fora da amostra.
 
+Distância (``distancia``): "d_til" é a do paper (Estágio 1, 2º passo): d~_ij =
+||D_i - D_j||, a euclidiana entre colunas da matriz D de d_ij = sqrt((1 - rho_ij) / 2),
+como no Apêndice A.3 (``linkage`` recebe D quadrada e a trata como observações).
+"d" clusteriza a própria D (a variante de PyPortfolioOpt e Riskfolio).
+
 HRP-Árvore: em vez de bissectar a ORDEM quasi-diagonal ao meio, desce a
 própria árvore do linkage e divide o capital em cada nó por inverso da
 variância dos dois ramos. É a ideia do HERC de Raffinot (2018), mas sem o
@@ -22,7 +27,7 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 from scipy.cluster.hierarchy import leaves_list, linkage, to_tree
-from scipy.spatial.distance import squareform
+from scipy.spatial.distance import pdist, squareform
 
 _VARIANCIA_MINIMA = 1e-12
 
@@ -32,12 +37,18 @@ def _correlacao(cov: pd.DataFrame) -> np.ndarray:
     return np.clip(cov.values / np.outer(sigma, sigma), -1.0, 1.0)
 
 
-def _arvore(cov: pd.DataFrame, metodo_linkage: str) -> np.ndarray:
-    """Linkage sobre a distância de López de Prado d_ij = sqrt((1 - rho_ij) / 2)."""
-    distancia = np.sqrt(np.clip(0.5 * (1.0 - _correlacao(cov)), 0.0, 1.0))
-    distancia = (distancia + distancia.T) / 2.0
-    np.fill_diagonal(distancia, 0.0)
-    return linkage(squareform(distancia, checks=False), method=metodo_linkage)
+_DISTANCIAS = ("d", "d_til")
+
+
+def _arvore(cov: pd.DataFrame, metodo_linkage: str, distancia: str) -> np.ndarray:
+    """Linkage sobre d_ij = sqrt((1 - rho_ij) / 2) ("d") ou sobre a euclidiana entre colunas de D ("d_til")."""
+    if distancia not in _DISTANCIAS:
+        raise ValueError(f"distancia deve ser uma de {_DISTANCIAS}: {distancia!r}")
+    d = np.sqrt(np.clip(0.5 * (1.0 - _correlacao(cov)), 0.0, 1.0))
+    d = (d + d.T) / 2.0
+    np.fill_diagonal(d, 0.0)
+    condensada = pdist(d) if distancia == "d_til" else squareform(d, checks=False)
+    return linkage(condensada, method=metodo_linkage)
 
 
 def _variancia_cluster(cov: pd.DataFrame, membros: list[str]) -> float:
@@ -54,12 +65,12 @@ def _fracao_esquerda(cov: pd.DataFrame, esquerda: list[str], direita: list[str])
     return var_dir / (var_esq + var_dir)
 
 
-def otimizar_hrp(cov: pd.DataFrame, metodo_linkage: str = "single") -> pd.Series:
+def otimizar_hrp(cov: pd.DataFrame, metodo_linkage: str = "single", distancia: str = "d") -> pd.Series:
     """HRP original: bissecção recursiva da ordem quasi-diagonal."""
     tickers = cov.index.tolist()
     if len(tickers) == 1:
         return pd.Series(1.0, index=tickers)
-    ordem = [tickers[i] for i in leaves_list(_arvore(cov, metodo_linkage))]
+    ordem = [tickers[i] for i in leaves_list(_arvore(cov, metodo_linkage, distancia))]
     pesos = pd.Series(1.0, index=ordem)
     grupos = [ordem]
     while grupos:
@@ -77,12 +88,12 @@ def otimizar_hrp(cov: pd.DataFrame, metodo_linkage: str = "single") -> pd.Series
     return pesos.reindex(tickers)
 
 
-def otimizar_hrp_arvore(cov: pd.DataFrame, metodo_linkage: str = "ward") -> pd.Series:
+def otimizar_hrp_arvore(cov: pd.DataFrame, metodo_linkage: str = "ward", distancia: str = "d") -> pd.Series:
     """Variante que desce a árvore de clusterização (inspirada no HERC)."""
     tickers = cov.index.tolist()
     if len(tickers) == 1:
         return pd.Series(1.0, index=tickers)
-    raiz = to_tree(_arvore(cov, metodo_linkage))
+    raiz = to_tree(_arvore(cov, metodo_linkage, distancia))
     pesos = pd.Series(0.0, index=tickers)
     pilha = [(raiz, 1.0)]
     while pilha:

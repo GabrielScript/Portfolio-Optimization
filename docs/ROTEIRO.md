@@ -367,7 +367,8 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 - [x] Paper-v2 da Conservadora, aprovada na prova final (§4.14): `scripts/paper_v2.py`, pré-registrado, registro em
       `paper-v2/carteiras.csv`, separado do paper-v1. A decisão é a do motor (conferida contra ele); no dia devido a
       rotina roda o `universe` do lago. Leituras em 126 e 252 pregões com custo e IR de R$ 10 mil contra o BOVA11
-      depois do IR (`--leitura`).
+      depois do IR (`--leitura`). 1º registro no fechamento de 19/10/2026: 15 nomes com pesos iguais (relógio do
+      paper-v2 começa aqui; leituras em ~abril e ~outubro de 2027).
 - [ ] Agendar a rotina do paper-v2 (de segunda a sexta, depois da das 8h30): **espera o seu OK**
 
 ### 4.11 Robustez fora da amostra (PLAN §11, passo 3): descritivo, o critério não muda

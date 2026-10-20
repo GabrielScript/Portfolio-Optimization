@@ -15,7 +15,8 @@ juntas.
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar -SemEspera
 #>
 param(
-    [string]$Hoje = (Get-Date -Format 'yyyy-MM-dd'),
+    [string]$Hoje = '',     # o dia conferido; vazio = o da rodada perdida, pela hora de -Agora (Dia-Vigiado)
+    [string]$Agora = (Get-Date -Format 's'),
     [string]$PastaLago = (Join-Path $env:LOCALAPPDATA 'b3lake'),
     [string]$PastaPaper = (Join-Path $env:LOCALAPPDATA 'paper-trading'),
     [switch]$SoMostrar,     # escreve os problemas na saída em vez de avisar no Windows (teste e conferência à mão)
@@ -32,8 +33,9 @@ $FalhasDoPaper = @('falhou', 'bloqueada', 'lago rodando')
 $AppDoPowerShell = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
 function Esperar-Rotinas {
-    # rodada atrasada (PC ligado ou acordado depois das 12h): as outras tarefas atrasadas começam junto com esta
-    if ((Get-Date).TimeOfDay -gt [TimeSpan]'12:10:00') { Start-Sleep -Seconds 180 }
+    # rodada atrasada (PC ligado ou acordado depois do horário): as outras tarefas atrasadas começam junto com esta;
+    # na rodada das 12h os 3 minutos não custam nada
+    Start-Sleep -Seconds 180
     $limite = (Get-Date) + $EsperaMaxima
     while ((Get-Date) -lt $limite) {
         $rodando = @(Get-ScheduledTask -TaskName $RotinasVigiadas -ErrorAction SilentlyContinue |
@@ -41,6 +43,18 @@ function Esperar-Rotinas {
         if ($rodando.Count -eq 0) { return }
         Start-Sleep -Seconds 30
     }
+}
+
+function Dia-Vigiado([string]$Agora) {
+    # rodada que caiu noutro dia (antes das 12h, ou no fim de semana): a perdida é a do dia útil anterior, e as
+    # rotinas de hoje ainda podem nem ter rodado
+    $momento = [datetime]::Parse($Agora, [Globalization.CultureInfo]::InvariantCulture)
+    $fimDeSemana = @('Saturday', 'Sunday')
+    $dia = $momento.Date
+    if ($momento.TimeOfDay -lt [TimeSpan]'12:00:00' -or $fimDeSemana -contains "$($dia.DayOfWeek)") {
+        do { $dia = $dia.AddDays(-1) } while ($fimDeSemana -contains "$($dia.DayOfWeek)")
+    }
+    return $dia.ToString('yyyy-MM-dd')
 }
 
 function Ler-Rodadas([string]$Arquivo) {
@@ -92,6 +106,7 @@ function Avisar([string]$Titulo, [string]$Corpo) {
 
 function Anotar([string]$Pasta, [string]$Texto) {
     # vigia.csv: prova de que o vigia rodou, com ou sem problema
+    $null = New-Item -ItemType Directory -Force -Path $Pasta      # máquina nova: a pasta do paper pode não existir
     $arquivo = Join-Path $Pasta 'vigia.csv'
     if (-not (Test-Path -LiteralPath $arquivo)) { Set-Content -LiteralPath $arquivo -Value 'quando,problemas' -Encoding UTF8 }
     $linha = '{0},"{1}"' -f (Get-Date -Format 's'), $Texto.Replace('"', '""')
@@ -104,13 +119,14 @@ try {
     if (-not $SemEspera) { Esperar-Rotinas }
     $doLago = Ler-Rodadas (Join-Path $PastaLago 'runs.csv')
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
-    $problemas = @(Problemas-DoDia $Hoje $doLago $doPaper)
+    $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper)
     $texto = $problemas -join '; '
     if ($SoMostrar) {
         if ($problemas.Count -eq 0) { 'vigia: tudo em dia' } else { $problemas | ForEach-Object { "vigia: $_" } }
     } else {
-        Anotar $PastaPaper $texto
         if ($problemas.Count -gt 0) { Avisar "vigia do paper: $($problemas.Count) problema(s)" $texto }
+        Anotar $PastaPaper "$dia $texto"
     }
     if ($problemas.Count -gt 0) { exit 1 }
     exit 0

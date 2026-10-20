@@ -22,10 +22,12 @@ def _pastas(tmp_path, lago: list[str], paper: list[str]) -> tuple[Path, Path]:
     return pasta_lago, pasta_paper
 
 
-def _vigiar(pasta_lago: Path, pasta_paper: Path) -> subprocess.CompletedProcess:
+def _vigiar(pasta_lago: Path, pasta_paper: Path, *quando: str) -> subprocess.CompletedProcess:
+    """``quando``: "-Hoje", dia (o padrão, 20/10/2026) ou "-Agora", data e hora da rodada (sem -Hoje)."""
     return subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
-                           str(VIGIA), "-Hoje", HOJE, "-PastaLago", str(pasta_lago), "-PastaPaper", str(pasta_paper),
-                           "-SoMostrar", "-SemEspera"], capture_output=True, text=True, encoding="utf-8", timeout=120)
+                           str(VIGIA), *(quando or ("-Hoje", HOJE)), "-PastaLago", str(pasta_lago),
+                           "-PastaPaper", str(pasta_paper), "-SoMostrar", "-SemEspera"],
+                          capture_output=True, text=True, encoding="utf-8", timeout=120)
 
 
 LAGO_EM_DIA = "2026-10-19T21:45:10,2026-10-19T22:10:02,2026-10-19,done,new zip: [2026]"
@@ -77,4 +79,15 @@ def test_vigia_atrasado_a_noite_nao_cobra_o_fechamento_que_o_lago_publicou_depoi
     # podia decidir no de ontem (o que o lago tinha às 8h00)
     noite = "2026-10-20T21:45:02,2026-10-20T22:05:40,2026-10-20,done,new zip: [2026]"
     saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE, noite], [PAPER_HOJE]))
+    assert (saida.returncode, saida.stdout.strip()) == (0, "vigia: tudo em dia"), saida.stderr
+
+
+@pytest.mark.parametrize("agora", ["2026-10-21T07:30:00", "2026-10-24T10:00:00"])
+def test_vigia_que_roda_atrasado_noutro_dia_confere_o_dia_util_anterior(tmp_path, agora):
+    # PC desligado às 12h de 20/10 (ter) e ligado na manhã seguinte, ou de 23/10 (sex) e ligado no sábado: as rotinas
+    # de hoje ainda não rodaram; a rodada perdida é a do dia útil anterior, que estava em dia
+    sexta = ["2026-10-23T08:00:03,2026-10-23T08:00:04,2026-10-22,up_to_date,"]
+    paper_sexta = ["2026-10-23T08:30:05,2026-10-23T08:30:31,2026-10-22,aguardar,"]
+    lago, paper = ([LAGO_HOJE], [PAPER_HOJE]) if agora.startswith("2026-10-21") else (sexta, paper_sexta)
+    saida = _vigiar(*_pastas(tmp_path, lago, paper), "-Agora", agora)
     assert (saida.returncode, saida.stdout.strip()) == (0, "vigia: tudo em dia"), saida.stderr

@@ -74,8 +74,8 @@ mesmas condições.
   `paper-v2/carteiras.csv`, separado do paper-v1. A carteira do dia é a que o motor decidiria (conferido contra ele);
   rebalanceio a cada 63 pregões, com o `universe` do lago rodado no dia devido. 1º registro no fechamento de
   19/10/2026 (15 nomes, pesos iguais); leituras em 126 e 252 pregões com custo e IR de R$ 10 mil contra o BOVA11
-  (`--leitura`). Tarefa "paper v2" do Windows, de segunda a sexta às 8h45 (`scripts/rodar_paper.py paper_v2`); o
-  `universe` também roda toda noite na rotina do lago. ROTEIRO §4.10.
+  (`--leitura`). Tarefa "paper v2" do Windows, de segunda a sexta às 8h45 (`scripts/rodar_paper.py paper_v2`), conferida
+  pelo vigia das 12h; o `universe` também roda toda noite na rotina do lago. ROTEIRO §4.10.
 - **Núcleo BOVA11 + IVVB11** (`scripts/avaliar_nucleo.py`, pré-registrado; saída em `docs/nucleo-2026-10-20.txt`):
   metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
   23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não

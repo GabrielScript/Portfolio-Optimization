@@ -30,3 +30,7 @@ data,script,configuracao
 2026-10-20,avaliar_nucleo.py,"Núcleo BOVA11 50% + IVVB11 50%, pesos fixos, de volta ao alvo a cada 63 pregões"
 2026-10-20,avaliar_valor.py,"Fórmula Mágica de Greenblatt (EBIT/EV e EBIT/capital empregado; 15 nomes, pesos iguais, 4 por setor) com regras"
 2026-10-20,avaliar_valor.py,"Trending Value de O'Shaughnessy (6 rendimentos, 30% mais baratos, momentum 6m; 15 nomes, pesos iguais, 4 por setor) com regras"
+2026-10-20,avaliar_vol_alvo.py,"Fórmula Mágica com alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
+2026-10-20,avaliar_vol_alvo.py,"Trending Value com alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
+2026-10-20,avaliar_vol_alvo.py,"Conservadora com alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"
+2026-10-20,avaliar_vol_alvo.py,"Kelly λ=2 com regras e alvo de vol EGARCH (janela 504, reajuste 21, alvo = vol realizada da janela, resto no CDI)"

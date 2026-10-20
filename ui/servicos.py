@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from core import market_data, reamostragem
+from core import cdi_lago, market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -75,8 +75,9 @@ def carregar_precos(tickers: tuple[str, ...], anos: int, dia: date, versao_dados
 
 @st.cache_data(ttl=86400, show_spinner=False)
 def carregar_cdi(anos: int, dia: date) -> pd.Series:
+    """The lake's CDI copy, topped up from the BCB (``cdi_lago``); without the file (Cloud), the BCB as before."""
     try:
-        return market_data.baixar_cdi_diario(anos, hoje=dia)
+        return cdi_lago.daily_cdi(anos, dia)
     except market_data.ErroDadosMercado:
         return pd.Series(dtype=float)
 

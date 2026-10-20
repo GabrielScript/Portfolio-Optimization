@@ -43,3 +43,24 @@ def test_sem_registro_do_paper_nao_ha_satelite(tmp_path):
     so_cabecalho.write_text("data,ticker,peso,preco\n", encoding="utf-8")
     assert carregar_satelite_registrado(tmp_path / "nao_existe.csv") is None
     assert carregar_satelite_registrado(so_cabecalho) is None
+
+
+def test_cdi_of_the_screen_comes_from_the_lake_copy_without_asking_the_bcb(tmp_path, monkeypatch):
+    from datetime import date
+
+    from core import cdi_lago, market_data
+    from ui import servicos
+
+    path = tmp_path / "cdi_daily.parquet"
+    days = pd.to_datetime(["2025-01-02", "2026-10-16", "2026-10-19"])
+    pd.DataFrame({"date": days.date, "cdi_pct": 0.05}).to_parquet(path)
+    monkeypatch.setattr(cdi_lago, "LAKE_CDI_FILE", path)
+
+    def no_network(*args, **kwargs):
+        raise AssertionError("the BCB must not be asked")
+
+    monkeypatch.setattr(market_data, "baixar_cdi_diario", no_network)
+    servicos.carregar_cdi.clear()
+    cdi = servicos.carregar_cdi(1, date(2026, 10, 20))
+    servicos.carregar_cdi.clear()
+    assert cdi.index.tolist() == days[1:].tolist()

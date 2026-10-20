@@ -141,6 +141,9 @@ mesmas condições.
 - **Cotação do dia:** Yahoo Finance (`yfinance`), só para o plano de compra.
 - **Banco Central (SGS):** CDI diário (série 12), Selic meta point-in-time (série 432) e PTAX (série 1, só para o painel macro),
   baixados em janelas de até 10 anos, com nova tentativa em falhas transitórias.
+- **Daily CDI from the lake (since 2026-10-20):** the `b3-datalake` nightly routine keeps SGS 12 since 1986 and
+  exports `data/b3lake/cdi_daily.parquet`; `core/cdi_lago.py` reads it and asks the SGS only for the days after the
+  last night's run. Without the file (Streamlit Cloud: `data/` is not versioned) the app downloads from the SGS as before.
 - **Lago de dados da B3 (projeto irmão `b3-datalake`):** exports em parquet gerados a partir do COTAHIST
   oficial (1986–hoje) e dos eventos da B3 e da CVM: retorno total ajustado desde 07/1994 de 3.948 papéis,
   **incluindo deslistados e em recuperação judicial** (troca de ticker, como ITAU4 → ITUB4, continua a mesma
@@ -190,6 +193,7 @@ Portfolio-Optimization/
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
 │   ├── lago.py               #   Preços diários do lago da B3 (lago/precos_diarios.parquet)
 │   ├── market_data.py        #   Preços (lago), calendário B3, CDI, Selic, cotação do dia (Yahoo)
+│   ├── cdi_lago.py           #   Daily CDI from the lake's copy, topped up from the SGS (outside the paper guards)
 │   ├── ordens.py             #   Plano de compra: pesos + cotações → quantidades inteiras
 │   ├── risco.py              #   Regras de risco fixas: aprova ou recusa a carteira (não muda pesos)
 │   ├── registro.py           #   Registro do paper trading (CSV que só acrescenta linhas)

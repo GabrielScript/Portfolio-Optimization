@@ -70,6 +70,11 @@ mesmas condições.
   líquidos de custo e de IR contra 7,2–8,4% do BOVA11, P[> BOVA11] da saída 0,981–0,995: **aprovada**, candidata ao
   paper-v2. Com R$ 1 milhão o custo sobe para 1,1–1,2% a.a. e o P cai para 0,94–0,98. Não cumpre ainda o critério de
   pronto (falta o paper trading). ROTEIRO §4.14.
+- **Paper-v2 da Conservadora** (`scripts/paper_v2.py`, pré-registrado, tag `paper-v2`): registro em
+  `paper-v2/carteiras.csv`, separado do paper-v1. A carteira do dia é a que o motor decidiria (conferido contra ele);
+  rebalanceio a cada 63 pregões, com o `universe` do lago rodado no dia devido. 1º registro no fechamento de
+  19/10/2026 (15 nomes, pesos iguais); leituras em 126 e 252 pregões com custo e IR de R$ 10 mil contra o BOVA11
+  (`--leitura`). A rotina diária ainda não está agendada (espera o OK do usuário). ROTEIRO §4.10.
 - **Núcleo BOVA11 + IVVB11** (`scripts/avaliar_nucleo.py`, pré-registrado; saída em `docs/nucleo-2026-10-20.txt`):
   metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
   23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não

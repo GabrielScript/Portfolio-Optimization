@@ -4,3 +4,10 @@ pytest==9.1.1
 iniconfig==2.3.1
 pluggy==1.6.0
 colorama==0.4.6 ; sys_platform == "win32"
+# Alvo de vol com EGARCH (core/vol_alvo.py, só nos scripts de pesquisa; a tela não importa)
+arch==8.0.0
+statsmodels==0.15.0
+patsy==1.0.3
+formulaic==1.2.2
+interface-meta==2.0.1
+wrapt==2.5.1

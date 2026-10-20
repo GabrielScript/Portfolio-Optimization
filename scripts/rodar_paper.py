@@ -31,13 +31,17 @@ def anotar_falha(pasta: Path, inicio: datetime, onde: str, erro: Exception) -> P
     log.parent.mkdir(parents=True, exist_ok=True)
     log.write_text(f"{onde}\n" + "".join(traceback.format_exception(erro)), encoding="utf-8")
     runs = pasta / "runs.csv"
-    novo = not runs.exists()
-    with runs.open("a", encoding="utf-8", newline="") as saida:
-        escritor = csv.writer(saida, lineterminator="\n")
-        if novo:
-            escritor.writerow(CABECALHO_DO_RUNS)
-        escritor.writerow([inicio.isoformat(timespec="seconds"), datetime.now().isoformat(timespec="seconds"), "",
-                           "falhou", f"{onde}: {type(erro).__name__}: {erro} (log {log.name})"[:300]])
+    try:
+        novo = not runs.exists()
+        with runs.open("a", encoding="utf-8", newline="") as saida:
+            escritor = csv.writer(saida, lineterminator="\n")
+            if novo:
+                escritor.writerow(CABECALHO_DO_RUNS)
+            escritor.writerow([inicio.isoformat(timespec="seconds"), datetime.now().isoformat(timespec="seconds"),
+                               "", "falhou", f"{onde}: {type(erro).__name__}: {erro} (log {log.name})"[:300]])
+    except OSError as travado:      # aberto no Excel: sem a linha, o vigia avisa o dia sem rodada
+        with log.open("a", encoding="utf-8") as saida:
+            saida.write(f"\nruns.csv sem a linha da falha: {travado}\n")
     return log
 
 

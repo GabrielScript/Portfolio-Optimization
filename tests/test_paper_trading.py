@@ -3,6 +3,7 @@
 import subprocess
 import sys
 from datetime import datetime
+from hashlib import sha256
 from pathlib import Path
 
 import numpy as np
@@ -382,30 +383,31 @@ def test_diario_do_dia_entra_num_commit_e_rodar_de_novo_nao_commita(registro_no_
     diario = raiz / "paper" / "diario.csv"
     rodada = paper_trading.Rodada(DATAS[-1], Acao.AGUARDAR)
     for _ in range(2):
-        revistos = paper_trading.conferir_o_diario(rodada, diario, registro_no_git, arquivo_precos,
-                                                   datetime(2026, 10, 9, 8, 30), raiz=raiz)
-    assert (revistos, _git(raiz, "rev-list", "--count", "HEAD"), _git(raiz, "log", "-1", "--format=%s")) == (
-        [], "2", f"paper: diário do fechamento de {DATAS[-1]:%d/%m/%Y}")
+        dia = paper_trading.conferir_o_diario(rodada, diario, registro_no_git, arquivo_precos,
+                                              datetime(2026, 10, 9, 8, 30), raiz=raiz)
+    assert (dia, _git(raiz, "rev-list", "--count", "HEAD"), _git(raiz, "log", "-1", "--format=%s")) == (
+        paper_trading.DiarioDoDia([]), "2", f"paper: diário do fechamento de {DATAS[-1]:%d/%m/%Y}")
 
 
-def test_registro_commita_a_proveniencia_e_o_marco_dos_precos_lidos(registro_no_git, arquivo_precos):
-    # os preços que decidiram vão no mesmo commit (marco versionado): o registro se refaz pelo git, sem o lago
-    raiz = registro_no_git.parent.parent
-    precos_no_app = raiz / "lago" / "precos_diarios.parquet"
-    precos_no_app.parent.mkdir()
-    precos_no_app.write_bytes(b"marco antigo")
-    _git(raiz, "add", "--", "lago/precos_diarios.parquet")
-    _git(raiz, "commit", "-q", "-m", "marco")
-    precos_no_app.write_bytes(arquivo_precos.read_bytes())
+def _registrar_no_repo(registro_no_git: Path) -> paper_trading.Rodada:
     registrar_carteira(DATAS[-1].date(), pd.Series({"B": 1.0}), pd.Series({"B": 19.0}), registro_no_git)
-    rodada = paper_trading.Rodada(DATAS[-1], Acao.REBALANCEAR, pd.Series({"B": 1.0}))
-    paper_trading.commitar_registro(registro_no_git, rodada, "abc1234", ["código abc1234", "Selic 15.00% (bcb)"],
-                                    precos_no_app, raiz=raiz)
+    return paper_trading.Rodada(DATAS[-1], Acao.REBALANCEAR, pd.Series({"B": 1.0}))
+
+
+def test_registro_commita_a_proveniencia_e_uma_copia_dos_precos_lidos(registro_no_git, arquivo_precos):
+    # os preços que decidiram vão no mesmo commit, numa cópia que o lago não reescreve: o registro se refaz pelo git
+    raiz = registro_no_git.parent.parent
+    rodada = _registrar_no_repo(registro_no_git)
+    notas = ["código abc1234", "Selic 15.00% (bcb)"]
+    lido = sha256(arquivo_precos.read_bytes()).hexdigest()
+    paper_trading.commitar_registro(registro_no_git, rodada, "abc1234", notas, arquivo_precos, lido, raiz=raiz)
     proveniencia = pd.read_csv(raiz / "paper" / "proveniencia.csv", dtype=str)
+    marco = f"paper/marcos/{DATAS[-1].date()}.parquet"
     assert _git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines() == [
-        "lago/precos_diarios.parquet", "paper/carteiras.csv", "paper/proveniencia.csv"]
-    assert proveniencia[["fechamento", "codigo", "selic"]].values.tolist() == [
-        [str(DATAS[-1].date()), "abc1234", "Selic 15.00% (bcb)"]]
+        "paper/carteiras.csv", marco, "paper/proveniencia.csv"]
+    assert proveniencia[["fechamento", "codigo", "precos_sha256", "selic"]].values.tolist() == [
+        [str(DATAS[-1].date()), "abc1234", lido, "Selic 15.00% (bcb)"]]
+    assert ((raiz / marco).read_bytes() == arquivo_precos.read_bytes(), notas[2:]) == (True, [])
 
 
 def test_diario_que_falha_vira_nota_e_aviso_sem_derrubar_a_rodada(monkeypatch):
@@ -429,3 +431,61 @@ def test_registro_pendente_leva_a_proveniencia_pendente_no_mesmo_commit(registro
     assert commitar_pendente(registro_no_git, raiz, junto=[proveniencia])
     assert (_git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines(), _git(raiz, "status", "--porcelain")) == (
         ["paper/carteiras.csv", "paper/proveniencia.csv"], "")
+
+
+def test_revisao_do_lago_chega_mesmo_com_o_commit_do_diario_falhando(registro_no_git, arquivo_precos):
+    # as linhas "revisao" já estão no disco quando o git falha: se a revisão se perdesse aqui, o dia seguinte a usaria
+    # como referência e o aviso nunca sairia
+    raiz = registro_no_git.parent.parent
+    diario = raiz / "paper" / "diario.csv"
+    rodada = paper_trading.Rodada(DATAS[-1], Acao.AGUARDAR)
+    paper_trading.conferir_o_diario(rodada, diario, registro_no_git, arquivo_precos, datetime(2026, 10, 9), raiz=raiz)
+    revisto = ler_precos(arquivo_precos)
+    revisto.loc[DATAS[30]:, "A"] *= 1.01
+    revisto.astype("float32").assign(date=revisto.index.date).to_parquet(arquivo_precos)
+    (raiz / ".git" / "index.lock").touch()
+    dia = paper_trading.conferir_o_diario(rodada, diario, registro_no_git, arquivo_precos, datetime(2026, 10, 10),
+                                          raiz=raiz)
+    assert (dia.revistos, "index.lock" in dia.erro_do_commit) == (list(DATAS[30:]), True)
+
+
+def test_proveniencia_que_falha_vira_nota_e_a_carteira_entra_no_git_mesmo_assim(registro_no_git, arquivo_precos,
+                                                                                 monkeypatch):
+    # proveniencia.csv aberto no Excel (trava de escrita no Windows): a carteira já está no disco e tem de ir ao git
+    import core.proveniencia
+
+    def travado(*argumentos, **opcoes):
+        raise PermissionError("proveniencia.csv aberto em outro programa")
+
+    monkeypatch.setattr(core.proveniencia, "registrar_proveniencia", travado)
+    monkeypatch.setattr(paper_trading, "avisar", lambda titulo, corpo: None)
+    raiz = registro_no_git.parent.parent
+    notas: list[str] = []
+    lido = sha256(arquivo_precos.read_bytes()).hexdigest()
+    paper_trading.commitar_registro(registro_no_git, _registrar_no_repo(registro_no_git), "abc1234", notas,
+                                    arquivo_precos, lido, raiz=raiz)
+    nomes = _git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines()
+    assert ("paper/carteiras.csv" in nomes, notas) == (True, ["proveniência falhou: proveniencia.csv aberto em outro "
+                                                               "programa"])
+
+
+def test_lago_que_publica_no_meio_da_rodada_vira_nota_no_registro(registro_no_git, arquivo_precos, monkeypatch):
+    # o daily.lock só é conferido no começo da rodada: a cópia que vai ao git pode não ser o arquivo que decidiu
+    avisos = []
+    monkeypatch.setattr(paper_trading, "avisar", lambda titulo, corpo: avisos.append(titulo))
+    notas: list[str] = []
+    paper_trading.commitar_registro(registro_no_git, _registrar_no_repo(registro_no_git), "abc1234", notas,
+                                    arquivo_precos, "hash de antes da rodada", raiz=registro_no_git.parent.parent)
+    assert (notas, avisos) == (["preços mudaram durante a rodada: o marco não é o arquivo que decidiu"],
+                               ["paper trading: preços mudaram durante a rodada"])
+
+
+def test_registro_pendente_leva_o_marco_dos_precos_pela_pasta_dos_marcos(registro_no_git):
+    raiz = registro_no_git.parent.parent
+    registrar_carteira(DATAS[5].date(), pd.Series({"B": 1.0}), pd.Series({"B": 20.0}), registro_no_git)
+    marco = raiz / "paper" / "marcos" / f"{DATAS[5].date()}.parquet"
+    marco.parent.mkdir()
+    marco.write_bytes(b"precos do dia")
+    assert commitar_pendente(registro_no_git, raiz, junto=[raiz / "paper" / "proveniencia.csv", marco.parent])
+    assert _git(raiz, "show", "--name-only", "--format=", "HEAD").splitlines() == [
+        "paper/carteiras.csv", f"paper/marcos/{DATAS[5].date()}.parquet"]

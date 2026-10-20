@@ -57,3 +57,13 @@ def test_falha_no_main_da_rotina_fora_do_try_dela_tambem_vira_linha_falhou(check
     log = local / "paper-trading" / "logs" / linha["nota"].rsplit("log ", 1)[1].rstrip(")")
     assert (saida.returncode, linha["desfecho"], "logs sem permissão" in linha["nota"]) == (1, "falhou", True)
     assert "PermissionError" in log.read_text(encoding="utf-8")
+
+
+def test_runs_csv_travado_fica_registrado_no_log_do_lancador(checkout, tmp_path):
+    # runs.csv aberto no Excel: a linha não entra, mas o log diz o que houve (o vigia avisa o dia sem rodada)
+    local = tmp_path / "local"
+    (local / "paper-trading" / "runs.csv").mkdir(parents=True)        # escrever nele falha como com a trava
+    saida = _lancar(checkout, "raise ImportError('pandas quebrado')\n", local)
+    logs = list((local / "paper-trading" / "logs").glob("*-lancador.log"))
+    texto = logs[0].read_text(encoding="utf-8")
+    assert (saida.returncode, saida.stderr, "pandas quebrado" in texto, "runs.csv" in texto) == (1, "", True, True)

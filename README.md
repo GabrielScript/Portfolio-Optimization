@@ -80,6 +80,11 @@ mesmas condições.
   metade BOVA11, metade IVVB11, de 2014 a 2026. 17,6–18,0% a.a. contra 11,9–12,0% do BOVA11, com vol de 15,7% contra
   23,8% e MDD de −34% contra −47%, mas P[> BOVA11] em log de 0,87–0,89 (pede 0,95) num regime de câmbio só: não
   candidato, o núcleo segue BOVA11. ROTEIRO §4.12.
+- **HRP com a distância do paper** (`scripts/avaliar_hrp_distancia.py`, pré-registrado; saída em
+  `docs/hrp-distancia-2026-10-20.txt`): López de Prado (2016) clusteriza a distância euclidiana entre as colunas da
+  matriz de distâncias (d~), e o app clusteriza a própria d. Com d~, o HRP empata (P[d~ > d] 0,50–0,71, retorno total
+  até 2 p.p. menor nas fases 0 e 21) e o HRP-Árvore reprova (P 0,03–0,39): o app fica com a d. A opção do paper está
+  em `core/hrp_paper.py`, fora dos caminhos vigiados do paper.
 - Teto de volatilidade anual (restrição cônica), peso máximo por ativo e número máximo de ativos
   (cardinalidade em duas etapas).
 - Universo: lista líquida, filtro por setores ou todos os ativos de `assets.py`.
@@ -194,6 +199,7 @@ Portfolio-Optimization/
 │   ├── optimization.py       #   Kelly, Max-Sharpe, Min-Vol, HRP, fronteira, projeção nos limites
 │   ├── reamostragem.py       #   Carteira reamostrada (bagging, bootstrap em blocos)
 │   ├── hierarchical.py       #   HRP e HRP-Árvore
+│   ├── hrp_paper.py          #   HRP com a distância d~ do paper original (pesquisa, fora da tela)
 │   ├── metrics.py            #   Sharpe, Sortino, Calmar, VaR/CVaR, alfa, drawdown, PSR/DSR
 │   ├── robustez.py           #   MinTRL, P[> referência] em log-retorno, janelas móveis
 │   ├── backtest.py           #   Walk-forward com custos e CDI point-in-time (universo ponto no tempo, regras no motor)
@@ -225,6 +231,7 @@ Portfolio-Optimization/
 │   ├── avaliar_vol_alvo.py           # Alvo de vol com EGARCH, pré-registrado (rodado)
 │   ├── avaliar_views.py              # S3, Black-Litterman com views, pré-registrado (rodado)
 │   ├── avaliar_execucao.py           # Prova final com execução realista (S4), pré-registrada (rodada)
+│   ├── avaliar_hrp_distancia.py      # HRP com a distância d~ do paper, pré-registrado (rodado)
 │   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
@@ -240,6 +247,7 @@ Portfolio-Optimization/
 │   ├── vol-alvo-2026-10-20.txt   # Saída do teste do alvo de vol com EGARCH
 │   ├── views-2026-10-20.txt      # Saída do S3 (Black-Litterman com views)
 │   ├── execucao-2026-10-20.txt   # Saída da prova final com custo por liquidez e IR (S4)
+│   ├── hrp-distancia-2026-10-20.txt  # Saída do teste do HRP com a distância d~ do paper
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/

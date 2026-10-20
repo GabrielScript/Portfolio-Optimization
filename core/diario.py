@@ -5,7 +5,8 @@ gravado no dia em que a rotina o viu, para avisar quando o lago muda um dado pas
 O ``paper/carteiras.csv`` guarda só as decisões; a curva sai dele e dos preços atuais do lago. Se o lago muda um preço
 passado (provento lançado depois, correção de um evento), a curva de um fechamento já visto muda sem que nada no
 registro mude. O diário só cresce: a cada rodada entram os fechamentos novos ("novo") e, para cada fechamento já
-gravado cujo valor recalculado mudou, uma linha nova "revisao" com o valor de agora (a última linha de cada fechamento
+gravado cujo valor recalculado mudou (e cada pregão que o lago pôs antes do último já gravado), uma linha nova
+"revisao" com o valor de agora (a última linha de cada fechamento
 é a referência da rodada seguinte, então a mesma mudança avisa uma vez só). Satélite e BOVA11 valem 1,0 no fechamento
 do 1º registro; razão = satélite / BOVA11 e pico = maior razão até o fechamento (o stop relativo olha os dois).
 """
@@ -23,7 +24,9 @@ import pandas as pd
 from core.paper import NUCLEO, curva_do_registro
 
 COLUNAS = ["fechamento", "satelite", "bova", "razao", "pico", "precos_sha256", "gravado_em", "tipo"]
-MEDIDAS = ["satelite", "bova"]      # razão e pico saem delas
+# o pico é um máximo acumulado: o lago corrigir o dia do pico muda o pico dos dias seguintes sem mudar a razão deles.
+# A razão não entra: é o quociente das duas primeiras, que já entram
+MEDIDAS = ["satelite", "bova", "pico"]
 # o mesmo arquivo de preços dá a mesma curva bit a bit; um provento ou correção mexe na 3ª casa ou antes
 TOLERANCIA_RELATIVA = 1e-6
 
@@ -67,9 +70,12 @@ def atualizar_diario(arquivo: Path, carteiras: pd.DataFrame, precos: pd.DataFram
     agora_nos_vistos = curvas.reindex(ultimas.index)[MEDIDAS]
     mudou = ~np.isclose(agora_nos_vistos, ultimas[MEDIDAS].astype(float), rtol=TOLERANCIA_RELATIVA, atol=0.0,
                         equal_nan=True).all(axis=1)
-    revistos = list(ultimas.index[mudou])
+    nunca_vistos = curvas.index[~curvas.index.isin(ultimas.index)]
+    # pregão que o lago pôs antes do último já gravado também muda o passado (contagem de pregões, retorno do dia)
+    inseridos = nunca_vistos[nunca_vistos < ultimas.index.max()] if len(ultimas) else nunca_vistos[:0]
+    revistos = sorted([*ultimas.index[mudou], *inseridos])
     _gravar(arquivo, curvas.reindex(revistos), precos_sha256, agora, "revisao")
-    _gravar(arquivo, curvas[~curvas.index.isin(ultimas.index)], precos_sha256, agora, "novo")
+    _gravar(arquivo, curvas.loc[nunca_vistos.difference(inseridos)], precos_sha256, agora, "novo")
     return revistos
 
 

@@ -76,3 +76,23 @@ def test_hash_dos_precos_e_o_sha256_do_arquivo(tmp_path):
 def test_texto_das_revisoes_diz_quantos_fechamentos_e_o_intervalo():
     assert texto_das_revisoes([DATAS[10], DATAS[11], DATAS[19]]) == (
         "lago mudou 3 fechamento(s) já gravado(s) no diário, de 15/07/2026 a 28/07/2026")
+
+
+def test_lago_que_corrige_o_dia_do_pico_revisa_o_pico_dos_dias_seguintes(tmp_path, carteiras, precos):
+    # um tick errado de +30% em A no 6º pregão fez o pico; o lago corrige só esse dia: a razão dos dias seguintes
+    # não muda, mas o pico gravado neles (o que o stop relativo olha) muda
+    arquivo = tmp_path / "diario.csv"
+    errado = precos.copy()
+    errado.loc[DATAS[5], "A"] *= 1.3
+    atualizar_diario(arquivo, carteiras, errado, "abc", AGORA)
+    revistos = atualizar_diario(arquivo, carteiras, precos, "def", AGORA)
+    assert revistos == list(DATAS[5:])
+
+
+def test_pregao_que_o_lago_poe_no_meio_do_passado_vira_revisao(tmp_path, carteiras, precos):
+    # o diário viu os pregões sem o 8º; o lago repõe esse dia: muda a contagem de pregões e o retorno diário
+    arquivo = tmp_path / "diario.csv"
+    atualizar_diario(arquivo, carteiras, precos.drop(DATAS[7]), "abc", AGORA)
+    revistos = atualizar_diario(arquivo, carteiras, precos, "def", AGORA)
+    linha = ler_diario(arquivo).iloc[-1]
+    assert (revistos, linha["fechamento"], linha["tipo"]) == ([DATAS[7]], DATAS[7], "revisao")

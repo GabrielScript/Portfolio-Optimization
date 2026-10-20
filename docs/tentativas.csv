@@ -26,3 +26,4 @@ data,script,configuracao
 2026-10-18,avaliar_regras_no_motor.py,"Núcleo Mín. Vol 70/30 com regras"
 2026-10-19,avaliar_robustez.py,"Dinheiro real: BOVA11 70% + Kelly λ=2 com regras e stop 30%"
 2026-10-19,avaliar_robustez.py,"Kelly λ=2 com regras, janela de 2.520 pregões (R10)"
+2026-10-20,avaliar_conservadora.py,"Conservadora de Blitz e van Vliet (vol 36m, DY 12m, momentum 12-1; 15 nomes, pesos iguais, 4 por setor) com regras"

@@ -1,0 +1,68 @@
+{
+  "generated_at": "2026-10-19T22:40:53",
+  "data_from": "1994-07-01",
+  "data_through": "2026-10-19",
+  "files": {
+    "securities": {
+      "rows": 3951,
+      "mb": 0.11
+    },
+    "monthly_metrics": {
+      "rows": 285513,
+      "mb": 18.58
+    },
+    "market_index_daily": {
+      "rows": 15962,
+      "mb": 0.17
+    },
+    "share_events": {
+      "rows": 3987,
+      "mb": 0.07
+    },
+    "cash_events": {
+      "rows": 29890,
+      "mb": 0.2
+    },
+    "unexplained_jumps": {
+      "rows": 3419,
+      "mb": 0.05
+    },
+    "daily_liquid_panel": {
+      "rows": 3067128,
+      "mb": 43.94
+    },
+    "monthly_total_returns": {
+      "rows": 388,
+      "columns": 3952,
+      "mb": 2.26
+    },
+    "dividends": {
+      "rows": 29102,
+      "mb": 0.45
+    },
+    "app_prices": {
+      "rows": 5401,
+      "columns": 382,
+      "mb": 3.35
+    }
+  },
+  "sources": {
+    "prices": "B3 COTAHIST (séries históricas anuais 1986-, ano corrente atualizado a cada pregão)",
+    "corporate_events": "B3 'listados' API (stockDividends, cashDividends) + flags ESPECI do COTAHIST"
+  },
+  "method": [
+    "Preços em R$ por ação (FATCOT aplicado); antes de 07/1994 convertidos pela cadeia oficial de moedas.",
+    "Security = ticker moderno; tickers pré-1998 ('PET 4') ligados ao moderno ('PETR4').",
+    "Inclui empresas em recuperação judicial (BDI 05-08) e deslistadas (sem viés de sobrevivência).",
+    "Ajuste de desdobramento/grupamento/bonificação: B3 + flags B/G do COTAHIST + saltos confirmados por persistência de preço e quantidade; eventos não confirmados ficam em share_events (confirmed=0).",
+    "Retorno total na convenção CRSP: (P_ex + D) / P_com - 1; JCP líquido do IR na fonte vigente na data de declaração (15% até 2025; 17,5% desde 01/01/2026, LC 224/2025 art. 8º); cisões e bonificações em outra classe como provento em ações (k x fechamento da filha no dia ex).",
+    "Fatores de desdobramento/grupamento: B3 + flags do COTAHIST + CVM FRE (quantidade de ações antes/depois informada pela companhia); auditoria em audit_fre (no D:).",
+    "dividends: dinheiro pago por ação (dividendo, JCP líquido do IR na fonte, rendimento, restituição de capital), na data ex do retorno total, com yield = valor / fechamento cru do dia ex; custo atribuído de bonificação, cisão e dinheiro de fusão ficam fora.",
+    "Após > 180 dias sem negociar, o retorno do dia de volta é nulo (tickers reaproveitados).",
+    "Índices próprios: top-100 por liquidez do mês anterior, pesos iguais e por volume."
+  ],
+  "warnings": [
+    "daily_liquid_panel (só no D:) usa 'já esteve entre os 300 mais líquidos' = informação do futuro: NÃO use como universo de backtest; monte o universo mês a mês com traded_ratio/adtv_brl do monthly_metrics.",
+    "Dias extremos não explicados ficam sem ajuste e listados em unexplained_jumps."
+  ]
+}

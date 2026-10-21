@@ -85,6 +85,10 @@ mesmas condições.
   matriz de distâncias (d~), e o app clusteriza a própria d. Com d~, o HRP empata (P[d~ > d] 0,50–0,71, retorno total
   até 2 p.p. menor nas fases 0 e 21) e o HRP-Árvore reprova (P 0,03–0,39): o app fica com a d. A opção do paper está
   em `core/hrp_paper.py`, fora dos caminhos vigiados do paper.
+- **Small caps below the universe with R$ 10 thousand** (pre-registered, `scripts/avaliar_iliquidez.py`, DECISOES 99):
+  the 15 least liquid tradable names, quarterly, midpoint returns, forced exits, costs and the income-tax exemption,
+  against SMAL11. P 0.52-0.65 (0.95 needed), CAGR -5% to -7% a year against SMAL11's +6% to +12%: spreads cost ~15%
+  of equity a year and there was no premium even before costs. Closed.
 - **Paired test, Núcleo Mín. Vol 70/30 + Kelly 30% vs HRP, BOVA11 and IVVB11** (descriptive, not counted in the DSR's
   N; DECISOES 90): vs BOVA11 +8.6–8.9 p.p./yr and P 0.95–0.99 as a single test, but deflated for 32 trials 0.51–0.73,
   60–68% of the excess from 2010–2014 and behind BOVA11 over the last 5 years; vs HRP P log 0.93–0.98 (≥ 0.95 only in
@@ -349,6 +353,12 @@ Portfolio-Optimization/
   (`docs/poder-dos-portoes-2026-10-18.txt`) mediu isso para os sinais do S2: o portão "IC médio mensal ≥ 0,02 e
   t ≥ 2" aprova 87% dos sinais com IC 0,03 e 1% dos sinais sem valor nos 225 meses de 2008 a 2026; em 5 anos, com IC
   que varia de mês a mês, nenhum portão passa de 47%. Por isso os sinais do S2 são julgados na janela inteira.
+
+- **The lake has had one lean audit, not a full review.** Session 35 ran 3 read-only reviewers (adjustments, metrics, data);
+  its 4 findings were fixed test-first (DECISOES 96-97) and a Yahoo cross-check of 24 liquid stock-years matched
+  (median gap 0.16 p.p.). COTAHIST ingestion and illiquid/delisted names against CVM have not been reviewed yet
+  (DECISOES 100). Known leftovers: 59 FRE contradictions, BDRs/FIIs/ETFs without payouts, adjustment only from 1994-07,
+  no delisting terminal return.
 
 O que falta e em que ordem: [`docs/ROTEIRO.md`](docs/ROTEIRO.md).
 

@@ -37,3 +37,4 @@ data,script,configuracao
 2026-10-20,avaliar_views.py,"Kelly λ=2 com views de Black-Litterman (Conservadora e valor; Ω pelo IC ponto no tempo, δ = 2) e regras"
 2026-10-20,avaliar_hrp_distancia.py,"HRP com a distância do paper d~ (euclidiana entre colunas de D), linkage single, Ledoit-Wolf, sem regras"
 2026-10-20,avaliar_hrp_distancia.py,"HRP-Árvore com a distância d~, linkage ward, Ledoit-Wolf, sem regras"
+2026-10-20,avaliar_iliquidez.py,"Small caps below the D1 universe: the 15 highest-Amihud names of the outside bucket (traded >= 80%, no distress, position <= 5% of daily volume), equal weights, every 63 sessions, R$ 10 thousand with the IR exemption, midpoint returns, forced exits"

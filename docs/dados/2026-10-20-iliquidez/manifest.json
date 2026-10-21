@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-10-20T23:43:26",
+  "lake_commit": "bc21ed6",
+  "data_through": "2026-10-20",
+  "rows": {
+    "daily.parquet": 882597,
+    "dividends.parquet": 29102,
+    "monthly.parquet": 94720,
+    "suspect_days.parquet": 5317,
+    "universe_monthly.parquet": 45812
+  }
+}

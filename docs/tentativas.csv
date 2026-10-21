@@ -38,3 +38,8 @@ data,script,configuracao
 2026-10-20,avaliar_hrp_distancia.py,"HRP com a distância do paper d~ (euclidiana entre colunas de D), linkage single, Ledoit-Wolf, sem regras"
 2026-10-20,avaliar_hrp_distancia.py,"HRP-Árvore com a distância d~, linkage ward, Ledoit-Wolf, sem regras"
 2026-10-20,avaliar_iliquidez.py,"Small caps below the D1 universe: the 15 highest-Amihud names of the outside bucket (traded >= 80%, no distress, position <= 5% of daily volume), equal weights, every 63 sessions, R$ 10 thousand with the IR exemption, midpoint returns, forced exits"
+2026-10-21,avaliar_acoes_titulos.py,"Core BOVA11 50% + IMA-B 50% (IMA-B net of IMAB11's 0.25% fee), fixed weights back to target every 63 sessions"
+2026-10-21,avaliar_acoes_titulos.py,"Core BOVA11 50% + CDI 50%, fixed weights back to target every 63 sessions"
+2026-10-21,avaliar_filtros_macro.py,"BOVA11 with the equity-risk-premium veto (E/P of the universe - 10y real rate below its expanding median -> CDI), every 21 sessions"
+2026-10-21,avaliar_filtros_macro.py,"BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI), every 21 sessions"
+2026-10-21,avaliar_filtros_macro.py,"BOVA11 meta-labelled by the premium and the credit proxy (expanding logistic regression, P < 0.5 -> CDI), every 21 sessions"

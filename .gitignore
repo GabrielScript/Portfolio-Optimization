@@ -149,3 +149,6 @@ session_state.md
 
 # Dados locais (exports do lago, IPCA, listas de trabalho): fora do git
 data/
+
+# Planilhas da ANBIMA: termos de uso 8.2 (arquivos só com autorização escrita); no git, só o SHA256SUMS e o LEIAME
+docs/dados/*-anbima/*.xls

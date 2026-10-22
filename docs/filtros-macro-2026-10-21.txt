@@ -1,0 +1,51 @@
+Files (sha256): {'fundamentals.parquet': '3a9681ba6ebd9d11a87ccc2ef1532d538016fa9d0af4a1f0612680d4e6397e16', 'market_caps.parquet': 'a9cc0ad31b50939e4954ba78653969a019575b8e969f12480d84dfa950d4db35', 'universe_monthly.parquet': '2e1799cfea40d506e5f271ce7604ea342c008f01fd86d78a438f88524a268b0f', 'universe_prices.parquet': 'f00869357593c6268b8997c9a668234a6f963c50993b636ea691c5737be4c811', 'IDADI-HISTORICO.xls': '8eb2ccaa2ae6edf27425929207ec6b1ba719f5a96cd6ca35d8f0881a92f80160', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90', 'real_curve.parquet': 'eee237ce678ff2e21972a8daadfca2f202e995888a94fce92f7726b94f10a6d3'}
+Premium 07/2011 to 10/2026: median -3.56%, min -7.48%, max 5.99%; credit proxy < 0 on 13% of the sessions; DSR N = 38
+
+=== Phase 0: 02/07/2014 to 16/10/2026, 146 decisions ===
+                                                                                     Sharpe      IR P aritmético  P log    DSR MinTRL (anos)    CAGR      MDD BOVA11 weight Switches Control CAGR P[> control] P log [> control]
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)  0.175  -0.089        0.378  0.498  0.081           inf  11,86%  -46,93%        40,41%   11.000       11,46%        0.635             0.540
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                0.035  -0.343        0.120  0.162  0.012           inf   8,50%  -39,49%        82,88%   16.000       11,95%        0.158             0.131
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                 0.195  -0.099        0.366  0.506  0.077           inf  11,99%  -28,22%        24,66%   21.000       11,06%        0.680             0.610
+BOVA11                                                                                    —       —            —      —      —             —  11,89%  -46,93%             —        —            —            —                 —
+CDI                                                                                       —       —            —      —      —             —  10,19%   -0,06%             —        —            —            —                 —
+CAGR excess over the timing control by subperiod:
+                                                                                     2014–2018 2019–2022 2023–2026
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)    -0,92%    -1,09%     3,76%
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                  -5,99%    -2,20%    -1,67%
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                    3,47%     1,45%    -2,63%
+(phase 0 done in 34 s)
+
+=== Phase 7: 14/07/2014 to 16/10/2026, 146 decisions ===
+                                                                                     Sharpe      IR P aritmético  P log    DSR MinTRL (anos)    CAGR      MDD BOVA11 weight Switches Control CAGR P[> control] P log [> control]
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)  0.122  -0.126        0.331  0.448  0.182           inf  10,91%  -46,93%        41,10%   11.000       11,66%        0.519             0.424
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                0.030  -0.250        0.197  0.275  0.094           inf   8,85%  -39,50%        81,51%   12.000       11,95%        0.206             0.213
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                 0.033  -0.202        0.242  0.351  0.121           inf   9,42%  -46,93%        26,03%   17.000       11,25%        0.430             0.324
+BOVA11                                                                                    —       —            —      —      —             —  11,65%  -46,93%             —        —            —            —                 —
+CDI                                                                                       —       —            —      —      —             —  10,18%   -0,06%             —        —            —            —                 —
+CAGR excess over the timing control by subperiod:
+                                                                                     2014–2018 2019–2022 2023–2026
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)    -0,67%    -1,73%     0,27%
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                  -6,11%    -0,39%    -2,45%
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                   -4,10%    -1,62%     0,74%
+(phase 7 done in 41 s)
+
+=== Phase 14: 23/07/2014 to 16/10/2026, 145 decisions ===
+                                                                                      Sharpe      IR P aritmético  P log    DSR MinTRL (anos)    CAGR      MDD BOVA11 weight Switches Control CAGR P[> control] P log [> control]
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)   0.140  -0.084        0.385  0.505  0.007           inf  11,23%  -46,93%        40,00%   11.000       11,19%        0.601             0.504
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                -0.086  -0.576        0.021  0.032  0.000           inf   5,60%  -40,70%        84,14%   14.000       11,36%        0.027             0.019
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                  0.172  -0.061        0.417  0.543  0.008           inf  11,79%  -46,93%        23,45%   18.000       10,87%        0.693             0.588
+BOVA11                                                                                     —       —            —      —      —             —  11,16%  -46,93%             —        —            —            —                 —
+CDI                                                                                        —       —            —      —      —             —  10,18%   -0,06%             —        —            —            —                 —
+CAGR excess over the timing control by subperiod:
+                                                                                     2014–2018 2019–2022 2023–2026
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI)    -0,04%    -3,43%     4,19%
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI)                  -6,24%    -6,11%    -4,71%
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI)                    3,26%    -3,98%     3,83%
+(phase 14 done in 48 s)
+
+BOVA11 with the premium veto (E/P - 10y real rate below its expanding median -> CDI): condition 1 (P log [> control] >= 0.95 in the 3 phases) not met; condition 2 (positive excess over the control in >= 2 of 3 subperiods, every phase) not met -> not a candidate
+
+BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI): condition 1 (P log [> control] >= 0.95 in the 3 phases) not met; condition 2 (positive excess over the control in >= 2 of 3 subperiods, every phase) not met -> not a candidate
+
+BOVA11 meta-labelled by premium and credit (logistic, P < 0.5 -> CDI): condition 1 (P log [> control] >= 0.95 in the 3 phases) not met; condition 2 (positive excess over the control in >= 2 of 3 subperiods, every phase) not met -> not a candidate
+(total 48 s)

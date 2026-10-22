@@ -1,0 +1,92 @@
+Files (sha256): {'universe_prices.parquet': 'f00869357593c6268b8997c9a668234a6f963c50993b636ea691c5737be4c811', 'IMAB-HISTORICO.xls': '1fb9a1627fb2ee72f8c1ab68d1c44629aa23de2926fcabcc5544a628b6ec1a96', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}
+Span 02/12/2008 to 16/10/2026 (4430 sessions); IMA-B net of 0.25% a.a.; DSR N = 38
+
+=== Phase 0: 03/12/2008 to 16/10/2026, 71 rebalances ===
+                               CAGR     Vol      MDD Turnover/yr Sharpe      IR P aritmético  P log    DSR MinTRL (anos)
+Core BOVA11 50% + IMA-B 50%  11,76%  13,66%  -29,55%      20,71%  0.179  -0.068        0.388  0.674  0.230           inf
+Core BOVA11 50% + CDI 50%    10,98%  11,77%  -23,77%      22,83%  0.126  -0.138        0.281  0.567  0.151           inf
+BOVA11                       10,42%  24,07%  -49,65%       5,69%      —       —            —      —      —             —
+IMA-B                        11,96%   6,88%  -14,40%       5,69%      —       —            —      —      —             —
+CDI                          10,09%   0,22%   -0,05%       5,69%      —       —            —      —      —             —
+CAGR excess over BOVA11 by subperiod:
+                            2008–2014 2015–2020 2021–2026
+Core BOVA11 50% + IMA-B 50%     4,85%     0,16%    -1,23%
+Core BOVA11 50% + CDI 50%       3,15%    -2,53%     0,82%
+P[IMA-B mix > CDI mix] in log: 0.789
+Rolling 36-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     179        69,83%           1,78%      -3,60%            0,56%     5,03%  -29,55%
+Core BOVA11 50% + CDI 50%       179        65,36%           2,31%      -5,10%            0,00%     2,79%  -23,77%
+IMA-B                           179        66,48%           2,68%      -7,56%            0,56%     3,91%  -14,40%
+CDI                             179        61,45%           3,42%     -11,25%            0,00%     0,56%    0,00%
+Rolling 60-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     155        77,42%           1,54%      -1,49%            1,29%    11,61%  -29,55%
+Core BOVA11 50% + CDI 50%       155        67,10%           1,67%      -2,81%            0,65%     8,39%  -23,77%
+IMA-B                           155        71,61%           2,15%      -3,69%            3,23%     9,68%  -14,40%
+CDI                             155        61,94%           2,37%      -7,38%            0,65%     4,52%    0,00%
+(phase 0 done in 23 s)
+
+=== Phase 21: 07/01/2009 to 16/10/2026, 70 rebalances ===
+                               CAGR     Vol      MDD Turnover/yr Sharpe      IR P aritmético  P log    DSR MinTRL (anos)
+Core BOVA11 50% + IMA-B 50%  11,09%  13,57%  -29,24%      21,50%  0.135  -0.032        0.446  0.722  0.310           inf
+Core BOVA11 50% + CDI 50%    10,55%  11,70%  -23,62%      24,45%  0.095  -0.089        0.355  0.645  0.232           inf
+BOVA11                        9,35%  23,87%  -49,65%       5,72%      —       —            —      —      —             —
+IMA-B                        11,68%   6,89%  -14,40%       5,72%      —       —            —      —      —             —
+CDI                          10,07%   0,22%   -0,05%       5,72%      —       —            —      —      —             —
+CAGR excess over BOVA11 by subperiod:
+                            2008–2014 2015–2020 2021–2026
+Core BOVA11 50% + IMA-B 50%     5,58%     0,33%    -1,03%
+Core BOVA11 50% + CDI 50%       4,21%    -2,07%     1,15%
+P[IMA-B mix > CDI mix] in log: 0.714
+Rolling 36-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     178        71,91%           2,42%      -3,63%            0,00%     4,49%  -29,24%
+Core BOVA11 50% + CDI 50%       178        69,66%           2,68%      -4,84%            0,00%     1,69%  -23,62%
+IMA-B                           178        66,29%           2,72%      -7,63%            0,56%     3,93%  -14,40%
+CDI                             178        61,80%           3,42%     -11,27%            0,00%     0,56%    0,00%
+Rolling 60-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     154        77,92%           1,89%      -1,31%            0,65%     9,74%  -29,24%
+Core BOVA11 50% + CDI 50%       154        70,13%           2,14%      -2,26%            0,00%     4,55%  -23,62%
+IMA-B                           154        71,43%           2,13%      -3,69%            3,25%     9,74%  -14,40%
+CDI                             154        61,69%           2,34%      -7,38%            0,65%     4,55%    0,00%
+(phase 21 done in 47 s)
+
+=== Phase 42: 05/02/2009 to 16/10/2026, 70 rebalances ===
+                               CAGR     Vol      MDD Turnover/yr Sharpe      IR P aritmético  P log    DSR MinTRL (anos)
+Core BOVA11 50% + IMA-B 50%  11,13%  13,46%  -29,03%      20,04%  0.140  -0.055        0.409  0.688  0.284           inf
+Core BOVA11 50% + CDI 50%    10,61%  11,54%  -23,25%      22,85%  0.101  -0.108        0.326  0.611  0.214           inf
+BOVA11                        9,69%  23,74%  -49,65%       5,74%      —       —            —      —      —             —
+IMA-B                        11,52%   6,90%  -14,40%       5,74%      —       —            —      —      —             —
+CDI                          10,05%   0,22%   -0,05%       5,74%      —       —            —      —      —             —
+CAGR excess over BOVA11 by subperiod:
+                            2008–2014 2015–2020 2021–2026
+Core BOVA11 50% + IMA-B 50%     5,14%     0,15%    -1,17%
+Core BOVA11 50% + CDI 50%       3,94%    -2,33%     0,92%
+P[IMA-B mix > CDI mix] in log: 0.705
+Rolling 36-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     177        70,62%           2,24%      -3,66%            0,00%     5,08%  -29,03%
+Core BOVA11 50% + CDI 50%       177        68,36%           2,40%      -5,01%            0,00%     2,26%  -23,25%
+IMA-B                           177        66,67%           2,75%      -7,71%            0,56%     3,95%  -14,40%
+CDI                             177        62,15%           3,42%     -11,30%            0,00%     0,56%    0,00%
+Rolling 60-month windows against BOVA11:
+                            janelas acima_do_bova excesso_mediano excesso_p10 p_aritmetica_095 p_log_095 pior_mdd
+curva                                                                                                            
+Core BOVA11 50% + IMA-B 50%     153        77,78%           1,63%      -1,50%            0,65%    10,46%  -29,03%
+Core BOVA11 50% + CDI 50%       153        69,93%           1,89%      -2,51%            0,00%     6,54%  -23,25%
+IMA-B                           153        71,24%           2,11%      -3,70%            3,27%     9,80%  -14,40%
+CDI                             153        61,44%           2,31%      -7,39%            0,65%     4,58%    0,00%
+(phase 42 done in 76 s)
+
+Core BOVA11 50% + IMA-B 50%: condition 1 (P log >= 0.95 in the 3 phases) not met; condition 2 (positive excess in >= 2 of 3 subperiods, every phase) met -> not a candidate
+
+Core BOVA11 50% + CDI 50%: condition 1 (P log >= 0.95 in the 3 phases) not met; condition 2 (positive excess in >= 2 of 3 subperiods, every phase) met -> not a candidate
+Core: stays BOVA11
+(total 76 s)

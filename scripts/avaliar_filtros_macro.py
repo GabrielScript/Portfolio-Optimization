@@ -189,6 +189,9 @@ def mean_stock_weight(decided: pd.DataFrame) -> float:
 # ---------------------------------------------------------------- run (network only if the frozen CDI is unusable)
 
 IDA_DI_FILE = "IDADI-HISTORICO.xls"
+# a data correction after the first run (DECISOES 114): the 2026-10-20 fundamentals with the market values re-checked
+# for thousandfold count slips (GOLL was ~R$ 40 trillion); the formula, the configurations and N do not change
+CVM_FOLDER = Path(__file__).resolve().parent.parent / "docs" / "dados" / "2026-10-22-cvm"
 SIGNAL_START = pd.Timestamp("2011-07-01")          # the first month with the CVM market values of most issuers
 FIRST_DECISION_FROM = pd.Timestamp("2014-07-01")   # 36 months of premiums and labels after SIGNAL_START
 PHASES = (0, 7, 14)                                # sessions the first decision moves; then every STEP
@@ -210,7 +213,7 @@ def month_of(close: pd.Timestamp) -> pd.Timestamp:
 def load() -> tuple[pd.DataFrame, pd.Series, pd.Series, dict[str, str]]:
     """BOVA11, CDI and IDA-DI levels on the BOVA11 sessions from SIGNAL_START's year before to LAST_SESSION, the
     monthly premium and the credit proxy; every file checked against its folder's SHA256SUMS."""
-    balances, sha256 = carregar_balancos()
+    balances, sha256 = carregar_balancos(CVM_FOLDER)
     sha256 |= conferir_hashes(PASTA_UNIVERSO, ["universe_monthly.parquet"])
     sha256 |= conferir_hashes(PRICES_FOLDER, ["universe_prices.parquet"])
     sha256 |= conferir_hashes(ANBIMA_FOLDER, [IDA_DI_FILE])

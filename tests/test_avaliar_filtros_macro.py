@@ -101,3 +101,9 @@ def test_the_timing_control_holds_the_filters_average_stock_weight_over_its_deci
     from scripts.avaliar_filtros_macro import mean_stock_weight
     weights = pd.DataFrame({"BOVA11": [1.0, 0.0, 1.0, 1.0], "CDI": [0.0, 1.0, 0.0, 0.0]})
     assert mean_stock_weight(weights) == 0.75
+
+
+def test_the_premium_reads_the_market_values_rechecked_for_thousandfold_slips():
+    # DECISOES 114: the 2026-10-20 values kept GOLL at ~R$ 40 trillion; same fundamentals, caps re-checked
+    from scripts.avaliar_filtros_macro import CVM_FOLDER
+    assert CVM_FOLDER.parts[-2:] == ("dados", "2026-10-22-cvm")

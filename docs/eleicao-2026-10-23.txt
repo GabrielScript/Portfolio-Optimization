@@ -1,0 +1,21 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd'}
+Market: 5402 sessions, 04/01/2005 to 21/10/2026; mean members' daily return
+2026 runoff: after the data (day 0 would be session 5402 of 5402)
+                  day 0  log RV ratio [0,+4]  RV ratio  log ratio [-5,-1]  |r0| / mean|r|  r day 0  r [0,+4]  in test
+round                                                                                                                
+2006 1st     02/10/2006               0.2908    1.3375            -0.1244          1.4933   0.0127    0.0362     True
+2006 runoff  30/10/2006               0.1806    1.1979            -0.2235          0.5457  -0.0042    0.0484     True
+2010 1st     04/10/2010               0.0596    1.0614            -0.0279          0.3392   0.0020    0.0228     True
+2010 runoff  01/11/2010               0.0425    1.0434            -0.0446          1.7985   0.0096    0.0254     True
+2014 1st     06/10/2014               0.7491    2.1151             0.8617          4.4520   0.0253    0.0021     True
+2014 runoff  27/10/2014               0.7663    2.1518             0.7060          1.7717  -0.0130    0.0514     True
+2018 1st     08/10/2018               0.6213    1.8613             0.5075          4.1455   0.0382    0.0157     True
+2018 runoff  29/10/2018               0.2183    1.2440            -0.1597          1.5825  -0.0170    0.0435     True
+2022 1st     03/10/2022               0.3921    1.4801             0.2401          3.8123   0.0487    0.0551     True
+2022 runoff  31/10/2022               0.2859    1.3310             0.1894          2.1859   0.0291    0.0251     True
+2026 1st     05/10/2026               1.1935    3.2985             0.3195          8.0249   0.0797    0.1793    False
+
+Placebo days: 966 week openings >= 60 sessions from every round; their mean log ratio -0.1447 (median -0.1672)
+Observed mean log ratio over the 10 rounds: 0.3606 (RV x1.43); rounds above the placebo median: 10 of 10
+p = 0.0013 (20000 draws, seed 20261023); decision (p <= 0.05): election weeks are more volatile
+Direction, printed only: mean [0,+4] return +0.0326; 10 of 10 rounds up

@@ -15,3 +15,14 @@ def test_the_snapshot_keeps_the_last_month_before_the_month_of_the_last_session_
     foto = instantaneo(metricas, ate=date(2026, 10, 22))
     assert foto.to_dict("records") == [{"security": "PETR4", "month": date(2026, 9, 1), "meio_spread": 0.001,
                                         "vol_diaria": 0.018, "volume_mediano": 2e9}]
+
+
+def test_the_exports_load_with_the_lakes_cp1252_manifest(tmp_path):
+    # the lake writes manifest.json in cp1252: a non-ASCII byte outside the dates must not stop the snapshot
+    from scripts.liquidez_do_app import ler_exports
+    (tmp_path / "manifest.json").write_bytes('{"origem": "s\xe9rie", "data_through": "2026-10-22"}'.encode("cp1252"))
+    pd.DataFrame({"month": [date(2026, 9, 1)], "security": ["PETR4"], "quoted_spread": [0.002], "vol_daily": [0.018],
+                  "median_dtv_brl": [2e9], "outra": [1]}).to_parquet(tmp_path / "monthly_metrics.parquet", index=False)
+    metricas, ate = ler_exports(tmp_path)
+    assert (ate, list(metricas.columns)) == (
+        date(2026, 10, 22), ["month", "security", "quoted_spread", "vol_daily", "median_dtv_brl"])

@@ -25,6 +25,7 @@ param(
     [string]$PastaPaperV2 = (Join-Path $env:LOCALAPPDATA 'paper-v2'),
     [string]$PastaManutencao = (Join-Path $env:LOCALAPPDATA 'paper-manutencao'),
     [string]$Repositorio = (Split-Path -Parent $PSScriptRoot),     # o checkout do app que as rotinas rodam
+    [switch]$ManutencaoRodando,     # a manutenção ainda roda (teste; sem ele, pergunta à tarefa, fora do -SemEspera)
     [switch]$SoMostrar,     # escreve os problemas na saída em vez de avisar no Windows (teste e conferência à mão)
     [switch]$SemEspera      # não espera as rotinas que estiverem rodando (teste)
 )
@@ -69,11 +70,12 @@ function Ler-Rodadas([string]$Arquivo) {
 }
 
 function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2,
-                         [object[]]$DoManutencao) {
+                         [object[]]$DoManutencao, [bool]$ManutencaoAindaRoda) {
     $problemas = New-Object System.Collections.Generic.List[string]
-    # manutenção (scripts/manutencao.py): rodou e não falhou nem ficou bloqueada
+    # manutenção (scripts/manutencao.py): rodou e não falhou nem ficou bloqueada; ainda rodando (leitura longa depois
+    # de esperar as outras rotinas) não é falta
     $manutencaoHoje = @($DoManutencao | Where-Object { "$($_.quando)".StartsWith($Dia) })
-    if ($manutencaoHoje.Count -eq 0) {
+    if ($manutencaoHoje.Count -eq 0 -and -not $ManutencaoAindaRoda) {
         $problemas.Add('manutenção: nenhuma rodada hoje (tarefa "paper manutencao")')
     } elseif ($FalhasDoPaper -contains $manutencaoHoje[-1].desfecho) {
         $problemas.Add("manutenção: $($manutencaoHoje[-1].desfecho) ($($manutencaoHoje[-1].nota))")
@@ -144,7 +146,10 @@ try {
     $doPaperV2 = Ler-Rodadas (Join-Path $PastaPaperV2 'runs.csv')
     $doManutencao = Ler-Rodadas (Join-Path $PastaManutencao 'runs.csv')
     $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
-    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao)
+    $daManutencao = @(Get-ScheduledTask -TaskName 'paper manutencao' -ErrorAction SilentlyContinue)
+    $tarefaRodando = -not $SemEspera -and @($daManutencao | Where-Object State -eq 'Running').Count -gt 0
+    $aindaRoda = $ManutencaoRodando.IsPresent -or $tarefaRodando
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao $aindaRoda)
     $doRamo = Problema-DoRamo $Repositorio
     if ($doRamo) { $problemas += $doRamo }
     $texto = $problemas -join '; '

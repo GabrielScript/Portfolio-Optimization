@@ -131,6 +131,14 @@ def test_upkeep_without_a_run_today_warns(tmp_path):
         1, 'vigia: manutenção: nenhuma rodada hoje (tarefa "paper manutencao")'), saida.stderr
 
 
+def test_upkeep_still_running_without_a_line_today_is_not_a_problem_yet(tmp_path):
+    # a reading day after a late wake: the upkeep waited for the other routines and is still reading at 12h48
+    ontem = "2026-10-19T10:03:05,ok,leituras: nenhuma devida"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], manutencao=[ontem]), "-Hoje", HOJE,
+                    "-ManutencaoRodando")
+    assert (saida.returncode, saida.stdout.strip()) == (0, "vigia: tudo em dia"), saida.stderr
+
+
 def test_upkeep_that_failed_or_was_blocked_today_warns_with_the_note(tmp_path):
     bloqueada = "2026-10-20T10:03:05,bloqueada,push: origin/main tem 1 commit(s) que a main local não tem"
     saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], manutencao=[bloqueada]))

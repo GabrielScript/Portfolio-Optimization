@@ -40,20 +40,22 @@ def test_a_reading_is_saved_only_when_its_own_session_count_reaches_the_target(t
     # the calendar said 126, but the lake's universe stopped a day short: the reading counted 125
     from scripts.manutencao import salvar_leituras
     agora = datetime(2027, 4, 26, 10, 5, 0)
-    feitas = salvar_leituras(SAIDA_125, {"leitura-126": 126, "progresso-2027-04": 1}, tmp_path, agora)
-    assert feitas == [tmp_path / "progresso-2027-04.txt"]
-    assert (tmp_path / "progresso-2027-04.txt").read_text(encoding="utf-8") == SAIDA_125
-    assert not (tmp_path / "leitura-126.txt").exists()
-    tentativa = tmp_path / "tentativas" / "leitura-126-20270426-100500.txt"
+    leituras, tentativas = tmp_path / "leituras", tmp_path / "estado" / "tentativas"
+    feitas = salvar_leituras(SAIDA_125, {"leitura-126": 126, "progresso-2027-04": 1}, leituras, agora, tentativas)
+    assert feitas == [leituras / "progresso-2027-04.txt"]
+    assert (leituras / "progresso-2027-04.txt").read_text(encoding="utf-8") == SAIDA_125
+    assert [caminho.name for caminho in leituras.iterdir()] == ["progresso-2027-04.txt"]   # nothing loose in git
+    tentativa = tentativas / "leitura-126-20270426-100500.txt"
     assert tentativa.read_text(encoding="utf-8") == SAIDA_125                     # kept, retried next run
 
 
 def test_an_output_without_the_session_count_saves_nothing_final(tmp_path):
     from scripts.manutencao import salvar_leituras
     feitas = salvar_leituras("Paper-v2: nenhum pregão depois do 1º registro (ou nenhum registro)\n",
-                             {"progresso-2026-10": 1}, tmp_path, datetime(2026, 10, 26, 10, 0, 0))
-    assert (feitas, [caminho.name for caminho in (tmp_path / "tentativas").iterdir()]) == (
-        [], ["progresso-2026-10-20261026-100000.txt"])
+                             {"progresso-2026-10": 1}, tmp_path / "leituras", datetime(2026, 10, 26, 10, 0, 0),
+                             tmp_path / "tentativas")
+    assert (feitas, (tmp_path / "leituras").exists(), [caminho.name for caminho in (tmp_path / "tentativas").iterdir()]
+            ) == ([], False, ["progresso-2026-10-20261026-100000.txt"])
 
 
 def _exports(pasta, ate: str) -> None:
@@ -75,6 +77,24 @@ def test_the_liquidity_snapshot_is_rebuilt_only_when_the_lake_closed_a_newer_mon
     assert liquidez_nova(atual, origem) is None                                       # 09/2026 is the newest closed
     _exports(origem, "2026-11-03")
     assert liquidez_nova(atual, origem)["month"].tolist() == [date(2026, 10, 1)]
+
+
+def test_no_closed_month_in_the_exports_means_no_new_snapshot(tmp_path):
+    # a partial export whose metric months all start at or after the lake's last month: an empty snapshot
+    from scripts.manutencao import liquidez_nova
+    _exports(tmp_path / "b3lake", "2026-08-15")
+    assert liquidez_nova(tmp_path / "sem.parquet", tmp_path / "b3lake") is None
+
+
+def test_run_as_a_script_the_upkeep_still_imports_the_projects_modules(tmp_path):
+    # `python scripts/manutencao.py` puts only scripts/ on sys.path (the tests' conftest adds the root)
+    _exports(tmp_path / "b3lake", "2026-10-22")
+    codigo = ("import sys; from pathlib import Path; sys.path.insert(0, sys.argv[1]); import manutencao; "
+              "print(manutencao.liquidez_nova(Path(sys.argv[2]) / 'sem.parquet', Path(sys.argv[2]) / 'b3lake')"
+              "['month'].tolist())")
+    feita = subprocess.run([sys.executable, "-X", "utf8", "-c", codigo, str(RAIZ / "scripts"), str(tmp_path)],
+                           cwd=tmp_path, capture_output=True, text=True, encoding="utf-8", timeout=120)
+    assert (feita.returncode, feita.stdout.strip()) == (0, "[datetime.date(2026, 9, 1)]"), feita.stderr
 
 
 def _rodar_git(*argumentos: str) -> str:
@@ -111,11 +131,11 @@ def test_the_commit_takes_exactly_the_given_paths_and_nothing_when_they_did_not_
     (app / "README.md").write_text("mexido à mão\n", encoding="utf-8")
     (app / "lago").mkdir()
     (app / "lago" / "liquidez.parquet").write_bytes(b"foto")
-    assert commitar(git, ["lago/liquidez.parquet"], "liquidez: 10/2026") is True
+    assert commitar(git, ["lago/liquidez.parquet"], "liquidez: 10/2026") == ["lago/liquidez.parquet"]
     assert git("show", "--name-only", "--format=%s", "HEAD").splitlines() == [
         "liquidez: 10/2026", "", "lago/liquidez.parquet"]
     assert git("status", "--porcelain").splitlines() == [" M README.md", "?? dask.zip"]   # untouched
-    assert commitar(git, ["lago/liquidez.parquet"], "liquidez: 10/2026") is False
+    assert commitar(git, ["lago/liquidez.parquet"], "liquidez: 10/2026") == []
 
 
 def test_a_local_commit_is_pushed_fast_forward_and_nothing_happens_when_in_sync(app):
@@ -227,6 +247,45 @@ def test_a_failed_reading_does_not_stop_the_snapshot_and_the_push(app):
     resultado = executar(app, git_em(app), app / "daily.lock", datetime(2027, 4, 27, 10, 0), quebrada)
     assert (resultado.desfecho, "CalledProcessError" in resultado.nota) == ("falhou", True)
     assert "lago/liquidez.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
+
+
+def _sem_commit(git):
+    """The real git, with ``commit`` failing (a late lock, a hook, the 300 s timeout)."""
+    def quebrado(*argumentos: str) -> str:
+        if argumentos[0] == "commit":
+            raise subprocess.CalledProcessError(1, ["git", "commit"])
+        return git(*argumentos)
+    return quebrado
+
+
+def test_a_reading_whose_commit_failed_is_committed_and_notified_by_the_next_run(app, tmp_path):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 126)
+    primeira = executar(app, _sem_commit(git_em(app)), app / "daily.lock", datetime(2027, 4, 27, 10, 0),
+                        lambda: _saida(126), tentativas=tmp_path / "tentativas")
+    assert (primeira.desfecho, primeira.avisos) == ("falhou", [])
+    segunda = executar(app, git_em(app), app / "daily.lock", datetime(2027, 4, 28, 10, 0), _nada_lido,
+                       tentativas=tmp_path / "tentativas")
+    publicados = _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
+    assert segunda.desfecho == "ok"
+    assert {"paper-v2/leituras/leitura-126.txt", "paper-v2/leituras/progresso-2027-04.txt",
+            "lago/liquidez.parquet"} <= set(publicados)
+    assert [titulo for titulo, _ in segunda.avisos] == ["Fundo Alepha: leitura de 126 pregões",
+                                                         "Fundo Alepha: progresso de 04/2027"]
+
+
+def test_a_git_error_while_checking_the_checkout_is_a_failed_run_not_a_crash(app, tmp_path):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 126)
+    real = git_em(app)
+
+    def sem_rev_parse(*argumentos: str) -> str:
+        if argumentos[0] == "rev-parse":
+            raise subprocess.TimeoutExpired(["git", "rev-parse"], 300)
+        return real(*argumentos)
+    resultado = executar(app, sem_rev_parse, app / "daily.lock", datetime(2027, 4, 27, 10, 0), _nada_lido,
+                         tentativas=tmp_path / "tentativas")
+    assert (resultado.desfecho, resultado.nota.startswith("checkout: TimeoutExpired")) == ("falhou", True)
 
 
 def test_the_run_waits_for_the_routines_still_running_but_not_forever():

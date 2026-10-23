@@ -18,7 +18,6 @@ watchdog reads; saved readings also raise a Windows notification.
 from __future__ import annotations
 
 import csv
-import json
 import os
 import re
 import subprocess
@@ -30,6 +29,8 @@ from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))     # run as a script, only scripts/ is on it
 
 Git = Callable[..., str]
 
@@ -74,9 +75,10 @@ def pregoes_da_saida(texto: str) -> int | None:
     return int(achado.group(1)) if achado else None
 
 
-def salvar_leituras(texto: str, devidas: dict[str, int], pasta: Path, agora: datetime) -> list[Path]:
-    """Saves the reading as each due name whose target its own session count reached; the others go to
-    ``tentativas/`` with the time (the run retries them). Returns the saved readings."""
+def salvar_leituras(texto: str, devidas: dict[str, int], pasta: Path, agora: datetime,
+                    tentativas: Path) -> list[Path]:
+    """Saves the reading in ``pasta`` as each due name whose target its own session count reached; the others go to
+    ``tentativas`` (outside the repository) with the time, and the next run retries them. Returns the saved ones."""
     pregoes = pregoes_da_saida(texto)
     feitas = []
     for nome, alvo in devidas.items():
@@ -84,7 +86,7 @@ def salvar_leituras(texto: str, devidas: dict[str, int], pasta: Path, agora: dat
             destino = pasta / f"{nome}.txt"
             feitas.append(destino)
         else:
-            destino = pasta / "tentativas" / f"{nome}-{agora:%Y%m%d-%H%M%S}.txt"
+            destino = tentativas / f"{nome}-{agora:%Y%m%d-%H%M%S}.txt"
         destino.parent.mkdir(parents=True, exist_ok=True)
         destino.write_text(texto, encoding="utf-8", newline="\n")
     return feitas
@@ -93,12 +95,10 @@ def salvar_leituras(texto: str, devidas: dict[str, int], pasta: Path, agora: dat
 def liquidez_nova(atual: Path, origem: Path) -> pd.DataFrame | None:
     """The snapshot of ``scripts/liquidez_do_app.py`` from the lake's exports in ``origem`` when its month is newer
     than the one in ``atual`` (or there is no snapshot yet); None otherwise."""
-    from scripts.liquidez_do_app import instantaneo
-    # the lake writes the manifest in cp1252; only the dates, which are ASCII, matter
-    manifest = json.loads((origem / "manifest.json").read_bytes().decode("utf-8", errors="replace"))
-    metricas = pd.read_parquet(origem / "monthly_metrics.parquet",
-                               columns=["month", "security", "quoted_spread", "vol_daily", "median_dtv_brl"])
-    foto = instantaneo(metricas, date.fromisoformat(manifest["data_through"]))
+    from scripts.liquidez_do_app import instantaneo, ler_exports
+    foto = instantaneo(*ler_exports(origem))
+    if foto.empty:
+        return None
     if atual.exists() and pd.Timestamp(foto["month"].iloc[0]) <= pd.Timestamp(
             pd.read_parquet(atual, columns=["month"])["month"].iloc[0]):
         return None
@@ -116,14 +116,20 @@ def git_em(raiz: Path) -> Git:
     return git
 
 
-def commitar(git: Git, caminhos: list[str], mensagem: str) -> bool:
-    """Commits exactly ``caminhos`` (never ``add -A``: the root has loose untracked files); False when they did not
-    change."""
+def pendentes(git: Git, caminhos: list[str]) -> list[str]:
+    """The paths of ``caminhos`` that differ from HEAD (new or changed): what a commit of them would take."""
+    saida = git("status", "--porcelain", "--untracked-files=all", "--", *caminhos)
+    return [linha[3:] for linha in saida.splitlines()]
+
+
+def commitar(git: Git, caminhos: list[str], mensagem: str) -> list[str]:
+    """Commits exactly ``caminhos`` (never ``add -A``: the root has loose untracked files); returns the paths the
+    commit took, none when they did not change."""
     git("add", "--", *caminhos)
-    if not git("diff", "--cached", "--name-only", "--", *caminhos):
-        return False
-    git("commit", "-q", "-m", mensagem, "--", *caminhos)
-    return True
+    feitos = git("diff", "--cached", "--name-only", "--", *caminhos).splitlines()
+    if feitos:
+        git("commit", "-q", "-m", mensagem, "--", *caminhos)
+    return feitos
 
 
 def publicar(git: Git) -> str:
@@ -164,38 +170,45 @@ def _titulo(nome: str) -> str:
     return f"Fundo Alepha: progresso de {mes}/{ano}"
 
 
-def _leituras(raiz: Path, git: Git, agora: datetime, ler_leitura: Callable[[], str],
+def _leituras(raiz: Path, git: Git, agora: datetime, ler_leitura: Callable[[], str], tentativas: Path,
               avisos: list[tuple[str, str]]) -> str:
+    from scripts.paper_trading import ler_registro
     calendario = pd.DatetimeIndex(pd.read_parquet(raiz / ARQUIVO_CALENDARIO, columns=["date"])["date"])
-    arquivo = raiz / ARQUIVO_REGISTRO
-    registro = pd.read_csv(arquivo, parse_dates=["data"]) if arquivo.exists() else pd.DataFrame({"data": []})
+    registro = ler_registro(raiz / ARQUIVO_REGISTRO)
     devidas = leituras_devidas(pregoes_desde_o_registro(calendario, registro), raiz / PASTA_LEITURAS, agora.date())
-    if not devidas:
-        return "leituras: nenhuma devida"
-    texto = ler_leitura()
-    feitas = salvar_leituras(texto, devidas, raiz / PASTA_LEITURAS, agora)
-    if not feitas:
-        return f"leituras: {', '.join(devidas)} sem os pregões na saída, de novo na próxima rodada"
-    commitar(git, [caminho.relative_to(raiz).as_posix() for caminho in feitas],
-             f"paper-v2: {', '.join(caminho.stem for caminho in feitas)} ({pregoes_da_saida(texto)} pregões)")
-    resumo = "\n".join(linha for linha in texto.splitlines() if linha.startswith("Critério"))
-    avisos.extend((_titulo(caminho.stem), resumo or texto.splitlines()[0]) for caminho in feitas)
-    return f"leituras: {', '.join(caminho.stem for caminho in feitas)}"
+    notas = []
+    if devidas:
+        texto = ler_leitura()
+        if not salvar_leituras(texto, devidas, raiz / PASTA_LEITURAS, agora, tentativas):
+            notas.append(f"{', '.join(devidas)} sem os pregões na saída, de novo na próxima rodada")
+    # every saved reading not yet in HEAD, this run's or one whose commit failed before: commit, then notify
+    salvas = pendentes(git, [caminho.relative_to(raiz).as_posix()
+                             for caminho in sorted((raiz / PASTA_LEITURAS).glob("*.txt"))])
+    if salvas:
+        commitar(git, salvas, f"paper-v2: {', '.join(Path(caminho).stem for caminho in salvas)}")
+        for caminho in salvas:
+            texto = (raiz / caminho).read_text(encoding="utf-8")
+            resumo = "\n".join(linha for linha in texto.splitlines() if linha.startswith("Critério"))
+            avisos.append((_titulo(Path(caminho).stem), resumo or texto.splitlines()[0]))
+        notas.append(", ".join(Path(caminho).stem for caminho in salvas))
+    return f"leituras: {'; '.join(notas) or 'nenhuma devida'}"
 
 
 def _liquidez(raiz: Path, git: Git) -> str:
     foto = liquidez_nova(raiz / ARQUIVO_LIQUIDEZ, raiz / PASTA_DO_LAGO)
-    if foto is None:
+    if foto is not None:
+        (raiz / ARQUIVO_LIQUIDEZ).parent.mkdir(parents=True, exist_ok=True)
+        foto.to_parquet(raiz / ARQUIVO_LIQUIDEZ, index=False)
+    # this run's snapshot or one whose commit failed before
+    if not pendentes(git, [ARQUIVO_LIQUIDEZ.as_posix()]):
         return "liquidez: em dia"
-    (raiz / ARQUIVO_LIQUIDEZ).parent.mkdir(parents=True, exist_ok=True)
-    foto.to_parquet(raiz / ARQUIVO_LIQUIDEZ, index=False)
-    mes = f"{foto['month'].iloc[0]:%m/%Y}"
+    mes = f"{pd.read_parquet(raiz / ARQUIVO_LIQUIDEZ, columns=['month'])['month'].iloc[0]:%m/%Y}"
     commitar(git, [ARQUIVO_LIQUIDEZ.as_posix()], f"liquidez: snapshot de {mes} (manutenção)")
     return f"liquidez: {mes}"
 
 
-def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime,
-             ler_leitura: Callable[[], str]) -> Resultado:
+def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
+             tentativas: Path = PASTA_ESTADO / "tentativas") -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output."""
     if trava_do_lago.exists():
@@ -204,9 +217,11 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime,
         conferir_checkout(raiz, git)
     except Bloqueio as bloqueio:
         return Resultado("bloqueada", str(bloqueio), [])
+    except Exception as erro:           # noqa: BLE001 - git missing, a broken repository, a timeout
+        return Resultado("falhou", f"checkout: {type(erro).__name__}: {erro}"[:300], [])
     avisos: list[tuple[str, str]] = []
     notas, desfecho = [], "ok"
-    passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, avisos)),
+    passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
               ("push", lambda: publicar(git)))
     for nome, passo in passos:

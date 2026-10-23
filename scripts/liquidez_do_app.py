@@ -2,7 +2,8 @@
 The app's liquidity snapshot: the last closed month of the lake's `monthly_metrics.parquet` in the final proof's
 measures (`scripts/avaliar_execucao.py`: half the quoted spread, daily vol, median daily traded value), written to
 `lago/liquidez.parquet` (~50 KB, versioned) so the deployed app prices each order with `custo_da_ordem` and the
-no-trade zone has each name's daily vol. Refresh it by hand after a month closes (the app shows its month).
+no-trade zone has each name's daily vol. The daily upkeep (`scripts/manutencao.py`) rebuilds and commits it after the
+lake closes a month (the app shows its month); this script still runs by hand.
 
 Usage: .venv/Scripts/python -X utf8 scripts/liquidez_do_app.py [folder of the lake's exports, default data/b3lake]
 """
@@ -34,11 +35,18 @@ def instantaneo(metricas: pd.DataFrame, ate: date) -> pd.DataFrame:
                          "volume_mediano": linhas["median_dtv_brl"].astype("float64").to_numpy()})
 
 
-def main() -> int:
-    origem = Path(sys.argv[1]) if len(sys.argv) > 1 else ORIGEM
-    ate = date.fromisoformat(json.loads((origem / "manifest.json").read_text(encoding="utf-8"))["data_through"])
+def ler_exports(origem: Path) -> tuple[pd.DataFrame, date]:
+    """The lake's monthly metrics (the snapshot's columns) and its last session (``manifest.json``)."""
+    # the lake writes the manifest in cp1252; only the dates, which are ASCII, matter
+    manifest = json.loads((origem / "manifest.json").read_bytes().decode("utf-8", errors="replace"))
     metricas = pd.read_parquet(origem / "monthly_metrics.parquet",
                                columns=["month", "security", "quoted_spread", "vol_daily", "median_dtv_brl"])
+    return metricas, date.fromisoformat(manifest["data_through"])
+
+
+def main() -> int:
+    origem = Path(sys.argv[1]) if len(sys.argv) > 1 else ORIGEM
+    metricas, ate = ler_exports(origem)
     foto = instantaneo(metricas, ate)
     foto.to_parquet(DESTINO, index=False)
     print(f"{DESTINO.relative_to(RAIZ)}: {len(foto)} papéis, mês {foto['month'].iloc[0]:%m/%Y} (lago até {ate:%d/%m/%Y})")

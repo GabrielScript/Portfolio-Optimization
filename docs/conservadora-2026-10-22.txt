@@ -1,0 +1,42 @@
+Selic indisponível (BCB SGS 432, janela 2020-2029: Expecting value: line 1 column 1 (char 0)); usando fallback 2026-10.
+Data correction of docs/conservadora-2026-10-20.txt: inputs from 2026-10-22, prices cut at 16/10/2026, run date 2026-10-20, DSR N 22
+Arquivos (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0'}
+Manifest: {'generated_at': '2026-10-21T21:48:55', 'data_from': '1994-07-01', 'data_through': '2026-10-21'}; Selic meta 13,75% (fallback 2026-10); CDI do BCB; N do DSR = 22
+
+IC de Spearman mensal (nota do mês x retorno total do mês, universo do mês):
+                         meses  IC médio  desvio     t  meses com IC > 0
+1998–2007 (condição 2) 120.000     0.059   0.209 3.103             0.617
+2008–2026 (condição 1) 225.000     0.083   0.206 6.031             0.667
+2008–2014               84.000     0.084   0.219 3.525             0.702
+2015–2019               60.000     0.039   0.179 1.675             0.533
+2020–2026               81.000     0.114   0.208 4.951             0.728
+(fase de IC pronta em 66 s)
+
+=== Fase 0: 1ª decisão 10/02/2010, fim 16/10/2026, 66 rebalanceios; falhas 0; adiados 0 ===
+                                                     CAGR      MDD Giro anual Recusas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly]
+Conservadora (15 nomes, pesos iguais, com regras)  17,41%  -40,69%    297,18%       0  0.455  0.614        0.993  0.998  0.816         7.276      0.670
+Kelly λ=2 com regras                               13,68%  -61,81%    221,67%       0  0.260  0.330        0.910  0.897  0.404        24.824          —
+IVVB11                                             21,06%  -30,71%      6,09%       0      —      —            —      —      —             —          —
+BOVA11                                              7,24%  -49,65%      6,09%       0      —      —            —      —      —             —          —
+(fase 0 pronta em 80 s)
+
+=== Fase 21: 1ª decisão 15/03/2010, fim 16/10/2026, 66 rebalanceios; falhas 0; adiados 0 ===
+                                                     CAGR      MDD Giro anual Recusas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly]
+Conservadora (15 nomes, pesos iguais, com regras)  16,41%  -41,60%    297,78%       0  0.406  0.590        0.991  0.997  0.887         7.901      0.508
+Kelly λ=2 com regras                               14,39%  -62,78%    219,68%       0  0.285  0.380        0.936  0.917  0.642        19.172          —
+IVVB11                                             21,06%  -30,71%      6,12%       0      —      —            —      —      —             —          —
+BOVA11                                              6,81%  -49,65%      6,12%       0      —      —            —      —      —             —          —
+(fase 21 pronta em 93 s)
+
+=== Fase 42: 1ª decisão 14/04/2010, fim 16/10/2026, 66 rebalanceios; falhas 0; adiados 1 ===
+                                                     CAGR      MDD Giro anual Recusas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Kelly]
+Conservadora (15 nomes, pesos iguais, com regras)  16,90%  -39,50%    303,44%       0  0.426  0.632        0.994  0.998  0.836         6.876      0.647
+Kelly λ=2 com regras                               13,56%  -61,74%    224,56%       0  0.255  0.350        0.920  0.909  0.440        22.260          —
+IVVB11                                             21,06%  -30,71%      6,15%       0      —      —            —      —      —             —          —
+BOVA11                                              6,72%  -49,65%      6,15%       0      —      —            —      —      —             —          —
+(fase 42 pronta em 111 s)
+
+Condição 1 (IC ≥ 0,02 e t ≥ 2, 2008-01 a 2026-09): cumprida
+Condição 2 (IC médio > 0, 1998-01 a 2007-12): cumprida
+Conservadora: APROVADA; candidata à prova final (P[> BOVA11] >= 0,95 nas 3 fases): sim
+(tempo total 111 s)

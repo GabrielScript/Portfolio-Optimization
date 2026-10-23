@@ -1,0 +1,68 @@
+Arquivos (sha256): {'universe_prices.parquet': 'f00869357593c6268b8997c9a668234a6f963c50993b636ea691c5737be4c811', 'universe_monthly.parquet': '2e1799cfea40d506e5f271ce7604ea342c008f01fd86d78a438f88524a268b0f', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': '32cd68c7f5e81dbcb9ae0ad9fba3d28717ae1b4130de9b1bcd902aa660fa0522', 'dividends.parquet': '083af1e9f0331a72b2cb671dd745dd257516f9776cf998d9e80fb8daade21e67', 'liquidez.parquet': '1fbe119acfa049571a11e5eff18700f320644a9f3ff3052e10abffe47c86b6e5'}
+Manifest: {'generated_at': '2026-10-19T16:51:23', 'data_from': '1994-07-01', 'data_through': '2026-10-16'}; Selic meta 13,75% (BCB SGS 432); N = 39 (sem DSR); preços desde 23/11/2006; Custos(emolumentos=0.0003, impacto=1.0); ZonaNoMotor(aversao=2.0, horizonte=63, peso_maximo=0.2)
+
+=== Fase 0: 1ª decisão 02/01/2012, fim 16/10/2026; âncora conferida ===
+
+--- R$ 10.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  16,33%  -39,45%            90420         0,59%          586             1977        0.981  0.990            —
+Conservadora com a zona  16,45%  -39,54%            91852         0,53%          743             2196        0.981  0.990        0.587
+BOVA11                    8,35%  -44,44%            32144         0,01%            0             3912            —      —            —
+
+--- R$ 100.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  15,02%  -39,06%           767336         0,71%        45780            16778        0.951  0.975            —
+Conservadora com a zona  14,82%  -39,61%           748058         0,64%        41552            17898        0.941  0.968        0.306
+BOVA11                    8,35%  -44,44%           321307         0,01%            0            39102            —      —            —
+
+--- R$ 1.000.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  14,59%  -39,09%          7262838         1,11%       445190           158822        0.938  0.966            —
+Conservadora com a zona  14,39%  -39,70%          7078779         1,00%       402952           169741        0.926  0.959        0.312
+BOVA11                    8,34%  -44,44%          3208780         0,02%            0           390494            —      —            —
+(fase 0 pronta em 179 s)
+
+=== Fase 21: 1ª decisão 01/02/2012, fim 16/10/2026; âncora conferida ===
+
+--- R$ 10.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  17,75%  -39,64%           106489         0,57%         2090             2139        0.995  0.998            —
+Conservadora com a zona  17,45%  -39,14%           102614         0,52%          813             2173        0.993  0.997        0.239
+BOVA11                    7,66%  -45,21%            29113         0,01%            0             3376            —      —            —
+
+--- R$ 100.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  16,46%  -39,14%           908102         0,70%        57746            18239        0.986  0.993            —
+Conservadora com a zona  16,00%  -38,40%           857242         0,63%        51175            18166        0.977  0.989        0.139
+BOVA11                    7,66%  -45,21%           290994         0,01%            0            33741            —      —            —
+
+--- R$ 1.000.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  16,02%  -39,14%          8596445         1,10%       561499           172592        0.981  0.991            —
+Conservadora com a zona  15,59%  -38,47%          8148799         0,98%       497678           173008        0.971  0.986        0.157
+BOVA11                    7,65%  -45,21%          2905680         0,02%            0           336914            —      —            —
+(fase 21 pronta em 309 s)
+
+=== Fase 42: 1ª decisão 05/03/2012, fim 16/10/2026; âncora conferida ===
+
+--- R$ 10.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  16,11%  -39,42%            85785         0,62%         1312              848        0.988  0.994            —
+Conservadora com a zona  16,13%  -38,25%            86017         0,56%          472             1186        0.987  0.994        0.478
+BOVA11                    7,20%  -45,77%            27218         0,01%            0             3041            —      —            —
+
+--- R$ 100.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  14,89%  -39,92%           737453         0,76%        47526             7287        0.971  0.985            —
+Conservadora com a zona  14,59%  -38,57%           710057         0,68%        39885             9639        0.961  0.980        0.180
+BOVA11                    7,20%  -45,77%           272112         0,01%            0            30405            —      —            —
+
+--- R$ 1.000.000 ---
+                           CAGR      MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log P[com > sem]
+Conservadora sem a zona  14,41%  -40,16%          6945925         1,21%       461550            68655        0.961  0.979            —
+Conservadora com a zona  14,18%  -39,02%          6740778         1,09%       394953            91595        0.951  0.974        0.228
+BOVA11                    7,20%  -45,77%          2718963         0,01%            0           303809            —      —            —
+(fase 42 pronta em 413 s)
+
+Com R$ 10.000, com a zona: P[> BOVA11] aritmético da saída 0.981, 0.993, 0.987; CAGR da saída com / sem a zona 16,45% / 16,33%, 17,45% / 17,75%, 16,13% / 16,11%; zona SÓ INFORMATIVA (o plano manda todas as ordens)
+(tempo total 413 s)

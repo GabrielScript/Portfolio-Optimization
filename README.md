@@ -26,6 +26,11 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
   month's IR, where the R$ 20 thousand exemption is a cliff, so each sale shows its marginal IR. The no-trade zone was
   pre-registered and did not pass (`docs/zona-2026-10-23.txt`): the screen shows it as information and sends every
   order.
+- **After v1.0 (git tag `v1.0`):** check every week that `paper-v2/runs.csv` and `paper/diario.csv` have a line for
+  each weekday; rebuild the liquidity snapshot (`python scripts/liquidez_do_app.py`, writes `lago/liquidez.parquet`)
+  after the lake closes a month; read paper-v2 with `python scripts/paper_v2.py --leitura`. Further research (meta-labeling,
+  a Monte Carlo bench, a news/filings veto, an election-window study) is optional and each item needs its own
+  pre-registration.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

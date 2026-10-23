@@ -1,0 +1,6 @@
+Paper-v2 de 19/10/2026 a 22/10/2026: 3 pregões, 1 registros; guarda: sem mudança
+                                                      CAGR     MDD Saída final (R$) Custo por ano IR pago (R$) IR na saída (R$) P aritmético  P log Vol anual Vol de baixa
+Conservadora (15 nomes, pesos iguais, com regras)  -31,75%  -1,79%             9955        15,64%            0                0        0.814  0.812    21,33%       12,39%
+BOVA11                                             -48,40%  -1,79%             9922         5,35%            0                0            —      —    20,63%       13,28%
+Critério principal (pré-registro, decide só em 252 pregões): saída final da Conservadora >= a do BOVA11
+Critério secundário (adendo de 23/10/2026, decide só em 252 pregões): vol anual da Conservadora > a do BOVA11

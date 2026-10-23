@@ -153,3 +153,30 @@ def test_the_screens_cost_uses_the_liquidity_snapshot_and_falls_back_to_bps_for_
     custo = custo_com_liquidez(foto, Custos(0.0003, 1.0), custo_bps=10.0)
     assert custo("PETR4.SA", 10_000.0) == pytest.approx(custo_da_ordem(10_000.0, 0.001, 0.02, 1e8, Custos(0.0003, 1.0)))
     assert custo("XPTO3.SA", 10_000.0) == pytest.approx(10.0)
+
+
+def test_the_screens_cost_falls_back_to_bps_for_a_name_whose_snapshot_row_is_incomplete():
+    # 403 rows of the 09/2026 snapshot have no spread (A1CR34): a NaN cost would drop out of the cash and IR sums
+    from core.execucao import Custos
+    from core.rebalanceio import custo_com_liquidez
+    foto = pd.DataFrame({"security": ["A1CR34", "ZERO3"], "meio_spread": [float("nan"), 0.001],
+                         "vol_diaria": [0.02, 0.02], "volume_mediano": [1e6, 0.0]})
+    custo = custo_com_liquidez(foto, Custos(0.0003, 1.0), custo_bps=10.0)
+    assert custo("A1CR34.SA", 10_000.0) == pytest.approx(10.0)
+    assert custo("ZERO3.SA", 10_000.0) == pytest.approx(10.0)
+
+
+def test_the_zone_never_skips_the_sale_of_a_name_the_plan_takes_to_zero_shares_though_its_weight_is_positive():
+    # B weighs 50% but R$ 250 of a R$ 500 patrimony buys no 2 shares at R$ 300: the plan sells the one held
+    zona = ZonaSemNegociacao(vol_diaria=pd.Series({"A": 1e-4, "B": 1e-4}))
+    regras = RegrasRebalanceio(peso_maximo=1.0, custo_bps=0.0, quantidade_minima=2)
+    plano = plano_de_rebalanceio(pd.Series({"A": 0.5, "B": 0.5}), {"B": Posicao(1, 300.0)},
+                                 pd.Series({"A": 10.0, "B": 300.0}), 200.0, regras, um_por_cento, zona=zona)
+    assert plano.ordens.loc["B", "delta"] == -1
+    assert plano.ordens.loc["B", "situacao"] == "executar"
+
+
+def test_a_ticker_typed_twice_in_the_positions_table_adds_its_quantities_at_their_weighted_average_price():
+    from core.rebalanceio import posicoes_da_tabela
+    tabela = pd.DataFrame({"ticker": ["PETR4", "petr4.sa"], "quantidade": [10, 5], "preco_medio": [30.0, 33.0]})
+    assert posicoes_da_tabela(tabela) == {"PETR4": Posicao(15, 31.0)}

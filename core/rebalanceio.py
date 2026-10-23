@@ -126,7 +126,7 @@ def plano_de_rebalanceio(alvo: pd.Series, posicoes: Mapping[str, Posicao], cotac
     if zona is not None:
         patrimonio = float((ordens["atual"] * ordens["cotacao"]).sum()) + caixa
         ganho = _ganho_esperado(ordens, zona, patrimonio)
-        pular = ganho.notna() & (ordens["atual"] > 0) & ordens.index.isin(alvo.index[alvo > 0]) & (
+        pular = ganho.notna() & (ordens["atual"] > 0) & (ordens["alvo"] > 0) & (
             ordens["custo"] + ordens["ir_marginal"] > ganho)
         forcadas = pular & _fura_um_teto(ordens, pular, patrimonio, regras)
         pular &= ~forcadas
@@ -204,13 +204,16 @@ def _custear(quadro: pd.DataFrame, caixa: float, custo: CustoDaOrdem) -> tuple[p
 
 def posicoes_da_tabela(tabela: pd.DataFrame) -> dict[str, Posicao]:
     """The screen's table (``ticker``, ``quantidade``, ``preco_medio``) as positions: tickers trimmed, upper case and
-    without ".SA"; rows without a ticker or with no shares are dropped."""
-    posicoes = {}
+    without ".SA"; rows without a ticker or with no shares are dropped; a ticker on two rows adds its quantities at
+    their quantity-weighted average price."""
+    posicoes: dict[str, Posicao] = {}
     for linha in tabela.itertuples(index=False):
         ticker = "" if pd.isna(linha.ticker) else str(linha.ticker).strip().upper().removesuffix(".SA")
         if ticker and pd.notna(linha.quantidade) and int(linha.quantidade) > 0:
-            posicoes[ticker] = Posicao(int(linha.quantidade),
-                                       0.0 if pd.isna(linha.preco_medio) else float(linha.preco_medio))
+            quantidade, medio = int(linha.quantidade), 0.0 if pd.isna(linha.preco_medio) else float(linha.preco_medio)
+            antes = posicoes.get(ticker, Posicao(0, 0.0))
+            total = antes.quantidade + quantidade
+            posicoes[ticker] = Posicao(total, (antes.quantidade * antes.preco_medio + quantidade * medio) / total)
     return posicoes
 
 
@@ -223,10 +226,12 @@ def capital_minimo(pesos: pd.Series, cotacoes: pd.Series, quantidade_minima: int
 
 def custo_com_liquidez(foto: pd.DataFrame | None, custos: Custos, custo_bps: float) -> CustoDaOrdem:
     """The screen's order cost: ``custo_da_ordem`` with the liquidity snapshot (``security``, ``meio_spread``,
-    ``vol_diaria``, ``volume_mediano``; ticker with or without ".SA"); ``custo_bps`` for a name not in it."""
+    ``vol_diaria``, ``volume_mediano``; ticker with or without ".SA"); ``custo_bps`` for a name not in it or whose row
+    is incomplete (a missing measure or no volume)."""
     colunas = ["meio_spread", "vol_diaria", "volume_mediano"]
-    medidas = {} if foto is None else {str(papel): tuple(linha)
-                                       for papel, linha in foto.set_index("security")[colunas].iterrows()}
+    completas = None if foto is None else foto[foto[colunas].notna().all(axis=1) & (foto["volume_mediano"] > 0)]
+    medidas = {} if completas is None else {str(papel): tuple(linha)
+                                            for papel, linha in completas.set_index("security")[colunas].iterrows()}
 
     def custo(ticker: str, valor: float) -> float:
         medida = medidas.get(ticker.removesuffix(".SA"))

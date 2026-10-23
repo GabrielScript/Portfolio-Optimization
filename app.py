@@ -446,12 +446,15 @@ def secao_conservadora(entradas: Entradas) -> None:
     argumentos = (alvo, posicoes, cotacoes["preco"], entradas.orcamento, regras, custo)
     try:
         plano = plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA)
-        zona = None if foto is None else plano_de_rebalanceio(
-            *argumentos, mes=mes, etfs=ETFS_DA_TELA,
-            zona=ZonaSemNegociacao(foto.set_index("security")["vol_diaria"].rename(lambda papel: f"{papel}.SA")))
     except ValueError as erro:
         st.error(f"Plano indisponível: {erro}")
         return
+    try:  # information only: when the zone's redo fails, the plan shows without its columns
+        zona = None if foto is None else plano_de_rebalanceio(
+            *argumentos, mes=mes, etfs=ETFS_DA_TELA,
+            zona=ZonaSemNegociacao(foto.set_index("security")["vol_diaria"].rename(lambda papel: f"{papel}.SA")))
+    except ValueError:
+        zona = None
     patrimonio = float((plano.ordens["atual"] * plano.ordens["cotacao"]).sum()) + entradas.orcamento
     pesos = plano.ordens["alvo"] * plano.ordens["cotacao"] / patrimonio
     violacoes = checar_carteira(pesos[pesos > 0], setores)

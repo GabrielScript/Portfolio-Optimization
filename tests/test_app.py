@@ -561,3 +561,25 @@ def test_below_the_minimum_capital_the_plan_warns_that_it_is_far_from_the_tested
     app_alepha.sidebar.number_input(key="orcamento").set_value(100.0).run()
     assert not app_alepha.exception
     assert len([w for w in app_alepha.warning if "fica longe da carteira testada" in w.value]) == 1
+
+
+def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(monkeypatch):
+    # the zone's redo can leave the cash negative with no buy to shrink (ValueError): only its columns go missing
+    from core import rebalanceio
+    _, alvo = _conservadora_sintetica()
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_liquidez", lambda: pd.DataFrame({
+        "security": [t.removesuffix(".SA") for t in alvo.index], "month": pd.Timestamp("2026-09-01"),
+        "meio_spread": 0.001, "vol_diaria": 0.02, "volume_mediano": 1e8}))
+    real = rebalanceio.plano_de_rebalanceio
+
+    def zona_falha(*args, zona=None, **kwargs):
+        if zona is not None:
+            raise ValueError("o caixa e as vendas não pagam os custos (faltam R$ 1.00)")
+        return real(*args, **kwargs)
+    monkeypatch.setattr(rebalanceio, "plano_de_rebalanceio", zona_falha)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert not [e for e in at.error if e.value.startswith("Plano indisponível")]
+    assert set(_ordens_alepha(at).index) == {t.removesuffix(".SA") for t in alvo.index}

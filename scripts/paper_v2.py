@@ -41,6 +41,20 @@ Pré-registro (2026-10-20, escrito e commitado antes do 1º registro; depois des
 - Expectativa registrada: 1º registro no fechamento de 19/10/2026 (rodado à mão; a rotina diária entra quando o
   usuário autorizar o agendamento); 4 rebalanceios em 12 meses; 0 recusas; 0 a 2 pregões congelados; giro perto de
   300% ao ano, como no motor.
+
+Addendum (2026-10-23, written and committed before the 126-session reading; the text above is unchanged, and after
+this commit the addendum does not change either). Secondary criterion, at the user's request (DECISOES 116):
+- What is measured: the annualized volatility of the daily simple returns (standard deviation x sqrt(252),
+  `core.volatilidade`) of the R$ 10 thousand patrimony refeito by the reading above (`refazer(...).valores`: after
+  order costs and the IR paid month by month, before the IR of selling everything), for the Conservadora and for
+  BOVA11, over the same sessions. Not the exit value: its month-end and exit IR steps would move the volatility. The
+  downside volatility (target 0, all days) is printed next to it, descriptive only.
+- Decision at 252 sessions, fixed now: the secondary criterion is met if the Conservadora's annualized volatility is
+  lower than or equal to BOVA11's. It is reported next to the main criterion and does not change it: item 3 of the
+  definition of done is decided by the exit value alone, as written above.
+- Written after seeing the backtest volatilities (`docs/conservadora-vol-2026-10-23.txt`: 18.0-18.3% against
+  23.4% for BOVA11, 2010-2026, three phases), so the expectation is that it is met; one year of daily data measures a
+  volatility to about +-5% of its value, so a gap smaller than ~2 p.p. is not a difference.
 """
 
 from __future__ import annotations
@@ -102,6 +116,7 @@ DEFINICOES_DA_CONSERVADORA = [IMPORTS_DO_PROJETO, "JANELA_TREINO", "SEM_PREGAO",
 JANELA_TREINO = 1_260
 SEM_PREGAO = {(12, 24), (12, 25), (12, 31), (1, 1)}      # (mês, dia) sem pregão na B3 todo ano
 CAPITAL_DA_LEITURA = 10_000.0
+VOLATILIDADES = ("Vol anual", "Vol de baixa")     # do patrimônio refeito (critério secundário de 23/10/2026)
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
@@ -208,7 +223,18 @@ def leitura(registro: pd.DataFrame, dados: DadosDoLago, dividendos: pd.DataFrame
                                       isencao=ISENCAO_DE_VENDAS, proventos=proventos),
                 "BOVA11": refazer(comprado_e_mantido(resultado, "BOVA11"), retornos, CAPITAL_DA_LEITURA, CUSTOS_DA_B3,
                                   liquidez, isencao=0.0)}
-    return medidas(refeitas)
+    # import local: os imports do nível do módulo estão na guarda do paper-v2, e a leitura não decide nada
+    from core.volatilidade import volatilidades
+    tabela = medidas(refeitas)
+    vols = {nome: volatilidades(refeita.valores) for nome, refeita in refeitas.items()}
+    return tabela.assign(**{VOLATILIDADES[0]: [vols[nome].anual for nome in tabela.index],
+                            VOLATILIDADES[1]: [vols[nome].de_baixa for nome in tabela.index]})
+
+
+def criterio_de_volatilidade(tabela: pd.DataFrame) -> bool:
+    """O critério secundário do adendo de 23/10/2026: vol anual da Conservadora <= a do BOVA11 (na tabela da
+    ``leitura``)."""
+    return bool(tabela.loc[CONSERVADORA, VOLATILIDADES[0]] <= tabela.loc["BOVA11", VOLATILIDADES[0]])
 
 
 def rodar(dados: DadosDoLago, registro: pd.DataFrame, data: pd.Timestamp) -> Rodada:
@@ -325,7 +351,9 @@ def main() -> int:
         print(f"Paper-v2 de {registro['data'].min():%d/%m/%Y} a {dados.precos.index[-1]:%d/%m/%Y}: {pregoes} pregões, "
               f"{registro['data'].nunique()} registros; guarda: {aviso or 'sem mudança'}")
         print(_tabela(tabela.assign(**{coluna: tabela[coluna].round().astype("int64") for coluna in EM_REAIS}),
-                      EM_PORCENTO))
+                      [*EM_PORCENTO, *VOLATILIDADES]))
+        print(f"Critério secundário (adendo de 23/10/2026, decide só em 252 pregões): vol anual da Conservadora "
+              f"{'<=' if criterio_de_volatilidade(tabela) else '>'} a do BOVA11")
         return 0
     rodada = executar(ARQUIVO_CALENDARIO, ARQUIVO_REGISTRO, TRAVA_DO_LAGO, atualizar_universo, ler_dados,
                       lambda feita, dados: guardar_no_git(feita, dados, versao))

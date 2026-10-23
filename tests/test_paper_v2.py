@@ -135,7 +135,8 @@ def test_no_dia_devido_registra_a_carteira_do_motor_e_guarda(tmp_path, dados_de_
                                    conservadora_do_dia(dados, decisao).sort_index(), check_names=False)
 
 
-def test_a_leitura_refaz_o_registro_e_o_bova11_nos_valores_de_saida():
+def _leitura_sintetica():
+    """Registro de 2 papéis e o BOVA11 em 130 pregões sintéticos, com liquidez e um provento."""
     datas = pd.bdate_range("2026-10-19", periods=130)
     gerador = np.random.default_rng(4)
     precos = pd.DataFrame(100 * np.cumprod(1 + gerador.normal(0.0005, 0.015, (130, 3)), axis=0), index=datas,
@@ -147,10 +148,32 @@ def test_a_leitura_refaz_o_registro_e_o_bova11_nos_valores_de_saida():
     dividendos = pd.DataFrame({"security": ["AAAA3"], "ex_date": [datas[50].date()], "corporate_action": ["DIVIDENDO"],
                                "yield": [0.01]})
     dados = DadosDoLago(precos, pd.DataFrame(), {}, pd.DataFrame(), pd.DataFrame(), {}, {})
-    medidas = leitura(registro, dados, dividendos, liquidez_da_tabela(tabela))
+    return registro, dados, dividendos, liquidez_da_tabela(tabela)
+
+
+def test_a_leitura_refaz_o_registro_e_o_bova11_nos_valores_de_saida():
+    registro, dados, dividendos, liquidez = _leitura_sintetica()
+    precos = dados.precos
+    medidas = leitura(registro, dados, dividendos, liquidez)
     assert list(medidas.index) == [CONSERVADORA, "BOVA11"]
     assert 0.0 < medidas.loc[CONSERVADORA, "P aritmético"] < 1.0
     assert medidas.loc["BOVA11", "IR na saída (R$)"] > 0.0 or precos["BOVA11"].iloc[-1] <= precos["BOVA11"].iloc[0]
+
+
+def test_a_leitura_mede_as_volatilidades_no_patrimonio_refeito_e_nao_na_saida():
+    # o critério secundário de 23/10/2026: a vol do patrimônio depois de custos e do IR pago, sem o IR de saída
+    from core.volatilidade import volatilidades
+    from scripts.avaliar_execucao import CUSTOS_DA_B3, comprado_e_mantido
+    from scripts.paper_v2 import CAPITAL_DA_LEITURA, VOLATILIDADES
+    registro, dados, dividendos, liquidez = _leitura_sintetica()
+    medidas = leitura(registro, dados, dividendos, liquidez)
+    bova = refazer(comprado_e_mantido(resultado_do_registro(registro, dados.precos), "BOVA11"),
+                   retornos_da_carteira(dados.precos), CAPITAL_DA_LEITURA, CUSTOS_DA_B3, liquidez, isencao=0.0)
+    assert bova.saida.iloc[-1] < bova.valores.iloc[-1]      # há IR de saída: as duas vols diferem
+    assert medidas.loc["BOVA11", VOLATILIDADES[0]] == pytest.approx(volatilidades(bova.valores).anual)
+    assert medidas.loc["BOVA11", VOLATILIDADES[1]] == pytest.approx(volatilidades(bova.valores).de_baixa)
+    assert medidas.loc["BOVA11", VOLATILIDADES[0]] != pytest.approx(volatilidades(bova.saida).anual)
+    assert np.isfinite(medidas.loc[CONSERVADORA, list(VOLATILIDADES)].astype(float)).all()
 
 
 def test_atualizar_universo_chama_o_python_do_venv_do_lago_e_nao_o_uv(monkeypatch, tmp_path):
@@ -163,3 +186,11 @@ def test_atualizar_universo_chama_o_python_do_venv_do_lago_e_nao_o_uv(monkeypatc
     atualizar_universo(tmp_path)
     assert chamadas == [([str(tmp_path / ".venv" / "Scripts" / "python.exe"), "-m", "b3lake.cli", "universe"],
                          tmp_path)]
+
+
+def test_o_criterio_secundario_pede_vol_anual_da_conservadora_menor_ou_igual_a_do_bova11():
+    from scripts.paper_v2 import VOLATILIDADES, criterio_de_volatilidade
+    tabela = pd.DataFrame({VOLATILIDADES[0]: [0.18, 0.18], VOLATILIDADES[1]: [0.20, 0.10]},
+                          index=[CONSERVADORA, "BOVA11"])
+    assert criterio_de_volatilidade(tabela)                     # empate cumpre; a vol de baixa não entra
+    assert not criterio_de_volatilidade(tabela.assign(**{VOLATILIDADES[0]: [0.181, 0.18]}))

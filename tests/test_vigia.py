@@ -13,16 +13,19 @@ HOJE = "2026-10-20"
 
 
 def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = None,
-            manutencao: list[str] | None = None, ramo: str = "main") -> tuple[Path, Path, Path, Path, Path]:
+            manutencao: list[str] | None = None, ramo: str = "main",
+            sentimento: list[str] | None = None) -> tuple[Path, Path, Path, Path, Path]:
     """runs.csv do lago (formato do b3lake), do paper (formato do ``anotar``), do paper-v2 (formato do ``_anotar``
-    dele) e da manutenção (``scripts/manutencao.py``), mais um checkout git no ``ramo``; sem ``v2`` ou sem
-    ``manutencao``, uma rodada certa dela hoje e em cada dia em que o paper rodou (os testes do paper-v1 não
-    dependem delas)."""
+    dele), da manutenção (``scripts/manutencao.py``) e do log de notícias do lago (``sentiment_runs.csv``), mais um
+    checkout git no ``ramo``; sem ``v2``, ``manutencao`` ou ``sentimento``, uma rodada certa dela hoje e em cada dia
+    em que o paper rodou (os testes do paper-v1 não dependem delas)."""
     dias = sorted({HOJE, *(linha[:10] for linha in paper)})
     if v2 is None:
         v2 = [f"{dia}T08:45:05,,aguardar,,abc1234," for dia in dias]
     if manutencao is None:
         manutencao = [f"{dia}T10:03:05,ok,leituras: nenhuma devida" for dia in dias]
+    if sentimento is None:
+        sentimento = [f"{dia}T13:10:05+00:00,{dia}T13:10:40+00:00,ok,infomoney 3" for dia in dias]
     pasta_lago, pasta_paper, pasta_v2 = tmp_path / "b3lake", tmp_path / "paper-trading", tmp_path / "paper-v2"
     pasta_manutencao = tmp_path / "paper-manutencao"
     for pasta, cabecalho, linhas in ((pasta_lago, "started,finished,expected,outcome,detail", lago),
@@ -31,6 +34,8 @@ def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = 
                                      (pasta_manutencao, "quando,desfecho,nota", manutencao)):
         pasta.mkdir()
         (pasta / "runs.csv").write_text("\n".join([cabecalho, *linhas]) + "\n", encoding="utf-8")
+    (pasta_lago / "sentiment_runs.csv").write_text(
+        "\n".join(["started,finished,outcome,detail", *sentimento]) + "\n", encoding="utf-8")
     checkout = tmp_path / "app"
     subprocess.run(["git", "init", "-q", "-b", ramo, str(checkout)], check=True, capture_output=True)
     return pasta_lago, pasta_paper, pasta_v2, pasta_manutencao, checkout
@@ -162,3 +167,17 @@ def test_an_app_checkout_with_a_detached_head_warns(tmp_path):
     saida = _vigiar(*pastas)
     assert (saida.returncode, saida.stdout.strip()) == (
         1, "vigia: checkout do app com HEAD destacado, as rotinas rodam na main (git switch main)"), saida.stderr
+
+
+def test_the_news_log_without_a_good_run_on_the_day_warns(tmp_path):
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_EM_DIA, LAGO_HOJE], [PAPER_HOJE], sentimento=[]))
+    assert saida.returncode == 1
+    assert 'vigia: log de notícias: nenhuma rodada certa hoje (tarefa "b3lake sentimento")' in saida.stdout
+
+
+def test_the_news_log_whose_runs_all_failed_on_the_day_warns_with_the_last_detail(tmp_path):
+    falhas = [f"{HOJE}T{hora}:10:05+00:00,{HOJE}T{hora}:10:09+00:00,failed,every source failed: offline"
+              for hora in ("09", "11")]
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_EM_DIA, LAGO_HOJE], [PAPER_HOJE], sentimento=falhas))
+    assert saida.returncode == 1
+    assert "vigia: log de notícias: failed (every source failed: offline)" in saida.stdout

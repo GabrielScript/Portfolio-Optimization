@@ -13,6 +13,9 @@ juntas.
 Since 2026-10-23 (DECISOES 121) it also reads the paper-v2 runs.csv and the upkeep's (%LOCALAPPDATA%\paper-manutencao,
 scripts/manutencao.py: no line today, or "falhou" / "bloqueada" / "lago rodando"), and warns when the app checkout
 the tasks run is not on main. The notification itself is scripts/avisar.ps1.
+Since 2026-10-23 (DECISOES 123) it also reads the lake's news/social log runs (%LOCALAPPDATA%\b3lake\
+sentiment_runs.csv, task "b3lake sentimento", every 2 h): no "ok" or "partial" run on the day, or a day whose last
+run "failed".
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar -SemEspera
@@ -70,8 +73,16 @@ function Ler-Rodadas([string]$Arquivo) {
 }
 
 function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2,
-                         [object[]]$DoManutencao, [bool]$ManutencaoAindaRoda) {
+                         [object[]]$DoManutencao, [bool]$ManutencaoAindaRoda, [object[]]$DoSentimento) {
     $problemas = New-Object System.Collections.Generic.List[string]
+    # log de notícias (b3lake.sentiment, a cada 2 h, todo dia): ao menos uma rodada certa no dia (UTC do started)
+    $sentimentoHoje = @($DoSentimento | Where-Object { "$($_.started)".StartsWith($Dia) })
+    $certas = @($sentimentoHoje | Where-Object { @('ok', 'partial') -contains $_.outcome })
+    if ($sentimentoHoje.Count -gt 0 -and $sentimentoHoje[-1].outcome -eq 'failed') {
+        $problemas.Add("log de notícias: failed ($($sentimentoHoje[-1].detail))")
+    } elseif ($certas.Count -eq 0) {
+        $problemas.Add('log de notícias: nenhuma rodada certa hoje (tarefa "b3lake sentimento")')
+    }
     # manutenção (scripts/manutencao.py): rodou e não falhou nem ficou bloqueada; ainda rodando (leitura longa depois
     # de esperar as outras rotinas) não é falta
     $manutencaoHoje = @($DoManutencao | Where-Object { "$($_.quando)".StartsWith($Dia) })
@@ -145,11 +156,12 @@ try {
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
     $doPaperV2 = Ler-Rodadas (Join-Path $PastaPaperV2 'runs.csv')
     $doManutencao = Ler-Rodadas (Join-Path $PastaManutencao 'runs.csv')
+    $doSentimento = Ler-Rodadas (Join-Path $PastaLago 'sentiment_runs.csv')
     $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
     $daManutencao = @(Get-ScheduledTask -TaskName 'paper manutencao' -ErrorAction SilentlyContinue)
     $tarefaRodando = -not $SemEspera -and @($daManutencao | Where-Object State -eq 'Running').Count -gt 0
     $aindaRoda = $ManutencaoRodando.IsPresent -or $tarefaRodando
-    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao $aindaRoda)
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao $aindaRoda $doSentimento)
     $doRamo = Problema-DoRamo $Repositorio
     if ($doRamo) { $problemas += $doRamo }
     $texto = $problemas -join '; '

@@ -89,6 +89,20 @@ mesmas condições.
   the 15 least liquid tradable names, quarterly, midpoint returns, forced exits, costs and the income-tax exemption,
   against SMAL11. P 0.52-0.65 (0.95 needed), CAGR -5% to -7% a year against SMAL11's +6% to +12%: spreads cost ~15%
   of equity a year and there was no premium even before costs. Closed.
+- **Stocks x bonds core** (pre-registered, `scripts/avaliar_acoes_titulos.py`, output `docs/acoes-titulos-2026-10-21.txt`,
+  DECISOES 111): BOVA11 50/50 with the IMA-B (net of IMAB11's fee; ANBIMA history files, research use only, not in
+  git) or with the CDI, from 12/2008. CAGR 11.1–11.8% and 10.6–11.0% vs BOVA11's 9.4–10.4%, MDD −29% and −24% vs
+  −50%, but P[> BOVA11] in log 0.67–0.72 and 0.57–0.65 (0.95 needed): neither is a candidate, the core stays BOVA11.
+  The split between stocks and fixed income is the investor's risk choice, not a backtest result.
+- **Macro filters on the core** (pre-registered, `scripts/avaliar_filtros_macro.py`, output
+  `docs/filtros-macro-2026-10-22.txt`, DECISOES 112): BOVA11 switched to the CDI by an equity-risk-premium veto
+  (market E/P minus the 10-year real rate from the Tesouro), a credit veto (IDA-DI minus CDI over 63 sessions) or a
+  logistic meta-label on both, each against its own average exposure. No candidate: P log [> control] 0.09–0.11, 0.02–0.21
+  and 0.30–0.96 (the meta-label only in one phase). The first run's premium was wrong (the lake priced GOLL at ~R$ 40
+  trillion); rerun once on corrected market values (`docs/dados/2026-10-22-cvm/`, same N).
+- **Conservadora on the corrected lake** (descriptive, `scripts/rerun_conservadora.py`, output
+  `docs/conservadora-2026-10-22.txt`, DECISOES 115): the S2.1 script unchanged on the exports with the CODBDI 58 and
+  RPMG3 fixes, same period and N. Still approved: IC 0.083 (t 6.0), P[> BOVA11] 0.991–0.994, CAGR 16.4–17.4%.
 - **Paired test, Núcleo Mín. Vol 70/30 + Kelly 30% vs HRP, BOVA11 and IVVB11** (descriptive, not counted in the DSR's
   N; DECISOES 90): vs BOVA11 +8.6–8.9 p.p./yr and P 0.95–0.99 as a single test, but deflated for 32 trials 0.51–0.73,
   60–68% of the excess from 2010–2014 and behind BOVA11 over the last 5 years; vs HRP P log 0.93–0.98 (≥ 0.95 only in
@@ -246,6 +260,10 @@ Portfolio-Optimization/
 │   ├── avaliar_views.py              # S3, Black-Litterman com views, pré-registrado (rodado)
 │   ├── avaliar_execucao.py           # Prova final com execução realista (S4), pré-registrada (rodada)
 │   ├── avaliar_hrp_distancia.py      # HRP com a distância d~ do paper, pré-registrado (rodado)
+│   ├── avaliar_iliquidez.py          # Small caps below the universe, pre-registered (run, closed)
+│   ├── avaliar_acoes_titulos.py      # Stocks x bonds core (IMA-B or CDI), pre-registered (run)
+│   ├── avaliar_filtros_macro.py      # Premium/credit vetoes and meta-label on BOVA11, pre-registered (run)
+│   ├── rerun_conservadora.py         # S2.1 rerun on the corrected lake (descriptive)
 │   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
@@ -262,6 +280,9 @@ Portfolio-Optimization/
 │   ├── views-2026-10-20.txt      # Saída do S3 (Black-Litterman com views)
 │   ├── execucao-2026-10-20.txt   # Saída da prova final com custo por liquidez e IR (S4)
 │   ├── hrp-distancia-2026-10-20.txt  # Saída do teste do HRP com a distância d~ do paper
+│   ├── acoes-titulos-2026-10-21.txt  # Output of the stocks x bonds core
+│   ├── filtros-macro-2026-10-2*.txt  # Outputs of the macro filters (10-21 invalid premium; 10-22 corrected)
+│   ├── conservadora-2026-10-22.txt   # Conservadora on the corrected lake
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/

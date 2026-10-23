@@ -17,11 +17,18 @@ fund offered to third parties: CVM Resolution 175/2022). What v1.0 is:
   only strategy that passed the net-of-tax final proof (§4.14). From the current positions: lots + fractional, cost
   by liquidity, month IR with the R$ 20 thousand cliff (§4.9). BOVA11 + satellite and the study stay as options.
 - **Measured (backtest, 2010-2026, 3 phases):** CAGR 16.4-17.4% vs 6.7-7.2% for BOVA11; volatility 18.0-18.3% vs
-  23.4%; downside volatility 12.8-12.9% vs 16.5-16.6% (`docs/conservadora-vol-2026-10-23.txt`).
+  23.4%; downside volatility 12.8-12.9% vs 16.5-16.6% (`docs/conservadora-vol-2026-10-23.txt`). The edge comes
+  mostly from 2010-2022: over the last 3 years (10/2023-10/2026) BOVA11 led, CAGR 21.9% vs 13.1% with equal
+  volatility (descriptive slice, before costs and IR; DECISOES 122).
 - **Still to prove, live:** paper-v2 reading at 126 sessions (~27/04/2027) and the decision at 252 (~25/10/2027):
   exit value after IR >= BOVA11's (main) and volatility <= BOVA11's (secondary, pre-registered 2026-10-23).
-- **Weekly check (the user or a session):** `paper-v2/runs.csv` and `paper/diario.csv` have a line for each weekday
-  and the watchdog task ("vigia", 12h) reports nothing missing.
+- **Upkeep, automated since 2026-10-23 (DECISOES 121):** the task "paper manutencao" (Mon-Fri 10:00,
+  `scripts/manutencao.py`) saves both readings and a monthly progress reading (information only) to
+  `paper-v2/leituras/` with a Windows notification, rebuilds `lago/liquidez.parquet` when the lake closes a month,
+  commits those files and pushes `main` fast-forward. The watchdog ("paper vigia", 12h) warns when any routine did
+  not run or failed and when the app checkout is not on `main`. By hand: only what a notification asks (`git switch
+  main`, a `git pull`, or a GitHub sign-in when the push's cached credential expires). Never leave work-in-progress
+  commits on `main` in this checkout: the upkeep pushes `main` every weekday.
 - **After v1.0, optional, each pre-registered and counted in N:** meta-labeling on the S2 signals; Monte Carlo bench +
   denoising/NCO; forward news/social log scored by Jev plus CVM IPE filings as a veto/meta-label; election-window
   event study (volatility, not direction); leverage only after PSR >= 0.95 out of sample.

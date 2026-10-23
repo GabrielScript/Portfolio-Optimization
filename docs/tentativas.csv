@@ -43,3 +43,4 @@ data,script,configuracao
 2026-10-21,avaliar_filtros_macro.py,"BOVA11 with the equity-risk-premium veto (E/P of the universe - 10y real rate below its expanding median -> CDI), every 21 sessions"
 2026-10-21,avaliar_filtros_macro.py,"BOVA11 with the credit veto (IDA-DI - CDI over 63 sessions < 0 -> CDI), every 21 sessions"
 2026-10-21,avaliar_filtros_macro.py,"BOVA11 meta-labelled by the premium and the credit proxy (expanding logistic regression, P < 0.5 -> CDI), every 21 sessions"
+2026-10-23,avaliar_zona.py,"Conservadora with the no-trade zone (skip a resize whose cost + marginal IR > (2/2) x vol_diaria^2 x 63 x order weight^2 x patrimony; entries and exits always trade; 20% cap forces; rest in cash at 0%)"

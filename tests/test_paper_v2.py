@@ -194,3 +194,11 @@ def test_o_criterio_secundario_pede_vol_anual_da_conservadora_menor_ou_igual_a_d
                           index=[CONSERVADORA, "BOVA11"])
     assert criterio_de_volatilidade(tabela)                     # empate cumpre; a vol de baixa não entra
     assert not criterio_de_volatilidade(tabela.assign(**{VOLATILIDADES[0]: [0.181, 0.18]}))
+
+
+def test_the_main_criterion_asks_for_a_final_exit_value_at_least_bova11s():
+    from scripts.paper_v2 import criterio_principal
+    tabela = pd.DataFrame({"Saída final (R$)": [11_000.0, 11_000.0], "CAGR": [0.05, 0.30]},
+                          index=[CONSERVADORA, "BOVA11"])
+    assert criterio_principal(tabela)                            # a tie meets it; the CAGR does not enter
+    assert not criterio_principal(tabela.assign(**{"Saída final (R$)": [10_999.0, 11_000.0]}))

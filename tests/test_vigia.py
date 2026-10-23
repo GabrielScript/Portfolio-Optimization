@@ -12,26 +12,37 @@ VIGIA = Path(__file__).resolve().parent.parent / "scripts" / "vigia.ps1"
 HOJE = "2026-10-20"
 
 
-def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = None) -> tuple[Path, Path, Path]:
-    """runs.csv do lago (formato do b3lake), do paper (formato do ``anotar``) e do paper-v2 (formato do ``_anotar``
-    dele); sem ``v2``, uma rodada "aguardar" do paper-v2 hoje e em cada dia em que o paper rodou (os testes do
-    paper-v1 não dependem dele)."""
+def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = None,
+            manutencao: list[str] | None = None, ramo: str = "main") -> tuple[Path, Path, Path, Path, Path]:
+    """runs.csv do lago (formato do b3lake), do paper (formato do ``anotar``), do paper-v2 (formato do ``_anotar``
+    dele) e da manutenção (``scripts/manutencao.py``), mais um checkout git no ``ramo``; sem ``v2`` ou sem
+    ``manutencao``, uma rodada certa dela hoje e em cada dia em que o paper rodou (os testes do paper-v1 não
+    dependem delas)."""
+    dias = sorted({HOJE, *(linha[:10] for linha in paper)})
     if v2 is None:
-        v2 = [f"{dia}T08:45:05,,aguardar,,abc1234," for dia in sorted({HOJE, *(linha[:10] for linha in paper)})]
+        v2 = [f"{dia}T08:45:05,,aguardar,,abc1234," for dia in dias]
+    if manutencao is None:
+        manutencao = [f"{dia}T10:03:05,ok,leituras: nenhuma devida" for dia in dias]
     pasta_lago, pasta_paper, pasta_v2 = tmp_path / "b3lake", tmp_path / "paper-trading", tmp_path / "paper-v2"
+    pasta_manutencao = tmp_path / "paper-manutencao"
     for pasta, cabecalho, linhas in ((pasta_lago, "started,finished,expected,outcome,detail", lago),
                                      (pasta_paper, "inicio,fim,fechamento,desfecho,nota", paper),
-                                     (pasta_v2, "quando,fechamento,desfecho,nota,codigo,guarda", v2)):
+                                     (pasta_v2, "quando,fechamento,desfecho,nota,codigo,guarda", v2),
+                                     (pasta_manutencao, "quando,desfecho,nota", manutencao)):
         pasta.mkdir()
         (pasta / "runs.csv").write_text("\n".join([cabecalho, *linhas]) + "\n", encoding="utf-8")
-    return pasta_lago, pasta_paper, pasta_v2
+    checkout = tmp_path / "app"
+    subprocess.run(["git", "init", "-q", "-b", ramo, str(checkout)], check=True, capture_output=True)
+    return pasta_lago, pasta_paper, pasta_v2, pasta_manutencao, checkout
 
 
-def _vigiar(pasta_lago: Path, pasta_paper: Path, pasta_v2: Path, *quando: str) -> subprocess.CompletedProcess:
+def _vigiar(pasta_lago: Path, pasta_paper: Path, pasta_v2: Path, pasta_manutencao: Path, checkout: Path,
+            *quando: str) -> subprocess.CompletedProcess:
     """``quando``: "-Hoje", dia (o padrão, 20/10/2026) ou "-Agora", data e hora da rodada (sem -Hoje)."""
     return subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                            str(VIGIA), *(quando or ("-Hoje", HOJE)), "-PastaLago", str(pasta_lago),
-                           "-PastaPaper", str(pasta_paper), "-PastaPaperV2", str(pasta_v2), "-SoMostrar",
+                           "-PastaPaper", str(pasta_paper), "-PastaPaperV2", str(pasta_v2),
+                           "-PastaManutencao", str(pasta_manutencao), "-Repositorio", str(checkout), "-SoMostrar",
                            "-SemEspera"],
                           capture_output=True, text=True, encoding="utf-8", timeout=120)
 
@@ -111,3 +122,35 @@ def test_paper_v2_que_falhou_hoje_avisa_com_a_nota(tmp_path):
     saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], [falhou]))
     assert (saida.returncode, saida.stdout.strip()) == (
         1, "vigia: paper v2: falhou (importação da rotina: ImportError: arch)"), saida.stderr
+
+
+def test_upkeep_without_a_run_today_warns(tmp_path):
+    ontem = "2026-10-19T10:03:05,ok,leituras: nenhuma devida"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], manutencao=[ontem]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, 'vigia: manutenção: nenhuma rodada hoje (tarefa "paper manutencao")'), saida.stderr
+
+
+def test_upkeep_that_failed_or_was_blocked_today_warns_with_the_note(tmp_path):
+    bloqueada = "2026-10-20T10:03:05,bloqueada,push: origin/main tem 1 commit(s) que a main local não tem"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], manutencao=[bloqueada]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, "vigia: manutenção: bloqueada (push: origin/main tem 1 commit(s) que a main local não tem)"), saida.stderr
+
+
+def test_an_app_checkout_off_main_warns(tmp_path):
+    # 22/10/2026: the checkout was left on a branch and paper-v1 did not register the day
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], ramo="feat/x"))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, "vigia: checkout do app em feat/x, as rotinas rodam na main (git switch main)"), saida.stderr
+
+
+def test_an_app_checkout_with_a_detached_head_warns(tmp_path):
+    pastas = _pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE])
+    checkout = pastas[-1]
+    subprocess.run(["git", "-C", str(checkout), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-q",
+                    "--allow-empty", "-m", "x"], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(checkout), "switch", "-q", "--detach"], check=True, capture_output=True)
+    saida = _vigiar(*pastas)
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, "vigia: checkout do app com HEAD destacado, as rotinas rodam na main (git switch main)"), saida.stderr

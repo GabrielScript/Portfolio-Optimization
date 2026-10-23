@@ -4,6 +4,7 @@ Lançador das rotinas do paper trading (as tarefas "paper trading" e "paper v2" 
 
 Uso: .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py            (paper-v1, ``paper_trading.py``)
      .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py paper_v2   (paper-v2 da Conservadora)
+     .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py manutencao (upkeep: liquidity, readings, push)
 
 Só biblioteca padrão de propósito. Se a importação da rotina falhar (venv quebrado, pacote faltando, erro de sintaxe),
 o ``main()`` dela nem começa e não anota nada; aqui a falha vira um log com o traceback e uma linha "falhou" no
@@ -41,6 +42,8 @@ ROTINAS = {
                                                   datetime.now().isoformat(timespec="seconds"), "", "falhou", nota]),
     "paper_v2": Rotina(_LOCAL / "paper-v2", ["quando", "fechamento", "desfecho", "nota", "codigo", "guarda"],
                        lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "", "falhou", nota, "", ""]),
+    "manutencao": Rotina(_LOCAL / "paper-manutencao", ["quando", "desfecho", "nota"],
+                         lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", nota]),
 }
 
 

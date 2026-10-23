@@ -10,6 +10,9 @@ formato do anotar da rotina). Problemas: rotina sem linha hoje; última rodada d
 mais velho que o que o lago já tinha publicado quando o paper rodou. Tarefa "paper vigia", seg-sex 12h. Antes de
 conferir, espera as rotinas que estiverem rodando: com o PC ligado depois do horário, as tarefas atrasadas rodam
 juntas.
+Since 2026-10-23 (DECISOES 121) it also reads the paper-v2 runs.csv and the upkeep's (%LOCALAPPDATA%\paper-manutencao,
+scripts/manutencao.py: no line today, or "falhou" / "bloqueada" / "lago rodando"), and warns when the app checkout
+the tasks run is not on main. The notification itself is scripts/avisar.ps1.
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar -SemEspera
@@ -20,18 +23,20 @@ param(
     [string]$PastaLago = (Join-Path $env:LOCALAPPDATA 'b3lake'),
     [string]$PastaPaper = (Join-Path $env:LOCALAPPDATA 'paper-trading'),
     [string]$PastaPaperV2 = (Join-Path $env:LOCALAPPDATA 'paper-v2'),
+    [string]$PastaManutencao = (Join-Path $env:LOCALAPPDATA 'paper-manutencao'),
+    [string]$Repositorio = (Split-Path -Parent $PSScriptRoot),     # o checkout do app que as rotinas rodam
     [switch]$SoMostrar,     # escreve os problemas na saída em vez de avisar no Windows (teste e conferência à mão)
     [switch]$SemEspera      # não espera as rotinas que estiverem rodando (teste)
 )
 
 $ErrorActionPreference = 'Stop'
 
-$RotinasVigiadas = @('b3lake daily', 'paper trading', 'paper v2')
+$RotinasVigiadas = @('b3lake daily', 'paper trading', 'paper v2', 'paper manutencao')
+$RamoDasRotinas = 'main'
 $EsperaMaxima = [TimeSpan]::FromMinutes(45)
 $FalhasDoLago = @('failed', 'missing_overdue')
 $ProntosDoLago = @('done', 'up_to_date')
 $FalhasDoPaper = @('falhou', 'bloqueada', 'lago rodando')
-$AppDoPowerShell = '{1AC14E77-02E7-4E5D-B744-2EB1AE5198B7}\WindowsPowerShell\v1.0\powershell.exe'
 
 function Esperar-Rotinas {
     # rodada atrasada (PC ligado ou acordado depois do horário): as outras tarefas atrasadas começam junto com esta;
@@ -63,8 +68,16 @@ function Ler-Rodadas([string]$Arquivo) {
     return @(Import-Csv -LiteralPath $Arquivo -Encoding UTF8)
 }
 
-function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2) {
+function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2,
+                         [object[]]$DoManutencao) {
     $problemas = New-Object System.Collections.Generic.List[string]
+    # manutenção (scripts/manutencao.py): rodou e não falhou nem ficou bloqueada
+    $manutencaoHoje = @($DoManutencao | Where-Object { "$($_.quando)".StartsWith($Dia) })
+    if ($manutencaoHoje.Count -eq 0) {
+        $problemas.Add('manutenção: nenhuma rodada hoje (tarefa "paper manutencao")')
+    } elseif ($FalhasDoPaper -contains $manutencaoHoje[-1].desfecho) {
+        $problemas.Add("manutenção: $($manutencaoHoje[-1].desfecho) ($($manutencaoHoje[-1].nota))")
+    }
     # paper-v2: só rodou e não falhou (o fechamento vem do mesmo precos_diarios do paper, conferido abaixo)
     $v2Hoje = @($DoPaperV2 | Where-Object { "$($_.quando)".StartsWith($Dia) })
     if ($v2Hoje.Count -eq 0) {
@@ -100,16 +113,17 @@ function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [o
     return $problemas
 }
 
+function Problema-DoRamo([string]$Repositorio) {
+    # as tarefas rodam este checkout: noutro ramo, o paper-v1 não registrou o dia (22/10/2026)
+    $ramo = & git -C $Repositorio symbolic-ref -q --short HEAD
+    if ($ramo -eq $RamoDasRotinas) { return $null }
+    $onde = if ($ramo) { "em $ramo" } else { 'com HEAD destacado' }
+    return "checkout do app $onde, as rotinas rodam na $RamoDasRotinas (git switch $RamoDasRotinas)"
+}
+
 function Avisar([string]$Titulo, [string]$Corpo) {
-    $null = [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime]
-    $null = [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom.XmlDocument, ContentType = WindowsRuntime]
-    $xml = New-Object Windows.Data.Xml.Dom.XmlDocument
-    $xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text/><text/></binding></visual></toast>')
-    $textos = $xml.GetElementsByTagName('text')
-    $null = $textos.Item(0).AppendChild($xml.CreateTextNode($Titulo))
-    $null = $textos.Item(1).AppendChild($xml.CreateTextNode($Corpo))
-    $aviso = [Windows.UI.Notifications.ToastNotification]::new($xml)
-    [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier($AppDoPowerShell).Show($aviso)
+    # o mesmo aviso da manutenção (scripts/avisar.ps1)
+    & (Join-Path $PSScriptRoot 'avisar.ps1') -Titulo $Titulo -Corpo $Corpo
 }
 
 function Anotar([string]$Pasta, [string]$Texto) {
@@ -128,8 +142,11 @@ try {
     $doLago = Ler-Rodadas (Join-Path $PastaLago 'runs.csv')
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
     $doPaperV2 = Ler-Rodadas (Join-Path $PastaPaperV2 'runs.csv')
+    $doManutencao = Ler-Rodadas (Join-Path $PastaManutencao 'runs.csv')
     $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
-    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2)
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao)
+    $doRamo = Problema-DoRamo $Repositorio
+    if ($doRamo) { $problemas += $doRamo }
     $texto = $problemas -join '; '
     if ($SoMostrar) {
         if ($problemas.Count -eq 0) { 'vigia: tudo em dia' } else { $problemas | ForEach-Object { "vigia: $_" } }

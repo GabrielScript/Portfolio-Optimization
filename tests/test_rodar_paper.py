@@ -81,3 +81,16 @@ def test_paper_v2_que_falha_na_importacao_vira_linha_falhou_no_runs_csv_dele(che
     assert (saida.returncode, len(linhas), list(linhas[0])) == (
         1, 1, ["quando", "fechamento", "desfecho", "nota", "codigo", "guarda"])
     assert (linhas[0]["desfecho"], "arch quebrado" in linhas[0]["nota"]) == ("falhou", True)
+
+
+def test_upkeep_that_fails_on_import_becomes_a_failed_line_in_its_own_runs_csv(checkout, tmp_path):
+    # the "paper manutencao" task calls the launcher with "manutencao": the failure goes to the upkeep's folder
+    local = tmp_path / "local"
+    (checkout / "scripts" / "manutencao.py").write_text("raise ImportError('pandas quebrado')\n", encoding="utf-8")
+    ambiente = {**os.environ, "LOCALAPPDATA": str(local)}
+    saida = subprocess.run([sys.executable, "-X", "utf8", str(checkout / "scripts" / "rodar_paper.py"), "manutencao"],
+                           env=ambiente, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    with (local / "paper-manutencao" / "runs.csv").open(encoding="utf-8", newline="") as entrada:
+        linhas = list(csv.DictReader(entrada))
+    assert (saida.returncode, len(linhas), list(linhas[0])) == (1, 1, ["quando", "desfecho", "nota"])
+    assert (linhas[0]["desfecho"], "pandas quebrado" in linhas[0]["nota"]) == ("falhou", True)

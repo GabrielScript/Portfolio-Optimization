@@ -237,6 +237,11 @@ def criterio_de_volatilidade(tabela: pd.DataFrame) -> bool:
     return bool(tabela.loc[CONSERVADORA, VOLATILIDADES[0]] <= tabela.loc["BOVA11", VOLATILIDADES[0]])
 
 
+def criterio_principal(tabela: pd.DataFrame) -> bool:
+    """Item 3 of the pre-registration: the Conservadora's final exit value >= BOVA11's (in the ``leitura`` table)."""
+    return bool(tabela.loc[CONSERVADORA, EM_REAIS[0]] >= tabela.loc["BOVA11", EM_REAIS[0]])
+
+
 def rodar(dados: DadosDoLago, registro: pd.DataFrame, data: pd.Timestamp) -> Rodada:
     """A decisão do dia devido no fechamento ``data`` (os dados já chegam a ele)."""
     curva = pd.Series(dtype=float) if registro.empty else curva_do_registro(registro, dados.precos)
@@ -352,6 +357,8 @@ def main() -> int:
               f"{registro['data'].nunique()} registros; guarda: {aviso or 'sem mudança'}")
         print(_tabela(tabela.assign(**{coluna: tabela[coluna].round().astype("int64") for coluna in EM_REAIS}),
                       [*EM_PORCENTO, *VOLATILIDADES]))
+        print(f"Critério principal (pré-registro, decide só em 252 pregões): saída final da Conservadora "
+              f"{'>=' if criterio_principal(tabela) else '<'} a do BOVA11")
         print(f"Critério secundário (adendo de 23/10/2026, decide só em 252 pregões): vol anual da Conservadora "
               f"{'<=' if criterio_de_volatilidade(tabela) else '>'} a do BOVA11")
         return 0

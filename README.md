@@ -26,11 +26,15 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
   month's IR, where the R$ 20 thousand exemption is a cliff, so each sale shows its marginal IR. The no-trade zone was
   pre-registered and did not pass (`docs/zona-2026-10-23.txt`): the screen shows it as information and sends every
   order.
-- **After v1.0 (git tag `v1.0`):** check every week that `paper-v2/runs.csv` and `paper/diario.csv` have a line for
-  each weekday; rebuild the liquidity snapshot (`python scripts/liquidez_do_app.py`, writes `lago/liquidez.parquet`)
-  after the lake closes a month; read paper-v2 with `python scripts/paper_v2.py --leitura`. Further research (meta-labeling,
-  a Monte Carlo bench, a news/filings veto, an election-window study) is optional and each item needs its own
-  pre-registration.
+- **After v1.0 (git tag `v1.0`), automated since 2026-10-23:** the task "paper manutencao" (weekdays at 10:00,
+  `scripts/manutencao.py`) waits for the lake and the paper routines, then saves the paper-v2 readings to
+  `paper-v2/leituras/` (the pre-registered ones at 126 and 252 sessions, and once a month a progress reading that
+  decides nothing), rebuilds `lago/liquidez.parquet` when the lake closes a month, commits exactly those files and
+  pushes `main` fast-forward (never forced), which also publishes the paper routines' commits to the deployed app.
+  Saved readings raise a Windows notification. The 12h watchdog ("paper vigia") warns when any routine, the upkeep
+  included, did not run or failed, and when the app checkout is not on `main`. By hand: nothing, unless a
+  notification asks (a `git switch main` or a `git pull`). Further research (meta-labeling, a Monte Carlo bench, a
+  news/filings veto, an election-window study) is optional and each item needs its own pre-registration.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
@@ -302,7 +306,10 @@ Portfolio-Optimization/
 │   ├── avaliar_filtros_macro.py      # Premium/credit vetoes and meta-label on BOVA11, pre-registered (run)
 │   ├── rerun_conservadora.py         # S2.1 rerun on the corrected lake, with both volatilities (descriptive)
 │   ├── avaliar_zona.py               # No-trade zone with vs without, pre-registered (run: information only)
-│   ├── liquidez_do_app.py            # The app's liquidity snapshot (lago/liquidez.parquet), refreshed by hand
+│   ├── liquidez_do_app.py            # The app's liquidity snapshot (lago/liquidez.parquet), rebuilt by the upkeep
+│   ├── manutencao.py                 # Daily upkeep: paper-v2 readings, liquidity snapshot, commit + push of main
+│   ├── avisar.ps1                    # Windows notification of the watchdog and the upkeep
+│   ├── vigia.ps1                     # 12h watchdog of the lake, paper, paper-v2 and upkeep routines
 │   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/

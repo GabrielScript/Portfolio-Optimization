@@ -1,6 +1,31 @@
-# 📊 Otimizador de Carteiras B3
+# 📊 Fundo Alepha — Otimizador de Carteiras B3
 
 > **Autor:** Gabriel Estrela Lopes
+
+## Version 1.0 (2026-10-23)
+
+**Fundo Alepha** is the name of a personal decision tool. It is not an investment fund offered to third parties and
+not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 covers securities analysts).
+
+- **Real-money default: the Conservadora** (Blitz & van Vliet, 2018: the 15 names of low 36-month volatility, high
+  12-month dividend yield and 12-1 momentum, equal weights, at most 4 per sector), the only strategy that passed the
+  pre-registered final proof after costs and IR (DECISOES 82). The user chose it on 2026-10-23 for the aggressive
+  investor; BOVA11 + satellite and the study stay as options on the screen.
+- **Backtest without survivorship bias, 2010-2026, three phases** (`docs/conservadora-vol-2026-10-23.txt`): CAGR
+  16.4-17.4% vs 6.7-7.2% for BOVA11; annualized volatility 18.0-18.3% vs 23.4%; downside volatility 12.8-12.9% vs
+  16.5-16.6%; maximum drawdown about −40% vs −50%. After costs and IR with R$ 10 thousand
+  (`docs/execucao-2026-10-20.txt`): P[exit value > BOVA11] 0.981 / 0.995 / 0.988.
+- **The live proof is still to come.** Paper-v2 registers the Conservadora every 63 sessions since 19/10/2026 (task
+  "paper v2", weekdays at 08:45). Operational reading at 126 sessions (~27/04/2027); decision at 252 (~25/10/2027):
+  the after-tax exit value must be at least BOVA11's (main criterion), and a secondary criterion pre-registered on
+  2026-10-23 asks for a volatility no higher than BOVA11's. One year cannot separate alpha from luck: the paper proves
+  the operation (data, routine, rules).
+- **Orders from the current positions (S4, `core/rebalanceio.py`):** the plan takes the holdings to the registered
+  portfolio. It splits buys and sells into standard lots plus fractional, and prices each order with the lake's
+  liquidity (B3 fees + half spread + square-root impact). It computes the realized gain at average cost and the
+  month's IR, where the R$ 20 thousand exemption is a cliff, so each sale shows its marginal IR. The no-trade zone was
+  pre-registered and did not pass (`docs/zona-2026-10-23.txt`): the screen shows it as information and sends every
+  order.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
@@ -126,7 +151,11 @@ mesmas condições.
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
   com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (até 30%, regra fixa) na
   carteira, no plano de compra e no walk-forward; o HRP da tela é projetado nele.
-- **Plano de compra, padrão = dinheiro real:** a regra até o critério de pronto, BOVA11 com as cotas inteiras mais
+- **Fundo Alepha plan (the default since v1.0):** the Conservadora registered in `paper-v2/carteiras.csv`, 100% in
+  stocks, from the positions typed on the screen (ticker, quantity, average price) and the cash to invest; month's
+  sales outside the plan and the carried loss enter the IR. The plan is refused if the final weights break a fixed
+  risk rule; below the minimum capital for the 15 names with 2 shares each (shown on the screen) some names stay out.
+- **Plano de compra "BOVA11 + satélite"** (option): a regra do paper-v1, BOVA11 com as cotas inteiras mais
   perto de 70% do valor e, no satélite, a carteira registrada no paper trading (`paper/carteiras.csv`), sem
   reotimizar, antes da carteira do estudo (um estudo inválido não esconde o plano). O satélite fica em caixa quando
   algum papel registrado está sem cotação ou sem setor, quando passaria de 50% do valor, quando não cabem papéis
@@ -238,12 +267,15 @@ Portfolio-Optimization/
 │   ├── views.py              #   Black-Litterman com views dos sinais do S2 (S3)
 │   ├── impostos.py           #   IR de pessoa física em ações: apuração mensal, isenção e prejuízo (S4)
 │   ├── execucao.py           #   Curva refeita em reais com custo por liquidez, IR e valor de saída (S4)
+│   ├── rebalanceio.py        #   Orders from the current positions: lots, cost, month IR, no-trade zone (S4, v1.0)
+│   ├── volatilidade.py       #   Annualized and downside volatility (rerun and paper-v2's secondary criterion)
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
 │   └── fatores_macro.py      #   Painel e fatores macro (em desenvolvimento)
 ├── ui/
 │   ├── servicos.py           # Cache do Streamlit com chaves explícitas
+│   ├── alepha.py             # Fundo Alepha plan blocks: positions, month IR, orders table, CVM note
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
@@ -263,7 +295,9 @@ Portfolio-Optimization/
 │   ├── avaliar_iliquidez.py          # Small caps below the universe, pre-registered (run, closed)
 │   ├── avaliar_acoes_titulos.py      # Stocks x bonds core (IMA-B or CDI), pre-registered (run)
 │   ├── avaliar_filtros_macro.py      # Premium/credit vetoes and meta-label on BOVA11, pre-registered (run)
-│   ├── rerun_conservadora.py         # S2.1 rerun on the corrected lake (descriptive)
+│   ├── rerun_conservadora.py         # S2.1 rerun on the corrected lake, with both volatilities (descriptive)
+│   ├── avaliar_zona.py               # No-trade zone with vs without, pre-registered (run: information only)
+│   ├── liquidez_do_app.py            # The app's liquidity snapshot (lago/liquidez.parquet), refreshed by hand
 │   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
 │   └── paper_trading.py              # Rotina diária do paper trading (S5), pré-registrada (agendada seg-sex 8h30)
 ├── docs/
@@ -283,10 +317,13 @@ Portfolio-Optimization/
 │   ├── acoes-titulos-2026-10-21.txt  # Output of the stocks x bonds core
 │   ├── filtros-macro-2026-10-2*.txt  # Outputs of the macro filters (10-21 invalid premium; 10-22 corrected)
 │   ├── conservadora-2026-10-22.txt   # Conservadora on the corrected lake
+│   ├── conservadora-vol-2026-10-23.txt  # The same, with annualized and downside volatility
+│   ├── zona-2026-10-23.txt       # Output of the no-trade zone test
 │   ├── tentativas.csv            # Configurações já avaliadas fora da amostra (o N do DSR)
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/
-│   └── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
+│   ├── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
+│   └── liquidez.parquet          # Last closed month's half spread, daily vol and median volume (order costs)
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
 └── requirements.txt
 ```
@@ -357,7 +394,7 @@ Portfolio-Optimization/
   aritmética dos retornos diários, não a riqueza final, e favorece as curvas mais voláteis.
 - **O plano do estudo só compra ações.** No modo "Estudo", com valores pequenos (R$ 300) o plano para em "Aumente
   o valor a investir" porque cabem menos de 5 papéis, e o filtro por preço reotimiza num universo menor. O padrão da
-  tela é o plano do dinheiro real (BOVA11 + satélite registrado), que não reotimiza.
+  tela é o plano do Fundo Alepha (a Conservadora registrada no paper-v2), que não reotimiza.
 - **Paper trading próprio, sem plataforma de corretora.** A rotina usa os fechamentos oficiais do lago, o mesmo código
   do walk-forward e um registro versionado que só cresce (auditável; uma conta demo pode ser zerada). Não mede a
   execução: spread, slippage, ordens parciais e a liquidez do fracionário ficam fora (custo fixo de 10 bps por lado).
@@ -366,9 +403,10 @@ Portfolio-Optimization/
 - **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago desde 2014: 20,1% a.a. ×
   12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18. O núcleo metade BOVA11, metade IVVB11
   não passou no teste pré-registrado (ROTEIRO §4.12).
-- **Imposto de renda não é modelado** (15% sobre o ganho; isenção de vendas até R$ 20 mil/mês). O Yahoo
-  também usa o JCP bruto; o lago da B3 já desconta o IR retido na fonte (15% até 2025 e 17,5% desde
-  01/01/2026, LC 224/2025).
+- **IR is modeled in the final proof and in the Fundo Alepha plan, not in the study's walk-forward** (15% of the
+  month's gain; stock sales up to R$ 20 thousand a month are exempt; ETFs are not). Simplifications: an ETF loss does
+  not offset a stock gain in the plan, and the exemption counts only the sales typed on the screen plus the plan's.
+  The lake already nets the JCP withholding (15% until 2025 and 17.5% since 01/01/2026, LC 224/2025).
 - **Janelas curtas.** Com 3–5 anos de histórico, alfas e diferenças de Sharpe raramente são
   estatisticamente significativos; o app mostra a estatística t para lembrar disso. A análise de poder
   (`docs/poder-dos-portoes-2026-10-18.txt`) mediu isso para os sinais do S2: o portão "IC médio mensal ≥ 0,02 e
@@ -388,6 +426,7 @@ O que falta e em que ordem: [`docs/ROTEIRO.md`](docs/ROTEIRO.md).
 ## 📝 Isenção de Responsabilidade (Disclaimer)
 
 Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o BOVA11 até o fim da validação em paper trading.
+"Fundo Alepha" is the name of this personal tool, not a fund offered to third parties (CVM Resolution 175/2022).
 
 > ⚠️ **Não representa recomendação de investimento.** As decisões financeiras devem ser tomadas com base em análise própria ou orientação profissional. Retornos passados não garantem retornos futuros.
 

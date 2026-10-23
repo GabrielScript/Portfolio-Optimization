@@ -375,20 +375,35 @@ def _satelite_sintetico() -> tuple[date, pd.Series]:
                                           por_setor[2][0]: 0.2, por_setor[3][0]: 0.2})
 
 
-@pytest.fixture
-def app_padrao(monkeypatch) -> AppTest:
-    """A tela como o usuário abre (sem escolher objetivo), com os 4 setores do teste."""
+def _servicos_sinteticos(monkeypatch) -> None:
+    """Every loader of ``ui.servicos`` on synthetic data: registrations, sectors, prices, CDI, Selic and quotes."""
     monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
+    monkeypatch.setattr(servicos, "carregar_conservadora_registrada", _conservadora_sintetica)
+    monkeypatch.setattr(servicos, "setores_do_lago", _setores_sinteticos)
+    monkeypatch.setattr(servicos, "carregar_liquidez", lambda: None)
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
+
+
+@pytest.fixture
+def app_padrao(monkeypatch) -> AppTest:
+    """A tela como o usuário abre (sem escolher objetivo), com os 4 setores do teste."""
+    _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
     at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
     at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
     return at
+
+
+@pytest.fixture
+def app_bova_satelite(app_padrao) -> AppTest:
+    """The screen with the "BOVA11 + satélite" plan chosen (the default until v1.0, DECISOES 69)."""
+    app_padrao.sidebar.segmented_control(key="modo_plano").set_value("dinheiro_real").run()
+    return app_padrao
 
 
 def test_padrao_da_tela_e_o_nucleo_satelite_da_regra_b(app_padrao):
@@ -444,27 +459,27 @@ def test_hrp_da_tela_respeita_teto_de_setor(app):
     assert (plano["Peso alvo"] <= 0.20 + 1e-6).all()
 
 
-def test_plano_padrao_e_o_dinheiro_real_com_bova11_e_o_satelite_do_paper(app_padrao):
-    # DECISOES 69: o plano que a tela abre é o da regra do dinheiro real, não a carteira otimizada da barra lateral
-    assert not app_padrao.exception
-    plano = _plano_de_compra(app_padrao).set_index("Ticker")
+def test_plano_bova11_satelite_usa_o_bova11_e_o_satelite_do_paper(app_bova_satelite):
+    # DECISOES 69: o plano da regra do paper-v1, não a carteira otimizada da barra lateral
+    assert not app_bova_satelite.exception
+    plano = _plano_de_compra(app_bova_satelite).set_index("Ticker")
     _, satelite = _satelite_sintetico()
     assert plano.index[0] == "BOVA11" and set(plano.index[1:]) <= {t.removesuffix(".SA") for t in satelite.index}
     assert 0.6 <= plano.at["BOVA11", "Valor (R$)"] / 10_000 <= 0.75
 
 
-def test_titulo_do_plano_do_dinheiro_real_nao_se_confunde_com_o_padrao_do_estudo(app_padrao):
-    # "padrão do estudo" é o objetivo da barra lateral (só ações); o padrão da tela é a regra do dinheiro real
-    titulos = [m.value for m in app_padrao.markdown if m.value.startswith("### Plano de compra")]
-    assert titulos == ["### Plano de compra: dinheiro real (a regra até o critério de pronto)"]
+def test_titulo_do_plano_bova11_satelite_nao_se_confunde_com_o_padrao_do_estudo(app_bova_satelite):
+    # "padrão do estudo" é o objetivo da barra lateral (só ações); este plano é a regra do paper-v1
+    titulos = [m.value for m in app_bova_satelite.markdown if m.value.startswith("### Plano de compra")]
+    assert titulos == ["### Plano de compra: BOVA11 + satélite (dinheiro real, a regra do paper-v1)"]
 
 
-def test_dinheiro_real_com_100_reais_mostra_o_bova11_e_o_satelite_em_caixa(app_padrao):
-    # R$ 100 (teto de R$ 20 por ação): no estudo a tela para ("Aumente o valor"); no dinheiro real, BOVA11 e caixa
-    app_padrao.sidebar.number_input(key="orcamento").set_value(100.0).run()
-    assert not app_padrao.exception and not [e for e in app_padrao.error if "Aumente" in e.value]
-    assert _plano_de_compra(app_padrao)["Ticker"].tolist() == ["BOVA11"]
-    assert len([i.value for i in app_padrao.info if i.value.startswith("Satélite em caixa")]) == 1
+def test_bova11_satelite_com_100_reais_mostra_o_bova11_e_o_satelite_em_caixa(app_bova_satelite):
+    # R$ 100 (teto de R$ 20 por ação): no estudo a tela para ("Aumente o valor"); aqui, BOVA11 e caixa
+    app_bova_satelite.sidebar.number_input(key="orcamento").set_value(100.0).run()
+    assert not app_bova_satelite.exception and not [e for e in app_bova_satelite.error if "Aumente" in e.value]
+    assert _plano_de_compra(app_bova_satelite)["Ticker"].tolist() == ["BOVA11"]
+    assert len([i.value for i in app_bova_satelite.info if i.value.startswith("Satélite em caixa")]) == 1
 
 
 def test_limitacoes_dizem_que_o_vies_favorece_as_estrategias_e_mostram_o_teste_sem_vies(app_padrao):
@@ -480,10 +495,69 @@ def test_plano_do_dinheiro_real_aparece_mesmo_com_o_estudo_invalido(app_padrao):
     app_padrao.sidebar.slider(key="n_ativos_max").set_value(3).run()
     assert not app_padrao.exception
     assert [e for e in app_padrao.error if e.value.startswith("Inviável")]
-    assert _plano_de_compra(app_padrao)["Ticker"].iloc[0] == "BOVA11"
+    _, alvo = _conservadora_sintetica()
+    assert set(_ordens_alepha(app_padrao).index) == {t.removesuffix(".SA") for t in alvo.index}
 
 
 def test_carteira_de_hoje_se_diz_estudo_quando_o_plano_e_o_do_dinheiro_real(app_padrao):
     # o gráfico em R$ da carteira otimizada fica logo abaixo de um plano diferente para o mesmo valor
     legendas = [c.value for c in app_padrao.caption if c.value.startswith("Estudo, só ações")]
     assert len(legendas) == 1 and "plano acima" in legendas[0]
+
+
+# ---------------------------------------------------------------- Fundo Alepha: the Conservadora as the default plan
+
+def _conservadora_sintetica() -> tuple[date, pd.Series]:
+    """A paper-v2 registration of 5 names at 20% (the per-stock cap), from the test's sectors."""
+    por_setor = [get_tickers_by_setor([setor]) for setor in SETORES_DO_TESTE]
+    tickers = [por_setor[0][0], por_setor[1][0], por_setor[2][0], por_setor[3][0], por_setor[3][1]]
+    return date(2026, 10, 19), pd.Series(0.2, index=tickers)
+
+
+def _setores_sinteticos(tickers: tuple[str, ...]) -> dict[str, str]:
+    return {ticker: f"Setor {posicao}" for posicao, ticker in enumerate(tickers)}
+
+
+@pytest.fixture
+def app_alepha(app_padrao) -> AppTest:
+    """The screen as the user opens it: a synthetic Conservadora registration and no liquidity snapshot."""
+    return app_padrao
+
+
+def _ordens_alepha(at: AppTest) -> pd.DataFrame:
+    tabelas = [df.value for df in at.dataframe if "Ordem" in df.value.columns]
+    assert len(tabelas) == 1
+    return tabelas[0].set_index("Ticker")
+
+
+def test_the_screen_is_fundo_alepha_and_its_default_plan_buys_the_registered_conservadora(app_alepha):
+    # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default, named Fundo Alepha
+    assert not app_alepha.exception
+    assert app_alepha.sidebar.segmented_control(key="modo_plano").value == "conservadora"
+    assert any("Fundo Alepha" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    assert any("não é um fundo de investimento" in c.value for c in app_alepha.caption)
+    _, alvo = _conservadora_sintetica()
+    ordens = _ordens_alepha(app_alepha)
+    assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
+    assert set(ordens["Ordem"]) == {"compra"}
+
+
+def test_from_the_held_positions_the_plan_sells_a_name_outside_the_registration_at_its_average_cost(monkeypatch):
+    from ui import alepha
+    fora = get_tickers_by_setor([SETORES_DO_TESTE[1]])[1].removesuffix(".SA")
+    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
+        {"ticker": [fora], "quantidade": [50], "preco_medio": [0.01]}))
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    venda = _ordens_alepha(at).loc[fora]
+    assert (venda["Ordem"], venda["Qtd."]) == ("venda", 50)
+    assert venda["Ganho realizado (R$)"] == pytest.approx(venda["Valor (R$)"] - venda["Custo (R$)"] - 50 * 0.01)
+
+
+def test_below_the_minimum_capital_the_plan_warns_that_it_is_far_from_the_tested_portfolio(app_alepha):
+    # 5 names at 20% with quotes near R$ 10: 2 shares each need about R$ 100 per 20%, so R$ 100 in all is not enough
+    app_alepha.sidebar.number_input(key="orcamento").set_value(100.0).run()
+    assert not app_alepha.exception
+    assert len([w for w in app_alepha.warning if "fica longe da carteira testada" in w.value]) == 1

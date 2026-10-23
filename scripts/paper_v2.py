@@ -116,7 +116,7 @@ DEFINICOES_DA_CONSERVADORA = [IMPORTS_DO_PROJETO, "JANELA_TREINO", "SEM_PREGAO",
 JANELA_TREINO = 1_260
 SEM_PREGAO = {(12, 24), (12, 25), (12, 31), (1, 1)}      # (mês, dia) sem pregão na B3 todo ano
 CAPITAL_DA_LEITURA = 10_000.0
-VOLATILIDADES = ("Vol anual", "Vol de baixa")     # do patrimônio refeito (critério secundário de 23/10/2026)
+VOLATILIDADES = ("Vol anual", "Vol de baixa")     # of the refeito patrimony (secondary criterion of 2026-10-23)
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
@@ -223,7 +223,7 @@ def leitura(registro: pd.DataFrame, dados: DadosDoLago, dividendos: pd.DataFrame
                                       isencao=ISENCAO_DE_VENDAS, proventos=proventos),
                 "BOVA11": refazer(comprado_e_mantido(resultado, "BOVA11"), retornos, CAPITAL_DA_LEITURA, CUSTOS_DA_B3,
                                   liquidez, isencao=0.0)}
-    # import local: os imports do nível do módulo estão na guarda do paper-v2, e a leitura não decide nada
+    # local import: the module-level imports are in paper-v2's guard, and the reading decides nothing
     from core.volatilidade import volatilidades
     tabela = medidas(refeitas)
     vols = {nome: volatilidades(refeita.valores) for nome, refeita in refeitas.items()}
@@ -232,8 +232,8 @@ def leitura(registro: pd.DataFrame, dados: DadosDoLago, dividendos: pd.DataFrame
 
 
 def criterio_de_volatilidade(tabela: pd.DataFrame) -> bool:
-    """O critério secundário do adendo de 23/10/2026: vol anual da Conservadora <= a do BOVA11 (na tabela da
-    ``leitura``)."""
+    """The secondary criterion of the 2026-10-23 addendum: the Conservadora's annualized vol <= BOVA11's (in the
+    ``leitura`` table)."""
     return bool(tabela.loc[CONSERVADORA, VOLATILIDADES[0]] <= tabela.loc["BOVA11", VOLATILIDADES[0]])
 
 

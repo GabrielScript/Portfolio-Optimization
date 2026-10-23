@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from core import cdi_lago, market_data, reamostragem
+from core import cdi_lago, lago, market_data, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -52,11 +52,23 @@ class ParametrosOtimizacao:
 
 
 ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
+ARQUIVO_PAPER_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "carteiras.csv"
+PASTA_MARCOS_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "marcos"
+ARQUIVO_LIQUIDEZ = Path(__file__).resolve().parents[1] / "lago" / "liquidez.parquet"
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
     """O último satélite registrado no paper trading (``paper/carteiras.csv``): data e pesos com ".SA". None sem
     registro (arquivo ausente ou só com o cabeçalho)."""
+    return _ultimo_registro(arquivo)
+
+
+def carregar_conservadora_registrada(arquivo: Path = ARQUIVO_PAPER_V2) -> tuple[date, pd.Series] | None:
+    """The last Conservadora registered in paper-v2 (``paper-v2/carteiras.csv``): date and weights with ".SA"."""
+    return _ultimo_registro(arquivo)
+
+
+def _ultimo_registro(arquivo: Path) -> tuple[date, pd.Series] | None:
     if not arquivo.exists():
         return None
     registro = pd.read_csv(arquivo, parse_dates=["data"])
@@ -64,6 +76,20 @@ def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, p
         return None
     ultimo = registro[registro["data"] == registro["data"].max()]
     return ultimo["data"].iloc[0].date(), ultimo.set_index("ticker")["peso"].rename(lambda papel: papel + ".SA")
+
+
+def setores_do_lago(tickers: tuple[str, ...], pasta: Path = PASTA_MARCOS_V2) -> dict[str, str]:
+    """Ticker -> the lake's sector (by issuer, the ticker's first 4 letters) in the latest paper-v2 milestone: the
+    sectors the registered decision used. A ticker without a sector is left out (``checar_carteira``: no sector)."""
+    marcos = sorted(caminho for caminho in pasta.iterdir() if (caminho / "sectors.parquet").exists())
+    setores = lago.ler_setores(marcos[-1] / "sectors.parquet")
+    return {ticker: setores[ticker.removesuffix(".SA")[:4]] for ticker in tickers
+            if ticker.removesuffix(".SA")[:4] in setores.index}
+
+
+def carregar_liquidez(arquivo: Path = ARQUIVO_LIQUIDEZ) -> pd.DataFrame | None:
+    """The app's liquidity snapshot (``scripts/liquidez_do_app.py``), or None without the file."""
+    return pd.read_parquet(arquivo) if arquivo.exists() else None
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

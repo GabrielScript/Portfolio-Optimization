@@ -64,3 +64,13 @@ def test_cdi_of_the_screen_comes_from_the_lake_copy_without_asking_the_bcb(tmp_p
     cdi = servicos.carregar_cdi(1, date(2026, 10, 20))
     servicos.carregar_cdi.clear()
     assert cdi.index.tolist() == days[1:].tolist()
+
+
+def test_the_conservadoras_sectors_come_from_the_lakes_sectors_of_the_latest_paper_v2_milestone(tmp_path):
+    # the registered decision checked the 4-per-sector rule with these (CVM) sectors, not the assets.py ones
+    from ui.servicos import setores_do_lago
+    for marco, setor in (("2026-10-19", "Antigo"), ("2027-01-20", "Financeiro")):
+        (tmp_path / marco).mkdir()
+        pd.DataFrame({"issuer": ["ITSA", "PETR"], "code_cvm": [1, 2], "setor_ativ": ["x", "y"],
+                      "sector": [setor, None]}).to_parquet(tmp_path / marco / "sectors.parquet")
+    assert setores_do_lago(("ITSA4.SA", "PETR4.SA"), tmp_path) == {"ITSA4.SA": "Financeiro"}

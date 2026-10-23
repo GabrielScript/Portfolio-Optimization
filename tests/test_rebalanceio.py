@@ -1,10 +1,10 @@
-"""Rebalance from the current positions (S4, ``core/execucao.py``): orders = target quantities of the purchase plan on
+"""Rebalance from the current positions (S4, ``core/rebalanceio.py``): orders = target quantities of the purchase plan on
 the whole patrimony minus the quantities held; then cost, the month's IR and the no-trade zone."""
 
 import pandas as pd
 import pytest
 
-from core.execucao import (MesFiscal, Posicao, RegrasRebalanceio, ZonaSemNegociacao, ordens_do_rebalanceio,
+from core.rebalanceio import (MesFiscal, Posicao, RegrasRebalanceio, ZonaSemNegociacao, ordens_do_rebalanceio,
                            plano_de_rebalanceio)
 
 SEM_TETO = RegrasRebalanceio(peso_maximo=1.0, custo_bps=0.0, quantidade_minima=1)
@@ -129,3 +129,27 @@ def test_the_zone_counts_the_marginal_ir_so_a_resize_that_would_end_the_exemptio
     assert plano.ordens["delta"].to_dict() == {"A": 0, "B": 0}
     assert plano.ordens["situacao"].to_dict() == {"A": "pular: custo acima do ganho", "B": ""}
     assert plano.ir_do_mes == 0.0
+
+
+def test_the_positions_table_of_the_screen_becomes_positions_without_empty_rows_and_with_clean_tickers():
+    from core.rebalanceio import posicoes_da_tabela
+    tabela = pd.DataFrame({"ticker": [" petr4 ", "VALE3.SA", None, "ITSA4"],
+                           "quantidade": [10, 5, 3, 0], "preco_medio": [30.0, 60.5, 1.0, 10.0]})
+    assert posicoes_da_tabela(tabela) == {"PETR4": Posicao(10, 30.0), "VALE3": Posicao(5, 60.5)}
+
+
+def test_the_minimum_capital_is_the_smallest_patrimony_whose_target_value_buys_the_minimum_of_every_name():
+    from core.rebalanceio import capital_minimo
+    # 2 shares of the R$ 30 name at 1/3 of the patrimony need R$ 180, plus the 10 bps reserved for the cost
+    pesos = pd.Series({"A": 1 / 3, "B": 1 / 3, "C": 1 / 3})
+    assert capital_minimo(pesos, pd.Series({"A": 10.0, "B": 30.0, "C": 20.0}), 2, 10.0) == pytest.approx(180.0 * 1.001)
+
+
+def test_the_screens_cost_uses_the_liquidity_snapshot_and_falls_back_to_bps_for_a_name_without_it():
+    from core.execucao import Custos, custo_da_ordem
+    from core.rebalanceio import custo_com_liquidez
+    foto = pd.DataFrame({"security": ["PETR4"], "meio_spread": [0.001], "vol_diaria": [0.02],
+                         "volume_mediano": [1e8]})
+    custo = custo_com_liquidez(foto, Custos(0.0003, 1.0), custo_bps=10.0)
+    assert custo("PETR4.SA", 10_000.0) == pytest.approx(custo_da_ordem(10_000.0, 0.001, 0.02, 1e8, Custos(0.0003, 1.0)))
+    assert custo("XPTO3.SA", 10_000.0) == pytest.approx(10.0)

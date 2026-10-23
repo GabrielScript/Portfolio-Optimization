@@ -8,19 +8,40 @@ Branch de trabalho: `feat/s1p-precos`._
 
 ---
 
+## 0. Version 1.0 (2026-10-23): frozen
+
+The optimizer is frozen as **v1.0** (git tag `v1.0`), named **Fundo Alepha** on the screen (a personal tool, not a
+fund offered to third parties: CVM Resolution 175/2022). What v1.0 is:
+
+- **Real-money plan = the Conservadora** registered in paper-v2 (the user's decision of 2026-10-23, DECISOES 117), the
+  only strategy that passed the net-of-tax final proof (§4.14). From the current positions: lots + fractional, cost
+  by liquidity, month IR with the R$ 20 thousand cliff (§4.9). BOVA11 + satellite and the study stay as options.
+- **Measured (backtest, 2010-2026, 3 phases):** CAGR 16.4-17.4% vs 6.7-7.2% for BOVA11; volatility 18.0-18.3% vs
+  23.4%; downside volatility 12.8-12.9% vs 16.5-16.6% (`docs/conservadora-vol-2026-10-23.txt`).
+- **Still to prove, live:** paper-v2 reading at 126 sessions (~27/04/2027) and the decision at 252 (~25/10/2027):
+  exit value after IR >= BOVA11's (main) and volatility <= BOVA11's (secondary, pre-registered 2026-10-23).
+- **Weekly check (the user or a session):** `paper-v2/runs.csv` and `paper/diario.csv` have a line for each weekday
+  and the watchdog task ("vigia", 12h) reports nothing missing.
+- **After v1.0, optional, each pre-registered and counted in N:** meta-labeling on the S2 signals; Monte Carlo bench +
+  denoising/NCO; forward news/social log scored by Jev plus CVM IPE filings as a veto/meta-label; election-window
+  event study (volatility, not direction); leverage only after PSR >= 0.95 out of sample.
+- **Known debt (low priority):** lake market caps 1000x for OIBR 06/2018-05/2019 and PDGR 06-07/2015 (value-weighted
+  uses only); `write_gold` empties before inserting (staging + swap); `ler_universo` month normalization (PLAN line
+  198); python-bcb 0.4.0 in the lake without the 429 error class.
+
 ## 1. Onde estamos
 
 | Parte | Situação |
 |---|---|
 | Motor de otimização (Kelly, Máx. Sharpe, Mín. Variância, HRP; tetos por ação, setor e vol) | Nível profissional, testado (295 testes) |
 | Regras de risco fixas (`core/risco.py`: sem alavancagem, 20% por ação e emissor, 30% por setor, vol 40%) | Na tela desde 2026-10-18: a tela só aperta; carteira fora das regras não vira plano |
-| Padrão da tela | Núcleo Mín. Vol 70% + satélite Kelly λ=2 30% (regra B do S1-P.b, §4.4) |
+| Padrão da tela | Plano: Fundo Alepha = a Conservadora do paper-v2 (desde a v1.0, 2026-10-23). Estudo da barra lateral: núcleo Mín. Vol 70% + satélite Kelly λ=2 30% (regra B do S1-P.b, §4.4) |
 | Estimação (Ledoit-Wolf + Jorion) | Correta; μ = média histórica (o ponto fraco) |
 | Walk-forward (fora da amostra, custos, BOVA11 na mesma data) | Honesto desde `8b6551b` |
 | Métricas estatísticas e financeiras (Sharpe, Sortino, PSR/DSR, CAGR, MDD, CVaR, alfa) | Corretas, já auditadas |
 | Dados de preço | **Lago de dados da B3 desde `4564459`**: retorno total do COTAHIST com proventos oficiais, JCP líquido e cisões (`lago/precos_diarios.parquet`, 380 papéis desde 2005), atualizado toda noite no lago e versionado no app nos marcos. O walk-forward da tela ainda usa a lista de hoje; o teste sem viés de sobrevivência (S1-P.b) já rodou fora da tela (§4.4) |
 | Growth Score (indicadores contábeis) | Fora da tela desde `55fb9b5`; código guardado em `core/growth.py`, não testado |
-| Execução (custo por liquidez, IR, carteira existente) | Não modelada; paper trading registrado desde 16/10/2026 (`paper/carteiras.csv`, rotina agendada) |
+| Execução (custo por liquidez, IR, carteira existente) | Modelada (S4, §4.9 e §4.14): `core/execucao.py` e `core/rebalanceio.py`; paper-v1 desde 16/10/2026 e paper-v2 (Conservadora) desde 19/10/2026, rotinas agendadas |
 
 **Último resultado fora da amostra** (treino de 5 anos, teste de 3 anos, 11/2023 a 10/2026, teto de 30% por setor):
 
@@ -351,12 +372,14 @@ quando o BCB voltar, sai como robustez, não como decisão. Na prática a tela m
 ### 4.9 S4: execução realista
 
 - [x] Custo por liquidez (proporcional a √(ordem / volume)), não 10 bps fixos (`core/execucao.py`; §4.14)
-- [ ] Zona de não negociação (só rebalancear quando o desvio compensa o custo)
+- [x] Zona de não negociação: pré-registrada e testada em 2026-10-23 (`docs/zona-2026-10-23.txt`, N 39); não passou
+      (CAGR menor na fase 21 com R$ 10 mil e em todas com R$ 100 mil): fica só informativa na tela (DECISOES 118)
 - [x] IR: 15% sobre ganho; isenção de vendas até R$ 20 mil/mês; JCP e dividendos (`core/impostos.py`; JCP líquido de
       15% como o lago guarda, dividendo reinvestido na base; §4.14)
-- [ ] Partir da **carteira que já existe** (posições atuais) e rebalancear a partir dela
-- [ ] **Fração Kelly ações × CDI**: quanto do dinheiro vai para ações, considerando a incerteza do prêmio de risco
-      (hoje o app fica sempre 100% em ações)
+- [x] Partir da **carteira que já existe** (posições atuais) e rebalancear a partir dela (`core/rebalanceio.py`, na
+      tela do Fundo Alepha desde a v1.0: lotes + fracionário, custo por liquidez, IR do mês com a isenção como degrau)
+- [x] **Fração ações × CDI / IMA-B**: testada pré-registrada em 2026-10-21 (`docs/acoes-titulos-2026-10-21.txt`):
+      nenhuma mistura é candidata; o app segue 100% em ações (DECISOES 111)
 
 ### 4.10 S5: paper trading
 
@@ -531,6 +554,12 @@ P[> BOVA11] aritmético da saída ≥ 0,95 com R$ 10 mil nas 3 fases.
    otimizador deixa de ser medido. Manter, ou fazer um pré-registro novo (paper-v2) com outra regra, como reentrada
    depois de N meses ou sem stop e só com o teto do satélite? Recomendado: o paper-v1 segue como está até a leitura
    de 126 pregões; a regra nova, se houver, entra num pré-registro próprio.
+
+Decidido pelo usuário em 2026-10-23 (DECISOES 117):
+
+10. Padrão do dinheiro real: **a Conservadora** ("a de maior retorno, com risco estratégico", para o investidor
+    arrojado), não BOVA11 + satélite.
+11. Nome na tela: **Fundo Alepha**, mesmo com a nota da CVM (fica visível como legenda).
 
 Decidido em 2026-10-17: terminar a B3 primeiro; depois, alocação entre classes (ações B3 × ETFs e BDRs de exterior ×
 ETFs de cripto × CDI) com dados que já estão no lago; dados crus dos EUA e de cripto só se essa camada mostrar que vale.

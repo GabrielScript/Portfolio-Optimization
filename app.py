@@ -1,7 +1,10 @@
 """
-app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``).
+app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Fundo Alepha.
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
+
+The plan the screen opens is Fundo Alepha's: the Conservadora registered in paper-v2, from the current positions
+(the user's decisions of 2026-10-23, DECISOES 117). BOVA11 + satellite and the study stay as options.
 
 Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
 Jorion) -> otimização -> walk-forward de todas as estratégias. O Growth Score
@@ -17,14 +20,15 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Otimizador Arrojado B3", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Fundo Alepha · Otimizador B3", page_icon="🚀", layout="wide")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objetivo,  # noqa: E402
-                         taxa_anual_para_aritmetica)
+                         limites_por_setor, taxa_anual_para_aritmetica)
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
+from core.execucao import Custos  # noqa: E402
 from core import lago  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
@@ -33,8 +37,10 @@ from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao
                                preparar_covariancia, projetar_pesos)
 from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limites_do_plano,  # noqa: E402
                          plano_de_compra, plano_dinheiro_real, redistribuir_sem_cotacao)
+from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_minimo, custo_com_liquidez,  # noqa: E402
+                              plano_de_rebalanceio, posicoes_da_tabela)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
-from ui import secoes, servicos  # noqa: E402
+from ui import alepha, secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
@@ -83,14 +89,20 @@ AVISO_REGRAS_DE_RISCO = (
     "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
     "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
-# Plano de compra (DECISOES 69): o padrão é a regra do dinheiro real até o critério de pronto, BOVA11 + o satélite
-# registrado no paper; a carteira otimizada da barra lateral é o estudo, com o plano dela por escolha.
-MODO_DINHEIRO_REAL, MODO_ESTUDO = "dinheiro_real", "estudo"
-ROTULOS_MODO = {MODO_DINHEIRO_REAL: "Dinheiro real", MODO_ESTUDO: "Estudo"}
+# Purchase plan: the default is Fundo Alepha's, the Conservadora registered in paper-v2 (the only one that passed the
+# final proof after IR, DECISOES 82; the user's choice on 2026-10-23, DECISOES 117). BOVA11 + paper-v1's satellite
+# (DECISOES 69) and the sidebar's optimized portfolio (the study) stay as options.
+MODO_CONSERVADORA, MODO_DINHEIRO_REAL, MODO_ESTUDO = "conservadora", "dinheiro_real", "estudo"
+ROTULOS_MODO = {MODO_CONSERVADORA: "Fundo Alepha", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
 AJUDA_MODO = (
-    "Dinheiro real: BOVA11 com ~70% e o satélite registrado no paper trading com ~30% (a regra até o critério de "
-    "pronto). Estudo: o plano da carteira otimizada pela barra lateral, só ações, para comparar."
+    "Fundo Alepha: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
+    "satélite: BOVA11 com ~70% e o satélite Kelly do paper-v1 com ~30%. Estudo: o plano da carteira otimizada pela "
+    "barra lateral, só ações, para comparar."
 )
+# The final proof's costs (scripts/avaliar_execucao.py) and the screen's ETFs, which have no R$ 20 thousand
+# exemption.
+CUSTOS_DA_B3 = Custos(emolumentos=0.0003, impacto=1.0)
+ETFS_DA_TELA = frozenset(REFERENCIAS_DA_TELA)
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
 PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
@@ -106,7 +118,7 @@ class Entradas:
     shrink_mu: bool
     custo_bps: float
     reamostrar: bool
-    modo_plano: str = MODO_DINHEIRO_REAL
+    modo_plano: str = MODO_CONSERVADORA
 
 
 @dataclass(frozen=True)
@@ -139,7 +151,7 @@ def ler_sidebar() -> Entradas:
         orcamento = st.number_input("Valor a investir (R$)", 100.0, 10_000_000.0, 10_000.0, 100.0,
                                     key="orcamento")
         modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
-                                          default=MODO_DINHEIRO_REAL, key="modo_plano", help=AJUDA_MODO)
+                                          default=MODO_CONSERVADORA, key="modo_plano", help=AJUDA_MODO)
 
         st.markdown("### Universo")
         setores = st.multiselect("Setores (vazio = lista líquida)", SETORES, key="setores")
@@ -181,7 +193,7 @@ def ler_sidebar() -> Entradas:
     )
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
-                    reamostrar and objetivo == Objetivo.KELLY.value, modo_plano or MODO_DINHEIRO_REAL)
+                    reamostrar and objetivo == Objetivo.KELLY.value, modo_plano or MODO_CONSERVADORA)
 
 
 def validar(entradas: Entradas) -> str | None:
@@ -204,11 +216,15 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Otimizador Arrojado B3</h1>'
-                '<p class="subtitle">Kelly/Markowitz robusto · Ledoit-Wolf + Jorion · '
-                'Walk-forward com custos · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-title">Fundo Alepha</h1>'
+                '<p class="subtitle">Otimizador arrojado da B3 · Conservadora no lago sem viés de sobrevivência · '
+                'Walk-forward com custos e IR · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
+    st.caption(alepha.AVISO_CVM)
     entradas = ler_sidebar()
-    if entradas.modo_plano == MODO_DINHEIRO_REAL:   # o plano padrão usa só o valor e o custo: vem antes do estudo
+    if entradas.modo_plano == MODO_CONSERVADORA:    # the real-money plans use only the amount and the cost: first
+        secao_conservadora(entradas)
+        st.markdown("---")
+    elif entradas.modo_plano == MODO_DINHEIRO_REAL:
         secao_dinheiro_real(entradas, get_ticker_info())
         st.markdown("---")
     erro = validar(entradas)
@@ -254,9 +270,9 @@ def main() -> None:
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
                   rf_aritmetica: float) -> None:
     st.markdown("## Carteira de hoje")
-    if entradas.modo_plano == MODO_DINHEIRO_REAL:
+    if entradas.modo_plano != MODO_ESTUDO:
         st.caption("Estudo, só ações: a carteira otimizada pela barra lateral, para comparar. O dinheiro real segue o "
-                   "plano acima (BOVA11 + satélite registrado).")
+                   "plano acima.")
     acoes = list(retornos.columns)
     # a trava do orçamento só vale para o plano da carteira otimizada: no dinheiro real, o satélite é o registrado
     compraveis = acoes_compraveis(entradas, precos[acoes]) if entradas.modo_plano == MODO_ESTUDO else acoes
@@ -400,8 +416,60 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
     secoes.resumo_plano(plano, regras)
 
 
+def secao_conservadora(entradas: Entradas) -> None:
+    st.markdown("### Plano de compra: Fundo Alepha (Conservadora, dinheiro real)")
+    registrado = servicos.carregar_conservadora_registrada()
+    if registrado is None:
+        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Fundo Alepha usa a de lá.")
+        return
+    data, alvo = registrado
+    st.info(alepha.aviso_conservadora(data))
+    posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}
+    mes = alepha.mes_fiscal()
+    tickers = tuple(dict.fromkeys((*alvo.index, *posicoes)))
+    janela = servicos.carregar_precos(tickers, 1, date.today(), lago.versao_dos_dados()).precos.tail(
+        PREGOES_PARA_FECHAMENTO)
+    if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_alepha"):
+        servicos.descartar_cotacoes(tickers, janela)
+    with st.spinner("Buscando as cotações do dia…"):
+        cotacoes = servicos.carregar_cotacoes(tickers, janela)
+    sem_cotacao = [ticker.removesuffix(".SA") for ticker in tickers if not cotacoes["preco"].get(ticker, math.nan) > 0]
+    if sem_cotacao:
+        st.error(f"Plano indisponível, sem cotação de {', '.join(sem_cotacao)}. Confira o ticker ou atualize as "
+                 "cotações.")
+        return
+    setores = servicos.setores_do_lago(tuple(alvo.index))
+    foto = servicos.carregar_liquidez()
+    regras = RegrasRebalanceio(LIMITES.peso_maximo_acao, entradas.custo_bps, QUANTIDADE_MINIMA_POR_ACAO,
+                               limites_por_setor(setores, LIMITES.teto_setor))
+    custo = custo_com_liquidez(foto, CUSTOS_DA_B3, entradas.custo_bps)
+    argumentos = (alvo, posicoes, cotacoes["preco"], entradas.orcamento, regras, custo)
+    try:
+        plano = plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA)
+        zona = None if foto is None else plano_de_rebalanceio(
+            *argumentos, mes=mes, etfs=ETFS_DA_TELA,
+            zona=ZonaSemNegociacao(foto.set_index("security")["vol_diaria"].rename(lambda papel: f"{papel}.SA")))
+    except ValueError as erro:
+        st.error(f"Plano indisponível: {erro}")
+        return
+    patrimonio = float((plano.ordens["atual"] * plano.ordens["cotacao"]).sum()) + entradas.orcamento
+    pesos = plano.ordens["alvo"] * plano.ordens["cotacao"] / patrimonio
+    violacoes = checar_carteira(pesos[pesos > 0], setores)
+    if violacoes:
+        st.error("Plano recusado pelas regras de risco fixas: " + _descrever(violacoes))
+        return
+    alepha.tabela_rebalanceio(plano, zona, patrimonio, None if foto is None else f"{foto['month'].iloc[0]:%m/%Y}",
+                              entradas.custo_bps)
+    minimo = capital_minimo(alvo, cotacoes["preco"], QUANTIDADE_MINIMA_POR_ACAO, entradas.custo_bps)
+    if patrimonio < minimo:
+        st.warning(f"Com R$ {patrimonio:,.2f} nem todos os {len(alvo)} nomes cabem com {QUANTIDADE_MINIMA_POR_ACAO} "
+                   "ações: o plano compra os que cabem, com pesos desiguais (até 20% cada), e fica longe da carteira "
+                   f"testada. Os {len(alvo)} nomes com pesos perto de iguais pedem a partir de R$ {minimo:,.2f} (a "
+                   "prova final usou R$ 10 mil).")
+
+
 def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
-    st.markdown("### Plano de compra: dinheiro real (a regra até o critério de pronto)")
+    st.markdown("### Plano de compra: BOVA11 + satélite (dinheiro real, a regra do paper-v1)")
     registrado = servicos.carregar_satelite_registrado()
     if registrado is None:
         st.error("Sem carteira registrada no paper trading (paper/carteiras.csv): o plano do dinheiro real usa o "

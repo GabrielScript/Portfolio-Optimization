@@ -55,6 +55,8 @@ ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
 ARQUIVO_PAPER_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "carteiras.csv"
 PASTA_MARCOS_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "marcos"
 ARQUIVO_LIQUIDEZ = Path(__file__).resolve().parents[1] / "lago" / "liquidez.parquet"
+# the frozen rerun's daily curves (scripts/curvas_conservadora.py): the Conservadora's results by period and year
+ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "conservadora-curvas-2026-10-23.parquet"
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
@@ -85,6 +87,12 @@ def setores_do_lago(tickers: tuple[str, ...], pasta: Path = PASTA_MARCOS_V2) -> 
     setores = lago.ler_setores(marcos[-1] / "sectors.parquet")
     return {ticker: setores[ticker.removesuffix(".SA")[:4]] for ticker in tickers
             if ticker.removesuffix(".SA")[:4] in setores.index}
+
+
+@st.cache_data(show_spinner=False, max_entries=2)
+def carregar_curvas_conservadora(arquivo: Path = ARQUIVO_CURVAS) -> pd.DataFrame | None:
+    """The Conservadora's and BOVA11's daily values in the 3 phases of the frozen rerun, or None without the file."""
+    return pd.read_parquet(arquivo) if arquivo.exists() else None
 
 
 def carregar_liquidez(arquivo: Path = ARQUIVO_LIQUIDEZ) -> pd.DataFrame | None:

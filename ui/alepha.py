@@ -14,6 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from core.impostos import ISENCAO_DE_VENDAS
+from core.periodos import medidas_por_periodo, retornos_por_ano
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 
 AVISO_CVM = ("Fundo Alepha é o nome de uma ferramenta pessoal de estudo e decisão: não é um fundo de investimento "
@@ -130,3 +131,53 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
         st.caption("Zona sem negociação: só informativa. O teste pré-registrado de 23/10/2026 "
                    "(docs/zona-2026-10-23.txt) não passou: pular os reajustes cortou o custo, mas o retorno caiu numa "
                    "das 3 fases com R$ 10 mil e em todas com R$ 100 mil. O plano manda todas as ordens.")
+
+
+def _rotulo_do_ano(ano: int, datas: pd.DatetimeIndex) -> str:
+    do_ano = datas[datas.year == ano]
+    if ano == datas[0].year and do_ano[0].month > 1:
+        return f"{ano} (desde {do_ano[0]:%d/%m})"
+    if ano == datas[-1].year and do_ano[-1].month < 12:
+        return f"{ano} (até {do_ano[-1]:%d/%m})"
+    return str(ano)
+
+
+def resultados_da_conservadora(quadro: pd.DataFrame | None) -> None:
+    """The frozen backtest of the Conservadora against BOVA11 (DECISOES 122): whole period, last 5 and 3 years, and
+    each calendar year, the bad ones included. Phase 0; the whole period's CAGR range covers the 3 phases."""
+    st.markdown("### A Conservadora no backtest: por período e por ano")
+    if quadro is None:
+        st.caption("Sem as curvas do backtest (docs/dados/conservadora-curvas-2026-10-23.parquet).")
+        return
+    fases = {fase: parte.set_index("date")[["Conservadora", "BOVA11"]] for fase, parte in quadro.groupby("fase")}
+    curvas = fases[min(fases)]
+    medidas = medidas_por_periodo(curvas)
+    tabela = pd.DataFrame({
+        "Período": medidas.index,
+        "De": [f"{data:%d/%m/%Y}" for data in medidas[("Início", "")]],
+        "Até": [f"{data:%d/%m/%Y}" for data in medidas[("Fim", "")]],
+        **{f"{medida} {nome}": medidas[(nome, coluna)].astype(float).to_numpy()
+           for medida, coluna in (("Retorno a.a.", "CAGR"), ("Vol", "Vol anual"), ("Queda máx.", "MDD"))
+           for nome in ("Conservadora", "BOVA11")}})
+    st.dataframe(tabela, width="stretch", hide_index=True,
+                 column_config={coluna: st.column_config.NumberColumn(format="percent")
+                                for coluna in tabela.columns[3:]},
+                 alt="Conservadora contra BOVA11 no período inteiro e nos últimos 5 e 3 anos")
+    anos = retornos_por_ano(curvas)
+    por_ano = pd.DataFrame({"Ano": [_rotulo_do_ano(ano, curvas.index) for ano in anos.index],
+                            "Conservadora": anos["Conservadora"].to_numpy(), "BOVA11": anos["BOVA11"].to_numpy(),
+                            "Diferença": (anos["Conservadora"] - anos["BOVA11"]).to_numpy()})
+    c1, c2 = st.columns([2, 3])
+    c1.dataframe(por_ano, width="stretch", hide_index=True,
+                 column_config={coluna: st.column_config.NumberColumn(format="percent")
+                                for coluna in ("Conservadora", "BOVA11", "Diferença")},
+                 alt="Retorno de cada ano civil da Conservadora e do BOVA11")
+    c2.bar_chart(por_ano.set_index("Ano")[["Conservadora", "BOVA11"]], stack=False, y_label="Retorno no ano",
+                 color=["#2e7d32", "#9e9e9e"])
+    inteiro = [float(medidas_por_periodo(parte, anos=()).iloc[0][("Conservadora", "CAGR")]) for parte in fases.values()]
+    st.caption(f"Backtest sem viés de sobrevivência no lago, antes de custos e IR (motor do pré-registro, entradas "
+               f"congeladas de 22/10/2026, preços até {curvas.index[-1]:%d/%m/%Y}); fase 0 da tabela. No período "
+               f"inteiro, as 3 fases de rebalanceio dão {min(inteiro):.1%} a {max(inteiro):.1%} ao ano. Os anos ruins "
+               "ficam na tabela: a vantagem do período inteiro vem quase toda de 2010–2022; nos últimos 3 anos o "
+               "BOVA11 rendeu mais, com volatilidade parecida. Passado não garante futuro; a prova ao vivo é o "
+               "paper-v2 (decisão em 252 pregões, ~25/10/2027).")

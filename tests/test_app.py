@@ -269,7 +269,8 @@ def yahoo_contador(app, monkeypatch) -> list[tuple[str, ...]]:
 
     def cotacoes_atuais(tickers, precos_diarios):
         buscas.append(tuple(tickers))
-        return pd.DataFrame({"preco": 10.0 * len(buscas), "horario": pd.Timestamp(date.today()),
+        # a bar of a session the lake does not have yet (trading now): the official close does not replace it
+        return pd.DataFrame({"preco": 10.0 * len(buscas), "horario": precos_diarios.index.max() + pd.Timedelta(days=1),
                              "fonte": market_data.FONTE_INTRADIARIA}, index=list(tickers))
 
     monkeypatch.setattr(market_data, "cotacoes_atuais", cotacoes_atuais)
@@ -280,7 +281,7 @@ def yahoo_contador(app, monkeypatch) -> list[tuple[str, ...]]:
 
 
 def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contador):
-    outra_carteira = (("OUTRA.SA",), pd.DataFrame({"OUTRA.SA": [5.0]}))
+    outra_carteira = (("OUTRA.SA",), pd.DataFrame({"OUTRA.SA": [5.0]}, index=[pd.Timestamp(date.today())]))
     CARREGAR_COTACOES_REAL(*outra_carteira)              # 1ª busca (R$ 10): cotação de outro usuário
 
     app.run()                                            # 2ª busca: R$ 20

@@ -36,7 +36,11 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
   notification asks (a `git switch main` or a `git pull`). Further research (meta-labeling, a Monte Carlo bench, a
   news/filings veto, an election-window study) is optional and each item needs its own pre-registration.
 
-### After v1.0 (2026-10-23, evening)
+## Version 1.1 (2026-10-24): final
+
+**Fundo Alepha v1.1** (git tag `v1.1`) is the finished optimizer: v1.0 plus the changes below. Nothing is left to
+build for the strategy itself; what remains is the live proof (paper-v2, decision at 252 sessions, ~25/10/2027),
+which runs and reports by itself.
 
 - **Start with little money:** below ~R$ 1,870 the Fundo Alepha plan keeps the BOVA11 you hold and buys the
   Conservadora's stocks one share at a time (fractional market), most underweight first, each stock at most 20% of
@@ -48,6 +52,11 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
   with the election timing (the pre-registered study: election weeks x1.43 more volatile, p 0.0013, direction not
   tested), the news tone of the forward log scored by Jev, the CVM material filings, the Focus survey, and a table of
   all 181 stocks with risk, multiples and dividend yield. Information only: none of it changes the plan.
+- **Sidebar:** "Todos os ativos (181)" ticked by default; the "Fundo Alepha" group holds the fields that change the
+  plan (amount, plan, cost), the "Estudo" group the ones that change only the study below it.
+- **Upkeep twice a day** (Mon-Fri 10:00 and 22:30, after the nightly lake run): paper-v2 readings, liquidity,
+  recent prices and the market panel's files, committed and pushed, so the deployed app shows the day's close the
+  same evening.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

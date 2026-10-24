@@ -1,0 +1,78 @@
+﻿Arquivos (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64'}
+Manifest: {'generated_at': '2026-10-21T21:48:55', 'data_from': '1994-07-01', 'data_through': '2026-10-21'}; Selic meta 13,75% (BCB SGS 432); CDI do BCB; N do DSR = 41; preços desde 24/11/2008
+
+Piotroski F-score (15 nomes, pesos iguais, com regras): IC de Spearman mensal (nota do mês x retorno total do mês, universo do mês); papéis com nota por mês: mínimo 91, mediana 126, máximo 177
+                     meses  IC médio  desvio     t  meses com IC > 0
+2014–2026 (portão) 153.000     0.046   0.117 4.847             0.634
+2014–2017           48.000     0.022   0.114 1.309             0.521
+2018–2021           48.000     0.033   0.116 1.969             0.604
+2022–2026           57.000     0.077   0.115 5.060             0.754
+
+Acquirer's Multiple (15 nomes, pesos iguais, com regras): IC de Spearman mensal (nota do mês x retorno total do mês, universo do mês); papéis com nota por mês: mínimo 95, mediana 132, máximo 196
+                     meses  IC médio  desvio     t  meses com IC > 0
+2014–2026 (portão) 153.000     0.057   0.138 5.146             0.699
+2014–2017           48.000     0.017   0.128 0.942             0.667
+2018–2021           48.000     0.069   0.157 3.055             0.667
+2022–2026           57.000     0.081   0.123 4.981             0.754
+
+Fórmula Mágica (15 nomes, pesos iguais, com regras): IC de Spearman mensal (nota do mês x retorno total do mês, universo do mês); papéis com nota por mês: mínimo 88, mediana 127, máximo 183
+                     meses  IC médio  desvio     t  meses com IC > 0
+2014–2026 (portão) 153.000     0.059   0.143 5.119             0.699
+2014–2017           48.000     0.049   0.142 2.391             0.646
+2018–2021           48.000     0.041   0.152 1.897             0.646
+2022–2026           57.000     0.082   0.135 4.605             0.789
+(fase de IC pronta em 157 s)
+
+=== Fase 0: 1ª decisão 02/01/2014, fim 21/10/2026, 51 rebalanceios ===
+                                                            CAGR      MDD Vol anual Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Conservadora]
+Piotroski F-score (15 nomes, pesos iguais, com regras)    13,25%  -54,33%    23,62%    402,29%       0      0  0.239  0.098        0.636  0.635  0.351       283.948             0.367
+Acquirer's Multiple (15 nomes, pesos iguais, com regras)  16,01%  -55,08%    23,70%    305,00%       0      0  0.340  0.266        0.827  0.826  0.585        38.276             0.627
+Fórmula Mágica (15 nomes, pesos iguais, com regras)       12,70%  -52,22%    23,95%    259,95%       0      0  0.218  0.070        0.598  0.590  0.315       552.645             0.331
+Conservadora (15 nomes, pesos iguais, com regras)         15,67%  -41,88%    19,35%    312,68%       0      0  0.352  0.215        0.776  0.851  0.513        58.992                 —
+IVVB11                                                    21,08%  -30,71%    19,64%      7,93%       0      0      —      —            —      —      —             —                 —
+BOVA11                                                    11,72%  -46,93%    23,67%      7,93%       0      0      —      —            —      —      —             —                 —
+
+Retorno de cada ano (fase 0; o 1º ano começa na 1ª decisão, o último vai até o fim do arquivo)
+     Piotroski F-score Acquirer's Multiple Fórmula Mágica Conservadora   BOVA11   IVVB11
+2013             0,00%               0,00%          0,00%        0,00%    0,00%        —
+2014            -9,25%              -6,76%         -8,26%        1,89%   -3,48%        —
+2015           -14,09%             -14,52%        -28,21%       -0,83%  -13,21%   51,29%
+2016            44,23%              53,76%         53,86%       13,80%   38,24%   -9,36%
+2017            55,69%              40,10%         41,77%       52,65%   26,75%   23,16%
+2018            12,99%               2,32%          4,32%       17,27%   14,60%    9,78%
+2019            40,46%              56,80%         63,46%       49,48%   31,48%   35,06%
+2020            -7,30%              16,34%         11,95%       -7,34%    3,07%   51,42%
+2021            -2,50%              16,03%         -0,23%        6,55%  -12,08%   39,76%
+2022            -5,74%              -9,73%        -11,31%       17,34%    5,11%  -23,35%
+2023            42,42%              21,98%         17,27%       17,02%   23,07%   14,49%
+2024           -16,57%              -6,83%         -3,15%       -6,02%  -10,06%   58,26%
+2025            36,96%              27,82%         39,32%       27,14%   34,73%    4,05%
+2026            24,73%              33,44%         17,66%       25,77%   28,80%    3,84%
+(fase 0 pronta em 188 s)
+
+=== Fase 21: 1ª decisão 31/01/2014, fim 21/10/2026, 51 rebalanceios ===
+                                                            CAGR      MDD Vol anual Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Conservadora]
+Piotroski F-score (15 nomes, pesos iguais, com regras)    18,33%  -54,83%    24,02%    399,69%       0      0  0.421  0.358        0.897  0.892  0.558        21.192             0.476
+Acquirer's Multiple (15 nomes, pesos iguais, com regras)  18,08%  -55,68%    23,90%    294,72%       0      0  0.414  0.340        0.885  0.880  0.533        23.484             0.452
+Fórmula Mágica (15 nomes, pesos iguais, com regras)       14,12%  -54,46%    24,08%    273,08%       0      0  0.271  0.106        0.646  0.634  0.228       240.031             0.140
+Conservadora (15 nomes, pesos iguais, com regras)         19,75%  -39,96%    19,56%    310,25%       0      0  0.528  0.443        0.940  0.966  0.671        13.977                 —
+IVVB11                                                    21,08%  -30,71%    19,64%      7,98%       0      0      —      —            —      —      —             —                 —
+BOVA11                                                    12,58%  -46,93%    23,70%      7,98%       0      0      —      —            —      —      —             —                 —
+(fase 21 pronta em 224 s)
+
+=== Fase 42: 1ª decisão 05/03/2014, fim 21/10/2026, 50 rebalanceios ===
+                                                            CAGR      MDD Vol anual Giro anual Recusas Falhas Sharpe     IR P aritmético  P log    DSR MinTRL (anos) P[> Conservadora]
+Piotroski F-score (15 nomes, pesos iguais, com regras)    19,29%  -56,52%    24,25%    399,81%       0      0  0.453  0.408        0.925  0.919  0.835        16.306             0.615
+Acquirer's Multiple (15 nomes, pesos iguais, com regras)  17,75%  -54,24%    24,09%    293,44%       0      0  0.400  0.316        0.868  0.862  0.743        27.052             0.470
+Fórmula Mágica (15 nomes, pesos iguais, com regras)       17,13%  -53,92%    24,12%    274,94%       0      0  0.378  0.286        0.843  0.835  0.707        33.160             0.411
+Conservadora (15 nomes, pesos iguais, com regras)         19,34%  -40,64%    19,31%    312,75%       0      0  0.515  0.395        0.917  0.952  0.823        17.523                 —
+IVVB11                                                    21,08%  -30,71%    19,64%      8,04%       0      0      —      —            —      —      —             —                 —
+BOVA11                                                    12,67%  -46,93%    23,71%      8,04%       0      0      —      —            —      —      —             —                 —
+(fase 42 pronta em 261 s)
+
+Piotroski F-score (15 nomes, pesos iguais, com regras): portão (IC ≥ 0,02 e t ≥ 2, 2014-01 a 2026-09) cumprido; APROVADA; candidata a uma prova final (P[> BOVA11] >= 0,95 nas 3 fases): não
+
+Acquirer's Multiple (15 nomes, pesos iguais, com regras): portão (IC ≥ 0,02 e t ≥ 2, 2014-01 a 2026-09) cumprido; APROVADA; candidata a uma prova final (P[> BOVA11] >= 0,95 nas 3 fases): não
+
+Fórmula Mágica (15 nomes, pesos iguais, com regras): portão (IC ≥ 0,02 e t ≥ 2, 2014-01 a 2026-09) cumprido; APROVADA; candidata a uma prova final (P[> BOVA11] >= 0,95 nas 3 fases): não
+(tempo total 261 s)

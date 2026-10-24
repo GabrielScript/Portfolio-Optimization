@@ -11,6 +11,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
 - the app's liquidity snapshot (``scripts/liquidez_do_app.py``) when the lake has a newer closed month;
 - ``lago/precos_recentes.parquet``: the nightly's sessions after the committed price file (``core.precos_do_app``),
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
+- the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
+  filings only (DECISOES 124);
 - a commit of exactly those paths and a fast-forward push of ``main`` (never forced), which also publishes the paper
   routines' local commits to the deployed app.
 It decides nothing about the portfolio. Outcomes go to ``%LOCALAPPDATA%/paper-manutencao/runs.csv``, which the 12h
@@ -45,6 +47,9 @@ ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
+ARQUIVOS_DO_PAINEL = (Path("lago/sentimento_diario.parquet"), Path("lago/fatos_relevantes.parquet"),
+                      Path("lago/fundamentos.parquet"))
+PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")           # the lake's news/social log and CVM IPE filings
 PASTA_DO_LAGO = Path("data/b3lake")             # the lake's exports (outside git)
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 RAIZ = Path(__file__).resolve().parent.parent
@@ -239,10 +244,38 @@ def atualizar_recentes(raiz: Path, git: Git) -> str:
     return f"pregões recentes: até {fim}"
 
 
+def atualizar_painel(raiz: Path, git: Git, pasta_do_log: Path,
+                     gerar: Callable[[], tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]]) -> str:
+    """Rebuilds the panel files (``scripts/painel_do_app.py``: the daily news tone, the recent CVM filings and the
+    per-stock fundamentals; numbers and public filings only) and commits them; nothing without the lake's log."""
+    if not pasta_do_log.exists():
+        return "painel: sem o log do lago"
+    tabelas = gerar()
+    for arquivo, tabela in zip(ARQUIVOS_DO_PAINEL, tabelas):
+        destino = raiz / arquivo
+        destino.parent.mkdir(parents=True, exist_ok=True)
+        if not destino.exists() or not pd.read_parquet(destino).equals(tabela):
+            tabela.to_parquet(destino)
+    caminhos = [arquivo.as_posix() for arquivo in ARQUIVOS_DO_PAINEL]
+    if not pendentes(git, caminhos):
+        return "painel: em dia"
+    diario, fatos, fundamentos = tabelas
+    resumo = f"{len(diario)} dia(s), {len(fatos)} fato(s), {len(fundamentos)} ação(ões)"
+    commitar(git, caminhos, f"data: painel de notícias, fatos relevantes e fundamentos ({resumo})")
+    return f"painel: {resumo}"
+
+
+def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    from assets import get_all_tickers
+    from scripts.painel_do_app import gerar
+    return gerar(pasta_do_log, raiz / PASTA_DO_LAGO, get_all_tickers(), date.today())
+
+
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
-             tentativas: Path = PASTA_ESTADO / "tentativas") -> Resultado:
+             tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
-    stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output."""
+    stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
+    lake's news log (None: the panel step does nothing)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -256,6 +289,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
+              ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log or raiz / "sem-log",
+                                                  lambda: _gerar_painel(raiz, pasta_do_log))),
               ("push", lambda: publicar(git)))
     for nome, passo in passos:
         try:
@@ -341,7 +376,7 @@ def anotar(pasta: Path, agora: datetime, resultado: Resultado) -> None:
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
-    resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ))
+    resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

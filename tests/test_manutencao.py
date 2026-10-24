@@ -383,3 +383,19 @@ def test_the_sessions_after_the_committed_price_file_are_committed_in_the_small_
     assert [str(d) for d in recentes["date"]] == ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22"]
     assert git("status", "--porcelain", "--", "lago").splitlines() == [" M lago/precos_diarios.parquet"]
     assert atualizar_recentes(app, git) == "pregões recentes: em dia"
+
+
+def test_the_news_panel_files_are_rebuilt_and_committed_and_without_the_lakes_log_nothing_happens(app, tmp_path):
+    from scripts.manutencao import atualizar_painel, git_em
+    git = git_em(app)
+    diario = pd.DataFrame({"dia": pd.to_datetime(["2026-10-23"]), "itens": [383]})
+    fatos = pd.DataFrame({"ticker": ["PETR4"], "data": [date(2026, 10, 16)]})
+    fundamentos = pd.DataFrame({"P/L": [5.7]}, index=["PETR4"])
+    tabelas = (diario, fatos, fundamentos)
+    assert atualizar_painel(app, git, tmp_path / "sem-log", lambda: tabelas) == "painel: sem o log do lago"
+    (tmp_path / "log").mkdir()
+    assert atualizar_painel(app, git, tmp_path / "log", lambda: tabelas) == "painel: 1 dia(s), 1 fato(s), 1 ação(ões)"
+    assert git("show", "--name-only", "--format=%s", "HEAD").splitlines()[2:] == [
+        "lago/fatos_relevantes.parquet", "lago/fundamentos.parquet", "lago/sentimento_diario.parquet"]
+    assert pd.read_parquet(app / "lago" / "fundamentos.parquet").index.tolist() == ["PETR4"]
+    assert atualizar_painel(app, git, tmp_path / "log", lambda: tabelas) == "painel: em dia"

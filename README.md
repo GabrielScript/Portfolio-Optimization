@@ -1,10 +1,10 @@
-# 📊 Fundo Alepha — Otimizador de Carteiras B3
+# 📊 Alepha — Otimizador de Carteiras B3
 
 > **Autor:** Gabriel Estrela Lopes
 
 ## Version 1.0 (2026-10-23)
 
-**Fundo Alepha** is the name of a personal decision tool. It is not an investment fund offered to third parties and
+**Alepha** is the name of a personal decision tool. It is not an investment fund offered to third parties and
 not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 covers securities analysts).
 
 - **Real-money default: the Conservadora** (Blitz & van Vliet, 2018: the 15 names of low 36-month volatility, high
@@ -38,11 +38,11 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
 
 ## Version 1.1 (2026-10-24): final
 
-**Fundo Alepha v1.1** (git tag `v1.1`) is the finished optimizer: v1.0 plus the changes below. Nothing is left to
+**Alepha v1.1** (git tag `v1.1`) is the finished optimizer: v1.0 plus the changes below. Nothing is left to
 build for the strategy itself; what remains is the live proof (paper-v2, decision at 252 sessions, ~25/10/2027),
 which runs and reports by itself.
 
-- **Start with little money:** below ~R$ 1,870 the Fundo Alepha plan keeps the BOVA11 you hold and buys the
+- **Start with little money:** below ~R$ 1,870 the Alepha plan keeps the BOVA11 you hold and buys the
   Conservadora's stocks one share at a time (fractional market), most underweight first, each stock at most 20% of
   everything you hold. The screen says which names wait for more capital and that the portfolio is far from the
   tested one until then.
@@ -52,7 +52,7 @@ which runs and reports by itself.
   with the election timing (the pre-registered study: election weeks x1.43 more volatile, p 0.0013, direction not
   tested), the news tone of the forward log scored by Jev, the CVM material filings, the Focus survey, and a table of
   all 181 stocks with risk, multiples and dividend yield. Information only: none of it changes the plan.
-- **Sidebar:** "Todos os ativos (181)" ticked by default; the "Fundo Alepha" group holds the fields that change the
+- **Sidebar:** "Todos os ativos (181)" ticked by default; the "Alepha" group holds the fields that change the
   plan (amount, plan, cost), the "Estudo" group the ones that change only the study below it.
 - **Upkeep twice a day** (Mon-Fri 10:00 and 22:30, after the nightly lake run): paper-v2 readings, liquidity,
   recent prices and the market panel's files, committed and pushed, so the deployed app shows the day's close the
@@ -182,7 +182,7 @@ mesmas condições.
 - **Carteira de hoje:** cards de retorno/risco, fronteira eficiente (com o ponto 1/N), composição, tabela
   com setores, contribuição para o risco e matriz de correlação. **Teto por setor** (até 30%, regra fixa) na
   carteira, no plano de compra e no walk-forward; o HRP da tela é projetado nele.
-- **Fundo Alepha plan (the default since v1.0):** the Conservadora registered in `paper-v2/carteiras.csv`, 100% in
+- **Alepha plan (the default since v1.0):** the Conservadora registered in `paper-v2/carteiras.csv`, 100% in
   stocks, from the positions typed on the screen (ticker, quantity, average price) and the cash to invest; month's
   sales outside the plan and the carried loss enter the IR. The plan is refused if the final weights break a fixed
   risk rule; below the minimum capital for the 15 names with 2 shares each (shown on the screen) some names stay out.
@@ -311,7 +311,7 @@ Portfolio-Optimization/
 │   └── fatores_macro.py      #   Painel e fatores macro (em desenvolvimento)
 ├── ui/
 │   ├── servicos.py           # Cache do Streamlit com chaves explícitas
-│   ├── alepha.py             # Fundo Alepha plan blocks: positions, month IR, orders table, CVM note
+│   ├── alepha.py             # Alepha plan blocks: positions, month IR, orders table, CVM note
 │   ├── painel.py             # Market panel: election timing, news, macro and every stock
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
@@ -440,7 +440,7 @@ Portfolio-Optimization/
   aritmética dos retornos diários, não a riqueza final, e favorece as curvas mais voláteis.
 - **O plano do estudo só compra ações.** No modo "Estudo", com valores pequenos (R$ 300) o plano para em "Aumente
   o valor a investir" porque cabem menos de 5 papéis, e o filtro por preço reotimiza num universo menor. O padrão da
-  tela é o plano do Fundo Alepha (a Conservadora registrada no paper-v2), que não reotimiza.
+  tela é o plano do Alepha (a Conservadora registrada no paper-v2), que não reotimiza.
 - **Paper trading próprio, sem plataforma de corretora.** A rotina usa os fechamentos oficiais do lago, o mesmo código
   do walk-forward e um registro versionado que só cresce (auditável; uma conta demo pode ser zerada). Não mede a
   execução: spread, slippage, ordens parciais e a liquidez do fracionário ficam fora (custo fixo de 10 bps por lado).
@@ -449,7 +449,7 @@ Portfolio-Optimization/
 - **S&P 500 só como referência.** O IVVB11 (S&P 500 em reais, sem hedge) está no lago desde 2014: 20,1% a.a. ×
   12,4% do BOVA11 em 10 anos e 9,2% × 15,2% em 5, correlação mensal −0,18. O núcleo metade BOVA11, metade IVVB11
   não passou no teste pré-registrado (ROTEIRO §4.12).
-- **IR is modeled in the final proof and in the Fundo Alepha plan, not in the study's walk-forward** (15% of the
+- **IR is modeled in the final proof and in the Alepha plan, not in the study's walk-forward** (15% of the
   month's gain; stock sales up to R$ 20 thousand a month are exempt; ETFs are not). Simplifications: an ETF loss does
   not offset a stock gain in the plan, and the exemption counts only the sales typed on the screen plus the plan's.
   The lake already nets the JCP withholding (15% until 2025 and 17.5% since 01/01/2026, LC 224/2025).
@@ -472,7 +472,7 @@ O que falta e em que ordem: [`docs/ROTEIRO.md`](docs/ROTEIRO.md).
 ## 📝 Isenção de Responsabilidade (Disclaimer)
 
 Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o BOVA11 até o fim da validação em paper trading.
-"Fundo Alepha" is the name of this personal tool, not a fund offered to third parties (CVM Resolution 175/2022).
+"Alepha" is the name of this personal tool, not a fund offered to third parties (CVM Resolution 175/2022).
 
 > ⚠️ **Não representa recomendação de investimento.** As decisões financeiras devem ser tomadas com base em análise própria ou orientação profissional. Retornos passados não garantem retornos futuros.
 

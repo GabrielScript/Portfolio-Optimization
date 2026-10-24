@@ -1,6 +1,6 @@
 """
 Saves the daily value curves of the Conservadora and BOVA11 from the frozen rerun (`scripts/rerun_conservadora.py`,
-inputs `docs/dados/2026-10-22/`, prices cut at 16/10/2026), for the Fundo Alepha screen's results by period and
+inputs `docs/dados/2026-10-22/`, prices cut at 16/10/2026), for the Alepha screen's results by period and
 calendar year (`core/periodos.py`). Descriptive: the registered configuration, run as registered; N unchanged
 (DECISOES 122 and 124). The rerun's text output goes to the second file and must match
 `docs/conservadora-vol-2026-10-23.txt` apart from the CDI/Selic source lines.

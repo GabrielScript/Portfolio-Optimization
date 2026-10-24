@@ -3,7 +3,7 @@ painel.py - Screen block "Mercado agora": the election timing, the news tone of 
 material filings, the Focus survey and a table of every stock (risk from the prices, valuation from the CVM
 statements). The user asked for it on 2026-10-23 (DECISOES 124).
 
-Advice boundary (prediction-market-risk-review): information only. Nothing here changes the Fundo Alepha plan or the
+Advice boundary (prediction-market-risk-review): information only. Nothing here changes the Alepha plan or the
 risk rules; the news tone has not been tested as a signal (its pre-registered test reads in ~October 2027). UI strings
 are Portuguese, like the rest of the app.
 """
@@ -20,7 +20,7 @@ from core.macro import resumo_focus
 from core.sentimento import (P_DO_ESTUDO, RAZAO_DE_VOL_DO_ESTUDO, RODADAS_DO_ESTUDO, ROTULOS_DOS_TOPICOS,
                              TOPICOS_DO_PAINEL, TURNOS_DE_2026, janela_eleitoral, ultimo_fato)
 
-AVISO = ("Informação, não recomendação: nada aqui muda o plano do Fundo Alepha (a Conservadora registrada) nem as "
+AVISO = ("Informação, não recomendação: nada aqui muda o plano do Alepha (a Conservadora registrada) nem as "
          "regras de risco. O tom das notícias e os fatos relevantes ainda não foram testados como sinal: o teste "
          "pré-registrado lê em ~outubro de 2027 (docs/preregistro-sentimento-2026-10-23.md).")
 PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m")
@@ -54,7 +54,7 @@ def _timing(hoje: date) -> None:
             f"({RODADAS_DO_ESTUDO} votações de 2006 a 2022, docs/eleicao-2026-10-23.txt), a volatilidade do Ibovespa "
             f"nos pregões 0 a +4 depois da votação ({janela.janela_inicio:%d/%m} a {janela.janela_fim:%d/%m} desta "
             f"vez) foi {_virgula(RAZAO_DE_VOL_DO_ESTUDO, 2)} vez a de antes (p = {_virgula(P_DO_ESTUDO, 4)}), em todas "
-            f"as votações; a direção não foi testada.{agora} O plano do Fundo Alepha não muda por isso: quem comprar "
+            f"as votações; a direção não foi testada.{agora} O plano do Alepha não muda por isso: quem comprar "
             "ou vender nesses dias pode encontrar spread maior e preços mais nervosos.")
 
 

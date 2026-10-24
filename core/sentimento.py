@@ -1,7 +1,7 @@
 """
 sentimento.py - The screen's news, sentiment and filings panel, from the lake's forward log (``b3lake.newslog``, Jev
 scores of the questions ``items-v1``) and the CVM IPE filings (``b3lake.ipe``). Information only: the user asked to
-see it on 2026-10-23 (DECISOES 124); nothing here reaches the optimizer, the paper routines or the Fundo Alepha plan,
+see it on 2026-10-23 (DECISOES 124); nothing here reaches the optimizer, the paper routines or the Alepha plan,
 and the pre-registered tests of ``docs/preregistro-sentimento-2026-10-23.md`` are unchanged.
 
 The Jev questions have no ticker: per-stock coverage comes from the CVM filings, which name the company.

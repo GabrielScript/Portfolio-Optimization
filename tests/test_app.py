@@ -516,7 +516,7 @@ def test_carteira_de_hoje_se_diz_estudo_quando_o_plano_e_o_do_dinheiro_real(app_
     assert len(legendas) == 1 and "plano acima" in legendas[0]
 
 
-# ---------------------------------------------------------------- Fundo Alepha: the Conservadora as the default plan
+# ---------------------------------------------------------------- Alepha: the Conservadora as the default plan
 
 def _conservadora_sintetica() -> tuple[date, pd.Series]:
     """A paper-v2 registration of 5 names at 20% (the per-stock cap), from the test's sectors."""
@@ -541,11 +541,14 @@ def _ordens_alepha(at: AppTest) -> pd.DataFrame:
     return tabelas[0].set_index("Ticker")
 
 
-def test_the_screen_is_fundo_alepha_and_its_default_plan_buys_the_registered_conservadora(app_alepha):
-    # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default, named Fundo Alepha
+def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservadora(app_alepha):
+    # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default; named Alepha, no longer
+    # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
     assert app_alepha.sidebar.segmented_control(key="modo_plano").value == "conservadora"
-    assert any("Fundo Alepha" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    assert any(">Alepha<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
+    assert not any("Fundo Alepha" in texto for texto in textos)
     assert any("não é um fundo de investimento" in c.value for c in app_alepha.caption)
     _, alvo = _conservadora_sintetica()
     ordens = _ordens_alepha(app_alepha)
@@ -614,14 +617,14 @@ def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(m
 
 def test_all_assets_is_ticked_by_default_and_the_sidebar_says_what_each_group_changes(monkeypatch):
     # the user's request of 2026-10-23: "Todos os ativos" checked by default; the study's selectors do not change
-    # the Fundo Alepha plan, and the sidebar says so
+    # the Alepha plan, and the sidebar says so
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
     assert at.sidebar.checkbox(key="todos").value is True
     textos = [m.value for m in at.sidebar.markdown] + [c.value for c in at.sidebar.caption]
-    assert any("não mudam o plano do Fundo Alepha" in texto for texto in textos)
+    assert any("não mudam o plano do Alepha" in texto for texto in textos)
 
 
 def _curvas_sinteticas() -> pd.DataFrame:

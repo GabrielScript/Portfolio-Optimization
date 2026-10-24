@@ -1,5 +1,5 @@
 """
-Daily upkeep of the Fundo Alepha (task "paper manutencao", weekdays at 10:00, through ``scripts/rodar_paper.py
+Daily upkeep of the Alepha (task "paper manutencao", weekdays at 10:00, through ``scripts/rodar_paper.py
 manutencao``), so nothing after v1.0 depends on the user remembering it.
 
 Usage: .venv/Scripts/python -X utf8 scripts/manutencao.py
@@ -175,9 +175,9 @@ class Resultado:
 
 def _titulo(nome: str) -> str:
     if nome.startswith("leitura-"):
-        return f"Fundo Alepha: leitura de {nome.removeprefix('leitura-')} pregões"
+        return f"Alepha: leitura de {nome.removeprefix('leitura-')} pregões"
     ano, mes = nome.removeprefix("progresso-").split("-")
-    return f"Fundo Alepha: progresso de {mes}/{ano}"
+    return f"Alepha: progresso de {mes}/{ano}"
 
 
 def _leituras(raiz: Path, git: Git, agora: datetime, ler_leitura: Callable[[], str], tentativas: Path,

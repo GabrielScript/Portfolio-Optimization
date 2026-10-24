@@ -2,7 +2,7 @@
 macro.py - The screen's macro panel: the median expectations of the BCB's Focus survey (``core.focus``, live from
 the Olinda API) for this year and the next, and how the current year's median moved in four weeks. Information only
 (DECISOES 124): the macro filters were tested on BOVA11 and did not pass (DECISOES 112), so nothing here changes the
-Fundo Alepha plan.
+Alepha plan.
 """
 
 from __future__ import annotations

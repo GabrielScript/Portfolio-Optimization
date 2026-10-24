@@ -1,9 +1,9 @@
 """
-app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Fundo Alepha.
+app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Alepha.
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-The plan the screen opens is Fundo Alepha's: the Conservadora registered in paper-v2, from the current positions
+The plan the screen opens is Alepha's: the Conservadora registered in paper-v2, from the current positions
 (the user's decisions of 2026-10-23, DECISOES 117). BOVA11 + satellite and the study stay as options.
 
 Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
@@ -20,7 +20,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Fundo Alepha · Otimizador B3", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Alepha · Otimizador B3", page_icon="🚀", layout="wide")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
@@ -89,13 +89,13 @@ AVISO_REGRAS_DE_RISCO = (
     "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
     "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
-# Purchase plan: the default is Fundo Alepha's, the Conservadora registered in paper-v2 (the only one that passed the
+# Purchase plan: the default is Alepha's, the Conservadora registered in paper-v2 (the only one that passed the
 # final proof after IR, DECISOES 82; the user's choice on 2026-10-23, DECISOES 117). BOVA11 + paper-v1's satellite
 # (DECISOES 69) and the sidebar's optimized portfolio (the study) stay as options.
 MODO_CONSERVADORA, MODO_DINHEIRO_REAL, MODO_ESTUDO = "conservadora", "dinheiro_real", "estudo"
-ROTULOS_MODO = {MODO_CONSERVADORA: "Fundo Alepha", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
+ROTULOS_MODO = {MODO_CONSERVADORA: "Alepha", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
 AJUDA_MODO = (
-    "Fundo Alepha: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
+    "Alepha: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
     "satélite: BOVA11 com ~70% e o satélite Kelly do paper-v1 com ~30%. Estudo: o plano da carteira otimizada pela "
     "barra lateral, só ações, para comparar."
 )
@@ -135,7 +135,7 @@ class CarteiraCalculada:
 
 def ler_sidebar() -> Entradas:
     with st.sidebar:
-        st.markdown("## Fundo Alepha")
+        st.markdown("## Alepha")
         st.caption("O plano de dinheiro real: a Conservadora registrada no paper-v2 (15 ações, pesos iguais). Estes "
                    "três campos mudam o plano.")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
@@ -148,7 +148,7 @@ def ler_sidebar() -> Entradas:
 
         st.markdown("## Estudo")
         st.caption("Carteira de hoje e walk-forward, mais abaixo na página: estes seletores mudam o estudo e não "
-                   "mudam o plano do Fundo Alepha (a Conservadora tem regras fixas, testadas antes). Cada mudança "
+                   "mudam o plano do Alepha (a Conservadora tem regras fixas, testadas antes). Cada mudança "
                    "recalcula o estudo: com todos os ativos, leva alguns minutos.")
         objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
                                 key="objetivo")
@@ -228,7 +228,7 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Fundo Alepha</h1>'
+    st.markdown('<h1 class="main-title">Alepha</h1>'
                 '<p class="subtitle">Otimizador arrojado da B3 · Conservadora no lago sem viés de sobrevivência · '
                 'Walk-forward com custos e IR · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     st.caption(alepha.AVISO_CVM)
@@ -444,10 +444,10 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
 
 
 def secao_conservadora(entradas: Entradas) -> None:
-    st.markdown("### Plano de compra: Fundo Alepha (Conservadora, dinheiro real)")
+    st.markdown("### Plano de compra: Alepha (Conservadora, dinheiro real)")
     registrado = servicos.carregar_conservadora_registrada()
     if registrado is None:
-        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Fundo Alepha usa a de lá.")
+        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Alepha usa a de lá.")
         return
     data, alvo = registrado
     st.info(alepha.aviso_conservadora(data))

@@ -1,7 +1,7 @@
 """
 indicadores.py - The screen's per-stock table: valuation multiples from the lake's CVM statements (``core.valor``'s
 accounts: balances at the period end, flows over 12 months) and risk measures from the daily prices. Information only
-(DECISOES 124): the Fundo Alepha plan is the registered Conservadora, which uses none of these.
+(DECISOES 124): the Alepha plan is the registered Conservadora, which uses none of these.
 
 Known data limit (README): a few market values right after a listing are a thousand times too small (the reverse
 slip of DECISOES 119), so their multiples are wrong by the same factor.

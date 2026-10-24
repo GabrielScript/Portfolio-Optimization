@@ -182,3 +182,129 @@ def test_the_last_filing_of_each_stock_keeps_its_own_date_and_subject_and_an_emp
                           "data": [date(2026, 10, 16), date(2026, 10, 10), date(2026, 10, 15)],
                           "assunto": [None, "Produção 3T26", "Esclarecimento"]})
     assert ultimo_fato(fatos).to_dict() == {"PETR4": "16/10", "VALE3": "15/10 Esclarecimento"}
+
+
+def _nota_de_fato(link: str, tom: dict, intensidade: dict, versao: str = "filings-v1") -> dict:
+    return {"key": link, "target": "filing", "questions_version": versao, "answers": {
+        "filing_tone": {"type": "choice", "probabilities": tom},
+        "filing_kind": {"type": "choice", "probabilities": {"other": 1.0}},
+        "filing_intensity": {"type": "score", "probabilities": intensidade}}}
+
+
+def test_each_scored_filing_becomes_one_row_with_its_top_tone_and_strength():
+    from core.sentimento import notas_por_fato
+    ruim = {"bad": 0.40, "neutral": 0.45, "good": 0.05, "unclear": 0.10}
+    forte = {"0": 0.1, "1": 0.2, "2": 0.3, "3": 0.4}
+    linhas = [_nota_de_fato("https://cvm/a", ruim, forte),
+              _nota_de_fato("https://cvm/b", ruim, forte, versao="filings-v0"),
+              _nota("item1", 0.9, {"positive": 1, "negative": 0, "neutral": 0, "not_applicable": 0}, TOPICO, 0.0,
+                    {"0": 1, "1": 0, "2": 0, "3": 0})]
+    notas = notas_por_fato(linhas)
+    assert list(notas.index) == ["https://cvm/a"]
+    assert notas.loc["https://cvm/a", "tom_do_fato"] == "neutral"
+    assert notas.loc["https://cvm/a", "p_ruim"] == pytest.approx(0.40)
+    assert notas.loc["https://cvm/a", "p_bom"] == pytest.approx(0.05)
+    assert notas.loc["https://cvm/a", "p_forte"] == pytest.approx(0.7)
+
+
+def test_the_filings_get_their_jev_scores_by_link_and_an_unscored_filing_stays_without_them():
+    from core.sentimento import com_notas_dos_fatos, notas_por_fato
+    fatos = pd.DataFrame({"ticker": ["PETR4", "VALE3"], "link": ["https://cvm/a", "https://cvm/b"]})
+    notas = notas_por_fato([_nota_de_fato("https://cvm/a", {"bad": 0.8, "neutral": 0.1, "good": 0.0, "unclear": 0.1},
+                                          {"0": 0.0, "1": 0.2, "2": 0.5, "3": 0.3})])
+    juntos = com_notas_dos_fatos(fatos, notas)
+    assert list(juntos["ticker"]) == ["PETR4", "VALE3"]
+    assert juntos.loc[0, "tom_do_fato"] == "bad" and juntos.loc[0, "p_forte"] == pytest.approx(0.8)
+    assert juntos.loc[1, ["tom_do_fato", "p_ruim", "p_bom", "p_forte"]].isna().all()
+
+
+def _fatos_pontuados(*linhas) -> pd.DataFrame:
+    from datetime import date
+    colunas = ["ticker", "assunto", "data", "link", "tom_do_fato", "p_ruim", "p_bom", "p_forte"]
+    quadro = pd.DataFrame([dict(zip(colunas, linha)) for linha in linhas], columns=colunas)
+    quadro["data"] = [date.fromisoformat(dia) for dia in quadro["data"]]
+    return quadro
+
+
+def test_a_strong_bad_filing_in_the_window_turns_the_stock_red_with_its_date_and_subject():
+    from datetime import date
+    from core.sentimento import semaforo
+    fatos = _fatos_pontuados(("PETR4", "Venda de ativo", "2026-10-20", "https://cvm/a", "bad", 0.8, 0.1, 0.6))
+    luzes = semaforo(fatos, ["PETR4.SA"], desde=date(2026, 9, 24))
+    assert luzes.loc["PETR4.SA", "cor"] == "vermelho"
+    assert luzes.loc["PETR4.SA", "motivo"] == "20/10 Venda de ativo"
+    assert luzes.loc["PETR4.SA", "data"] == date(2026, 10, 20)
+    assert luzes.loc["PETR4.SA", "link"] == "https://cvm/a"
+
+
+def test_a_strong_good_filing_turns_the_stock_green():
+    from datetime import date
+    from core.sentimento import semaforo
+    fatos = _fatos_pontuados(("VALE3", "Dividendos", "2026-10-21", "https://cvm/b", "good", 0.0, 0.9, 0.7))
+    luzes = semaforo(fatos, ["VALE3.SA"], desde=date(2026, 9, 24))
+    assert luzes.loc["VALE3.SA", ["cor", "motivo", "link"]].tolist() == ["verde", "21/10 Dividendos", "https://cvm/b"]
+
+
+def test_without_a_strong_scored_filing_in_the_window_the_light_is_yellow_and_says_why():
+    from datetime import date
+    from core.sentimento import semaforo
+    fatos = _fatos_pontuados(
+        ("PETR4", "Venda de ativo", "2026-10-20", "https://cvm/a", "neutral", 0.40, 0.05, 0.9),
+        ("PETR4", "Multa", "2026-09-01", "https://cvm/c", "bad", 0.9, 0.0, 0.9),
+        ("VALE3", "Assembleia", "2026-10-21", "https://cvm/b", None, None, None, None))
+    luzes = semaforo(fatos, ["PETR4.SA", "VALE3.SA", "ITSA4.SA"], desde=date(2026, 9, 24))
+    assert luzes["cor"].tolist() == ["amarelo"] * 3
+    assert luzes["motivo"].tolist() == ["neutro (1 fato pontuado)", "sem fato pontuado", "sem fato pontuado"]
+    assert luzes[["data", "link"]].isna().all().all()
+
+
+def test_a_filings_file_from_before_the_scores_were_joined_gives_yellow_lights_instead_of_failing():
+    from datetime import date
+    from core.sentimento import semaforo
+    fatos = _fatos_pontuados(("PETR4", "Venda de ativo", "2026-10-20", "https://cvm/a", "bad", 0.8, 0.1, 0.6))
+    antigo = fatos.drop(columns=["tom_do_fato", "p_ruim", "p_bom", "p_forte"])
+    luzes = semaforo(antigo, ["PETR4.SA"], desde=date(2026, 9, 24))
+    assert luzes.loc["PETR4.SA", ["cor", "motivo"]].tolist() == ["amarelo", "sem fato pontuado"]
+
+
+def test_a_red_filing_beats_a_newer_green_one():
+    from datetime import date
+    from core.sentimento import semaforo
+    fatos = _fatos_pontuados(("PETR4", "Multa", "2026-10-02", "https://cvm/a", "bad", 0.8, 0.1, 0.6),
+                             ("PETR4", "Dividendos", "2026-10-20", "https://cvm/b", "good", 0.0, 0.9, 0.9))
+    assert semaforo(fatos, ["PETR4.SA"], desde=date(2026, 9, 24)).loc["PETR4.SA", "motivo"] == "02/10 Multa"
+
+
+def test_the_next_rebalance_is_63_lake_sessions_after_the_registered_one_counting_weekdays_past_the_last_session():
+    from datetime import date
+    from core.sentimento import proxima_troca
+    calendario = pd.bdate_range("2026-10-01", "2026-10-23")      # 4 sessions after the registered 19/10
+    assert proxima_troca(calendario, date(2026, 10, 19)) == (pd.Timestamp("2026-10-23") + pd.offsets.BDay(59)).date()
+
+
+def test_only_a_stock_that_turned_red_after_the_registered_portfolio_is_flagged_with_the_next_rebalance():
+    from datetime import date
+    from core.sentimento import alertas_antes_da_troca
+    luzes = pd.DataFrame({"cor": ["vermelho", "vermelho", "verde"],
+                          "data": [date(2026, 10, 20), date(2026, 10, 16), date(2026, 10, 21)]},
+                         index=["PETR4.SA", "VALE3.SA", "ITSA4.SA"])
+    assert alertas_antes_da_troca(luzes, date(2026, 10, 19), date(2027, 1, 19)) == [
+        "PETR4 ficou vermelho em 20/10, depois da carteira de 19/10; próxima troca ~19/01/2027"]
+
+
+def test_the_filing_scores_are_read_from_the_lakes_score_files(tmp_path):
+    import json
+    from datetime import date
+    from core.sentimento import ler_notas_dos_fatos
+    (tmp_path / "scores").mkdir()
+    nota = _nota_de_fato("https://cvm/a", {"bad": 0.1, "neutral": 0.2, "good": 0.7, "unclear": 0.0},
+                         {"0": 0.0, "1": 0.5, "2": 0.5, "3": 0.0})
+    (tmp_path / "scores" / "2026-10-26.jsonl").write_text(json.dumps(nota) + "\n{\"key\": \"cort", encoding="utf-8")
+    notas = ler_notas_dos_fatos(tmp_path, desde=date(2026, 10, 23))
+    assert notas.index.tolist() == ["https://cvm/a"] and notas.loc["https://cvm/a", "tom_do_fato"] == "good"
+
+
+def test_with_no_filing_scored_yet_the_probability_columns_are_still_numbers():
+    from core.sentimento import notas_por_fato
+    notas = notas_por_fato([])
+    assert notas.empty and all(notas[coluna].dtype == float for coluna in ("p_ruim", "p_bom", "p_forte"))

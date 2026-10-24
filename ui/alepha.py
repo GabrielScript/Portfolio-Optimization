@@ -16,6 +16,7 @@ import streamlit as st
 from core.impostos import ISENCAO_DE_VENDAS
 from core.periodos import medidas_por_periodo, retornos_por_ano
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
+from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
 
 AVISO_CVM = ("Alepha é o nome de uma ferramenta pessoal de estudo e decisão: não é um fundo de investimento "
              "oferecido a terceiros nem recomendação de investimento (fundos: Resolução CVM 175/2022; análise de "
@@ -46,6 +47,36 @@ def aviso_conservadora(data: date) -> str:
             "contra −50%; depois de custos e IR, com R$ 10 mil, P[> BOVA11] de 0,98 a 0,995. Passado não garante "
             "futuro: a prova ao vivo é o paper-v2 (leitura em 126 pregões, ~27/04/2027; decisão em 252, ~25/10/2027). "
             "Só dinheiro de 5 anos ou mais; a carteira muda a cada 63 pregões, quando o paper-v2 registra a nova.")
+
+
+SESSOES_DO_SEMAFORO = 21           # the light reads the material filings of the last 21 lake sessions (~1 month)
+EMOJI_DA_COR = {"vermelho": "🔴", "amarelo": "🟡", "verde": "🟢"}
+FATOS_VAZIOS = pd.DataFrame(columns=["ticker", "assunto", "data", "link"])
+
+
+def semaforo_do_plano(fatos: pd.DataFrame | None, tickers: pd.Index, registrada: date,
+                      calendario: pd.DatetimeIndex) -> None:
+    """A red/yellow/green light per stock of the plan from its Jev-scored CVM filings (``core.sentimento.semaforo``),
+    and a warning for each one that turned red after the registered portfolio. Information only (the user's goal of
+    2026-10-24, DECISOES 132): the weights and the orders never read it."""
+    desde = calendario[-min(SESSOES_DO_SEMAFORO, len(calendario))].date()
+    luzes = semaforo(FATOS_VAZIOS if fatos is None else fatos, tickers, desde)
+    st.markdown("#### Sinal de cada ação: fatos relevantes da CVM")
+    tabela = pd.DataFrame({"Ticker": [ticker.removesuffix(".SA") for ticker in luzes.index],
+                           "Sinal": [f"{EMOJI_DA_COR[cor]} {cor}" for cor in luzes["cor"]],
+                           "Fatos da CVM": luzes["motivo"].to_numpy(), "Notícias e redes": "—",
+                           "Link": luzes["link"].to_numpy()})
+    st.dataframe(tabela, width="stretch", hide_index=True,
+                 column_config={"Link": st.column_config.LinkColumn("Link", display_text="abrir")},
+                 alt="Sinal vermelho, amarelo ou verde de cada ação do plano, pelos fatos relevantes da CVM")
+    for alerta in alertas_antes_da_troca(luzes, registrada, proxima_troca(calendario, registrada)):
+        st.warning(f"{alerta} (data estimada; quem decide é o paper-v2). O plano mantém os pesos até lá.")
+    st.caption(f"Informativo: não muda os pesos nem as ordens. Fatos relevantes e comunicados ao mercado dos últimos "
+               f"{SESSOES_DO_SEMAFORO} pregões, cada um com a nota do Jev (pontua os fatos novos a cada 2 horas): "
+               "vermelho = o tom mais provável é ruim para o acionista e a chance de efeito forte no preço é de 50% "
+               "ou mais; verde = o mesmo com tom bom; amarelo = nenhum fato forte (ou nenhum fato pontuado: os "
+               "anteriores a 23/10/2026 não têm nota). Vermelho vence verde. Notícias e redes: \"—\" até as notícias "
+               "trazerem o ticker (perguntas items-v2). O sinal ainda não foi testado como regra de venda.")
 
 
 def aviso_capital_pequeno(patrimonio: float, minimo: float, um_de_cada: float, nomes: int, esperando: list[str],

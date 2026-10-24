@@ -42,7 +42,66 @@ def notas_por_item(linhas: Iterable[dict]) -> pd.DataFrame:
     return pd.DataFrame.from_dict(registros, orient="index", columns=colunas).astype(float).rename_axis("key")
 
 
-LIMIAR_RELEVANTE = 0.5                  # the pre-registration's "relevant >= 0.5" (Test B)
+VERSAO_DAS_PERGUNTAS_DE_FATOS = "filings-v1"
+COLUNAS_DA_NOTA_DE_FATO = ("tom_do_fato", "p_ruim", "p_bom", "p_forte")
+
+
+def notas_por_fato(linhas: Iterable[dict]) -> pd.DataFrame:
+    """One row per Jev-scored CVM filing (index ``key`` = the filing's ``link_download``): ``tom_do_fato`` = the most
+    likely of bad/neutral/good/unclear, ``p_ruim`` = P(bad), ``p_bom`` = P(good), ``p_forte`` = P(intensity Major or
+    Extraordinary). Rows of other targets or question versions are skipped."""
+    registros = {}
+    for linha in linhas:
+        if linha.get("target") != "filing" or linha.get("questions_version") != VERSAO_DAS_PERGUNTAS_DE_FATOS:
+            continue
+        tom = linha["answers"]["filing_tone"]["probabilities"]
+        intensidade = linha["answers"]["filing_intensity"]["probabilities"]
+        registros[linha["key"]] = {"tom_do_fato": max(tom, key=tom.get), "p_ruim": float(tom["bad"]),
+                                   "p_bom": float(tom["good"]), "p_forte": float(intensidade["2"] + intensidade["3"])}
+    notas = pd.DataFrame.from_dict(registros, orient="index", columns=list(COLUNAS_DA_NOTA_DE_FATO))
+    return notas.astype({"tom_do_fato": object, "p_ruim": float, "p_bom": float, "p_forte": float}).rename_axis("key")
+
+
+def com_notas_dos_fatos(fatos: pd.DataFrame, notas: pd.DataFrame) -> pd.DataFrame:
+    """``fatos`` (``fatos_recentes``) with the columns of ``notas_por_fato`` joined by ``link``; a filing Jev has not
+    scored yet (backfilled, or waiting for the next run) keeps its row with NaN scores."""
+    return fatos.join(notas, on="link")
+
+
+LIMIAR_FORTE = 0.5          # P(intensity Major or Extraordinary) for a filing to change a stock's light
+
+
+def semaforo(fatos: pd.DataFrame, tickers: Iterable[str], desde) -> pd.DataFrame:
+    """The light of each of ``tickers`` (index, app format) from its material filings (``com_notas_dos_fatos``)
+    delivered on or after ``desde``: ``cor`` "vermelho" for a filing whose most likely tone is bad with P(strong) >=
+    ``LIMIAR_FORTE``, with ``motivo`` (dd/mm + subject), ``data`` and ``link`` of the newest such filing. Information
+    only: nothing here reaches the weights (DECISOES 132)."""
+    # a panel file written before the scores were joined has no score columns: every filing reads as unscored
+    fatos = fatos.reindex(columns=list(dict.fromkeys([*fatos.columns, *COLUNAS_DA_NOTA_DE_FATO])))
+    luzes = {}
+    for ticker in tickers:
+        do_ticker = fatos[(fatos["ticker"] == ticker.removesuffix(".SA")) & (fatos["data"] >= desde)]
+        fortes = do_ticker[do_ticker["p_forte"] >= LIMIAR_FORTE]
+        for tom, cor in (("bad", "vermelho"), ("good", "verde")):
+            do_tom = fortes[fortes["tom_do_fato"] == tom]
+            if len(do_tom):
+                fato = do_tom.sort_values("data", kind="stable").iloc[-1]
+                luzes[ticker] = {"cor": cor, "motivo": _rotulo_do_fato(fato), "data": fato["data"],
+                                 "link": fato["link"]}
+                break
+        else:
+            pontuados = int(do_ticker["tom_do_fato"].notna().sum())
+            luzes[ticker] = {"cor": "amarelo", "data": None, "link": None, "motivo":
+                             f"neutro ({pontuados} fato{'s' if pontuados > 1 else ''} pontuado"
+                             f"{'s' if pontuados > 1 else ''})" if pontuados else "sem fato pontuado"}
+    return pd.DataFrame.from_dict(luzes, orient="index", columns=["cor", "motivo", "data", "link"])
+
+
+def _rotulo_do_fato(fato: pd.Series) -> str:
+    return f"{fato['data']:%d/%m} {fato['assunto'] if isinstance(fato['assunto'], str) else ''}".strip()
+
+
+LIMIAR_RELEVANTE = 0.5                 # the pre-registration's "relevant >= 0.5" (Test B)
 FUSO = "America/Sao_Paulo"
 TOPICOS_DO_PAINEL = ("election_politics", "monetary_policy", "fiscal_policy", "currency", "commodities_global",
                      "company_specific")
@@ -181,3 +240,26 @@ def janela_eleitoral(hoje: date) -> JanelaEleitoral | None:
         if hoje <= fim:
             return JanelaEleitoral(turno, (turno - hoje).days, inicio, fim, inicio <= hoje <= fim)
     return None
+
+
+def proxima_troca(calendario: pd.DatetimeIndex, registrada: date) -> date:
+    """About when paper-v2 registers the next portfolio: ``core.paper.PASSO`` lake sessions after ``registrada``,
+    counted as ``core.paper.rebalanceio_devido`` counts them, the sessions still to come as weekdays (holidays push
+    the real date later; paper-v2's own calendar decides)."""
+    from core.paper import PASSO
+    faltam = max(PASSO - int((calendario > pd.Timestamp(registrada)).sum()), 0)
+    return (calendario[-1] + pd.offsets.BDay(faltam)).date()
+
+
+def alertas_antes_da_troca(luzes: pd.DataFrame, registrada: date, proxima: date) -> list[str]:
+    """One line per stock of ``semaforo`` whose red filing came after the portfolio registered on ``registrada``:
+    the plan keeps its weights until paper-v2's next registration (about ``proxima``)."""
+    vermelhos = luzes[(luzes["cor"] == "vermelho") & (luzes["data"] > registrada)]
+    return [f"{ticker.removesuffix('.SA')} ficou vermelho em {linha['data']:%d/%m}, depois da carteira de "
+            f"{registrada:%d/%m}; próxima troca ~{proxima:%d/%m/%Y}" for ticker, linha in vermelhos.iterrows()]
+
+
+def ler_notas_dos_fatos(pasta: Path, desde: date) -> pd.DataFrame:
+    """The Jev scores of the CVM filings (``notas_por_fato``) in the lake's score files under ``pasta`` from
+    ``desde`` on (the scorer writes items and filings to the same daily files)."""
+    return notas_por_fato(linha for arquivo in _arquivos_desde(pasta / "scores", desde) for linha in _linhas(arquivo))

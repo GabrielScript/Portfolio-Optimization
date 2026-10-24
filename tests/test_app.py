@@ -699,3 +699,30 @@ def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch)
     assert not at.exception
     ordens = _ordens_alepha(at)
     assert (ordens.loc["BOVA11", "Ordem"], ordens.loc["IVVB11", "Ordem"]) == ("manter", "venda")
+
+
+def test_the_plan_shows_a_light_per_stock_and_flags_one_that_turned_red_without_changing_the_orders(monkeypatch):
+    # the user's goal of 2026-10-24 (DECISOES 132): display only, next to each stock of the plan
+    from datetime import timedelta
+    _, alvo = _conservadora_sintetica()
+    vermelho = alvo.index[0].removesuffix(".SA")
+    dia = date.today() - timedelta(days=2)
+    fatos = pd.DataFrame({"ticker": [vermelho], "empresa": ["X"], "categoria": ["Fato Relevante"],
+                          "assunto": ["Multa"], "data": [dia], "link": ["https://www.rad.cvm.gov.br/a"],
+                          "tom_do_fato": ["bad"], "p_ruim": [0.9], "p_bom": [0.0], "p_forte": [0.8]})
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_painel", lambda: (None, fatos, None))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    luzes = [df.value for df in at.dataframe if "Sinal" in df.value.columns]
+    assert len(luzes) == 1
+    luzes = luzes[0].set_index("Ticker")
+    assert set(luzes.index) == {t.removesuffix(".SA") for t in alvo.index}
+    assert luzes.loc[vermelho, "Sinal"] == "🔴 vermelho"
+    assert luzes.loc[vermelho, "Fatos da CVM"] == f"{dia:%d/%m} Multa"
+    assert set(luzes.drop(index=vermelho)["Sinal"]) == {"🟡 amarelo"}
+    assert set(luzes["Notícias e redes"]) == {"—"}
+    assert len([w for w in at.warning if f"{vermelho} ficou vermelho em {dia:%d/%m}" in w.value]) == 1
+    assert any("não muda os pesos" in c.value for c in at.caption)
+    assert set(_ordens_alepha(at)["Ordem"]) == {"compra"}

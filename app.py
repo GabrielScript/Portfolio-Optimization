@@ -454,8 +454,9 @@ def secao_conservadora(entradas: Entradas) -> None:
     posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}
     mes = alepha.mes_fiscal()
     tickers = tuple(dict.fromkeys((*alvo.index, *posicoes)))
-    janela = servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos.tail(
-        PREGOES_PARA_FECHAMENTO)
+    historico = servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos
+    janela = historico.tail(PREGOES_PARA_FECHAMENTO)
+    alepha.semaforo_do_plano(servicos.carregar_painel()[1], alvo.index, data, historico.index)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_alepha"):
         servicos.descartar_cotacoes(tickers, janela)
     with st.spinner("Buscando as cotações do dia…"):

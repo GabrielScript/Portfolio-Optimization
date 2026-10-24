@@ -81,6 +81,18 @@ All three are valid signals on the B3 (monthly IC 0.046–0.059, t ≈ 5), with 
 12–15 p.p. deeper drawdowns; none beats it or BOVA11 with confidence. Over this shorter window the Conservadora's
 edge is lower risk more than higher return; its pre-registered proof (2012 start) stands.
 
+### After v1.1 (2026-10-24): a light per stock of the plan
+
+Display only: the weights, the orders and the paper routines never read it. Under the Alepha plan, each of the 15
+stocks gets 🔴/🟡/🟢 from its CVM material filings ("Fato Relevante", "Comunicado ao Mercado") of the last 21
+sessions, each scored by Jev (`filings-v1`, every 2 hours, in the lake): red = the most likely tone is bad for the
+shareholders and P(strong effect on the price) >= 0.5; green = the same with a good tone; yellow = no strong filing,
+or none scored yet; red beats green. A stock that turned red after the registered portfolio gets a warning with the
+approximate date of the next rebalance (63 lake sessions; paper-v2 decides). The scores reach the deployed app as
+numbers in `lago/fatos_relevantes.parquet` (`scripts/painel_do_app.py`, the daily upkeep). Filings delivered before
+23/10/2026 have no score (backfilled), so the lights are yellow until new filings arrive. The news/social column
+shows "—" until the log's items carry a ticker (`items-v2`). The light was never tested as a sell rule.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

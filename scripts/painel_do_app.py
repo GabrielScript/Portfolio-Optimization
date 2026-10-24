@@ -2,9 +2,10 @@
 The deployed app's news/sentiment and filings panel files, from the lake's forward log and CVM IPE filings on D:
 (``core.sentimento``): ``lago/sentimento_diario.parquet`` (counts and Jev means per Brasília day, numbers only) and
 ``lago/fatos_relevantes.parquet`` (the material CVM filings of the app's stocks in the last ``DIAS_DE_FATOS`` days,
-public CVM data) and ``lago/fundamentos.parquet`` (multiples and 12-month dividend yield of each stock, from the
-lake's CVM statements). No headline or summary text goes to git: the raw text stays on D: (DECISOES 123); the local app
-reads the headlines from there. The daily upkeep (``scripts/manutencao.py``) runs this and commits both files.
+public CVM data, with Jev's tone and strength numbers of each scored filing for the per-stock light) and
+``lago/fundamentos.parquet`` (multiples and 12-month dividend yield of each stock, from the lake's CVM statements).
+No headline or summary text goes to git: the raw text stays on D: (DECISOES 123); the local app reads the headlines
+from there. The daily upkeep (``scripts/manutencao.py``) runs this and commits the files.
 
 Usage: .venv/Scripts/python -X utf8 scripts/painel_do_app.py [lake sentiment folder, default D:/b3-datalake/sentiment]
 """
@@ -34,13 +35,14 @@ def gerar(pasta: Path, exports: Path, tickers: list[str], hoje: date) -> tuple[p
     """The panel tables: the daily tone since the log began, the recent material filings of ``tickers`` and their
     fundamentals (``core.indicadores.tabela_de_fundamentos``, from the lake's exports in ``exports``)."""
     from core.indicadores import tabela_de_fundamentos
-    from core.sentimento import fatos_recentes, ler_log, tom_diario
+    from core.sentimento import com_notas_dos_fatos, fatos_recentes, ler_log, ler_notas_dos_fatos, tom_diario
     itens, notas = ler_log(pasta, INICIO_DO_LOG)
     diario = tom_diario(itens, notas).reset_index()
     ipe = pd.read_parquet(pasta / "ipe" / "ipe.parquet", columns=["codigo_cvm", "nome_companhia", "categoria",
                                                                   "assunto", "data_entrega", "link_download"])
     fatos = fatos_recentes(ipe, pd.read_parquet(exports / "sectors.parquet", columns=["issuer", "code_cvm"]),
                            tickers, hoje - timedelta(days=DIAS_DE_FATOS))
+    fatos = com_notas_dos_fatos(fatos, ler_notas_dos_fatos(pasta, INICIO_DO_LOG))
     fundamentos = pd.read_parquet(exports / "fundamentals.parquet",
                                   columns=["issuer", "account", "dt_refer", "value", "available_from", "sector"])
     for coluna in ("dt_refer", "available_from"):

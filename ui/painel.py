@@ -18,7 +18,7 @@ import streamlit as st
 from core.indicadores import risco_por_acao
 from core.macro import resumo_focus
 from core.sentimento import (P_DO_ESTUDO, RAZAO_DE_VOL_DO_ESTUDO, RODADAS_DO_ESTUDO, ROTULOS_DOS_TOPICOS,
-                             TOPICOS_DO_PAINEL, TURNOS_DE_2026, janela_eleitoral)
+                             TOPICOS_DO_PAINEL, TURNOS_DE_2026, janela_eleitoral, ultimo_fato)
 
 AVISO = ("Informação, não recomendação: nada aqui muda o plano do Fundo Alepha (a Conservadora registrada) nem as "
          "regras de risco. O tom das notícias e os fatos relevantes ainda não foram testados como sinal: o teste "
@@ -129,10 +129,7 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
     if fundamentos is not None:
         tabela = tabela.join(fundamentos.drop(columns=["Balanço de"]), on="Ticker")
     if fatos is not None and not fatos.empty:
-        ultimo_fato = fatos.sort_values("data").groupby("ticker").last()
-        tabela["Último fato relevante"] = tabela["Ticker"].map(
-            lambda ticker: (f"{ultimo_fato.at[ticker, 'data']:%d/%m} {ultimo_fato.at[ticker, 'assunto'] or ''}".strip()
-                            if ticker in ultimo_fato.index else ""))
+        tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
     st.dataframe(tabela, width="stretch", hide_index=True, height=420,
                  column_config={"Preço (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
                                 "Fechamento de": st.column_config.DateColumn(format="DD/MM/YYYY"),

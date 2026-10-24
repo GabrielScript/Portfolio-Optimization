@@ -62,3 +62,13 @@ def test_the_cache_stamp_changes_when_only_the_small_file_changes(tmp_path):
     antes = versao_dos_dados(tmp_path / "base.parquet", tmp_path / "recentes.parquet")
     os.utime(tmp_path / "recentes.parquet", ns=(1, 1))
     assert versao_dos_dados(tmp_path / "base.parquet", tmp_path / "recentes.parquet") != antes
+
+
+def test_a_stock_without_a_trade_on_the_base_s_last_session_is_rescaled_on_the_last_common_one():
+    # review finding 3: FIQE3 did not trade on 19/10 (NaN there) and paid R$ 0.10 on 20/10; the small file starts a
+    # few sessions earlier, so both files have 16/10 and the base is rescaled there
+    base = _quadro(["2026-10-15", "2026-10-16", "2026-10-19"], FIQE3=[6.0, 6.2, float("nan")])
+    recentes = _quadro(["2026-10-15", "2026-10-16", "2026-10-19", "2026-10-20"], FIQE3=[5.9, 6.1, float("nan"), 6.0])
+    emendado = emendar(base, recentes)
+    assert emendado.loc["2026-10-15", "FIQE3"] == pytest.approx(6.0 * 6.1 / 6.2)
+    assert emendado.loc["2026-10-20", "FIQE3"] == pytest.approx(6.0)

@@ -661,3 +661,17 @@ def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monke
     assert len(acoes) == 1 and len(acoes[0]) >= 100 and "Retorno 12m" in acoes[0].columns
     assert any("Selic" in df.value.index for df in at.dataframe if "Pesquisa" in df.value.columns)
     assert any("nada aqui muda o plano" in c.value for c in at.caption)
+
+
+def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch):
+    # review finding 2: the core kept in small-capital mode is BOVA11, not every ETF of the screen (IVVB11, SMAL11...)
+    from ui import alepha
+    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
+        {"ticker": ["BOVA11", "IVVB11"], "quantidade": [1, 1], "preco_medio": [10.0, 10.0]}))
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    at.sidebar.number_input(key="orcamento").set_value(50.0).run()
+    assert not at.exception
+    ordens = _ordens_alepha(at)
+    assert (ordens.loc["BOVA11", "Ordem"], ordens.loc["IVVB11", "Ordem"]) == ("manter", "venda")

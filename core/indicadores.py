@@ -41,14 +41,18 @@ PREGOES_NO_ANO = 252
 def risco_por_acao(precos: pd.DataFrame, referencia: str) -> pd.DataFrame:
     """Per column of ``precos`` (daily total-return closes, NaN on a session without trades): the last 252 sessions'
     return, annualized volatility and beta against ``referencia`` (BOVA11), and the maximum drawdown over the whole
-    window given."""
+    window given. A stock with no price at the start of the year has no 12-month return; the beta uses the sessions
+    where both the stock and ``referencia`` have a return."""
     retornos = precos.pct_change(fill_method=None).iloc[-PREGOES_NO_ANO:]
-    ano = precos.iloc[-PREGOES_NO_ANO - 1:]
+    corridos = precos.ffill()
     mercado = retornos[referencia]
-    beta = retornos.apply(lambda serie: serie.cov(mercado) / mercado.var())
-    return pd.DataFrame({"Retorno 12m": ano.ffill().iloc[-1] / ano.bfill().iloc[0] - 1,
+
+    def beta(serie: pd.Series) -> float:
+        juntos = pd.concat([serie, mercado], axis=1).dropna()
+        return float(juntos.iloc[:, 0].cov(juntos.iloc[:, 1]) / juntos.iloc[:, 1].var())
+    return pd.DataFrame({"Retorno 12m": corridos.iloc[-1] / corridos.iloc[-PREGOES_NO_ANO - 1] - 1,
                          "Vol anual": retornos.std() * np.sqrt(PREGOES_NO_ANO),
-                         "Beta": beta,
+                         "Beta": retornos.apply(beta),
                          "Queda máx.": (precos.ffill() / precos.ffill().cummax() - 1).min()})
 
 

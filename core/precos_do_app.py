@@ -5,7 +5,8 @@ big file is committed only at the paper routines' rebalances (~3 MB each time), 
 app would be up to a rebalance old.
 
 The lake's file is a total-return index anchored on the last close: each ex-date rescales the earlier sessions. The
-small file starts at the base's last session (one session of overlap), and the base is rescaled to it there.
+small file starts a few sessions before the base's last one (the overlap), and the base is rescaled to it on the last
+overlap session where a stock traded in both.
 
 Kept out of ``core/lago.py`` and ``core/market_data.py``, which are in the paper guards' paths: the paper routines
 read the big file directly, as before.
@@ -26,12 +27,13 @@ ARQUIVO_RECENTES = ARQUIVO_PRECOS.with_name("precos_recentes.parquet")
 
 def emendar(base: pd.DataFrame, recentes: pd.DataFrame) -> pd.DataFrame:
     """``base`` followed by the sessions of ``recentes`` after its last one (both: dates as index, one column per
-    security). Each column of ``base`` is rescaled by ``recentes`` / ``base`` on the base's last session, when both
-    have it (an ex-date between the files)."""
+    security). Each column of ``base`` is rescaled by ``recentes`` / ``base`` on the last session of the overlap where
+    both have a price (an ex-date between the files); a column with no common price is kept as it is."""
     ultima = base.index.max()
-    if ultima in recentes.index:
-        razao = (recentes.loc[ultima].reindex(base.columns) / base.loc[ultima]).fillna(1.0)
-        base = base * razao
+    comuns = base.loc[base.index.isin(recentes.index)]
+    if not comuns.empty:
+        razoes = recentes.reindex(index=comuns.index, columns=base.columns) / comuns
+        base = base * razoes.ffill().iloc[-1].fillna(1.0)
     return pd.concat([base, recentes.loc[recentes.index > ultima]])
 
 

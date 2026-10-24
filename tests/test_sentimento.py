@@ -151,3 +151,34 @@ def test_a_headline_link_that_is_not_http_or_https_is_dropped():
     links = manchetes(itens, notas)["link"].tolist()
     assert links[0] == "https://exame.com/a"
     assert pd.isna(links[1]) and pd.isna(links[2])
+
+
+def test_the_log_reader_skips_stray_file_names_and_score_files_older_than_the_window(tmp_path):
+    # review finding 7: a stray file must not break the panel, and the 10-minute refresh must not parse the whole
+    # score history (an item's score is written on or after its fetch day, so older score files hold none)
+    import json
+    from datetime import date
+    from core.sentimento import ler_log
+    (tmp_path / "raw" / "items").mkdir(parents=True)
+    (tmp_path / "scores").mkdir()
+    item = {"key": "a", "source": "exame", "kind": "feed", "fetched_at": "2026-10-23T15:00:00+00:00",
+            "title": "Pesquisa", "summary": "texto", "url": "https://exame.com/a"}
+    (tmp_path / "raw" / "items" / "2026-10-23.jsonl").write_text(json.dumps(item) + "\n", encoding="utf-8")
+    (tmp_path / "raw" / "items" / "backup.jsonl").write_text("{}\n", encoding="utf-8")
+    tom = {"negative": 0.0, "neutral": 1.0, "positive": 0.0, "not_applicable": 0.0}
+    velha = _nota("velho", 0.9, tom, TOPICO, 0.0, {"0": 1, "1": 0, "2": 0, "3": 0})
+    (tmp_path / "scores" / "2026-10-01.jsonl").write_text(json.dumps(velha) + "\n", encoding="utf-8")
+    (tmp_path / "scores" / "2026-10-23.part.jsonl").write_text("{}\n", encoding="utf-8")
+    itens, notas = ler_log(tmp_path, desde=date(2026, 10, 23))
+    assert itens["key"].tolist() == ["a"]
+    assert "velho" not in notas.index
+
+
+def test_the_last_filing_of_each_stock_keeps_its_own_date_and_subject_and_an_empty_subject_reads_blank():
+    # review finding 4: groupby().last() skipped the NaN subject and paired the newest date with an older subject
+    from datetime import date
+    from core.sentimento import ultimo_fato
+    fatos = pd.DataFrame({"ticker": ["PETR4", "PETR4", "VALE3"],
+                          "data": [date(2026, 10, 16), date(2026, 10, 10), date(2026, 10, 15)],
+                          "assunto": [None, "Produção 3T26", "Esclarecimento"]})
+    assert ultimo_fato(fatos).to_dict() == {"PETR4": "16/10", "VALE3": "15/10 Esclarecimento"}

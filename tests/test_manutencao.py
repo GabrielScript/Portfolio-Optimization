@@ -369,18 +369,19 @@ def _precos(datas: pd.DatetimeIndex) -> pd.DataFrame:
 
 def test_the_sessions_after_the_committed_price_file_are_committed_in_the_small_file(app):
     # the nightly rewrites lago/precos_diarios.parquet but nobody commits it between rebalances: the deployed app
-    # reads lago/precos_recentes.parquet, the sessions from the committed file's last one on (one of overlap)
+    # reads lago/precos_recentes.parquet, the sessions after the committed file's last one plus an overlap of up to
+    # 10 sessions before it (where the splice rescales the base)
     from scripts.manutencao import atualizar_recentes, git_em
     git = git_em(app)
     (app / "lago").mkdir()
-    _precos(pd.bdate_range("2026-10-15", "2026-10-19")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    _precos(pd.bdate_range("2026-09-01", "2026-10-19")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
     git("add", "lago/precos_diarios.parquet")
     git("commit", "-q", "-m", "marco")
-    _precos(pd.bdate_range("2026-10-15", "2026-10-22")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    _precos(pd.bdate_range("2026-09-01", "2026-10-22")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
     assert atualizar_recentes(app, git) == "pregões recentes: até 22/10/2026"
     assert git("show", "--name-only", "--format=%s", "HEAD").splitlines()[-1] == "lago/precos_recentes.parquet"
     recentes = pd.read_parquet(app / "lago" / "precos_recentes.parquet")
-    assert [str(d) for d in recentes["date"]] == ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22"]
+    assert [str(d) for d in recentes["date"]] == [str(d.date()) for d in pd.bdate_range("2026-10-06", "2026-10-22")]
     assert git("status", "--porcelain", "--", "lago").splitlines() == [" M lago/precos_diarios.parquet"]
     assert atualizar_recentes(app, git) == "pregões recentes: em dia"
 
@@ -393,9 +394,28 @@ def test_the_news_panel_files_are_rebuilt_and_committed_and_without_the_lakes_lo
     fundamentos = pd.DataFrame({"P/L": [5.7]}, index=["PETR4"])
     tabelas = (diario, fatos, fundamentos)
     assert atualizar_painel(app, git, tmp_path / "sem-log", lambda: tabelas) == "painel: sem o log do lago"
+
+    def nao_gerar():
+        raise AssertionError("no log, nothing to generate")
+    (app / "sem-log").mkdir()                                       # review finding 10: no stand-in path any more
+    assert atualizar_painel(app, git, None, nao_gerar) == "painel: sem o log do lago"
     (tmp_path / "log").mkdir()
     assert atualizar_painel(app, git, tmp_path / "log", lambda: tabelas) == "painel: 1 dia(s), 1 fato(s), 1 ação(ões)"
     assert git("show", "--name-only", "--format=%s", "HEAD").splitlines()[2:] == [
         "lago/fatos_relevantes.parquet", "lago/fundamentos.parquet", "lago/sentimento_diario.parquet"]
     assert pd.read_parquet(app / "lago" / "fundamentos.parquet").index.tolist() == ["PETR4"]
     assert atualizar_painel(app, git, tmp_path / "log", lambda: tabelas) == "painel: em dia"
+
+
+def test_a_nightly_file_with_no_session_after_the_committed_one_leaves_the_small_file_alone(app):
+    # review finding 5: the lake did not run (or the checkout's file is older than HEAD's): nothing is overwritten
+    from scripts.manutencao import atualizar_recentes, git_em
+    git = git_em(app)
+    (app / "lago").mkdir()
+    _precos(pd.bdate_range("2026-10-01", "2026-10-19")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    git("add", "lago/precos_diarios.parquet")
+    git("commit", "-q", "-m", "marco")
+    (app / "lago" / "precos_recentes.parquet").write_bytes(b"o bom")
+    _precos(pd.bdate_range("2026-10-01", "2026-10-16")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    assert atualizar_recentes(app, git) == "pregões recentes: o arquivo do lago não passa do commitado"
+    assert (app / "lago" / "precos_recentes.parquet").read_bytes() == b"o bom"

@@ -103,6 +103,7 @@ AJUDA_MODO = (
 # exemption.
 CUSTOS_DA_B3 = Custos(emolumentos=0.0003, impacto=1.0)
 ETFS_DA_TELA = frozenset(REFERENCIAS_DA_TELA)
+NUCLEO_DO_PEQUENO_CAPITAL = frozenset({BENCHMARK_ACOES})     # the ETF kept below the minimum capital (DECISOES 124)
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
 PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
@@ -477,8 +478,8 @@ def secao_conservadora(entradas: Entradas) -> None:
     custo = custo_com_liquidez(foto, CUSTOS_DA_B3, entradas.custo_bps)
     argumentos = (alvo, posicoes, precos, entradas.orcamento, regras, custo)
     try:
-        plano = (plano_com_nucleo(*argumentos, nucleo=ETFS_DA_TELA, mes=mes, etfs=ETFS_DA_TELA) if pequeno else
-                 plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA))
+        plano = (plano_com_nucleo(*argumentos, nucleo=NUCLEO_DO_PEQUENO_CAPITAL, mes=mes, etfs=ETFS_DA_TELA)
+                 if pequeno else plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA))
     except ValueError as erro:
         st.error(f"Plano indisponível: {erro}")
         return
@@ -488,14 +489,15 @@ def secao_conservadora(entradas: Entradas) -> None:
             zona=ZonaSemNegociacao(foto.set_index("security")["vol_diaria"].rename(lambda papel: f"{papel}.SA")))
     except ValueError:
         zona = None
-    violacoes = checar_carteira(pesos_finais(plano.ordens, patrimonio, ETFS_DA_TELA), setores)
+    violacoes = checar_carteira(pesos_finais(plano.ordens, patrimonio, NUCLEO_DO_PEQUENO_CAPITAL), setores)
     if violacoes:
         st.error("Plano recusado pelas regras de risco fixas: " + _descrever(violacoes))
         return
     if pequeno:
-        st.info(alepha.aviso_capital_pequeno(patrimonio, minimo, float(precos.reindex(alvo.index).sum()), len(alvo),
-                                             [ticker.removesuffix(".SA") for ticker in alvo.index
-                                              if plano.ordens.at[ticker, "alvo"] == 0]))
+        st.info(alepha.aviso_capital_pequeno(
+            patrimonio, minimo, float(precos.reindex(alvo.index).sum()), len(alvo),
+            [ticker.removesuffix(".SA") for ticker in alvo.index if plano.ordens.at[ticker, "alvo"] == 0],
+            QUANTIDADE_MINIMA_POR_ACAO, LIMITES.peso_maximo_acao, BENCHMARK_ACOES.removesuffix(".SA")))
     alepha.tabela_rebalanceio(plano, zona, patrimonio, None if foto is None else f"{foto['month'].iloc[0]:%m/%Y}",
                               entradas.custo_bps)
     if pequeno:

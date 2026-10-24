@@ -47,6 +47,7 @@ ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
+SOBREPOSICAO = 10           # committed sessions repeated in the small file (a stock may not trade on the last one)
 ARQUIVOS_DO_PAINEL = (Path("lago/sentimento_diario.parquet"), Path("lago/fatos_relevantes.parquet"),
                       Path("lago/fundamentos.parquet"))
 PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")           # the lake's news/social log and CVM IPE filings
@@ -224,16 +225,20 @@ def _no_head(raiz: Path, caminho: Path) -> bytes | None:
 
 
 def atualizar_recentes(raiz: Path, git: Git) -> str:
-    """Writes ``lago/precos_recentes.parquet`` = the sessions of the nightly's ``lago/precos_diarios.parquet`` from
-    the committed file's last session on (one of overlap: ``core.precos_do_app.emendar`` rescales there) and commits
-    it. The big file is committed only by the paper routines' rebalances, so this is what keeps the deployed app one
-    session old."""
+    """Writes ``lago/precos_recentes.parquet`` = the sessions of the nightly's ``lago/precos_diarios.parquet`` after
+    the committed file's last one, plus its last ``SOBREPOSICAO`` sessions (``core.precos_do_app.emendar`` rescales the
+    base there), and commits it; nothing when the nightly's file has no newer session. The big file is committed only
+    by the paper routines' rebalances, so this is what keeps the deployed app one session old."""
     commitado = _no_head(raiz, ARQUIVO_CALENDARIO)
     if commitado is None:
         return "pregões recentes: sem o arquivo de preços no HEAD"
-    ultima = pd.read_parquet(io.BytesIO(commitado), columns=["date"])["date"].max()
+    datas = pd.read_parquet(io.BytesIO(commitado), columns=["date"])["date"]
+    ultima = datas.max()
+    inicio = datas.sort_values().iloc[-SOBREPOSICAO:].iloc[0]       # the overlap where the splice rescales the base
     precos = pd.read_parquet(raiz / ARQUIVO_CALENDARIO)
-    recentes = precos.loc[precos["date"] >= ultima].reset_index(drop=True)
+    if not (precos["date"] > ultima).any():
+        return "pregões recentes: o arquivo do lago não passa do commitado"
+    recentes = precos.loc[precos["date"] >= inicio].reset_index(drop=True)
     destino = raiz / ARQUIVO_RECENTES
     if not destino.exists() or not pd.read_parquet(destino).equals(recentes):
         recentes.to_parquet(destino, index=False)
@@ -244,11 +249,11 @@ def atualizar_recentes(raiz: Path, git: Git) -> str:
     return f"pregões recentes: até {fim}"
 
 
-def atualizar_painel(raiz: Path, git: Git, pasta_do_log: Path,
+def atualizar_painel(raiz: Path, git: Git, pasta_do_log: Path | None,
                      gerar: Callable[[], tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]]) -> str:
     """Rebuilds the panel files (``scripts/painel_do_app.py``: the daily news tone, the recent CVM filings and the
     per-stock fundamentals; numbers and public filings only) and commits them; nothing without the lake's log."""
-    if not pasta_do_log.exists():
+    if pasta_do_log is None or not pasta_do_log.exists():
         return "painel: sem o log do lago"
     tabelas = gerar()
     for arquivo, tabela in zip(ARQUIVOS_DO_PAINEL, tabelas):
@@ -289,8 +294,7 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
-              ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log or raiz / "sem-log",
-                                                  lambda: _gerar_painel(raiz, pasta_do_log))),
+              ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log))),
               ("push", lambda: publicar(git)))
     for nome, passo in passos:
         try:

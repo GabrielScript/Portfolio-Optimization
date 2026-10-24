@@ -72,3 +72,16 @@ def test_banks_and_insurers_get_no_multiples_because_their_equity_line_is_not_th
     linha = tabela_de_fundamentos(fundamentos, mercado, proventos, ["ITUB4.SA"], date(2026, 10, 23)).loc["ITUB4"]
     assert np.isnan(linha["P/VP"]) and np.isnan(linha["ROE"]) and np.isnan(linha["P/L"])
     assert linha["DY 12m"] == pytest.approx(0.07)
+
+
+def test_a_stock_listed_inside_the_last_year_has_no_12m_return_and_its_beta_uses_the_common_sessions():
+    # review finding 6
+    from core.indicadores import risco_por_acao
+    datas = pd.bdate_range("2024-01-01", periods=600)
+    mercado = np.random.default_rng(5).normal(0.0005, 0.01, len(datas))
+    retornos = pd.DataFrame({"BOVA11.SA": mercado, "NOVA3.SA": 1.5 * mercado}, index=datas)
+    precos = 10 * (1 + retornos).cumprod()
+    precos.iloc[:-60, 1] = np.nan                                         # listed 60 sessions ago
+    risco = risco_por_acao(precos, "BOVA11.SA")
+    assert np.isnan(risco.loc["NOVA3.SA", "Retorno 12m"])
+    assert risco.loc["NOVA3.SA", "Beta"] == pytest.approx(1.5)

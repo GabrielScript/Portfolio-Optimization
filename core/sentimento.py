@@ -83,6 +83,14 @@ def fatos_recentes(ipe: pd.DataFrame, setores: pd.DataFrame, tickers: Iterable[s
     return fatos.sort_values(["data", "ticker"], ascending=[False, True], kind="stable").reset_index(drop=True)
 
 
+def ultimo_fato(fatos: pd.DataFrame) -> pd.Series:
+    """Ticker -> "dd/mm subject" of its newest filing (``fatos_recentes``), date and subject from the same row; a
+    filing without a subject shows only its date."""
+    ultimos = fatos.sort_values("data", kind="stable").drop_duplicates("ticker", keep="last").set_index("ticker")
+    return pd.Series({ticker: f"{linha['data']:%d/%m} {linha['assunto'] if isinstance(linha['assunto'], str) else ''}"
+                     .strip() for ticker, linha in ultimos.iterrows()}, dtype="object")
+
+
 def link_seguro(url) -> str | None:
     """``url`` when it is an http(s) address, else None: the links come from third-party feeds and files, and a
     ``javascript:`` or ``data:`` URL must never become a clickable link on the screen."""
@@ -123,14 +131,27 @@ def _linhas(arquivo: Path):
                 continue        # a killed run's partial line (the lake's collector skips it too)
 
 
+def _arquivos_desde(pasta: Path, desde: date) -> list[Path]:
+    """The daily ``YYYY-MM-DD.jsonl`` files of ``pasta`` from ``desde`` on; any other file name is skipped."""
+    arquivos = []
+    for arquivo in sorted(pasta.glob("*.jsonl")):
+        try:
+            dia = date.fromisoformat(arquivo.stem)
+        except ValueError:
+            continue
+        if dia >= desde:
+            arquivos.append(arquivo)
+    return arquivos
+
+
 def ler_log(pasta: Path, desde: date) -> tuple[pd.DataFrame, pd.DataFrame]:
     """The lake's log under ``pasta`` (``D:/b3-datalake/sentiment``): the items of the daily files from ``desde`` on
-    (``COLUNAS_DO_ITEM``, no summary text) and the Jev scores of every file (``notas_por_item``)."""
-    linhas = [linha for arquivo in sorted((pasta / "raw" / "items").glob("*.jsonl"))
-              if date.fromisoformat(arquivo.stem) >= desde for linha in _linhas(arquivo)]
+    (``COLUNAS_DO_ITEM``, no summary text) and their Jev scores (``notas_por_item``). Score files are dated by the
+    scoring day, never before the fetch day, so only those from ``desde`` on are read."""
+    linhas = [linha for arquivo in _arquivos_desde(pasta / "raw" / "items", desde) for linha in _linhas(arquivo)]
     itens = pd.DataFrame([{coluna: linha.get(coluna) for coluna in COLUNAS_DO_ITEM} for linha in linhas],
                          columns=list(COLUNAS_DO_ITEM)).drop_duplicates("key")
-    notas = notas_por_item(linha for arquivo in sorted((pasta / "scores").glob("*.jsonl"))
+    notas = notas_por_item(linha for arquivo in _arquivos_desde(pasta / "scores", desde)
                            for linha in _linhas(arquivo))
     return itens, notas
 

@@ -36,6 +36,26 @@ fund offered to third parties: CVM Resolution 175/2022). What v1.0 is:
   uses only); `write_gold` empties before inserting (staging + swap); `ler_universo` month normalization (PLAN line
   198); python-bcb 0.4.0 in the lake without the 429 error class.
 
+## 0.1 After v1.0 (2026-10-23, evening): what changed on the screen
+
+- **Election-window study** (pre-registered `a7a7f10`, run once `25a1ca1`, `docs/eleicao-2026-10-23.txt`): over 10
+  rounds of 2006-2022, the Ibovespa's volatility in sessions 0 to +4 after the vote was x1.43 that of sessions -60 to
+  -11, 10 of 10 rounds above the placebo median, p = 0.0013: election weeks are more volatile. Direction was printed,
+  not tested. Not a strategy configuration: N unchanged.
+- **Small capital** (the user's decision, DECISOES 124): below the minimum capital (2 shares of each of the 15
+  names) the Fundo Alepha plan keeps the held BOVA11 and buys the Conservadora one share at a time, most underweight
+  first, with the 20% and 30% caps measured on the whole patrimony. Far from the tested portfolio until ~R$ 1,870.
+- **Fresher prices online:** the daily upkeep also commits `lago/precos_recentes.parquet` (the sessions after the
+  committed price file), spliced in by `core/precos_do_app.py`: the deployed app is one session old at most.
+- **The Conservadora's backtest by period and calendar year** on the Fundo Alepha section (whole, last 5 and 3
+  years, every year; `docs/dados/conservadora-curvas-2026-10-23.parquet`).
+- **Market panel, information only:** election timing, the news tone of the forward log (Jev), the CVM material
+  filings of every stock, the Focus survey and BCB series (live) and a table of all 181 stocks (risk from the prices,
+  multiples and dividend yield from the CVM statements). Nothing in it reaches the plan; the tone's test reads in
+  ~October 2027 (`docs/preregistro-sentimento-2026-10-23.md`, addendum).
+- **Sidebar:** "Todos os ativos (181)" ticked by default; a "Fundo Alepha" group (the fields that change the plan)
+  and an "Estudo" group that says it does not.
+
 ## 1. Onde estamos
 
 | Parte | Situação |

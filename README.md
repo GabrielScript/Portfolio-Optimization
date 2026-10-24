@@ -36,6 +36,19 @@ not investment advice (CVM Resolution 175/2022 covers funds; Resolution 20/2021 
   notification asks (a `git switch main` or a `git pull`). Further research (meta-labeling, a Monte Carlo bench, a
   news/filings veto, an election-window study) is optional and each item needs its own pre-registration.
 
+### After v1.0 (2026-10-23, evening)
+
+- **Start with little money:** below ~R$ 1,870 the Fundo Alepha plan keeps the BOVA11 you hold and buys the
+  Conservadora's stocks one share at a time (fractional market), most underweight first, each stock at most 20% of
+  everything you hold. The screen says which names wait for more capital and that the portfolio is far from the
+  tested one until then.
+- **Prices one session old at most** on the deployed app (`lago/precos_recentes.parquet`, committed by the daily
+  upkeep) plus the 15-minute-delayed quote for the plan.
+- **On the screen:** the Conservadora's backtest by period and calendar year (bad years included), and a market panel
+  with the election timing (the pre-registered study: election weeks x1.43 more volatile, p 0.0013, direction not
+  tested), the news tone of the forward log scored by Jev, the CVM material filings, the Focus survey, and a table of
+  all 181 stocks with risk, multiples and dividend yield. Information only: none of it changes the plan.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas
@@ -278,6 +291,11 @@ Portfolio-Optimization/
 │   ├── execucao.py           #   Curva refeita em reais com custo por liquidez, IR e valor de saída (S4)
 │   ├── rebalanceio.py        #   Orders from the current positions: lots, cost, month IR, no-trade zone (S4, v1.0)
 │   ├── volatilidade.py       #   Annualized and downside volatility (rerun and paper-v2's secondary criterion)
+│   ├── periodos.py           #   The Conservadora's frozen results by period and calendar year
+│   ├── precos_do_app.py      #   Committed price file + the recent sessions (deployed app)
+│   ├── sentimento.py         #   News tone (Jev), CVM filings, election timing: information only
+│   ├── macro.py              #   Focus survey summary: information only
+│   ├── indicadores.py        #   Per-stock multiples, dividend yield and risk: information only
 │   ├── growth.py             #   Growth Score (Yahoo/CVM), fora da tela até ser validado
 │   ├── focus.py              #   Expectativas Focus (em desenvolvimento)
 │   ├── tesouro.py            #   Curva prefixada do Tesouro (em desenvolvimento)
@@ -285,6 +303,7 @@ Portfolio-Optimization/
 ├── ui/
 │   ├── servicos.py           # Cache do Streamlit com chaves explícitas
 │   ├── alepha.py             # Fundo Alepha plan blocks: positions, month IR, orders table, CVM note
+│   ├── painel.py             # Market panel: election timing, news, macro and every stock
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)
@@ -307,7 +326,9 @@ Portfolio-Optimization/
 │   ├── rerun_conservadora.py         # S2.1 rerun on the corrected lake, with both volatilities (descriptive)
 │   ├── avaliar_zona.py               # No-trade zone with vs without, pre-registered (run: information only)
 │   ├── liquidez_do_app.py            # The app's liquidity snapshot (lago/liquidez.parquet), rebuilt by the upkeep
-│   ├── manutencao.py                 # Daily upkeep: paper-v2 readings, liquidity snapshot, commit + push of main
+│   ├── manutencao.py                 # Daily upkeep: paper-v2 readings, liquidity, recent prices, panel, push
+│   ├── painel_do_app.py              # The market panel's files from the lake's log, filings and statements
+│   ├── curvas_conservadora.py        # The frozen rerun's daily curves (results by period and year)
 │   ├── avisar.ps1                    # Windows notification of the watchdog and the upkeep
 │   ├── vigia.ps1                     # 12h watchdog of the lake, paper, paper-v2 and upkeep routines
 │   ├── paper_v2.py                   # Paper-v2 da Conservadora: rotina e leitura, pré-registrado
@@ -335,7 +356,11 @@ Portfolio-Optimization/
 │   └── dados/                    # Exports do lago fixados pelos pré-registros (com SHA256SUMS)
 ├── lago/
 │   ├── precos_diarios.parquet    # Preços diários de retorno total publicados pelo b3-datalake
-│   └── liquidez.parquet          # Last closed month's half spread, daily vol and median volume (order costs)
+│   ├── liquidez.parquet          # Last closed month's half spread, daily vol and median volume (order costs)
+│   ├── precos_recentes.parquet   # The sessions after the committed price file (daily upkeep)
+│   ├── sentimento_diario.parquet # News tone per day (numbers only)
+│   ├── fatos_relevantes.parquet  # CVM material filings of the app's stocks, last 90 days
+│   └── fundamentos.parquet       # Per-stock multiples and 12-month dividend yield
 ├── tests/                    # Testes com pytest, sem rede (o app inteiro roda via AppTest com dados sintéticos)
 └── requirements.txt
 ```

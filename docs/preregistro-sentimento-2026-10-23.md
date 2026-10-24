@@ -44,3 +44,17 @@ before any score exists. DECISOES 123. Collection only: nothing reaches the opti
 
 Gaps of more than a day without items, a source answering errors for more than a week, or a scored share below 90% of
 items. The watchdog (`scripts/vigia.ps1`) flags a log with no successful run in 6 hours.
+
+## Addendum, 2026-10-23 (later the same day): shown on the screen, at the user's request
+
+The user asked to see the timing, news and sentiment on the political (election) and macro scenarios for every stock
+in the app (DECISOES 124). The text above said "nothing reaches ... the app"; that changes for display only:
+
+- The app shows the daily counts and Jev means (`lago/sentimento_diario.parquet`), the material CVM filings of its
+  stocks (`lago/fatos_relevantes.parquet`) and, on the PC with the lake's disk, the headlines (title and link only).
+  The deployed app gets numbers and public CVM filings, never the raw text (DECISOES 123).
+- Nothing reaches the optimizer, the paper routines, the Fundo Alepha plan or the risk rules. The screen says the
+  tone is untested.
+- Tests A and B, their rules, data and dates are unchanged; N stays until one of them runs. Watching the forward log
+  cannot leak into Test A (backfilled filings) and Test B's outcome (future returns) is unknown when the screen shows
+  a day's tone.

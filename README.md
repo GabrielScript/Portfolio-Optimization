@@ -61,6 +61,26 @@ which runs and reports by itself.
   recent prices and the market panel's files, committed and pushed, so the deployed app shows the day's close the
   same evening.
 
+### After v1.1 (2026-10-24): classic strategies compared
+
+Research only; the Alepha plan (the Conservadora) does not change. `scripts/avaliar_classicas.py` (pre-registered,
+`core/classicas.py`, output `docs/classicas-2026-10-24.txt`) runs Piotroski's F-score, Greenblatt's Magic Formula and
+Carlisle's Acquirer's Multiple against the Conservadora on the same engine: lake universe without survivorship bias,
+CVM statements point-in-time (the lake now also exports the gross profit, DRE 3.03), 15 names, 4 per sector, every
+63 sessions, 10 bps, first decision 01/2014.
+
+| 2014–10/2026 (3 start dates) | CAGR | Max drawdown | Vol | P[> BOVA11] |
+|---|---|---|---|---|
+| Piotroski F-score | 13.3–19.3% | −54% to −57% | 24% | 0.64–0.93 |
+| Acquirer's Multiple | 16.0–18.1% | −54% to −56% | 24% | 0.83–0.89 |
+| Magic Formula | 12.7–17.1% | −52% to −54% | 24% | 0.60–0.84 |
+| **Conservadora (Alepha)** | **15.7–19.8%** | **−40% to −42%** | **19%** | 0.78–0.94 |
+| BOVA11 | 11.7–12.7% | −47% | 24% | — |
+
+All three are valid signals on the B3 (monthly IC 0.046–0.059, t ≈ 5), with returns like the Conservadora's but
+12–15 p.p. deeper drawdowns; none beats it or BOVA11 with confidence. Over this shorter window the Conservadora's
+edge is lower risk more than higher return; its pre-registered proof (2012 start) stands.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

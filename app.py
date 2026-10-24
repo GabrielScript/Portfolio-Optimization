@@ -399,8 +399,8 @@ def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
     teto = peso_maximo * entradas.orcamento
     necessarias = math.ceil(1.0 / peso_maximo - 1e-9)        # menos que isso não soma 100% com o teto
     if len(compraveis) < necessarias:
-        st.error(f"Com R$ {entradas.orcamento:,.2f} e peso máximo de {peso_maximo:.0%}, cada ação vai até "
-                 f"R$ {teto:,.2f}: só {len(compraveis)} cabem com {QUANTIDADE_MINIMA_POR_ACAO} unidades, e a "
+        st.error(f"Com R\\$ {entradas.orcamento:,.2f} e peso máximo de {peso_maximo:.0%}, cada ação vai até "
+                 f"R\\$ {teto:,.2f}: só {len(compraveis)} cabem com {QUANTIDADE_MINIMA_POR_ACAO} unidades, e a "
                  f"carteira precisa de {necessarias}. Aumente o valor a investir ou o peso máximo.")
         st.stop()
     caras = [t.replace(".SA", "") for t in precos.columns if t not in compraveis]
@@ -501,8 +501,8 @@ def secao_conservadora(entradas: Entradas) -> None:
     alepha.tabela_rebalanceio(plano, zona, patrimonio, None if foto is None else f"{foto['month'].iloc[0]:%m/%Y}",
                               entradas.custo_bps)
     if pequeno:
-        st.warning(f"Com R$ {patrimonio:,.2f} a carteira fica longe da carteira testada ({len(alvo)} nomes com pesos "
-                   f"iguais, R$ 10 mil na prova final): menos nomes e pesos desiguais, mais risco de cada empresa.")
+        st.warning(f"Com R\\$ {patrimonio:,.2f} a carteira fica longe da carteira testada ({len(alvo)} nomes com pesos "
+                   f"iguais, R\\$ 10 mil na prova final): menos nomes e pesos desiguais, mais risco de cada empresa.")
 
 
 def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:

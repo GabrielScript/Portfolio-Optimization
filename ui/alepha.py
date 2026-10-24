@@ -119,8 +119,8 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
               delta_color="off", delta_arrow="off", border=True)
     excesso = plano.vendas_de_acoes_no_mes - ISENCAO_DE_VENDAS
     if excesso > 0 and plano.ir_do_mes > 0:
-        st.warning(f"As vendas de ações do mês somam R$ {plano.vendas_de_acoes_no_mes:,.2f}, acima de R$ 20 mil: o "
-                   f"ganho do mês inteiro paga 15%. Adiar R$ {excesso:,.2f} de vendas para o mês seguinte mantém a "
+        st.warning(f"As vendas de ações do mês somam R\\$ {plano.vendas_de_acoes_no_mes:,.2f}, acima de R\\$ 20 mil: o "
+                   f"ganho do mês inteiro paga 15%. Adiar R\\$ {excesso:,.2f} de vendas para o mês seguinte mantém a "
                    "isenção (as compras que dependem delas esperam junto).")
     fonte = (f"liquidez de {mes_da_liquidez} do lago (emolumentos de 0,030% + meio spread + impacto pela raiz do "
              f"tamanho, o modelo da prova final); papel sem medida: {custo_bps:.0f} bps" if mes_da_liquidez else
@@ -131,7 +131,7 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
     if zona is not None:
         st.caption("Zona sem negociação: só informativa. O teste pré-registrado de 23/10/2026 "
                    "(docs/zona-2026-10-23.txt) não passou: pular os reajustes cortou o custo, mas o retorno caiu numa "
-                   "das 3 fases com R$ 10 mil e em todas com R$ 100 mil. O plano manda todas as ordens.")
+                   "das 3 fases com R\\$ 10 mil e em todas com R\\$ 100 mil. O plano manda todas as ordens.")
 
 
 def _rotulo_do_ano(ano: int, datas: pd.DatetimeIndex) -> str:

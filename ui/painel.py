@@ -105,7 +105,7 @@ def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_
     st.dataframe(resumo, width="stretch",
                  column_config={"Pesquisa": st.column_config.DateColumn(format="DD/MM/YYYY")},
                  alt="Mediana do Focus para este ano e o próximo e a mudança em 4 semanas")
-    st.caption("Focus: mediana das projeções do mercado (Selic e PIB em % a.a., IPCA em %, câmbio em R$/US$ no fim do "
+    st.caption("Focus: mediana das projeções do mercado (Selic e PIB em % a.a., IPCA em %, câmbio em R\\$/US\\$ no fim do "
                "ano). Os filtros macro foram testados no BOVA11 e não passaram (DECISOES 112): aqui é contexto.")
 
 

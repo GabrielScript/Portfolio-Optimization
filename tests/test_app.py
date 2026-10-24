@@ -1,5 +1,6 @@
 """App inteiro via AppTest, SEM rede: os carregadores de ``ui.servicos`` viram dados sintéticos."""
 
+import re
 from dataclasses import replace
 from datetime import date
 from pathlib import Path
@@ -555,6 +556,25 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
     assert set(ordens["Ordem"]) == {"compra"}
 
+
+
+def test_no_screen_text_call_has_two_bare_dollar_signs():
+    # Streamlit renders "$...$" as LaTeX: the live app showed "R$ 10 mil ... R$ 100 mil" and "R$/US$" as math
+    # (2026-10-24). Most of these texts only appear on real data, so the source is read: in every st.<text> call
+    # of the app and ui/, at most one "$" may be left unescaped
+    import ast
+    chamadas_de_texto = {"markdown", "caption", "warning", "info", "error", "success", "write"}
+    achados = []
+    for arquivo in [APP, *sorted((APP.parent / "ui").glob("*.py"))]:
+        for no in ast.walk(ast.parse(arquivo.read_text(encoding="utf-8"))):
+            if not (isinstance(no, ast.Call) and isinstance(no.func, ast.Attribute)
+                    and no.func.attr in chamadas_de_texto and no.args):
+                continue
+            literais = "".join(c.value for c in ast.walk(no.args[0])
+                               if isinstance(c, ast.Constant) and isinstance(c.value, str))
+            if len(re.findall(r"(?<!\\)\$", literais)) >= 2:
+                achados.append(f"{arquivo.name}:{no.lineno}")
+    assert achados == []
 
 def test_from_the_held_positions_the_plan_sells_a_name_outside_the_registration_at_its_average_cost(monkeypatch):
     from ui import alepha

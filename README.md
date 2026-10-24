@@ -47,7 +47,10 @@ which runs and reports by itself.
   everything you hold. The screen says which names wait for more capital and that the portfolio is far from the
   tested one until then.
 - **Prices one session old at most** on the deployed app (`lago/precos_recentes.parquet`, committed by the daily
-  upkeep) plus the 15-minute-delayed quote for the plan.
+  upkeep) plus the 15-minute-delayed quote for the plan. Fix of 2026-10-24: Yahoo's 1-minute bars stop at 16:54,
+  before B3's closing auction, so once the lake has a session's close the plan uses that official close
+  (`precos_do_app.com_fechamento_oficial`). Between the auction and the 22:30 upkeep the plan still shows the last
+  pre-auction trade (usually within 1% of the close).
 - **On the screen:** the Conservadora's backtest by period and calendar year (bad years included), and a market panel
   with the election timing (the pre-registered study: election weeks x1.43 more volatile, p 0.0013, direction not
   tested), the news tone of the forward log scored by Jev, the CVM material filings, the Focus survey, and a table of

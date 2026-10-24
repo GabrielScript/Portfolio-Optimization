@@ -74,3 +74,19 @@ def test_the_conservadoras_sectors_come_from_the_lakes_sectors_of_the_latest_pap
         pd.DataFrame({"issuer": ["ITSA", "PETR"], "code_cvm": [1, 2], "setor_ativ": ["x", "y"],
                       "sector": [setor, None]}).to_parquet(tmp_path / marco / "sectors.parquet")
     assert setores_do_lago(("ITSA4.SA", "PETR4.SA"), tmp_path) == {"ITSA4.SA": "Financeiro"}
+
+
+def test_the_plan_s_quotes_take_the_lake_s_official_close_over_a_bar_of_the_same_session(monkeypatch):
+    # the live app on 24/10/2026 priced PETR4 at Yahoo's 16:54 bar (58.83), not B3's close of 23/10 (58.68)
+    from core import market_data
+    from ui import servicos
+
+    barra = pd.Timestamp("2026-10-23 16:54", tz="America/Sao_Paulo")
+    monkeypatch.setattr(market_data, "baixar_ultimos_negocios",
+                        lambda tickers: pd.DataFrame({"preco": [58.83], "horario": [barra]}, index=["PETR4.SA"]))
+    janela = pd.DataFrame({"PETR4.SA": [57.83, 58.68]}, index=pd.to_datetime(["2026-10-22", "2026-10-23"]))
+    servicos.carregar_cotacoes.clear()
+    cotacoes = servicos.carregar_cotacoes(("PETR4.SA",), janela)
+    servicos.carregar_cotacoes.clear()
+    assert cotacoes.loc["PETR4.SA", "preco"] == 58.68
+    assert cotacoes.loc["PETR4.SA", "fonte"] == market_data.FONTE_FECHAMENTO

@@ -128,8 +128,10 @@ def carregar_selic(dia: date) -> market_data.TaxaSelic:
 
 @st.cache_data(ttl=5 * 60, show_spinner=False, max_entries=16)
 def carregar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
-    """Último negócio do dia (Yahoo, ~15 min de atraso); sem ele, o último fechamento de ``precos_recentes``."""
-    return market_data.cotacoes_atuais(list(tickers), precos_recentes)
+    """Último negócio do dia (Yahoo, ~15 min de atraso); sem ele, ou quando o lago já tem o fechamento daquele pregão
+    (a barra de 1 min para antes do leilão de fechamento), o último fechamento de ``precos_recentes``."""
+    return precos_do_app.com_fechamento_oficial(market_data.cotacoes_atuais(list(tickers), precos_recentes),
+                                                precos_recentes)
 
 
 def descartar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> None:

@@ -599,3 +599,37 @@ def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(m
     assert not at.exception
     assert not [e for e in at.error if e.value.startswith("Plano indisponível")]
     assert set(_ordens_alepha(at).index) == {t.removesuffix(".SA") for t in alvo.index}
+
+
+def test_all_assets_is_ticked_by_default_and_the_sidebar_says_what_each_group_changes(monkeypatch):
+    # the user's request of 2026-10-23: "Todos os ativos" checked by default; the study's selectors do not change
+    # the Fundo Alepha plan, and the sidebar says so
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert at.sidebar.checkbox(key="todos").value is True
+    textos = [m.value for m in at.sidebar.markdown] + [c.value for c in at.sidebar.caption]
+    assert any("não mudam o plano do Fundo Alepha" in texto for texto in textos)
+
+
+def _curvas_sinteticas() -> pd.DataFrame:
+    datas = pd.bdate_range("2019-01-01", "2026-10-16")
+    crescimento = np.linspace(1.0, 3.0, len(datas))
+    return pd.concat([pd.DataFrame({"fase": fase, "date": datas, "Conservadora": crescimento * (1 + fase / 1000),
+                                    "BOVA11": np.linspace(1.0, 2.0, len(datas))}) for fase in (0, 21, 42)],
+                     ignore_index=True)
+
+
+def test_the_fundo_alepha_section_shows_the_conservadoras_results_by_period_and_calendar_year(monkeypatch):
+    # A2 (user's request of 2026-10-23): the frozen backtest by period (whole, last 5 and 3 years) and by year
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    periodos = [df.value for df in at.dataframe if "Período" in df.value.columns]
+    assert len(periodos) == 1
+    assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
+    anos = [df.value for df in at.dataframe if "Ano" in df.value.columns]
+    assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 16/10)"

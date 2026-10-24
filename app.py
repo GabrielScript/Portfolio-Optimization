@@ -134,7 +134,21 @@ class CarteiraCalculada:
 
 def ler_sidebar() -> Entradas:
     with st.sidebar:
-        st.markdown("## Parâmetros")
+        st.markdown("## Fundo Alepha")
+        st.caption("O plano de dinheiro real: a Conservadora registrada no paper-v2 (15 ações, pesos iguais). Estes "
+                   "três campos mudam o plano.")
+        orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
+                                    key="orcamento")
+        modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
+                                          default=MODO_CONSERVADORA, key="modo_plano", help=AJUDA_MODO)
+        custo = st.slider("Custo de transação (bps por lado)", 0, 50, 10, key="custo_bps",
+                          help="Reserva do plano e custo do papel sem a foto de liquidez do lago; no estudo, o custo "
+                               "do walk-forward.")
+
+        st.markdown("## Estudo")
+        st.caption("Carteira de hoje e walk-forward, mais abaixo na página: estes seletores mudam o estudo e não "
+                   "mudam o plano do Fundo Alepha (a Conservadora tem regras fixas, testadas antes). Cada mudança "
+                   "recalcula o estudo: com todos os ativos, leva alguns minutos.")
         objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
                                 key="objetivo")
         com_kelly = objetivo in (Objetivo.KELLY.value, NUCLEO_SATELITE)
@@ -148,14 +162,12 @@ def ler_sidebar() -> Entradas:
                                     disabled=objetivo != NUCLEO_SATELITE, help=AJUDA_SATELITE) / 100
         teto_vol = round(LIMITES.vol_maxima * 100)
         vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, teto_vol, teto_vol, 5, key="vol_maxima") / 100
-        orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
-                                    key="orcamento")
-        modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
-                                          default=MODO_CONSERVADORA, key="modo_plano", help=AJUDA_MODO)
 
         st.markdown("### Universo")
-        setores = st.multiselect("Setores (vazio = lista líquida)", SETORES, key="setores")
-        todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=False)
+        setores = st.multiselect("Setores (vazio = todos os ativos ou a lista líquida)", SETORES, key="setores")
+        todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=True, key="todos",
+                            disabled=bool(setores), help="Desmarcado: só a lista líquida (mais rápido). Com setores "
+                                                         "escolhidos, valem os setores.")
 
         with st.expander("Avançado"):
             n_max = st.slider("Máximo de ativos", 3, 30, 10, key="n_ativos_max",
@@ -175,7 +187,6 @@ def ler_sidebar() -> Entradas:
             reamostrar = st.checkbox("Reamostragem de μ (bagging, B=100)", value=REAMOSTRAGEM_PADRAO,
                                      key="reamostrar", disabled=objetivo != Objetivo.KELLY.value,
                                      help=AJUDA_REAMOSTRAGEM)
-            custo = st.slider("Custo de transação (bps por lado)", 0, 50, 10)
 
     if setores:
         acoes = get_tickers_by_setor(setores)
@@ -223,6 +234,7 @@ def main() -> None:
     entradas = ler_sidebar()
     if entradas.modo_plano == MODO_CONSERVADORA:    # the real-money plans use only the amount and the cost: first
         secao_conservadora(entradas)
+        alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora())
         st.markdown("---")
     elif entradas.modo_plano == MODO_DINHEIRO_REAL:
         secao_dinheiro_real(entradas, get_ticker_info())

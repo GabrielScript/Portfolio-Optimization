@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from collections.abc import Iterable
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 
@@ -122,3 +123,30 @@ def ler_log(pasta: Path, desde: date) -> tuple[pd.DataFrame, pd.DataFrame]:
     notas = notas_por_item(linha for arquivo in sorted((pasta / "scores").glob("*.jsonl"))
                            for linha in _linhas(arquivo))
     return itens, notas
+
+
+# The election-window study (scripts/evento_eleicao.py, docs/eleicao-2026-10-23.txt, pre-registered): 10 rounds of
+# 2006-2022; the volatility of sessions 0 to +4 after the vote against sessions -60 to -11: x1.43, p = 0.0013.
+# Direction was printed, never tested.
+TURNOS_DE_2026 = (date(2026, 10, 4), date(2026, 10, 25))
+RAZAO_DE_VOL_DO_ESTUDO, P_DO_ESTUDO, RODADAS_DO_ESTUDO = 1.43, 0.0013, 10
+SESSOES_DA_JANELA = 5
+
+
+@dataclass(frozen=True)
+class JanelaEleitoral:
+    turno: date             # the vote (a Sunday)
+    dias_ate: int           # calendar days from today (negative after it)
+    janela_inicio: date     # session 0: the first weekday after the vote
+    janela_fim: date        # session +4
+    dentro: bool            # today is in sessions 0 to +4
+
+
+def janela_eleitoral(hoje: date) -> JanelaEleitoral | None:
+    """The next round of 2026 whose studied window (sessions 0 to +4) has not ended, or None after the last one."""
+    for turno in TURNOS_DE_2026:
+        sessoes = pd.bdate_range(pd.Timestamp(turno) + pd.Timedelta(days=1), periods=SESSOES_DA_JANELA)
+        inicio, fim = sessoes[0].date(), sessoes[-1].date()
+        if hoje <= fim:
+            return JanelaEleitoral(turno, (turno - hoje).days, inicio, fim, inicio <= hoje <= fim)
+    return None

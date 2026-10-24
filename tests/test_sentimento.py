@@ -124,3 +124,14 @@ def test_a_cvm_code_with_two_issuer_prefixes_maps_to_the_one_the_app_lists():
                         "assunto": ["x"], "data_entrega": [date(2026, 10, 10)], "link_download": ["l1"]})
     setores = pd.DataFrame({"issuer": ["ELET", "AXIA"], "code_cvm": [2437, 2437]})
     assert fatos_recentes(ipe, setores, ["AXIA3.SA"], desde=date(2026, 10, 1))["ticker"].tolist() == ["AXIA3"]
+
+
+def test_the_election_timing_counts_the_days_to_the_runoff_and_names_the_studied_window():
+    from datetime import date
+    from core.sentimento import janela_eleitoral
+    antes = janela_eleitoral(date(2026, 10, 23))
+    assert (antes.turno, antes.dias_ate) == (date(2026, 10, 25), 2)
+    assert (antes.janela_inicio, antes.janela_fim) == (date(2026, 10, 26), date(2026, 10, 30))
+    assert not antes.dentro
+    assert janela_eleitoral(date(2026, 10, 28)).dentro
+    assert janela_eleitoral(date(2026, 11, 3)) is None                    # after the window: nothing to show

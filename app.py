@@ -40,7 +40,7 @@ from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limi
 from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_minimo, custo_com_liquidez,  # noqa: E402
                               pesos_finais, plano_com_nucleo, plano_de_rebalanceio, posicoes_da_tabela)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
-from ui import alepha, secoes, servicos  # noqa: E402
+from ui import alepha, painel, secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
@@ -239,6 +239,8 @@ def main() -> None:
     elif entradas.modo_plano == MODO_DINHEIRO_REAL:
         secao_dinheiro_real(entradas, get_ticker_info())
         st.markdown("---")
+    secao_mercado()
+    st.markdown("---")
     erro = validar(entradas)
     if erro:
         st.error(erro)
@@ -277,6 +279,18 @@ def main() -> None:
     st.markdown("---")
     st.markdown(secoes.LIMITACOES)
     secoes.tabela_sem_vies()
+
+
+def secao_mercado() -> None:
+    """The market panel (information only, DECISOES 124): election timing, news, macro and every stock."""
+    hoje = date.today()
+    diario, fatos, fundamentos = servicos.carregar_painel()
+    tickers = tuple(dict.fromkeys((*get_all_tickers(), BENCHMARK_ACOES)))
+    with st.spinner("Carregando o painel do mercado…"):
+        precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
+        painel.secao_mercado(hoje, diario, fatos, fundamentos, servicos.carregar_manchetes(),
+                             servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
+                             servicos.carregar_selic(hoje), precos, get_ticker_info(), BENCHMARK_ACOES)
 
 
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
@@ -500,7 +514,8 @@ def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
     st.warning(secoes.aviso_dinheiro_real(data))
     tickers = tuple(dict.fromkeys((*satelite.index, BENCHMARK_ACOES)))     # depois do stop o satélite é o BOVA11
     hoje = date.today()
-    janela = servicos.carregar_precos(tickers, 1, hoje, precos_do_app.versao_dos_dados()).precos.tail(PREGOES_PARA_FECHAMENTO)
+    janela = servicos.carregar_precos(tickers, 1, hoje, precos_do_app.versao_dos_dados()).precos.tail(
+        PREGOES_PARA_FECHAMENTO)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_real"):
         servicos.descartar_cotacoes(tickers, janela)
     with st.spinner("Buscando as cotações do dia…"):

@@ -48,6 +48,15 @@ def _cotacoes_sinteticas(tickers: tuple[str, ...], precos_recentes: pd.DataFrame
                          "fonte": market_data.FONTE_INTRADIARIA}, index=list(tickers))
 
 
+def _painel_sem_rede(monkeypatch) -> None:
+    """The market panel's live loaders (Focus and BCB series) and the lake's headlines on D:, off."""
+    monkeypatch.setattr(servicos, "carregar_focus", lambda dia: None)
+    monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: None)
+    monkeypatch.setattr(servicos, "carregar_manchetes", lambda: None)
+    monkeypatch.setattr(servicos, "carregar_precos_da_tabela", lambda tickers, dia, versao: _precos_sinteticos(
+        tickers, 3, dia, versao).precos)
+
+
 @pytest.fixture
 def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
@@ -55,6 +64,7 @@ def app(monkeypatch) -> AppTest:
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
+    _painel_sem_rede(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     at.sidebar.selectbox(key="objetivo").set_value(Objetivo.KELLY.value)   # os testes antigos são do Kelly
@@ -385,6 +395,7 @@ def _servicos_sinteticos(monkeypatch) -> None:
     monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
     monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
     monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
+    _painel_sem_rede(monkeypatch)
 
 
 @pytest.fixture
@@ -633,3 +644,20 @@ def test_the_fundo_alepha_section_shows_the_conservadoras_results_by_period_and_
     assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
     anos = [df.value for df in at.dataframe if "Ano" in df.value.columns]
     assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 16/10)"
+
+
+def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monkeypatch):
+    # the user's request of 2026-10-23: timing, news and sentiment on politics (elections) and the economy for all
+    # stocks, visible in the app; information only
+    _servicos_sinteticos(monkeypatch)
+    focus = pd.DataFrame({"data": pd.to_datetime(["2026-09-18", "2026-10-16", "2026-10-16"]),
+                          "ano_referencia": [2026, 2026, 2027], "mediana": [15.0, 14.75, 12.25], "desvio": 0.1})
+    monkeypatch.setattr(servicos, "carregar_focus", lambda dia: {"Selic": focus})
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert any("Mercado agora" in m.value for m in at.markdown)
+    acoes = [df.value for df in at.dataframe if "P/L" in df.value.columns]
+    assert len(acoes) == 1 and len(acoes[0]) >= 100 and "Retorno 12m" in acoes[0].columns
+    assert any("Selic" in df.value.index for df in at.dataframe if "Pesquisa" in df.value.columns)
+    assert any("nada aqui muda o plano" in c.value for c in at.caption)

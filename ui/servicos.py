@@ -11,13 +11,13 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from core import cdi_lago, lago, market_data, precos_do_app, reamostragem
+from core import bcb, cdi_lago, focus, lago, market_data, precos_do_app, reamostragem, sentimento
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -55,6 +55,11 @@ ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
 ARQUIVO_PAPER_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "carteiras.csv"
 PASTA_MARCOS_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "marcos"
 ARQUIVO_LIQUIDEZ = Path(__file__).resolve().parents[1] / "lago" / "liquidez.parquet"
+# the market panel (scripts/painel_do_app.py, refreshed by the daily upkeep) and the lake's log, local only
+ARQUIVOS_DO_PAINEL = tuple(Path(__file__).resolve().parents[1] / "lago" / nome for nome in (
+    "sentimento_diario.parquet", "fatos_relevantes.parquet", "fundamentos.parquet"))
+PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")
+INDICADORES_DO_FOCUS = ("Selic", "IPCA", "PIB Total", "Câmbio")
 # the frozen rerun's daily curves (scripts/curvas_conservadora.py): the Conservadora's results by period and year
 ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "conservadora-curvas-2026-10-23.parquet"
 
@@ -175,3 +180,46 @@ def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg
     })
     return {nome: walk_forward(retornos, estrategia, cfg_bt, nome)
             for nome, estrategia in estrategias.items()}
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_painel() -> tuple[pd.DataFrame | None, ...]:
+    """The panel files: daily news tone, recent CVM filings and per-stock fundamentals (None when one is missing)."""
+    return tuple(pd.read_parquet(arquivo) if arquivo.exists() else None for arquivo in ARQUIVOS_DO_PAINEL)
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def carregar_manchetes() -> pd.DataFrame | None:
+    """The last 3 days' relevant headlines from the lake's log on D: (title and link only); None where the lake's
+    disk is not reachable (the deployed app)."""
+    if not PASTA_DO_LOG.exists():
+        return None
+    itens, notas = sentimento.ler_log(PASTA_DO_LOG, date.today() - timedelta(days=3))
+    return sentimento.manchetes(itens, notas, quantas=60)
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def carregar_focus(dia: date) -> dict[str, pd.DataFrame] | None:
+    """The Focus survey's annual indicators, live from the BCB (``core.focus``); None when the API fails."""
+    try:
+        return {nome: focus.baixar_focus_anual(nome, dia) for nome in INDICADORES_DO_FOCUS}
+    except focus.ErroFocus:
+        return None
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def carregar_indicadores_bcb(dia: date) -> dict[str, tuple[pd.Timestamp, float]] | None:
+    """The last IPCA 12 months (SGS 13522, %) and PTAX (SGS 1, R$/US$), live from the BCB; None when it fails."""
+    try:
+        ipca = bcb.baixar_serie(bcb.SERIE_IPCA_12M, dia - timedelta(days=400), dia).dropna()
+        ptax = bcb.baixar_ptax(dia - timedelta(days=30), dia).dropna()
+    except bcb.ErroBcb:
+        return None
+    return {"IPCA 12 meses (%)": (ipca.index[-1], float(ipca.iloc[-1])),
+            "Dólar PTAX (R$)": (ptax.index[-1], float(ptax.iloc[-1]))}
+
+
+@st.cache_data(ttl=3600, show_spinner=False, max_entries=2)
+def carregar_precos_da_tabela(tickers: tuple[str, ...], dia: date, versao_dados: int) -> pd.DataFrame:
+    """3 years of daily closes of ``tickers``, raw (no coverage filter: the table shows every stock)."""
+    return precos_do_app.ler_fechamentos(list(tickers), dia - timedelta(days=3 * 365 + 10), dia)

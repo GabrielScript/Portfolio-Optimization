@@ -9,7 +9,7 @@ no-trade zone (``docs/zona-2026-10-23.txt``: pre-registered, it did not pass, so
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 import numpy as np
 import pandas as pd
@@ -237,3 +237,35 @@ def custo_com_liquidez(foto: pd.DataFrame | None, custos: Custos, custo_bps: flo
         medida = medidas.get(ticker.removesuffix(".SA"))
         return valor * custo_bps / 10_000 if medida is None else custo_da_ordem(valor, *medida, custos)
     return custo
+
+
+def plano_com_nucleo(alvo: pd.Series, posicoes: Mapping[str, Posicao], cotacoes: pd.Series, caixa: float,
+                     regras: RegrasRebalanceio, custo: CustoDaOrdem, *, nucleo: frozenset[str],
+                     mes: MesFiscal = MesFiscal(), etfs: frozenset[str] = frozenset()) -> Rebalanceio:
+    """
+    Small capital (the user's decision of 2026-10-23, DECISOES 124): the held ``nucleo`` ETFs (BOVA11) are kept and
+    never sold; the other holdings plus ``caixa`` are rebalanced to ``alvo`` by ``plano_de_rebalanceio``, with the
+    caps (``peso_maximo`` and the groups') measured on the whole patrimony, core included, so a 20% cap is 20% of
+    everything held. The core's rows come back with no order.
+    """
+    nucleo_mantido = {ticker: posicao for ticker, posicao in posicoes.items() if ticker in nucleo}
+    resto = {ticker: posicao for ticker, posicao in posicoes.items() if ticker not in nucleo}
+    valor_do_nucleo = sum(posicao.quantidade * float(cotacoes[ticker]) for ticker, posicao in nucleo_mantido.items())
+    satelite = sum(posicao.quantidade * float(cotacoes[ticker]) for ticker, posicao in resto.items()) + caixa
+    escala = (satelite + valor_do_nucleo) / satelite     # the caps in R$ are fractions of the whole patrimony
+    nas_regras = replace(regras, peso_maximo=min(1.0, regras.peso_maximo * escala),
+                         grupos=tuple(replace(grupo, teto=min(1.0, grupo.teto * escala)) for grupo in regras.grupos))
+    plano = plano_de_rebalanceio(alvo, resto, cotacoes, caixa, nas_regras, custo, mes=mes, etfs=etfs)
+    linhas = pd.DataFrame(0, index=list(nucleo_mantido), columns=plano.ordens.columns).astype(plano.ordens.dtypes)
+    linhas["atual"] = linhas["alvo"] = [posicao.quantidade for posicao in nucleo_mantido.values()]
+    linhas["lado"] = ""
+    linhas["cotacao"] = cotacoes.reindex(linhas.index).astype(float)
+    return Rebalanceio(pd.concat([plano.ordens, linhas]), plano.caixa_final, plano.ir_do_mes,
+                       plano.vendas_de_acoes_no_mes)
+
+
+def pesos_finais(ordens: pd.DataFrame, patrimonio: float, fora: frozenset[str] = frozenset()) -> pd.Series:
+    """The weight of each name the plan ends up holding (``alvo`` x ``cotacao`` / ``patrimonio``), for
+    ``checar_carteira``: names in ``fora`` (the kept core ETF, which the stock rules do not cover) left out."""
+    pesos = ordens["alvo"] * ordens["cotacao"] / patrimonio
+    return pesos[(pesos > 0) & ~pesos.index.isin(list(fora))]

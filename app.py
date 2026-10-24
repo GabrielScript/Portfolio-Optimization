@@ -38,7 +38,7 @@ from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao
 from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limites_do_plano,  # noqa: E402
                          plano_de_compra, plano_dinheiro_real, redistribuir_sem_cotacao)
 from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_minimo, custo_com_liquidez,  # noqa: E402
-                              plano_de_rebalanceio, posicoes_da_tabela)
+                              pesos_finais, plano_com_nucleo, plano_de_rebalanceio, posicoes_da_tabela)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
 from ui import alepha, secoes, servicos  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
@@ -148,7 +148,7 @@ def ler_sidebar() -> Entradas:
                                     disabled=objetivo != NUCLEO_SATELITE, help=AJUDA_SATELITE) / 100
         teto_vol = round(LIMITES.vol_maxima * 100)
         vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, teto_vol, teto_vol, 5, key="vol_maxima") / 100
-        orcamento = st.number_input("Valor a investir (R$)", 100.0, 10_000_000.0, 10_000.0, 100.0,
+        orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
         modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
                                           default=MODO_CONSERVADORA, key="modo_plano", help=AJUDA_MODO)
@@ -440,35 +440,41 @@ def secao_conservadora(entradas: Entradas) -> None:
         return
     setores = servicos.setores_do_lago(tuple(alvo.index))
     foto = servicos.carregar_liquidez()
-    regras = RegrasRebalanceio(LIMITES.peso_maximo_acao, entradas.custo_bps, QUANTIDADE_MINIMA_POR_ACAO,
+    precos = cotacoes["preco"]
+    patrimonio = sum(posicao.quantidade * float(precos[ticker]) for ticker, posicao in posicoes.items())
+    patrimonio += entradas.orcamento
+    minimo = capital_minimo(alvo, precos, QUANTIDADE_MINIMA_POR_ACAO, entradas.custo_bps)
+    pequeno = patrimonio < minimo     # the user's decision of 2026-10-23 (DECISOES 124): start now, any amount
+    quantidade_minima = 1 if pequeno else QUANTIDADE_MINIMA_POR_ACAO
+    regras = RegrasRebalanceio(LIMITES.peso_maximo_acao, entradas.custo_bps, quantidade_minima,
                                limites_por_setor(setores, LIMITES.teto_setor))
     custo = custo_com_liquidez(foto, CUSTOS_DA_B3, entradas.custo_bps)
-    argumentos = (alvo, posicoes, cotacoes["preco"], entradas.orcamento, regras, custo)
+    argumentos = (alvo, posicoes, precos, entradas.orcamento, regras, custo)
     try:
-        plano = plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA)
+        plano = (plano_com_nucleo(*argumentos, nucleo=ETFS_DA_TELA, mes=mes, etfs=ETFS_DA_TELA) if pequeno else
+                 plano_de_rebalanceio(*argumentos, mes=mes, etfs=ETFS_DA_TELA))
     except ValueError as erro:
         st.error(f"Plano indisponível: {erro}")
         return
     try:  # information only: when the zone's redo fails, the plan shows without its columns
-        zona = None if foto is None else plano_de_rebalanceio(
+        zona = None if foto is None or pequeno else plano_de_rebalanceio(
             *argumentos, mes=mes, etfs=ETFS_DA_TELA,
             zona=ZonaSemNegociacao(foto.set_index("security")["vol_diaria"].rename(lambda papel: f"{papel}.SA")))
     except ValueError:
         zona = None
-    patrimonio = float((plano.ordens["atual"] * plano.ordens["cotacao"]).sum()) + entradas.orcamento
-    pesos = plano.ordens["alvo"] * plano.ordens["cotacao"] / patrimonio
-    violacoes = checar_carteira(pesos[pesos > 0], setores)
+    violacoes = checar_carteira(pesos_finais(plano.ordens, patrimonio, ETFS_DA_TELA), setores)
     if violacoes:
         st.error("Plano recusado pelas regras de risco fixas: " + _descrever(violacoes))
         return
+    if pequeno:
+        st.info(alepha.aviso_capital_pequeno(patrimonio, minimo, float(precos.reindex(alvo.index).sum()), len(alvo),
+                                             [ticker.removesuffix(".SA") for ticker in alvo.index
+                                              if plano.ordens.at[ticker, "alvo"] == 0]))
     alepha.tabela_rebalanceio(plano, zona, patrimonio, None if foto is None else f"{foto['month'].iloc[0]:%m/%Y}",
                               entradas.custo_bps)
-    minimo = capital_minimo(alvo, cotacoes["preco"], QUANTIDADE_MINIMA_POR_ACAO, entradas.custo_bps)
-    if patrimonio < minimo:
-        st.warning(f"Com R$ {patrimonio:,.2f} nem todos os {len(alvo)} nomes cabem com {QUANTIDADE_MINIMA_POR_ACAO} "
-                   "ações: o plano compra os que cabem, com pesos desiguais (até 20% cada), e fica longe da carteira "
-                   f"testada. Os {len(alvo)} nomes com pesos perto de iguais pedem a partir de R$ {minimo:,.2f} (a "
-                   "prova final usou R$ 10 mil).")
+    if pequeno:
+        st.warning(f"Com R$ {patrimonio:,.2f} a carteira fica longe da carteira testada ({len(alvo)} nomes com pesos "
+                   f"iguais, R$ 10 mil na prova final): menos nomes e pesos desiguais, mais risco de cada empresa.")
 
 
 def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:

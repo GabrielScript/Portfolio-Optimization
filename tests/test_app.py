@@ -560,7 +560,23 @@ def test_below_the_minimum_capital_the_plan_warns_that_it_is_far_from_the_tested
     # 5 names at 20% with quotes near R$ 10: 2 shares each need about R$ 100 per 20%, so R$ 100 in all is not enough
     app_alepha.sidebar.number_input(key="orcamento").set_value(100.0).run()
     assert not app_alepha.exception
-    assert len([w for w in app_alepha.warning if "fica longe da carteira testada" in w.value]) == 1
+    assert len([w for w in app_alepha.warning if "longe da carteira testada" in w.value]) == 1
+
+
+def test_small_capital_keeps_the_held_bova11_and_buys_stocks_with_the_new_cash(monkeypatch):
+    # the user's decision of 2026-10-23 (DECISOES 124): start now with little money; 1 BOVA11 held + R$ 100
+    from ui import alepha
+    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
+        {"ticker": ["BOVA11"], "quantidade": [1], "preco_medio": [10.0]}))
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    at.sidebar.number_input(key="orcamento").set_value(100.0).run()
+    assert not at.exception
+    ordens = _ordens_alepha(at)
+    assert ordens.loc["BOVA11", "Ordem"] == "manter"
+    assert (ordens.drop(index="BOVA11")["Ordem"] == "compra").any()
+    assert any("Capital pequeno" in i.value for i in at.info)
 
 
 def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(monkeypatch):

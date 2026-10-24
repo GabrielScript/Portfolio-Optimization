@@ -47,6 +47,20 @@ def aviso_conservadora(data: date) -> str:
             "Só dinheiro de 5 anos ou mais; a carteira muda a cada 63 pregões, quando o paper-v2 registra a nova.")
 
 
+def aviso_capital_pequeno(patrimonio: float, minimo: float, um_de_cada: float, nomes: int,
+                          esperando: list[str]) -> str:
+    """The small-capital plan (DECISOES 124): what it does and how far it is from the tested portfolio."""
+    texto = (f"Capital pequeno: com R$ {patrimonio:,.2f} (abaixo dos R$ {minimo:,.2f} que os {nomes} nomes com 2 ações "
+             "e pesos perto de iguais pedem), o plano mantém o BOVA11 que você já tem e usa o dinheiro novo para "
+             "comprar as ações da Conservadora uma a uma no fracionário, primeiro as mais abaixo do peso igual, cada "
+             "ação com até 20% de tudo o que você tem (BOVA11 incluído). A cada aporte o plano completa os nomes que "
+             f"faltam: 1 ação de cada um dos {nomes} custa hoje cerca de R$ {um_de_cada:,.2f}. No fracionário o spread "
+             "costuma ser maior que no lote padrão: o custo mostrado é um piso.")
+    if esperando:
+        texto += f" Esperam mais capital: {', '.join(esperando)}."
+    return texto
+
+
 def editor_de_posicoes() -> pd.DataFrame:
     """The table of the positions the user already holds (empty = buy from zero)."""
     vazia = pd.DataFrame({"ticker": pd.Series(dtype="str"), "quantidade": pd.Series(dtype="Int64"),

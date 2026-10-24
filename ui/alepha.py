@@ -65,7 +65,7 @@ def semaforo_do_plano(fatos: pd.DataFrame | None, tickers: pd.Index, registrada:
     tabela = pd.DataFrame({"Ticker": [ticker.removesuffix(".SA") for ticker in luzes.index],
                            "Sinal": [f"{EMOJI_DA_COR[cor]} {cor}" for cor in luzes["cor"]],
                            "Fatos da CVM": luzes["motivo"].to_numpy(), "Notícias e redes": "—",
-                           "Link": luzes["link"].to_numpy()})
+                           "Link": luzes["link"].fillna("").to_numpy()})
     st.dataframe(tabela, width="stretch", hide_index=True,
                  column_config={"Link": st.column_config.LinkColumn("Link", display_text="abrir")},
                  alt="Sinal vermelho, amarelo ou verde de cada ação do plano, pelos fatos relevantes da CVM")

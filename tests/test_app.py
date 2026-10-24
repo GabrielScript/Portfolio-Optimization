@@ -723,6 +723,7 @@ def test_the_plan_shows_a_light_per_stock_and_flags_one_that_turned_red_without_
     assert luzes.loc[vermelho, "Fatos da CVM"] == f"{dia:%d/%m} Multa"
     assert set(luzes.drop(index=vermelho)["Sinal"]) == {"🟡 amarelo"}
     assert set(luzes["Notícias e redes"]) == {"—"}
+    assert set(luzes.drop(index=vermelho)["Link"]) == {""}      # a blank cell, not Streamlit's grey "None"
     assert len([w for w in at.warning if f"{vermelho} ficou vermelho em {dia:%d/%m}" in w.value]) == 1
     assert any("não muda os pesos" in c.value for c in at.caption)
     assert set(_ordens_alepha(at)["Ordem"]) == {"compra"}

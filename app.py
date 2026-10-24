@@ -29,7 +29,7 @@ from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objet
                          limites_por_setor, taxa_anual_para_aritmetica)
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.execucao import Custos  # noqa: E402
-from core import lago  # noqa: E402
+from core import precos_do_app  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
@@ -235,7 +235,7 @@ def main() -> None:
     hoje = date.today()
     universo = entradas.tickers_acoes
     anos_walk_forward = entradas.anos + entradas.anos_teste
-    versao_dados = lago.versao_dos_dados()
+    versao_dados = precos_do_app.versao_dos_dados()
     with st.spinner("Carregando preços, CDI e Selic..."):
         dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje, versao_dados)
         precos_walk_forward = servicos.carregar_precos(universo + REFERENCIAS_DA_TELA, anos_walk_forward, hoje,
@@ -427,7 +427,7 @@ def secao_conservadora(entradas: Entradas) -> None:
     posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}
     mes = alepha.mes_fiscal()
     tickers = tuple(dict.fromkeys((*alvo.index, *posicoes)))
-    janela = servicos.carregar_precos(tickers, 1, date.today(), lago.versao_dos_dados()).precos.tail(
+    janela = servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos.tail(
         PREGOES_PARA_FECHAMENTO)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_alepha"):
         servicos.descartar_cotacoes(tickers, janela)
@@ -488,7 +488,7 @@ def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
     st.warning(secoes.aviso_dinheiro_real(data))
     tickers = tuple(dict.fromkeys((*satelite.index, BENCHMARK_ACOES)))     # depois do stop o satélite é o BOVA11
     hoje = date.today()
-    janela = servicos.carregar_precos(tickers, 1, hoje, lago.versao_dos_dados()).precos.tail(PREGOES_PARA_FECHAMENTO)
+    janela = servicos.carregar_precos(tickers, 1, hoje, precos_do_app.versao_dos_dados()).precos.tail(PREGOES_PARA_FECHAMENTO)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_real"):
         servicos.descartar_cotacoes(tickers, janela)
     with st.spinner("Buscando as cotações do dia…"):

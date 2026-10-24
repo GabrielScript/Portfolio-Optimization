@@ -17,7 +17,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from core import cdi_lago, lago, market_data, reamostragem
+from core import cdi_lago, lago, market_data, precos_do_app, reamostragem
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -94,9 +94,9 @@ def carregar_liquidez(arquivo: Path = ARQUIVO_LIQUIDEZ) -> pd.DataFrame | None:
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def carregar_precos(tickers: tuple[str, ...], anos: int, dia: date, versao_dados: int) -> market_data.DadosPrecos:
-    """``dia`` e ``versao_dados`` (``lago.versao_dos_dados()``) entram na chave: o cache vira com o dia e a cada
-    publicação do lago."""
-    return market_data.carregar_precos(list(tickers), anos, hoje=dia)
+    """``dia`` e ``versao_dados`` (``precos_do_app.versao_dos_dados()``) entram na chave: o cache vira com o dia e a
+    cada publicação do lago ou dos pregões recentes."""
+    return precos_do_app.carregar_precos(list(tickers), anos, hoje=dia)
 
 
 @st.cache_data(ttl=86400, show_spinner=False)

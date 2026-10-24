@@ -361,3 +361,25 @@ def test_every_notification_is_sent_and_a_failed_one_is_recorded_in_the_outcome(
     assert (resultado.desfecho, resultado.nota.startswith("leituras: leitura-126; aviso: CalledProcessError")) == (
         "falhou", True)
     assert notificar(Resultado("ok", "nada", []), avisar) == Resultado("ok", "nada", [])
+
+
+def _precos(datas: pd.DatetimeIndex) -> pd.DataFrame:
+    return pd.DataFrame({"date": datas.date, "PETR4": [float(i + 1) for i in range(len(datas))]})
+
+
+def test_the_sessions_after_the_committed_price_file_are_committed_in_the_small_file(app):
+    # the nightly rewrites lago/precos_diarios.parquet but nobody commits it between rebalances: the deployed app
+    # reads lago/precos_recentes.parquet, the sessions from the committed file's last one on (one of overlap)
+    from scripts.manutencao import atualizar_recentes, git_em
+    git = git_em(app)
+    (app / "lago").mkdir()
+    _precos(pd.bdate_range("2026-10-15", "2026-10-19")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    git("add", "lago/precos_diarios.parquet")
+    git("commit", "-q", "-m", "marco")
+    _precos(pd.bdate_range("2026-10-15", "2026-10-22")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    assert atualizar_recentes(app, git) == "pregões recentes: até 22/10/2026"
+    assert git("show", "--name-only", "--format=%s", "HEAD").splitlines()[-1] == "lago/precos_recentes.parquet"
+    recentes = pd.read_parquet(app / "lago" / "precos_recentes.parquet")
+    assert [str(d) for d in recentes["date"]] == ["2026-10-19", "2026-10-20", "2026-10-21", "2026-10-22"]
+    assert git("status", "--porcelain", "--", "lago").splitlines() == [" M lago/precos_diarios.parquet"]
+    assert atualizar_recentes(app, git) == "pregões recentes: em dia"

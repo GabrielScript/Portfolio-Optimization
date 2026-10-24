@@ -9,6 +9,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
   ``scripts/paper_v2.py``), and once a month as information only (DECISOES 121), it runs ``paper_v2.py --leitura`` and
   saves its output to ``paper-v2/leituras/``; a reading counts only when its own session count reaches the target;
 - the app's liquidity snapshot (``scripts/liquidez_do_app.py``) when the lake has a newer closed month;
+- ``lago/precos_recentes.parquet``: the nightly's sessions after the committed price file (``core.precos_do_app``),
+  so the deployed app is one session old, not one rebalance old (DECISOES 124);
 - a commit of exactly those paths and a fast-forward push of ``main`` (never forced), which also publishes the paper
   routines' local commits to the deployed app.
 It decides nothing about the portfolio. Outcomes go to ``%LOCALAPPDATA%/paper-manutencao/runs.csv``, which the 12h
@@ -18,6 +20,7 @@ watchdog reads; saved readings also raise a Windows notification.
 from __future__ import annotations
 
 import csv
+import io
 import os
 import re
 import subprocess
@@ -41,6 +44,7 @@ ARQUIVO_CALENDARIO = Path("lago/precos_diarios.parquet")
 ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
+ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
 PASTA_DO_LAGO = Path("data/b3lake")             # the lake's exports (outside git)
 _SEM_JANELA = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 RAIZ = Path(__file__).resolve().parent.parent
@@ -207,6 +211,34 @@ def _liquidez(raiz: Path, git: Git) -> str:
     return f"liquidez: {mes}"
 
 
+def _no_head(raiz: Path, caminho: Path) -> bytes | None:
+    """The bytes of ``caminho`` as committed in HEAD; None when HEAD does not have it."""
+    feita = subprocess.run(["git", "-C", str(raiz), "show", f"HEAD:{caminho.as_posix()}"], capture_output=True,
+                           timeout=300, creationflags=_SEM_JANELA)
+    return feita.stdout if feita.returncode == 0 else None
+
+
+def atualizar_recentes(raiz: Path, git: Git) -> str:
+    """Writes ``lago/precos_recentes.parquet`` = the sessions of the nightly's ``lago/precos_diarios.parquet`` from
+    the committed file's last session on (one of overlap: ``core.precos_do_app.emendar`` rescales there) and commits
+    it. The big file is committed only by the paper routines' rebalances, so this is what keeps the deployed app one
+    session old."""
+    commitado = _no_head(raiz, ARQUIVO_CALENDARIO)
+    if commitado is None:
+        return "pregões recentes: sem o arquivo de preços no HEAD"
+    ultima = pd.read_parquet(io.BytesIO(commitado), columns=["date"])["date"].max()
+    precos = pd.read_parquet(raiz / ARQUIVO_CALENDARIO)
+    recentes = precos.loc[precos["date"] >= ultima].reset_index(drop=True)
+    destino = raiz / ARQUIVO_RECENTES
+    if not destino.exists() or not pd.read_parquet(destino).equals(recentes):
+        recentes.to_parquet(destino, index=False)
+    if not pendentes(git, [ARQUIVO_RECENTES.as_posix()]):
+        return "pregões recentes: em dia"
+    fim = f"{pd.Timestamp(recentes['date'].max()):%d/%m/%Y}"
+    commitar(git, [ARQUIVO_RECENTES.as_posix()], f"data: pregões recentes até {fim} (manutenção)")
+    return f"pregões recentes: até {fim}"
+
+
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
              tentativas: Path = PASTA_ESTADO / "tentativas") -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
@@ -223,6 +255,7 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     notas, desfecho = [], "ok"
     passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
+              ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
               ("push", lambda: publicar(git)))
     for nome, passo in passos:
         try:

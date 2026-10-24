@@ -14,6 +14,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -77,9 +78,18 @@ def fatos_recentes(ipe: pd.DataFrame, setores: pd.DataFrame, tickers: Iterable[s
     ticker = materiais["codigo_cvm"].map(ticker_do_codigo)
     fatos = pd.DataFrame({"ticker": ticker, "empresa": materiais["nome_companhia"],
                           "categoria": materiais["categoria"], "assunto": materiais["assunto"],
-                          "data": materiais["data_entrega"], "link": materiais["link_download"]}).dropna(
-        subset=["ticker"])
+                          "data": materiais["data_entrega"],
+                          "link": materiais["link_download"].map(link_seguro)}).dropna(subset=["ticker"])
     return fatos.sort_values(["data", "ticker"], ascending=[False, True], kind="stable").reset_index(drop=True)
+
+
+def link_seguro(url) -> str | None:
+    """``url`` when it is an http(s) address, else None: the links come from third-party feeds and files, and a
+    ``javascript:`` or ``data:`` URL must never become a clickable link on the screen."""
+    try:
+        return url if isinstance(url, str) and urlparse(url).scheme in ("http", "https") else None
+    except ValueError:
+        return None
 
 
 ROTULOS_DOS_TOPICOS = {"election_politics": "Eleição e política", "monetary_policy": "Juros e inflação",
@@ -97,7 +107,7 @@ def manchetes(itens: pd.DataFrame, notas: pd.DataFrame, quantas: int = 50) -> pd
     quando = pd.to_datetime(quadro["fetched_at"], utc=True).dt.tz_convert(FUSO).dt.tz_localize(None)
     lista = pd.DataFrame({"quando": quando, "fonte": quadro["source"], "titulo": quadro["title"],
                           "tema": quadro[list(TOPICOS)].idxmax(axis=1).map(ROTULOS_DOS_TOPICOS),
-                          "tom": quadro["tom"], "link": quadro["url"]})
+                          "tom": quadro["tom"], "link": quadro["url"].map(link_seguro)})
     return lista.sort_values("quando", ascending=False, kind="stable").head(quantas).reset_index(drop=True)
 
 

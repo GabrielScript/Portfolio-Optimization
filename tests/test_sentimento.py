@@ -63,11 +63,12 @@ def test_material_filings_of_the_apps_stocks_are_listed_by_ticker_newest_first()
         "categoria": ["Fato Relevante", "Assembleia", "Comunicado ao Mercado", "Fato Relevante"],
         "assunto": ["Produção 3T26", "AGO", "Esclarecimento", "x"],
         "data_entrega": [date(2026, 10, 10), date(2026, 10, 11), date(2026, 10, 15), date(2026, 10, 15)],
-        "link_download": ["l1", "l2", "l3", "l4"]})
+        "link_download": [f"https://www.rad.cvm.gov.br/{n}" for n in ("l1", "l2", "l3", "l4")]})
     setores = pd.DataFrame({"issuer": ["PETR", "VALE"], "code_cvm": [9512, 4170]})
     fatos = fatos_recentes(ipe, setores, ["PETR4.SA", "VALE3.SA", "ITUB4.SA"], desde=date(2026, 10, 1))
     assert fatos["ticker"].tolist() == ["VALE3", "PETR4"]                 # material only, app stocks only
-    assert fatos.iloc[1][["categoria", "assunto", "link"]].tolist() == ["Fato Relevante", "Produção 3T26", "l1"]
+    assert fatos.iloc[1][["categoria", "assunto", "link"]].tolist() == ["Fato Relevante", "Produção 3T26",
+                                                                       "https://www.rad.cvm.gov.br/l1"]
 
 
 def test_headlines_are_the_relevant_scored_items_newest_first_with_their_main_topic():
@@ -135,3 +136,18 @@ def test_the_election_timing_counts_the_days_to_the_runoff_and_names_the_studied
     assert not antes.dentro
     assert janela_eleitoral(date(2026, 10, 28)).dentro
     assert janela_eleitoral(date(2026, 11, 3)) is None                    # after the window: nothing to show
+
+
+def test_a_headline_link_that_is_not_http_or_https_is_dropped():
+    # the links come from third-party feeds: a javascript: or data: URL must never become a clickable link
+    from core.sentimento import manchetes
+    tom = {"negative": 0.0, "neutral": 1.0, "positive": 0.0, "not_applicable": 0.0}
+    notas = notas_por_item([_nota(chave, 0.9, tom, TOPICO, 0.0, {"0": 1, "1": 0, "2": 0, "3": 0})
+                            for chave in ("a", "b", "c")])
+    itens = pd.DataFrame({"key": ["a", "b", "c"], "source": ["x"] * 3, "title": ["A", "B", "C"],
+                          "url": ["https://exame.com/a", "javascript:alert(1)", "data:text/html,oi"],
+                          "fetched_at": ["2026-10-23T17:00:00+00:00", "2026-10-23T16:00:00+00:00",
+                                         "2026-10-23T15:00:00+00:00"]})
+    links = manchetes(itens, notas)["link"].tolist()
+    assert links[0] == "https://exame.com/a"
+    assert pd.isna(links[1]) and pd.isna(links[2])

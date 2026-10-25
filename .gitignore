@@ -152,3 +152,6 @@ data/
 
 # Planilhas da ANBIMA: termos de uso 8.2 (arquivos só com autorização escrita); no git, só o SHA256SUMS e o LEIAME
 docs/dados/*-anbima/*.xls
+
+# Streamlit secrets (the headlines token, DECISOES 134): never in the public repo
+.streamlit/secrets.toml

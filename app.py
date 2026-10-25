@@ -289,7 +289,7 @@ def secao_mercado() -> None:
     tickers = tuple(dict.fromkeys((*get_all_tickers(), BENCHMARK_ACOES)))
     with st.spinner("Carregando o painel do mercado…"):
         precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
-        painel.secao_mercado(hoje, diario, fatos, fundamentos, servicos.carregar_manchetes(),
+        painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
                              servicos.carregar_selic(hoje), precos, get_ticker_info(), BENCHMARK_ACOES)
 

@@ -419,3 +419,58 @@ def test_a_nightly_file_with_no_session_after_the_committed_one_leaves_the_small
     _precos(pd.bdate_range("2026-10-01", "2026-10-16")).to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
     assert atualizar_recentes(app, git) == "pregões recentes: o arquivo do lago não passa do commitado"
     assert (app / "lago" / "precos_recentes.parquet").read_bytes() == b"o bom"
+
+
+def _loja_privada(tmp_path: Path) -> str:
+    """The private headlines store's ``origin``: a bare repository with ``main`` and a README, as GitHub creates it."""
+    origem = tmp_path / "alepha-manchetes.git"
+    _rodar_git("init", "-q", "--bare", "-b", "main", str(origem))
+    semente = _clone(origem, tmp_path / "semente-manchetes")
+    (semente / "README.md").write_text("privado\n", encoding="utf-8")
+    _rodar_git("-C", str(semente), "add", "README.md")
+    _rodar_git("-C", str(semente), "commit", "-q", "-m", "inicio")
+    _rodar_git("-C", str(semente), "push", "-q", "origin", "main")
+    return str(origem)
+
+
+def _manchetes_do_log() -> pd.DataFrame:
+    return pd.DataFrame({"quando": pd.to_datetime(["2026-10-26 09:10"]), "fonte": ["valor"],
+                         "titulo": ["Copom mantém Selic"], "tema": ["Juros e inflação"], "tom": [-0.25],
+                         "link": ["https://valor.com.br/a"]})
+
+
+@pytest.fixture
+def identidade_do_git(monkeypatch):
+    """The commits of a clone the upkeep makes itself carry this identity (a CI runner may have none)."""
+    for nome in ("GIT_AUTHOR", "GIT_COMMITTER"):
+        monkeypatch.setenv(f"{nome}_NAME", "teste")
+        monkeypatch.setenv(f"{nome}_EMAIL", "teste@exemplo")
+
+
+def test_the_headlines_step_clones_the_private_store_and_publishes_the_file_only_when_it_changes(tmp_path,
+                                                                                                identidade_do_git):
+    from core.manchetes_online import de_json
+    from scripts.manutencao import atualizar_manchetes
+    url, clone = _loja_privada(tmp_path), tmp_path / "alepha-manchetes"
+    (tmp_path / "log").mkdir()
+    nota = atualizar_manchetes(clone, url, tmp_path / "log", _manchetes_do_log, datetime(2026, 10, 26, 10, 5))
+    assert nota == "manchetes: 1 publicada(s)"
+    publicado = _rodar_git("-C", url, "show", "main:manchetes.json")
+    manchetes, gerado_em = de_json(publicado)
+    assert manchetes["titulo"].tolist() == ["Copom mantém Selic"] and gerado_em == datetime(2026, 10, 26, 10, 5)
+    nota = atualizar_manchetes(clone, url, tmp_path / "log", _manchetes_do_log, datetime(2026, 10, 26, 22, 30))
+    assert nota == "manchetes: em dia"
+    assert _rodar_git("-C", url, "rev-list", "--count", "main") == "2"
+
+
+def test_a_private_store_not_reachable_blocks_only_the_headlines_step_and_the_app_is_still_pushed(app, tmp_path,
+                                                                                                 identidade_do_git):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 126)
+    (tmp_path / "log").mkdir()
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2027, 4, 27, 10, 0), lambda: _saida(126),
+                         manchetes=(tmp_path / "alepha-manchetes", str(tmp_path / "nao-criado.git"),
+                                    tmp_path / "log", _manchetes_do_log))
+    assert resultado.desfecho == "bloqueada"
+    assert "manchetes: sem acesso ao repositório privado" in resultado.nota
+    assert "lago/liquidez.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()

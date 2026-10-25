@@ -93,6 +93,23 @@ numbers in `lago/fatos_relevantes.parquet` (`scripts/painel_do_app.py`, the dail
 23/10/2026 have no score (backfilled), so the lights are yellow until new filings arrive. The news/social column
 shows "—" until the log's items carry a ticker (`items-v2`). The light was never tested as a sell rule.
 
+### After v1.1 (2026-10-24): headlines on the deployed app
+
+This repository stays public and keeps no headline text. The daily upkeep (`scripts/manutencao.py`, weekdays 10:00
+and 22:30) publishes the 50 newest relevant headlines of the forward log (title, link, Jev topic and tone; never the
+summary text) as `manchetes.json` to the private repository `GabrielScript/alepha-manchetes`, through a clone next
+to the projects folder and the owner's stored git login. The deployed app downloads that file with a fine-grained
+GitHub token (Contents: read-only on that one repository) kept in Streamlit secrets (`core/manchetes_online.py`):
+
+```toml
+[manchetes]
+token = "github_pat_..."
+```
+
+The panel shows when the headlines were published. Without the token, or with GitHub down, the page shows only the
+numbers, as before. On the lake's own PC the app keeps reading the headlines live from D:.
+`.streamlit/secrets.toml` is in `.gitignore`.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

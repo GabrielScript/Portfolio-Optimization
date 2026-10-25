@@ -10,7 +10,7 @@ are Portuguese, like the rest of the app.
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st
@@ -27,13 +27,13 @@ PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Marge
 
 
 def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame | None,
-                  fundamentos: pd.DataFrame | None, manchetes: pd.DataFrame | None,
+                  fundamentos: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None,
                   focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None, selic,
                   precos: pd.DataFrame, info: dict, referencia: str) -> None:
     st.markdown("## Mercado agora: eleição, notícias, macro e ações")
     st.caption(AVISO)
     _timing(hoje)
-    _noticias(diario, manchetes)
+    _noticias(diario, manchetes, publicadas_em)
     _macro(hoje, focus_anual, indicadores_bcb, selic)
     _acoes(precos, info, fundamentos, fatos, referencia)
 
@@ -58,7 +58,7 @@ def _timing(hoje: date) -> None:
             "ou vender nesses dias pode encontrar spread maior e preços mais nervosos.")
 
 
-def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> None:
+def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None) -> None:
     st.markdown("### Notícias e sentimento (política, eleição e economia)")
     if diario is None or diario.empty:
         st.caption("Sem o painel de notícias (lago/sentimento_diario.parquet).")
@@ -85,9 +85,12 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
                                     "tom": st.column_config.NumberColumn("Tom", format="%+.2f"),
                                     "link": st.column_config.LinkColumn("Link", display_text="abrir")},
                      alt="Manchetes relevantes dos últimos 3 dias, com tema e tom do Jev")
+        if publicadas_em is not None:
+            st.caption(f"Manchetes publicadas em {publicadas_em:%d/%m às %H:%M} pela manutenção do Alepha (dias úteis, "
+                       "10:00 e 22:30), lidas de um repositório privado: só título, link, tema e tom.")
     else:
-        st.caption("As manchetes ficam só no computador do lago (o texto é dos veículos); na versão online vão só "
-                   "os números.")
+        st.caption("Manchetes indisponíveis na versão online agora: elas ficam num repositório privado (o texto é dos "
+                   "veículos) e a página as lê com um token; sem ele, ou com o GitHub fora do ar, ficam só os números.")
     st.caption(f"Log desde 23/10/2026: 9 veículos por RSS a cada 2 h, buscas e redes (Reddit, Threads) duas vezes por "
                f"dia; notas do Jev (TypeSafe) com perguntas fixas. Dados até {dias.index[-1]:%d/%m/%Y}.")
 

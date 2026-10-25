@@ -2,12 +2,13 @@
 
 import re
 from dataclasses import replace
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import pytest
+import streamlit as st
 from streamlit.testing.v1 import AppTest
 
 from assets import BENCHMARK_ACOES, BENCHMARKS, get_tickers_by_setor
@@ -53,7 +54,7 @@ def _painel_sem_rede(monkeypatch) -> None:
     """The market panel's live loaders (Focus and BCB series) and the lake's headlines on D:, off."""
     monkeypatch.setattr(servicos, "carregar_focus", lambda dia: None)
     monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: None)
-    monkeypatch.setattr(servicos, "carregar_manchetes", lambda: None)
+    monkeypatch.setattr(servicos, "carregar_manchetes", lambda: (None, None))
     monkeypatch.setattr(servicos, "carregar_precos_da_tabela", lambda tickers, dia, versao: _precos_sinteticos(
         tickers, 3, dia, versao).precos)
 
@@ -727,3 +728,41 @@ def test_the_plan_shows_a_light_per_stock_and_flags_one_that_turned_red_without_
     assert len([w for w in at.warning if f"{vermelho} ficou vermelho em {dia:%d/%m}" in w.value]) == 1
     assert any("não muda os pesos" in c.value for c in at.caption)
     assert set(_ordens_alepha(at)["Ordem"]) == {"compra"}
+
+
+def _app_online(monkeypatch, tmp_path, token: str | None) -> AppTest:
+    """The deployed app's view: no lake disk, the real headline loader, the private store's download stubbed (it
+    answers only to the token "certo")."""
+    from core import manchetes_online
+    carregar_manchetes = servicos.carregar_manchetes
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_manchetes", carregar_manchetes)
+    monkeypatch.setattr(servicos, "PASTA_DO_LOG", tmp_path / "sem-lago")
+    publicado = manchetes_online.para_json(pd.DataFrame({
+        "quando": pd.to_datetime(["2026-10-26 09:10"]), "fonte": ["valor"], "titulo": ["Copom mantém Selic"],
+        "tema": ["Juros e inflação"], "tom": [-0.25], "link": ["https://valor.com.br/a"]}), datetime(2026, 10, 26, 10, 5))
+    monkeypatch.setattr(manchetes_online, "baixar", lambda chave: publicado if chave == "certo" else None)
+    st.cache_data.clear()
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    if token is not None:
+        at.secrets["manchetes"] = {"token": token}
+    at.run()
+    return at
+
+
+def test_online_the_market_panel_shows_the_headlines_from_the_private_store_with_their_publish_time(monkeypatch,
+                                                                                                     tmp_path):
+    # the user's pick of 2026-10-24 (option (b), DECISOES 134): public repo, headlines read with a token in secrets
+    at = _app_online(monkeypatch, tmp_path, "certo")
+    assert not at.exception
+    tabelas = [df.value for df in at.dataframe if "titulo" in df.value.columns]
+    assert len(tabelas) == 1 and tabelas[0]["titulo"].tolist() == ["Copom mantém Selic"]
+    assert any("publicadas em 26/10 às 10:05" in c.value for c in at.caption)
+
+
+def test_online_without_a_valid_token_the_panel_says_the_headlines_are_unavailable_and_still_renders(monkeypatch,
+                                                                                                      tmp_path):
+    at = _app_online(monkeypatch, tmp_path, "vencido")          # an expired token and no token read alike
+    assert not at.exception
+    assert not [df for df in at.dataframe if "titulo" in df.value.columns]
+    assert any("Manchetes indisponíveis na versão online agora" in c.value for c in at.caption)

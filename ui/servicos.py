@@ -11,13 +11,13 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from core import bcb, cdi_lago, focus, lago, market_data, precos_do_app, reamostragem, sentimento
+from core import bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem, sentimento
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -190,14 +190,38 @@ def carregar_painel() -> tuple[pd.DataFrame | None, ...]:
     return tuple(pd.read_parquet(arquivo) if arquivo.exists() else None for arquivo in ARQUIVOS_DO_PAINEL)
 
 
+def carregar_manchetes() -> tuple[pd.DataFrame | None, datetime | None]:
+    """The relevant headlines (title, link, topic and tone) and when they were published: live from the lake's log
+    on D: (publish time None) where the disk is reachable; on the deployed app, the private store's file read with the
+    token of Streamlit secrets (``core.manchetes_online``, DECISOES 134); (None, None) without either."""
+    if PASTA_DO_LOG.exists():
+        return _manchetes_do_lago(), None
+    token = _token_das_manchetes()
+    return _manchetes_online(token) if token else (None, None)
+
+
 @st.cache_data(ttl=600, show_spinner=False)
-def carregar_manchetes() -> pd.DataFrame | None:
-    """The last 3 days' relevant headlines from the lake's log on D: (title and link only); None where the lake's
-    disk is not reachable (the deployed app)."""
-    if not PASTA_DO_LOG.exists():
-        return None
+def _manchetes_do_lago() -> pd.DataFrame:
     itens, notas = sentimento.ler_log(PASTA_DO_LOG, date.today() - timedelta(days=3))
-    return sentimento.manchetes(itens, notas, quantas=60)
+    return sentimento.manchetes(itens, notas, quantas=manchetes_online.QUANTAS_MANCHETES)
+
+
+def _token_das_manchetes() -> str | None:
+    try:
+        return st.secrets["manchetes"]["token"]
+    except Exception:       # noqa: BLE001 - no secrets file (a local run, the tests) or no [manchetes] entry
+        return None
+
+
+@st.cache_data(ttl=600, show_spinner=False)
+def _manchetes_online(token: str) -> tuple[pd.DataFrame | None, datetime | None]:
+    texto = manchetes_online.baixar(token)
+    if texto is None:
+        return None, None
+    try:
+        return manchetes_online.de_json(texto)
+    except (ValueError, KeyError, TypeError):       # a file not made by para_json
+        return None, None
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

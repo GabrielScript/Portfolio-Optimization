@@ -13,6 +13,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
 - the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
   filings only (DECISOES 124);
+- the newest scored headlines (title, link, topic, tone) to the private repository ``alepha-manchetes`` through its
+  clone next to the projects folder, which the deployed app reads with a token in Streamlit secrets (DECISOES 134);
 - a commit of exactly those paths and a fast-forward push of ``main`` (never forced), which also publishes the paper
   routines' local commits to the deployed app.
 It decides nothing about the portfolio. Outcomes go to ``%LOCALAPPDATA%/paper-manutencao/runs.csv``, which the 12h
@@ -23,6 +25,7 @@ from __future__ import annotations
 
 import csv
 import io
+import json
 import os
 import re
 import subprocess
@@ -30,7 +33,7 @@ import sys
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -58,6 +61,9 @@ _LOCAL = Path(os.environ.get("LOCALAPPDATA", Path.home()))
 PASTA_ESTADO = _LOCAL / "paper-manutencao"     # runs.csv, outside the repository (the launcher's "manutencao")
 TRAVA_DO_LAGO = _LOCAL / "b3lake" / "daily.lock"
 ROTINAS_ANTES = ("b3lake daily", "paper trading", "paper v2")     # the upkeep waits for them to finish
+# the private headlines store (DECISOES 134): cloned next to the projects folder, outside every repository
+URL_DAS_MANCHETES = "https://github.com/GabrielScript/alepha-manchetes.git"
+CLONE_DAS_MANCHETES = RAIZ.parent.parent / "alepha-manchetes"
 
 
 class Bloqueio(Exception):
@@ -270,6 +276,44 @@ def atualizar_painel(raiz: Path, git: Git, pasta_do_log: Path | None,
     return f"painel: {resumo}"
 
 
+LojaDeManchetes = tuple[Path, str, Path | None, Callable[[], pd.DataFrame]]     # clone, url, the lake's log, gerar
+
+
+def atualizar_manchetes(clone: Path, url: str, pasta_do_log: Path | None, gerar: Callable[[], pd.DataFrame],
+                        agora: datetime) -> str:
+    """Publishes the newest scored headlines (``gerar``: ``core.sentimento.manchetes``, title, link, topic and tone)
+    as ``manchetes.json`` in the private repository ``url`` through its clone ``clone`` (cloned on the first run with
+    the user's stored git login), committed and pushed only when the headlines changed; nothing without the lake's
+    log. ``Bloqueio`` when the repository cannot be reached (not created yet, or the login lost access)."""
+    from core.manchetes_online import ARQUIVO, para_json
+    if pasta_do_log is None or not pasta_do_log.exists():
+        return "manchetes: sem o log do lago"
+    if not (clone / ".git").exists():
+        try:
+            git_em(clone.parent)("clone", "-q", url, clone.name)
+        except subprocess.CalledProcessError as erro:
+            raise Bloqueio(f"sem acesso ao repositório privado {url}: {(erro.stderr or '').strip()[-200:]}") from None
+    git = git_em(clone)
+    git("pull", "-q", "--ff-only", "origin", RAMO)
+    manchetes = gerar()
+    texto = para_json(manchetes, agora)
+    arquivo = clone / ARQUIVO
+    antes = json.loads(arquivo.read_text(encoding="utf-8"))["manchetes"] if arquivo.exists() else None
+    if antes != json.loads(texto)["manchetes"]:        # a new publish time alone is no change
+        arquivo.write_text(texto + "\n", encoding="utf-8", newline="\n")
+    if not pendentes(git, [ARQUIVO]):
+        return "manchetes: em dia"
+    commitar(git, [ARQUIVO], f"manchetes: {len(manchetes)} de {agora:%d/%m/%Y %H:%M}")
+    publicar(git)
+    return f"manchetes: {len(manchetes)} publicada(s)"
+
+
+def _gerar_manchetes(pasta_do_log: Path) -> pd.DataFrame:
+    from core.manchetes_online import QUANTAS_MANCHETES
+    from core.sentimento import ler_log, manchetes
+    return manchetes(*ler_log(pasta_do_log, date.today() - timedelta(days=3)), quantas=QUANTAS_MANCHETES)
+
+
 def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     from assets import get_all_tickers
     from scripts.painel_do_app import gerar
@@ -277,10 +321,12 @@ def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.Data
 
 
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
-             tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None) -> Resultado:
+             tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None,
+             manchetes: LojaDeManchetes | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
-    lake's news log (None: the panel step does nothing)."""
+    lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
+    the time (None: no headlines step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -291,11 +337,13 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         return Resultado("falhou", f"checkout: {type(erro).__name__}: {erro}"[:300], [])
     avisos: list[tuple[str, str]] = []
     notas, desfecho = [], "ok"
-    passos = (("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
+    passos = [("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
-              ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log))),
-              ("push", lambda: publicar(git)))
+              ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
+    if manchetes is not None:
+        passos.append(("manchetes", lambda: atualizar_manchetes(*manchetes, agora)))
+    passos.append(("push", lambda: publicar(git)))
     for nome, passo in passos:
         try:
             notas.append(passo())
@@ -380,7 +428,9 @@ def anotar(pasta: Path, agora: datetime, resultado: Resultado) -> None:
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
-    resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG)
+    resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG,
+                         manchetes=(CLONE_DAS_MANCHETES, URL_DAS_MANCHETES, PASTA_DO_LOG,
+                                    lambda: _gerar_manchetes(PASTA_DO_LOG)))
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

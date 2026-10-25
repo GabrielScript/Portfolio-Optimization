@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from core.periodos import medidas_por_periodo, retornos_por_ano
+from core.periodos import desde_inicio_comum, medidas_por_periodo, retornos_por_ano
 
 
 def _curvas() -> pd.DataFrame:
@@ -51,3 +51,13 @@ def test_the_saved_curves_are_one_row_per_phase_and_session_with_both_names():
     assert list(quadro.columns) == ["fase", "date", "Conservadora", "BOVA11"]
     assert quadro["fase"].tolist() == [0, 0, 21, 21]
     assert quadro.loc[quadro["fase"] == 21, "Conservadora"].tolist() == [2.0, 2.2]
+
+
+def test_desde_inicio_comum_comeca_quando_todos_tem_preco_e_vale_1():
+    datas = pd.bdate_range("2021-08-02", periods=4)
+    precos = pd.DataFrame({"BOVA11": [100.0, 110.0, 121.0, 110.0], "HASH11": [None, 50.0, None, 60.0]}, index=datas)
+    curvas = desde_inicio_comum(precos)
+    assert list(curvas.index) == list(datas[1:])
+    assert curvas.iloc[0].tolist() == [1.0, 1.0]
+    assert curvas["HASH11"].tolist() == [1.0, 1.0, 1.2]          # a missing day keeps the last price
+    assert curvas["BOVA11"].iloc[-1] == 1.0

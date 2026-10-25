@@ -14,6 +14,14 @@ from core.metrics import cagr, drawdown
 from core.volatilidade import volatilidades
 
 
+def desde_inicio_comum(precos: pd.DataFrame) -> pd.DataFrame:
+    """``precos`` (dates x securities) from the first session where every column has a price, each column divided by
+    its price on that session (all start at 1); a missing day later keeps the last price."""
+    inicio = precos.dropna().index[0]
+    curvas = precos.loc[inicio:].ffill()
+    return curvas / curvas.iloc[0]
+
+
 def retornos_por_ano(curvas: pd.DataFrame) -> pd.DataFrame:
     """Each calendar year's simple return of every column: last session of the year over the last session of the
     year before (the first year starts at the curve's first value)."""

@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from core.impostos import ISENCAO_DE_VENDAS
-from core.periodos import medidas_por_periodo, retornos_por_ano
+from core.periodos import desde_inicio_comum, medidas_por_periodo, retornos_por_ano
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
 
@@ -213,3 +213,29 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None) -> None:
                "ficam na tabela: a vantagem do período inteiro vem quase toda de 2010–2022; nos últimos 3 anos o "
                "BOVA11 rendeu mais, com volatilidade parecida. Passado não garante futuro; a prova ao vivo é o "
                "paper-v2 (decisão em 252 pregões, ~25/10/2027).")
+
+
+def bova11_e_cripto(precos: pd.DataFrame | None) -> None:
+    """BOVA11 next to the B3's crypto ETFs since they all trade (the user's request of 2026-10-25, DECISOES 140):
+    comparison only, none of them is in the plan."""
+    st.markdown("### BOVA11 e os ETFs de cripto da B3")
+    if precos is None:
+        st.caption("Cotações dos ETFs indisponíveis agora (Yahoo).")
+        return
+    curvas = desde_inicio_comum(precos)
+    medidas = medidas_por_periodo(curvas, anos=()).iloc[0]
+    tabela = pd.DataFrame({"ETF": curvas.columns,
+                           "Retorno no período": (curvas.iloc[-1] - 1).to_numpy(),
+                           "Retorno a.a.": [float(medidas[(nome, "CAGR")]) for nome in curvas.columns],
+                           "Vol": [float(medidas[(nome, "Vol anual")]) for nome in curvas.columns],
+                           "Queda máx.": [float(medidas[(nome, "MDD")]) for nome in curvas.columns]})
+    c1, c2 = st.columns([2, 3])
+    c1.dataframe(tabela, width="stretch", hide_index=True,
+                 column_config={coluna: st.column_config.NumberColumn(format="percent")
+                                for coluna in tabela.columns[1:]},
+                 alt="Retorno, volatilidade e queda máxima do BOVA11 e de quatro ETFs de cripto da B3")
+    c2.line_chart(curvas, y_label="R$ 1 aplicado no início")
+    st.caption(f"Fechamentos do Yahoo de {curvas.index[0]:%d/%m/%Y} a {curvas.index[-1]:%d/%m/%Y}, desde o dia em que "
+               "os cinco já negociavam: HASH11 (índice de criptoativos da Nasdaq), BITH11 e QBTC11 (bitcoin), ETHE11 "
+               "(ether). Só comparação: nenhum entra no plano. ETF não tem a isenção de R$ 20 mil nas vendas. Passado "
+               "não garante futuro.")

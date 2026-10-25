@@ -187,6 +187,25 @@ def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg
             for nome, estrategia in estrategias.items()}
 
 
+ETFS_DE_CRIPTO = ("HASH11", "BITH11", "ETHE11", "QBTC11")   # the 4 most traded on the B3 (63 sessions to 23/10/2026)
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def carregar_etfs_de_cripto(dia: date) -> pd.DataFrame | None:
+    """Daily closes of BOVA11 and ``ETFS_DE_CRIPTO`` since 2021 from Yahoo (the lake has no crypto ETF; they pay no
+    income, so the close is the total return); None when Yahoo fails."""
+    import yfinance as yf
+
+    tickers = [f"{papel}.SA" for papel in ("BOVA11", *ETFS_DE_CRIPTO)]
+    try:
+        tabela = yf.download(tickers, start="2021-01-01", end=dia + timedelta(days=1), auto_adjust=True,
+                             progress=False)["Close"]
+    except Exception:       # noqa: BLE001 - network, rate limit or a Yahoo format change: the block says so
+        return None
+    tabela = tabela.reindex(columns=tickers).rename(columns=lambda papel: papel.removesuffix(".SA"))
+    return None if tabela.dropna().empty else tabela
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def carregar_painel() -> tuple[pd.DataFrame | None, ...]:
     """The panel files: daily news tone, recent CVM filings and per-stock fundamentals (None when one is missing)."""

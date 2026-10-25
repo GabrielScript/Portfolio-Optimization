@@ -549,7 +549,7 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
     assert app_alepha.sidebar.segmented_control(key="modo_plano").value == "conservadora"
-    assert any(">Alepha<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    assert any(">Alepha Quant<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
     textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
     assert not any("Fundo Alepha" in texto for texto in textos)
     assert any("não é um fundo de investimento" in c.value for c in app_alepha.caption)

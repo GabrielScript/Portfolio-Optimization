@@ -1,4 +1,4 @@
-# 📊 Alepha — Otimizador de Carteiras B3
+# 📊 Alepha Quant — Alocação quantitativa em ações da B3
 
 > **Autor:** Gabriel Estrela Lopes
 

@@ -20,7 +20,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Alepha · Otimizador B3", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Alepha Quant · Alocação quantitativa B3", page_icon="🚀", layout="wide")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
@@ -232,8 +232,8 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Alepha</h1>'
-                '<p class="subtitle">Otimizador arrojado da B3 · Conservadora no lago sem viés de sobrevivência · '
+    st.markdown('<h1 class="main-title">Alepha Quant</h1>'
+                '<p class="subtitle">Alocação quantitativa em ações da B3 · Conservadora no lago sem viés de sobrevivência · '
                 'Walk-forward com custos e IR · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     st.caption(alepha.AVISO_CVM)
     entradas = ler_sidebar()

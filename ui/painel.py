@@ -87,7 +87,7 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None, publi
                      alt="Manchetes relevantes dos últimos 3 dias, com tema e tom do Jev")
         if publicadas_em is not None:
             st.caption(f"Manchetes publicadas em {publicadas_em:%d/%m às %H:%M} pela manutenção do Alepha (dias úteis, "
-                       "10:00 e 22:30), lidas de um repositório privado: só título, link, tema e tom.")
+                       "10:00, 16:00 e 22:30), lidas de um repositório privado: só título, link, tema e tom.")
     else:
         st.caption("Manchetes indisponíveis na versão online agora: elas ficam num repositório privado (o texto é dos "
                    "veículos) e a página as lê com um token; sem ele, ou com o GitHub fora do ar, ficam só os números.")

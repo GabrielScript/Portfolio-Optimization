@@ -352,3 +352,18 @@ def test_claims_and_free_text_with_links_are_dropped_and_shown_text_is_markdown_
                                 ["PETR4"])
     assert resultado.parecer["resumo"] == ""
     assert sem_markdown("**a** [b](c) `d` <e> #f !g _h_") == r"\*\*a\*\* \[b\]\(c\) \`d\` \<e\> \#f \!g \_h\_"
+
+
+def test_the_pro_model_is_sent_by_name_and_priced_with_its_own_table():
+    from datetime import datetime, timezone
+
+    from core.assessor import MODELO_PRO, pedir_parecer
+    corpos = []
+
+    def post(url, json, timeout, headers):
+        corpos.append(json)
+        return _resposta_do_modelo({"content": _parecer_com("E1", "15,00%")}, _uso(1000, 400, 100))
+    resultado = pedir_parecer(list(_evidencias().values()), ["VALE3"], _ferramentas(), "ds",
+                              datetime(2026, 10, 25, 15, 0, tzinfo=timezone.utc), post=post, modelo=MODELO_PRO)
+    assert MODELO_PRO == "deepseek-v4-pro" and corpos[0]["model"] == "deepseek-v4-pro"
+    assert resultado.uso.custo_usd == pytest.approx((600 * 0.66 + 400 * 0.022 + 100 * 1.98) / 1e6)

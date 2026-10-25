@@ -57,9 +57,9 @@ which runs and reports by itself.
   all 181 stocks with risk, multiples and dividend yield. Information only: none of it changes the plan.
 - **Sidebar:** "Todos os ativos (181)" ticked by default; the "Alepha" group holds the fields that change the
   plan (amount, plan, cost), the "Estudo" group the ones that change only the study below it.
-- **Upkeep twice a day** (Mon-Fri 10:00 and 22:30, after the nightly lake run): paper-v2 readings, liquidity,
-  recent prices and the market panel's files, committed and pushed, so the deployed app shows the day's close the
-  same evening.
+- **Upkeep three times a day** (Mon-Fri 10:00, 16:00 and 22:30, the last after the nightly lake run; 16:00 since
+  2026-10-25, for a mid-day headline publish): paper-v2 readings, liquidity, recent prices and the market panel's
+  files, committed and pushed, so the deployed app shows the day's close the same evening.
 
 ### After v1.1 (2026-10-24): classic strategies compared
 
@@ -95,11 +95,12 @@ shows "—" until the log's items carry a ticker (`items-v2`). The light was nev
 
 ### After v1.1 (2026-10-24): headlines on the deployed app
 
-This repository stays public and keeps no headline text. The daily upkeep (`scripts/manutencao.py`, weekdays 10:00
-and 22:30) publishes the 50 newest relevant headlines of the forward log (title, link, Jev topic and tone; never the
-summary text) as `manchetes.json` to the private repository `GabrielScript/alepha-manchetes`, through a clone next
-to the projects folder and the owner's stored git login. The deployed app downloads that file with a fine-grained
-GitHub token (Contents: read-only on that one repository) kept in Streamlit secrets (`core/manchetes_online.py`):
+This repository stays public and keeps no headline text. The daily upkeep (`scripts/manutencao.py`, weekdays
+10:00, 16:00 and 22:30) publishes the 50 newest relevant headlines of the forward log (title, link, Jev topic and
+tone; never the summary text) as `manchetes.json` to the private repository `GabrielScript/alepha-manchetes`,
+through a clone next to the projects folder and the owner's stored git login. The deployed app downloads that file
+with a fine-grained GitHub token (Contents: read-only on that one repository) kept in Streamlit secrets
+(`core/manchetes_online.py`):
 
 ```toml
 [manchetes]
@@ -107,10 +108,10 @@ token = "github_pat_..."
 ```
 
 The panel shows when the headlines were published. Without the token, or with GitHub down, the page shows only the
-numbers, as before. On the lake's own PC the app keeps reading the headlines live from D:. The file is published twice a
-day, like the app's prices and filings; the lake itself collects and scores the news every 2 hours. A late file holds
-true headlines with its publish time on screen, and nothing decides on them (display only), so a 2-hourly publish
-was judged not needed.
+numbers, as before. On the lake's own PC the app keeps reading the headlines live from D:. The file is published
+three times a day (the 16:00 run was added on 2026-10-25 at the user's request); the lake itself collects and
+scores the news every 2 hours. A late file holds true headlines with its publish time on screen, and nothing decides
+on them (display only).
 `.streamlit/secrets.toml` is in `.gitignore`.
 
 ### After v1.1 (2026-10-25): the DeepSeek adviser

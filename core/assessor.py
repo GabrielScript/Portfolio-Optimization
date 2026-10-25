@@ -495,14 +495,15 @@ class Ferramentas:
 
 # --- the model call ----------------------------------------------------------------------------------------------
 MODELO = "deepseek-flash"            # DeepSeek-V4.1-Flash-1017 on the official API (pricing page, 2026-10-25)
+MODELO_PRO = "deepseek-v4-pro"       # DeepSeek-V4-Pro-0813, compared with Flash in DECISOES 137
 ESFORCO = "high"                     # thinking effort: low / high / max; temperature is ignored in thinking mode
 MAX_TOKENS = 64_000                  # per request, reasoning + answer: 15 stocks of claims took ~20k in a real run
 MAX_RODADAS_DE_FERRAMENTA = 6
 MAX_CHAMADAS_DE_FERRAMENTA = 12
 MAX_REQUISICOES = 10
 PRAZO_DO_MODELO_S = 240
-# US$ per million tokens, off-peak (peak doubles); DeepSeek pricing page read on 2026-10-25
-PRECO_CACHE, PRECO_SEM_CACHE, PRECO_SAIDA = 0.003, 0.15, 0.6
+# US$ per million tokens, off-peak (peak doubles), as (cache hit, cache miss, output); pricing page of 2026-10-25
+PRECOS = {MODELO: (0.003, 0.15, 0.6), MODELO_PRO: (0.022, 0.66, 1.98)}
 HORAS_DE_PICO_UTC = frozenset({1, 2, 3, 6, 7, 8, 9})     # 01-04 and 06-10 UTC, Monday to Friday
 PRECO_DA_FERRAMENTA_DEEPSEEK = 0.00075                     # per successful Search or Fetch call
 COBRANCA_DAS_FERRAMENTAS_DESDE = datetime(2026, 10, 31, 16, 0, tzinfo=timezone.utc)   # 01/11 00:00 in Beijing
@@ -575,7 +576,7 @@ class Uso:
     requisicoes: int = 0
     custo_usd: float = 0.0
 
-    def somar(self, uso: dict, pico: bool) -> None:
+    def somar(self, uso: dict, pico: bool, precos: tuple[float, float, float] = PRECOS[MODELO]) -> None:
         cache = int(uso.get("prompt_cache_hit_tokens") or 0)
         sem_cache = int(uso.get("prompt_cache_miss_tokens") or 0)
         saida = int(uso.get("completion_tokens") or 0)
@@ -584,8 +585,9 @@ class Uso:
         self.saida += saida
         self.raciocinio += int((uso.get("completion_tokens_details") or {}).get("reasoning_tokens") or 0)
         self.requisicoes += 1
-        self.custo_usd += (2 if pico else 1) * (cache * PRECO_CACHE + sem_cache * PRECO_SEM_CACHE
-                                                + saida * PRECO_SAIDA) / 1e6
+        preco_cache, preco_sem_cache, preco_saida = precos
+        self.custo_usd += (2 if pico else 1) * (cache * preco_cache + sem_cache * preco_sem_cache
+                                                + saida * preco_saida) / 1e6
 
     @property
     def taxa_de_cache(self) -> float:
@@ -640,7 +642,8 @@ def custo_das_ferramentas(chamadas_pagas: dict[str, int], agora: datetime) -> fl
 
 
 def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str,
-                  agora: datetime, post: Callable[..., requests.Response] = requests.post) -> Resultado:
+                  agora: datetime, post: Callable[..., requests.Response] = requests.post,
+                  modelo: str = MODELO) -> Resultado:
     """The opinion on ``universo`` (the plan's tickers) from ``pacote``: thinking mode, the tools, the assistant
     message with its ``reasoning_content`` sent back on every round (the API answers 400 otherwise), one retry of an
     empty answer and one repair request for an answer the check cannot use."""
@@ -648,7 +651,7 @@ def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Fer
         ferramentas.evidencias.setdefault(evidencia.id, evidencia)
     uso, chamadas = Uso(), []
     try:
-        validacao, erro = _conversar(pacote, universo, ferramentas, chave, agora, post, uso, chamadas)
+        validacao, erro = _conversar(pacote, universo, ferramentas, chave, agora, post, uso, chamadas, modelo)
     except ErroDoModelo as falha:
         validacao, erro = None, str(falha)
     uso.custo_usd += custo_das_ferramentas(ferramentas.chamadas_pagas, agora)
@@ -656,20 +659,20 @@ def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Fer
 
 
 def _conversar(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str, agora: datetime,
-               post: Callable[..., requests.Response], uso: Uso, chamadas: list[str]) -> tuple[Validacao | None,
-                                                                                               str | None]:
+               post: Callable[..., requests.Response], uso: Uso, chamadas: list[str],
+               modelo: str) -> tuple[Validacao | None, str | None]:
     tickers = ", ".join(sorted(_ticker(ticker) for ticker in universo))
     mensagens: list[dict] = [{"role": "system", "content": mensagem_de_sistema(pacote)},
                              {"role": "user", "content": PEDIDO.format(tickers=tickers, hoje=f"{agora:%d/%m/%Y}")}]
     rodadas, vazia_repetida, reparo_pedido = 0, False, False
     pico = horario_de_pico(agora)
     for _ in range(MAX_REQUISICOES):
-        corpo = {"model": MODELO, "messages": mensagens, "tools": FERRAMENTAS, "thinking": {"type": "enabled"},
+        corpo = {"model": modelo, "messages": mensagens, "tools": FERRAMENTAS, "thinking": {"type": "enabled"},
                  "reasoning_effort": ESFORCO, "response_format": {"type": "json_object"}, "max_tokens": MAX_TOKENS}
         if rodadas >= MAX_RODADAS_DE_FERRAMENTA:
             corpo["tool_choice"] = "none"
         dados = _chamar(corpo, chave, post)
-        uso.somar(dados.get("usage") or {}, pico)
+        uso.somar(dados.get("usage") or {}, pico, PRECOS[modelo])
         escolha = (dados.get("choices") or [{}])[0]
         mensagem = escolha.get("message") or {}
         assistente = {"role": "assistant", "content": mensagem.get("content") or "",

@@ -1,6 +1,6 @@
 """
-Daily upkeep of the Alepha (task "paper manutencao", weekdays at 10:00, through ``scripts/rodar_paper.py
-manutencao``), so nothing after v1.0 depends on the user remembering it.
+Daily upkeep of the Alepha (task "paper manutencao", weekdays at 10:00, 16:00 and 22:30, through
+``scripts/rodar_paper.py manutencao``), so nothing after v1.0 depends on the user remembering it.
 
 Usage: .venv/Scripts/python -X utf8 scripts/manutencao.py
 

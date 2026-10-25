@@ -117,7 +117,7 @@ on them (display only).
 ### After v1.1 (2026-10-25): the DeepSeek adviser
 
 Under the market panel, "Assessor do Alepha (DeepSeek)" gives one opinion per click on the registered plan's
-stocks, for the aggressive investor (`core/assessor.py`, `ui/assessor.py`; design in
+stocks, for the extremely aggressive investor since 2026-10-25 (`core/assessor.py`, `ui/assessor.py`; design in
 `docs/superpowers/specs/2026-10-25-assessor-deepseek-design.md`). DeepSeek V4.1 Flash (`deepseek-flash`, thinking
 mode) reads a numbered evidence pack (BCB and Focus, the plan, each stock's price, risk and multiples, CVM filings
 and lights, headlines) and may call tools: stock metrics, filings, BCB series, DeepSeek Search and Fetch, Firecrawl

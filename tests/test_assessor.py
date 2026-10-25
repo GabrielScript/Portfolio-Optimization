@@ -367,3 +367,13 @@ def test_the_pro_model_is_sent_by_name_and_priced_with_its_own_table():
                               datetime(2026, 10, 25, 15, 0, tzinfo=timezone.utc), post=post, modelo=MODELO_PRO)
     assert MODELO_PRO == "deepseek-v4-pro" and corpos[0]["model"] == "deepseek-v4-pro"
     assert resultado.uso.custo_usd == pytest.approx((600 * 0.66 + 400 * 0.022 + 100 * 1.98) / 1e6)
+
+
+def test_the_prompt_judges_for_an_extremely_aggressive_investor_and_keeps_the_evidence_rules():
+    # the user's choice of 2026-10-25 (DECISOES 138): "extremamente arrojado", no longer "volatility not too high"
+    from core.assessor import INSTRUCOES, PEDIDO
+    assert "extremely aggressive" in INSTRUCOES and "extremamente arrojado" in INSTRUCOES
+    assert "avoids extreme volatility" not in INSTRUCOES
+    assert "never change the plan's weights" in INSTRUCOES
+    assert "an invented fact is the worst possible failure" in INSTRUCOES
+    assert "extremamente arrojado" in PEDIDO

@@ -51,9 +51,10 @@ def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[], Res
         st.caption(f"Assessor indisponível nesta versão do app: {indisponivel}.")
         return
     st.caption("O DeepSeek V4.1 Flash lê as ações do plano, o Banco Central, os fatos da CVM e as manchetes, pode "
-               "buscar notícias, posts e páginas, e dá um parecer imparcial para o investidor arrojado. Cada afirmação "
-               "cita uma evidência; o app confere a citação e os números e descarta o que não confere. Antes da "
-               "postura, três razões macro do Banco Central contra a tese.")
+               "buscar notícias, posts e páginas, e dá um parecer imparcial para o investidor extremamente arrojado "
+               "(aceita volatilidade e quedas fortes, rejeita perda permanente de capital). Cada afirmação cita uma "
+               "evidência; o app confere a citação e os números e descarta o que não confere. Antes da postura, três "
+               "razões macro do Banco Central contra a tese.")
     if st.button("Gerar parecer", key="gerar_parecer", icon=":material/psychology:"):
         with st.spinner("O assessor está lendo as evidências (até alguns minutos)…"):
             st.session_state[CHAVE_DO_PARECER] = gerar()

@@ -5,9 +5,10 @@
 The user wants an investment adviser inside the Streamlit app: DeepSeek V4.1 Flash 1017 reads the Alepha plan (the
 registered Conservadora, 15 stocks), the stocks' numbers, the BCB macro data, CVM filings, recent news and posts, and
 gives an impartial, skeptical opinion per stock for an aggressive ("arrojado") investor who accepts more volatility
-for more return, but not much more. It must be cheap (prompt cache, few tokens), have tools to look things up, and
-minimize hallucination. It must critique its own thesis before the verdict: three macro reasons, from the BCB data
-only, that would invalidate it.
+for more return, but not much more (changed the same day, at the user's request, to an extremely aggressive investor:
+high volatility and deep drawdowns accepted, permanent loss of capital rejected; DECISOES 138). It must be cheap
+(prompt cache, few tokens), have tools to look things up, and minimize hallucination. It must critique its own thesis
+before the verdict: three macro reasons, from the BCB data only, that would invalidate it.
 
 ## Goals
 

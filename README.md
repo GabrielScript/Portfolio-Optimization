@@ -107,7 +107,10 @@ token = "github_pat_..."
 ```
 
 The panel shows when the headlines were published. Without the token, or with GitHub down, the page shows only the
-numbers, as before. On the lake's own PC the app keeps reading the headlines live from D:.
+numbers, as before. On the lake's own PC the app keeps reading the headlines live from D:. The file is published twice a
+day, like the app's prices and filings; the lake itself collects and scores the news every 2 hours. A late file holds
+true headlines with its publish time on screen, and nothing decides on them (display only), so a 2-hourly publish
+was judged not needed.
 `.streamlit/secrets.toml` is in `.gitignore`.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.

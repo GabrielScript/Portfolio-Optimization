@@ -29,7 +29,10 @@ from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objet
                          limites_por_setor, taxa_anual_para_aritmetica)
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.execucao import Custos  # noqa: E402
-from core import precos_do_app  # noqa: E402
+from core import assessor, bcb, precos_do_app  # noqa: E402
+from core.indicadores import tabela_por_acao  # noqa: E402
+from core.macro import resumo_focus  # noqa: E402
+from core.sentimento import semaforo  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
@@ -41,6 +44,7 @@ from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_mini
                               pesos_finais, plano_com_nucleo, plano_de_rebalanceio, posicoes_da_tabela)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
 from ui import alepha, painel, secoes, servicos  # noqa: E402
+from ui import assessor as ui_assessor  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
                             grafico_fronteira_eficiente, grafico_matriz_correlacao,
@@ -242,6 +246,8 @@ def main() -> None:
         st.markdown("---")
     secao_mercado()
     st.markdown("---")
+    secao_assessor()
+    st.markdown("---")
     erro = validar(entradas)
     if erro:
         st.error(erro)
@@ -292,6 +298,38 @@ def secao_mercado() -> None:
         painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
                              servicos.carregar_selic(hoje), precos, get_ticker_info(), BENCHMARK_ACOES)
+
+
+def secao_assessor() -> None:
+    """The DeepSeek adviser on the registered Alepha plan (information only, DECISOES 136)."""
+    registrado = servicos.carregar_conservadora_registrada()
+    chave = servicos.chave_da_api("deepseek", "DEEPSEEK_API_KEY")
+    indisponivel = ("sem carteira registrada no paper-v2" if registrado is None else
+                    "falta a chave do DeepSeek nos segredos do app ([deepseek] api_key)" if chave is None else None)
+    universo = [] if registrado is None else list(registrado[1].index)
+    ui_assessor.secao(indisponivel, universo, lambda: _parecer_do_plano(registrado, chave))
+
+
+def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assessor.Resultado:
+    hoje = date.today()
+    data, alvo = registrado
+    _, fatos, fundamentos = servicos.carregar_painel()
+    tickers = tuple(dict.fromkeys((*get_all_tickers(), BENCHMARK_ACOES)))
+    precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
+    acoes = tabela_por_acao(precos, get_ticker_info(), fundamentos, BENCHMARK_ACOES)
+    focus_anual = servicos.carregar_focus(hoje)
+    macro = assessor.macro_do_painel(hoje, servicos.carregar_selic(hoje), servicos.carregar_indicadores_bcb(hoje),
+                                     None if focus_anual is None else resumo_focus(focus_anual, hoje.year))
+    desde = precos.index[-min(alepha.SESSOES_DO_SEMAFORO, len(precos.index))].date()
+    luzes = None if fatos is None else semaforo(fatos, alvo.index, desde)
+    pacote = assessor.montar_pacote(plano=alvo, registrada=data, acoes=acoes, percentuais=painel.PERCENTUAIS,
+                                    macro=macro, fatos=fatos, luzes=luzes, manchetes=servicos.carregar_manchetes()[0])
+    fontes = assessor.Fontes(hoje=hoje, acoes=acoes, percentuais=painel.PERCENTUAIS, fatos=fatos,
+                             serie_bcb=bcb.baixar_serie, chave_deepseek=chave,
+                             chave_firecrawl=servicos.chave_da_api("firecrawl", "FIRECRAWL_API_KEY"),
+                             chave_scrapecreators=servicos.chave_da_api("scrapecreators", "SCRAPECREATORS_API_KEY"))
+    texto = assessor.mensagem_de_sistema(pacote)
+    return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave)
 
 
 def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,

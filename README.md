@@ -113,6 +113,31 @@ true headlines with its publish time on screen, and nothing decides on them (dis
 was judged not needed.
 `.streamlit/secrets.toml` is in `.gitignore`.
 
+### After v1.1 (2026-10-25): the DeepSeek adviser
+
+Under the market panel, "Assessor do Alepha (DeepSeek)" gives one opinion per click on the registered plan's
+stocks, for the aggressive investor (`core/assessor.py`, `ui/assessor.py`; design in
+`docs/superpowers/specs/2026-10-25-assessor-deepseek-design.md`). DeepSeek V4.1 Flash (`deepseek-flash`, thinking
+mode) reads a numbered evidence pack (BCB and Focus, the plan, each stock's price, risk and multiples, CVM filings
+and lights, headlines) and may call tools: stock metrics, filings, BCB series, DeepSeek Search and Fetch, Firecrawl
+news, ScrapeCreators Threads posts. Every claim must cite one evidence and quote it; the app keeps a claim only when
+the quote is in that evidence and the claim's numbers are in the quote, and a stance needs three BCB-only reasons
+against the thesis, written before it. Display only: the weights and orders never read it. Keys in Streamlit
+secrets (or the environment variables `DEEPSEEK_API_KEY`, `FIRECRAWL_API_KEY`, `SCRAPECREATORS_API_KEY` locally);
+without the DeepSeek key the section says it is unavailable, and a missing search key only disables that tool:
+
+```toml
+[deepseek]
+api_key = "sk-..."
+[firecrawl]
+api_key = "fc-..."
+[scrapecreators]
+api_key = "..."
+```
+
+One opinion cost about US$ 0.03 off-peak in the first real run (5 requests, 83% of the input from the cache); the
+same pack, plan and day is cached for 6 hours, so a second click costs nothing.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

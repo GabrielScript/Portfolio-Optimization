@@ -85,3 +85,22 @@ def test_a_stock_listed_inside_the_last_year_has_no_12m_return_and_its_beta_uses
     risco = risco_por_acao(precos, "BOVA11.SA")
     assert np.isnan(risco.loc["NOVA3.SA", "Retorno 12m"])
     assert risco.loc["NOVA3.SA", "Beta"] == pytest.approx(1.5)
+
+
+def test_the_per_stock_table_joins_name_sector_last_close_risk_and_fundamentals_by_ticker_without_the_suffix():
+    from core.indicadores import tabela_por_acao
+    datas = pd.bdate_range("2024-01-01", periods=300)
+    gerador = np.random.default_rng(5)
+    precos = pd.DataFrame(10 * (1 + gerador.normal(0, 0.01, (300, 3))).cumprod(axis=0), index=datas,
+                          columns=["BOVA11.SA", "PETR4.SA", "VALE3.SA"])
+    precos.iloc[-1, 2] = np.nan                                   # VALE3 did not trade on the last session
+    fundamentos = pd.DataFrame({"P/L": [4.8], "Balanço de": [pd.Timestamp("2026-06-30")]}, index=["PETR4"])
+    tabela = tabela_por_acao(precos, {"PETR4.SA": {"nome": "Petrobras", "setor": "Petróleo"}}, fundamentos,
+                             "BOVA11.SA")
+    assert list(tabela.index) == ["PETR4", "VALE3"]
+    assert list(tabela.columns[:4]) == ["Empresa", "Setor", "Preço (R$)", "Fechamento de"]
+    assert tabela.loc["PETR4", "Empresa"] == "Petrobras" and tabela.loc["VALE3", "Empresa"] == ""
+    assert tabela.loc["VALE3", "Preço (R$)"] == pytest.approx(precos["VALE3.SA"].iloc[-2])
+    assert tabela.loc["VALE3", "Fechamento de"] == datas[-2]
+    assert tabela.loc["PETR4", "P/L"] == pytest.approx(4.8) and np.isnan(tabela.loc["VALE3", "P/L"])
+    assert "Queda máx. (3 anos)" in tabela.columns and "Balanço de" in tabela.columns

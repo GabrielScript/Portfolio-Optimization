@@ -15,7 +15,7 @@ from datetime import date, datetime
 import pandas as pd
 import streamlit as st
 
-from core.indicadores import risco_por_acao
+from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
 from core.sentimento import (P_DO_ESTUDO, RAZAO_DE_VOL_DO_ESTUDO, RODADAS_DO_ESTUDO, ROTULOS_DOS_TOPICOS,
                              TOPICOS_DO_PAINEL, TURNOS_DE_2026, janela_eleitoral, ultimo_fato)
@@ -119,18 +119,8 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
     if referencia not in com_dados.columns:
         st.caption("Sem os preços do BOVA11 para medir o beta.")
         return
-    risco = risco_por_acao(com_dados, referencia).drop(index=referencia).rename(
-        columns={"Queda máx.": "Queda máx. (3 anos)"})
-    ultimos = com_dados.ffill().iloc[-1]
-    datas = com_dados.apply(lambda serie: serie.last_valid_index())
-    tabela = pd.DataFrame({"Ticker": [ticker.removesuffix(".SA") for ticker in risco.index],
-                           "Empresa": [info.get(ticker, {}).get("nome", "") for ticker in risco.index],
-                           "Setor": [info.get(ticker, {}).get("setor", "") for ticker in risco.index],
-                           "Preço (R$)": ultimos.reindex(risco.index).to_numpy(),
-                           "Fechamento de": datas.reindex(risco.index).to_numpy()}).join(
-        risco.reset_index(drop=True))
-    if fundamentos is not None:
-        tabela = tabela.join(fundamentos.drop(columns=["Balanço de"]), on="Ticker")
+    tabela = tabela_por_acao(com_dados, info, None if fundamentos is None else fundamentos.drop(columns=["Balanço de"]),
+                             referencia).rename_axis("Ticker").reset_index()
     if fatos is not None and not fatos.empty:
         tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
     st.dataframe(tabela, width="stretch", hide_index=True, height=420,

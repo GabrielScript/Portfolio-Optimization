@@ -10,14 +10,16 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, replace
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from core import bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem, sentimento
+from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem,
+                  sentimento)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -222,6 +224,25 @@ def _manchetes_online(token: str) -> tuple[pd.DataFrame | None, datetime | None]
         return manchetes_online.de_json(texto)
     except (ValueError, KeyError, TypeError):       # a file not made by para_json
         return None, None
+
+
+def chave_da_api(secao: str, variavel: str) -> str | None:
+    """An API key from Streamlit secrets (``[secao] api_key``, the deployed app) or the environment variable
+    ``variavel`` (a local run); None without either. The key is only ever sent in a request header."""
+    try:
+        return st.secrets[secao]["api_key"]
+    except Exception:       # noqa: BLE001 - no secrets file (a local run, the tests) or no such entry
+        return os.environ.get(variavel) or None
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False, max_entries=4)
+def gerar_parecer(texto_do_pacote: str, universo: tuple[str, ...], dia: date, _pacote: tuple[assessor.Evidencia, ...],
+                  _fontes: assessor.Fontes, _chave: str) -> assessor.Resultado:
+    """The adviser's opinion (``core.assessor.pedir_parecer``), once per pack, plan and day: a second click on the
+    same day costs nothing. The pack enters the key as its text; the tools' sources and the key stay out of it (the
+    key is never hashed)."""
+    return assessor.pedir_parecer(list(_pacote), list(universo), assessor.Ferramentas(_fontes, {}), _chave,
+                                  datetime.now(timezone.utc))
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

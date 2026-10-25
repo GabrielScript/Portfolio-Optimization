@@ -766,3 +766,58 @@ def test_online_without_a_valid_token_the_panel_says_the_headlines_are_unavailab
     assert not at.exception
     assert not [df for df in at.dataframe if "titulo" in df.value.columns]
     assert any("Manchetes indisponíveis na versão online agora" in c.value for c in at.caption)
+
+
+# ---------------------------------------------------------------- the DeepSeek adviser (DECISOES 136)
+
+def _app_do_assessor(monkeypatch, chave: str | None) -> tuple[AppTest, list]:
+    """The page with the adviser's model call stubbed: it answers an opinion on the first plan stock that cites the
+    pack's Selic three times, and one claim with a number the evidence does not hold."""
+    from core import assessor
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
+    pedidos = []
+
+    def pedir_parecer(pacote, universo, ferramentas, chave, agora, post=None):
+        pedidos.append((pacote, universo, chave))
+        selic = next(e for e in pacote if e.texto.startswith("Selic meta"))
+        contra = [{"afirmacao": "Selic de 13,75%", "evidencia": selic.id, "citacao": "13,75%"}] * 3
+        primeira = universo[0].removesuffix(".SA")
+        bruto = {"cenario_macro": [], "ranking": [primeira], "resumo": "Cenário de juros altos.", "limitacoes": [],
+                 "acoes": [{"ticker": primeira, "tese": [{"afirmacao": "Juro de 13,75%", "evidencia": selic.id,
+                                                         "citacao": "13,75%"}],
+                            "contra_tese_macro": contra, "postura": "neutra", "confianca": 0.4,
+                            "riscos": [{"afirmacao": "Queda de 99%", "evidencia": selic.id, "citacao": "13,75%"}]}]}
+        validacao = assessor.validar_parecer(bruto, {e.id: e for e in pacote}, universo)
+        return assessor.Resultado(validacao, None, assessor.Uso(entrada=1000, cache=600, saida=200, raciocinio=100,
+                                                                requisicoes=2, custo_usd=0.00042), ["buscar_web"])
+    monkeypatch.setattr(assessor, "pedir_parecer", pedir_parecer)
+    st.cache_data.clear()
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    if chave is not None:
+        at.secrets["deepseek"] = {"api_key": chave}
+    at.run()
+    return at, pedidos
+
+
+def test_without_the_deepseek_key_the_adviser_says_it_is_unavailable_and_the_page_still_renders(monkeypatch):
+    at, pedidos = _app_do_assessor(monkeypatch, None)
+    assert not at.exception and not pedidos
+    assert any("Assessor indisponível" in c.value for c in at.caption)
+    assert not [b for b in at.button if b.key == "gerar_parecer"]
+
+
+def test_the_adviser_judges_only_the_plan_stocks_shows_checked_claims_and_its_cost(monkeypatch):
+    at, pedidos = _app_do_assessor(monkeypatch, "chave-de-teste")
+    assert not at.exception and not pedidos                       # nothing is paid before the click
+    at.button(key="gerar_parecer").click().run()
+    assert not at.exception and len(pedidos) == 1
+    pacote, universo, chave = pedidos[0]
+    _, plano = _conservadora_sintetica()
+    assert chave == "chave-de-teste" and sorted(universo) == sorted(plano.index)
+    tabela = next(df.value for df in at.dataframe if "Postura" in df.value.columns)
+    primeira = plano.index[0].removesuffix(".SA")
+    assert tabela["Ticker"].tolist()[0] == primeira and tabela["Postura"].tolist()[0] == "🟡 neutra"
+    assert any("1 afirmação descartada" in e.label for e in at.expander)
+    assert any("cache 60%" in c.value and "US$ 0,0004" in c.value for c in at.caption)
+    assert any("não muda os pesos" in c.value for c in at.caption)

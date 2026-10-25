@@ -56,6 +56,25 @@ def risco_por_acao(precos: pd.DataFrame, referencia: str) -> pd.DataFrame:
                          "Queda máx.": (precos.ffill() / precos.ffill().cummax() - 1).min()})
 
 
+def tabela_por_acao(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None,
+                    referencia: str) -> pd.DataFrame:
+    """Per stock with a price (index: ticker without ".SA"; ``referencia`` left out): name and sector (``info``), the
+    last close and its date, ``risco_por_acao`` (drawdown over the window given, "Queda máx. (3 anos)" for the panel's
+    three years) and the columns of ``fundamentos`` (ticker -> multiples, "Balanço de")."""
+    com_dados = precos.loc[:, precos.notna().any()]
+    risco = risco_por_acao(com_dados, referencia).drop(index=referencia).rename(
+        columns={"Queda máx.": "Queda máx. (3 anos)"})
+    ultimos = com_dados.ffill().iloc[-1]
+    datas = com_dados.apply(lambda serie: serie.last_valid_index())
+    tabela = pd.DataFrame({"Empresa": [info.get(ticker, {}).get("nome", "") for ticker in risco.index],
+                           "Setor": [info.get(ticker, {}).get("setor", "") for ticker in risco.index],
+                           "Preço (R$)": ultimos.reindex(risco.index).to_numpy(),
+                           "Fechamento de": datas.reindex(risco.index).to_numpy()},
+                          index=[ticker.removesuffix(".SA") for ticker in risco.index]).join(
+        risco.rename(index=lambda ticker: ticker.removesuffix(".SA")))
+    return tabela if fundamentos is None else tabela.join(fundamentos)
+
+
 def tabela_de_fundamentos(fundamentos: pd.DataFrame, valor_mercado: pd.DataFrame, proventos: pd.DataFrame,
                           tickers: list[str], hoje: date) -> pd.DataFrame:
     """Per ticker of ``tickers`` (index without ".SA") whose issuer has a statement: ``multiplos`` with the statements

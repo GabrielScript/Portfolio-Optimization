@@ -58,18 +58,24 @@ text is untrusted data: the prompt says it never carries instructions.
   sent (recorded in DECISOES 136, the user asked for it to be configured).
 - `response_format: json_object` (probed live 25/10 together with thinking and tools: works); the assistant message
   with its `reasoning_content` goes back on every tool round (the API answers 400 otherwise).
-- Caps: 6 tool rounds, 12 tool calls, `max_tokens` 16,000 per request; empty content gets one retry; a structural
-  failure gets one repair request listing the errors; then the opinion is refused with the reason on screen.
+- Caps: 6 tool rounds (then `tool_choice: "none"`), 12 tool calls, `max_tokens` 64,000 per request (16,000 cut a
+  real answer); at most 3 claims per list; empty content gets one retry; an answer cut at the token limit
+  (`finish_reason: "length"`) or a structural failure gets one repair request; then the opinion is refused with the
+  reason on screen.
 - Cache: system message = rules + evidence pack, nothing variable before it; the question goes last.
+- The public app spends the owner's key: the same pack, plan and day is cached for every visitor, and at most 8
+  paid opinions a day per app process.
 
 ## Anti-hallucination checks (`validar_parecer`)
 
 - Tickers only from the plan, each once; the ranking only from judged tickers.
 - Claim = `{afirmacao, evidencia, citacao}`; `evidencia` must exist; `citacao` must be inside that evidence's text
-  (spaces and case normalized); every number in `afirmacao` must be in `citacao`.
+  (spaces, case and accents normalized); every stand-alone number in `afirmacao` must be in `citacao` (digits
+  inside a word, like PETR4 or 2T26, are names); no link in `afirmacao` or in free text.
 - `contra_tese_macro`: exactly three claims, all with `bcb` evidence; otherwise the stance becomes "evidência
   insuficiente" with the reason shown.
-- Invalid claims are dropped and counted on screen.
+- Invalid claims are dropped and counted on screen. Everything the model or a web page wrote is shown with Markdown
+  escaped (no injected link, image or format).
 
 ## Online behaviour
 

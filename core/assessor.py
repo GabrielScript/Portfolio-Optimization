@@ -39,6 +39,8 @@ class Evidencia:
 _ESPACOS = re.compile(r"\s+")
 _NUMERO = re.compile(r"\d+(?:[.,]\d+)*")
 # a number of a claim or of free text stands alone: digits inside a word (PETR4, 2T26, 12m) are part of a name
+# the model's own words carry no link: a link there could only come from injected web text (phishing, image beacons)
+_LINK = re.compile(r"https?://|www\.", re.IGNORECASE)
 _NUMERO_SOLTO = re.compile(r"(?<!\w)\d+(?:[.,]\d+)*(?!\w)")
 
 
@@ -74,6 +76,8 @@ def validar_afirmacao(afirmacao: object, evidencias: dict[str, Evidencia]) -> st
     if not isinstance(afirmacao, dict) or not all(isinstance(afirmacao.get(campo), str)
                                                   for campo in ("afirmacao", "evidencia", "citacao")):
         return "afirmação sem os campos afirmacao, evidencia e citacao"
+    if _LINK.search(afirmacao["afirmacao"]):
+        return "afirmação com link"
     evidencia = evidencias.get(afirmacao["evidencia"].strip())
     if evidencia is None:
         return f"a evidência {afirmacao['evidencia']} não existe"
@@ -118,8 +122,8 @@ def _texto_sem_numeros(texto: object, onde: str, descartes: list[str]) -> str:
     """Free text cites nothing, so it may hold no number: a number there could not be checked."""
     if not isinstance(texto, str) or not texto.strip():
         return ""
-    if _NUMERO_SOLTO.search(texto):
-        descartes.append(f"{onde}: texto livre com número sem fonte")
+    if _NUMERO_SOLTO.search(texto) or _LINK.search(texto):
+        descartes.append(f"{onde}: texto livre com número ou link sem fonte")
         return ""
     return texto.strip()
 

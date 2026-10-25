@@ -135,8 +135,10 @@ api_key = "fc-..."
 api_key = "..."
 ```
 
-One opinion cost about US$ 0.03 off-peak in the first real run (5 requests, 83% of the input from the cache); the
-same pack, plan and day is cached for 6 hours, so a second click costs nothing.
+One opinion cost US$ 0.014 to 0.031 off-peak in four real runs (3 to 5 requests, 69% to 94% of the input from the
+cache); the same pack, plan and day is cached for 6 hours for every visitor, so a second click costs nothing, and at
+most 8 paid opinions a day run per app process (the public app spends the owner's key). Model and web text is
+shown with Markdown escaped.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

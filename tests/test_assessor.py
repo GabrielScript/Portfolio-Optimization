@@ -340,3 +340,15 @@ def test_an_answer_cut_at_the_token_limit_is_repaired_with_a_request_to_be_short
                               datetime(2026, 10, 25, 15, 0, tzinfo=timezone.utc), post=post)
     assert resultado.erro is None and MAX_TOKENS >= 64_000
     assert "cortada" in corpos[1]["messages"][-1]["content"]
+
+
+def test_claims_and_free_text_with_links_are_dropped_and_shown_text_is_markdown_escaped():
+    from core.assessor import validar_afirmacao, validar_parecer
+    from ui.assessor import sem_markdown
+    evidencias = _evidencias()
+    assert "link" in validar_afirmacao(_afirmacao("Veja https://golpe.com", "E5", "novo plano"), evidencias)
+    assert "link" in validar_afirmacao(_afirmacao("![x](www.golpe.com/a)", "E5", "novo plano"), evidencias)
+    resultado = validar_parecer({"acoes": [], "resumo": "Clique em http://golpe.com", "limitacoes": []}, evidencias,
+                                ["PETR4"])
+    assert resultado.parecer["resumo"] == ""
+    assert sem_markdown("**a** [b](c) `d` <e> #f !g _h_") == r"\*\*a\*\* \[b\]\(c\) \`d\` \<e\> \#f \!g \_h\_"

@@ -821,3 +821,18 @@ def test_the_adviser_judges_only_the_plan_stocks_shows_checked_claims_and_its_co
     assert any("1 afirmação descartada" in e.label for e in at.expander)
     assert any("cache 60%" in c.value and "US$ 0,0004" in c.value for c in at.caption)
     assert any("não muda os pesos" in c.value for c in at.caption)
+
+
+def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(monkeypatch):
+    # the deployed app is public: the owner's key pays, so a cleared cache or many visitors cannot run up the bill
+    from core import assessor
+    pagos = []
+    monkeypatch.setattr(assessor, "pedir_parecer", lambda *argumentos, **nomeados: pagos.append(1) or
+                        assessor.Resultado(None, None, assessor.Uso(), []))
+    monkeypatch.setattr(servicos, "PARECERES_POR_DIA", 2)
+    st.cache_data.clear()
+    servicos.contador_de_pareceres().clear()
+    resultados = [servicos.gerar_parecer(f"pacote {i}", ("PETR4.SA",), date(2026, 10, 26), (), None, "k")
+                  for i in range(3)]
+    assert len(pagos) == 2 and "limite diário" in resultados[2].erro
+    assert servicos.gerar_parecer("pacote 9", ("PETR4.SA",), date(2026, 10, 27), (), None, "k").erro is None

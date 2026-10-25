@@ -16,6 +16,13 @@ from core.assessor import Evidencia, Resultado
 ROTULO_DA_POSTURA = {"favoravel": "🟢 favorável", "neutra": "🟡 neutra", "desfavoravel": "🔴 desfavorável",
                      "evidencia_insuficiente": "⚪ evidência insuficiente"}
 CHAVE_DO_PARECER = "parecer_do_assessor"
+_MARKDOWN = set("\\`*_{}[]()<>#+-.!|~$:")
+
+
+def sem_markdown(texto: str) -> str:
+    """``texto`` (the model's words, quotes of web pages) shown as plain text inside Markdown: every Markdown control
+    character escaped, so injected text cannot become a link, an image or a format."""
+    return "".join(f"\\{letra}" if letra in _MARKDOWN else letra for letra in texto)
 
 
 def _virgula(numero: float, casas: int) -> str:
@@ -33,7 +40,8 @@ def _afirmacoes(lista: list[dict]) -> str:
 def _fonte(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str:
     evidencia = evidencias.get(afirmacao["evidencia"])
     origem = f"{evidencia.classe}, {evidencia.data}" if evidencia else "?"
-    return f"- {afirmacao['afirmacao']} — *{afirmacao['evidencia']} ({origem}): \"{afirmacao['citacao']}\"*"
+    return (f"- {sem_markdown(afirmacao['afirmacao'])} — *{sem_markdown(afirmacao['evidencia'])} "
+            f"({sem_markdown(origem)}): “{sem_markdown(afirmacao['citacao'])}”*")
 
 
 def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[], Resultado]) -> None:
@@ -60,11 +68,11 @@ def _mostrar(resultado: Resultado, universo: list[str]) -> None:
                f"{uso.taxa_de_cache:.0%}), {_milhar(uso.saida)} de saída ({_milhar(uso.raciocinio)} de raciocínio), "
                f"{len(resultado.chamadas)} ferramenta(s); custo estimado US$ {_virgula(uso.custo_usd, 4)}.")
     if resultado.validacao is None:
-        st.error(f"Parecer indisponível: {resultado.erro}.")
+        st.error(f"Parecer indisponível: {sem_markdown(resultado.erro or '')}.")
         return
     parecer, evidencias = resultado.validacao.parecer, resultado.evidencias
     if parecer["resumo"]:
-        st.info(parecer["resumo"])
+        st.info(sem_markdown(parecer["resumo"]))
     acoes = {acao["ticker"]: acao for acao in parecer["acoes"]}
     ordem = parecer["ranking"] + [ticker for ticker in acoes if ticker not in parecer["ranking"]]
     tabela = pd.DataFrame({"Posição": range(1, len(ordem) + 1), "Ticker": ordem,
@@ -89,11 +97,11 @@ def _mostrar(resultado: Resultado, universo: list[str]) -> None:
     if parecer["cenario_macro"]:
         st.markdown("**Cenário macro**\n" + "\n".join(_fonte(a, evidencias) for a in parecer["cenario_macro"]))
     if parecer["limitacoes"]:
-        st.caption("Limitações apontadas pelo assessor: " + " ".join(parecer["limitacoes"]))
+        st.caption("Limitações apontadas pelo assessor: " + sem_markdown(" ".join(parecer["limitacoes"])))
     descartes = resultado.validacao.descartes
     if descartes:
         with st.expander(f"{len(descartes)} afirmação descartada pela checagem" if len(descartes) == 1 else
                          f"{len(descartes)} afirmações descartadas pela checagem"):
-            st.markdown("\n".join(f"- {motivo}" for motivo in descartes))
+            st.markdown("\n".join(f"- {sem_markdown(motivo)}" for motivo in descartes))
     st.caption("Informativo: não muda os pesos nem as ordens do Alepha, e não é recomendação de investimento. "
                "Opinião de um modelo de linguagem sobre evidências conferidas, sem teste de que acerte.")

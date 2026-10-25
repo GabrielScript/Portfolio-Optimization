@@ -11,6 +11,7 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 from __future__ import annotations
 
 import os
+import threading
 from dataclasses import dataclass, replace
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -235,12 +236,30 @@ def chave_da_api(secao: str, variavel: str) -> str | None:
         return os.environ.get(variavel) or None
 
 
+PARECERES_POR_DIA = 8      # paid opinions per day per app process: the public app spends the owner's key
+
+
+@st.cache_resource
+def contador_de_pareceres() -> dict[date, int]:
+    """Paid opinions per day, shared by every visitor of this process."""
+    return {}
+
+
+_TRAVA_DO_CONTADOR = threading.Lock()
+
+
 @st.cache_data(ttl=6 * 3600, show_spinner=False, max_entries=4)
 def gerar_parecer(texto_do_pacote: str, universo: tuple[str, ...], dia: date, _pacote: tuple[assessor.Evidencia, ...],
                   _fontes: assessor.Fontes, _chave: str) -> assessor.Resultado:
     """The adviser's opinion (``core.assessor.pedir_parecer``), once per pack, plan and day: a second click on the
-    same day costs nothing. The pack enters the key as its text; the tools' sources and the key stay out of it (the
-    key is never hashed)."""
+    same day costs nothing, and past ``PARECERES_POR_DIA`` paid ones a day the answer is the limit message. The pack
+    enters the cache key as its text; the tools' sources and the key stay out of it (the key is never hashed)."""
+    with _TRAVA_DO_CONTADOR:
+        contador = contador_de_pareceres()
+        if contador.get(dia, 0) >= PARECERES_POR_DIA:
+            return assessor.Resultado(None, f"limite diário de {PARECERES_POR_DIA} pareceres atingido; tente amanhã",
+                                      assessor.Uso(), [])
+        contador[dia] = contador.get(dia, 0) + 1
     return assessor.pedir_parecer(list(_pacote), list(universo), assessor.Ferramentas(_fontes, {}), _chave,
                                   datetime.now(timezone.utc))
 

@@ -114,7 +114,7 @@ scores the news every 2 hours. A late file holds true headlines with its publish
 on them (display only).
 `.streamlit/secrets.toml` is in `.gitignore`.
 
-### After v1.1 (2026-10-25): the DeepSeek adviser
+### Version 1.2 (2026-10-25, git tag `v1.2`): the DeepSeek adviser
 
 Under the market panel, "Assessor do Alepha (DeepSeek)" gives one opinion per click on the registered plan's
 stocks, for the extremely aggressive investor since 2026-10-25 (`core/assessor.py`, `ui/assessor.py`; design in
@@ -140,6 +140,20 @@ One opinion cost US$ 0.014 to 0.031 off-peak in four real runs (3 to 5 requests,
 cache); the same pack, plan and day is cached for 6 hours for every visitor, so a second click costs nothing, and at
 most 8 paid opinions a day run per app process (the public app spends the owner's key). Model and web text is
 shown with Markdown escaped.
+
+- **Investor profile (2026-10-25, the user's choice):** extremely aggressive: high volatility, deep drawdowns and
+  concentrated, asymmetric bets are accepted when the potential return pays for them; only a permanent loss of
+  capital (fraud, insolvency, value destruction) is rejected. The model is told not to prefer risk for its own sake
+  and that the plan itself is low-volatility and unlevered. First live opinion with it: US$ 0.0185, no claim dropped.
+- **Flash vs Pro (DECISOES 137, same evidence pack, two runs each):** Flash US$ 0.016-0.030 and 2-3 minutes, 1 and
+  7 claims dropped, 6 tool calls a run; Pro (`deepseek-v4-pro`) US$ 0.074-0.106 and 4-6 minutes, no claim dropped
+  but no tool call at all (no news, posts or web). Run-to-run ranking correlation 0.85 (Flash) and 0.88 (Pro);
+  0.60-0.73 across models; PETR4 first in all four. Flash stays the default; `pedir_parecer(..., modelo=MODELO_PRO)`
+  switches.
+- **Retrieval:** a numbered evidence pack plus tools, not a vector or graph store: the data is small and tabular,
+  exact lookup is what the quote check needs, and the fixed pack is what the prompt cache matches.
+- **Not a backtest:** the model was trained on the past it would be tested on (look-ahead), so its value can only be
+  measured forward; a pre-registered weekly log of its opinions is proposed, not started.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

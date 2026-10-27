@@ -9,7 +9,7 @@ ceiling a QAOA can at best reach on the same QUBO; the QAOA itself lives in ``qp
 from __future__ import annotations
 
 import itertools
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
@@ -110,6 +110,7 @@ RISK_AVERSION = 1.0     # growth-optimal (Kelly) lambda: the "extremely aggressi
 CFG_MAX_SHARPE = ConfigOtimizacao(objetivo=Objetivo.MAX_SHARPE, peso_maximo=0.20, n_ativos_max=None, vol_maxima=0.40)
 
 Selector = Callable[[pd.Timestamp, pd.DataFrame, pd.Series], list[str]]   # (decision date, treino, score) -> names
+ScoreOfMonth = Callable[[pd.Timestamp, Sequence[str]], pd.Series]         # (month, candidates) -> score per name
 
 
 @dataclass(frozen=True)
@@ -174,18 +175,19 @@ def random_selector(sectors: Mapping[str, str], n: int, k: int, seed: int) -> Se
 
 
 def selection_then_max_sharpe(select: Selector, monthly_returns: pd.DataFrame, dividends: pd.DataFrame,
-                              sectors: Mapping[str, str], cfg: ConfigOtimizacao,
-                              rf_daily: pd.Series | None) -> Estrategia:
+                              sectors: Mapping[str, str], cfg: ConfigOtimizacao, rf_daily: pd.Series | None,
+                              score_of_month: ScoreOfMonth | None = None) -> Estrategia:
     """
-    Every QPO arm in the engine: the Conservadora score of the decision month (public data before it only), a
-    selection, then ``estrategia_otimizada_nas_regras`` on the chosen names (sector cap, ``checar_carteira``,
-    ``CarteiraRecusada``), Jorion-shrunk mu.
+    Every QPO arm in the engine: the score of the decision month (the Conservadora's unless ``score_of_month`` is
+    given; public data before the month only), a selection, then ``estrategia_otimizada_nas_regras`` on the chosen
+    names (sector cap, ``checar_carteira``, ``CarteiraRecusada``), Jorion-shrunk mu.
     """
     pesos_nas_regras = estrategia_otimizada_nas_regras(cfg, True, sectors, rf_daily)
 
     def _strategy(treino: pd.DataFrame) -> pd.Series:
         mes = treino.index[-1].to_period("M").to_timestamp()
-        score = conservadora(monthly_returns, dividends, mes, treino.columns)
+        score = (conservadora(monthly_returns, dividends, mes, treino.columns) if score_of_month is None
+                 else score_of_month(mes, list(treino.columns)))
         nomes = select(treino.index[-1], treino, score)
         if not nomes:
             raise ValueError(f"{treino.index[-1]:%Y-%m-%d}: no name selected")

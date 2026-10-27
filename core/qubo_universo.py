@@ -13,9 +13,11 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 
 import numpy as np
+import pandas as pd
 import pyscipopt as scip
 
 from core.qpo import RISK_AVERSION, QuboInstance, build_qubo, energy
+from core.views import escore_normal
 
 FULL_UNIVERSE = 10**6          # more names than the B3 lists: ``core.qpo.candidates`` keeps every eligible name
 TIME_LIMIT = 600.0             # seconds per MIQP (fixed by the timing spike before the pre-registration commit)
@@ -208,3 +210,17 @@ def anneal_solver(sectors: Mapping[str, str], max_per_sector: int = SECTOR_CAP, 
                                               abs(energias[0] - energias[1]) <= 1e-12)
         return corridas[melhor]
     return _solve
+
+
+def composite_score(conservadora_of_month: Callable[[pd.Timestamp, Sequence[str]], pd.Series],
+                    value_of_month: Callable[[pd.Timestamp, Sequence[str]], pd.Series]
+                    ) -> Callable[[pd.Timestamp, Sequence[str]], pd.Series]:
+    """Attempt 48's score (docs/superpowers/specs/2026-10-27-qubo-universo-valor-design.md): over the names with a
+    Conservadora score, the mean of its normal score and the value score's normal score among those names; a name
+    without a value score keeps the Conservadora's alone. Equal weights: nothing is fitted."""
+    def _nota(mes: pd.Timestamp, candidatos: Sequence[str]) -> pd.Series:
+        base = conservadora_of_month(mes, candidatos).dropna()
+        valor = value_of_month(mes, list(base.index)).dropna()
+        escores = pd.DataFrame({"conservadora": escore_normal(base), "valor": escore_normal(valor)})
+        return escores.reindex(base.index).mean(axis=1)
+    return _nota

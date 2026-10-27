@@ -168,3 +168,19 @@ def test_random_selector_is_reproducible_and_draws_k_of_the_candidates():
     primeira = sorteio(MES, treino, score)
     assert primeira == sorteio(MES, treino, score)
     assert len(primeira) == 3 and set(primeira) <= set(candidates(score, SETORES_DOS_8, 6))
+
+
+def test_selection_scores_with_the_given_monthly_score_instead_of_the_conservadora():
+    retornos, proventos = _painel_de_8_papeis()
+    registro: dict = {}
+    inverso = pd.Series(np.arange(8, dtype=float), index=list("ABCDEFGH"))          # H best, A worst
+
+    def nota_do_mes(mes, candidatos):
+        return inverso.reindex(list(candidatos)).dropna()
+
+    estrategia = selection_then_max_sharpe(qubo_selector(SETORES_DOS_8, n=7, k=5, solve=exact_picks, record=registro),
+                                           retornos, proventos, SETORES_DOS_8, CFG_MAX_SHARPE, None,
+                                           score_of_month=nota_do_mes)
+    estrategia(_treino(0.01))
+    instancia, _ = next(iter(registro.values()))
+    assert instancia.tickers == tuple("HGFEDCB")

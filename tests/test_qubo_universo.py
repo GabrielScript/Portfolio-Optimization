@@ -179,3 +179,20 @@ def test_full_universe_arm_weights_only_annealed_picks_within_the_sector_cap():
     assert set(pesos[pesos > 0].index) <= escolhidos
     assert pesos.sum() == pytest.approx(1.0)
     assert log[instancia.date].agree
+
+
+def test_composite_score_averages_normal_scores_where_both_exist_and_keeps_the_conservadora_names():
+    from scipy.stats import norm
+
+    from core.qubo_universo import composite_score
+
+    conservadora_ = pd.Series([5.0, 4.0, 3.0, 2.0, 1.0], index=list("ABCDE"))
+    valor = pd.Series([1.0, 2.0, 3.0, 9.0], index=list("ACEF"))          # F has no Conservadora score
+    nota = composite_score(lambda mes, c: conservadora_.reindex(c).dropna(), lambda mes, c: valor.reindex(c).dropna())(
+        MES, list("ABCDEF"))
+    z_c = pd.Series(norm.ppf((conservadora_.rank() - 0.5) / 5), index=list("ABCDE"))
+    z_v = pd.Series(norm.ppf((valor[list("ACE")].rank() - 0.5) / 3), index=list("ACE"))
+    assert list(nota.index) == list("ABCDE")
+    assert nota["A"] == pytest.approx((z_c["A"] + z_v["A"]) / 2)
+    assert nota["B"] == pytest.approx(z_c["B"])
+    assert nota["E"] == pytest.approx((z_c["E"] + z_v["E"]) / 2)

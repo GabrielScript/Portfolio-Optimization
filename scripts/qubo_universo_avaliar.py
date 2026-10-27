@@ -3,6 +3,8 @@ qubo_universo_avaliar.py - the one reading of the QPO's QUBO over the full unive
 (docs/superpowers/specs/2026-10-27-qubo-universo-design.md). Runs only after the pre-registration commit.
 
     python scripts/qubo_universo_avaliar.py > docs/qubo-universo-2026-10-27.txt
+    python scripts/qubo_universo_avaliar.py valor > docs/qubo-universo-valor-2026-10-27.txt   (attempt 48, conditional:
+    docs/superpowers/specs/2026-10-27-qubo-universo-valor-design.md)
 """
 
 from __future__ import annotations
@@ -22,12 +24,14 @@ from core import market_data  # noqa: E402
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.config import taxa_anual_para_aritmetica  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
-from core.qpo import CFG_MAX_SHARPE, K, QuboInstance, exact_picks, qubo_selector  # noqa: E402
+from core.qpo import CFG_MAX_SHARPE, K, QuboInstance, ScoreOfMonth, exact_picks, qubo_selector  # noqa: E402
 from core.qpo import selection_then_max_sharpe  # noqa: E402
-from core.qubo_universo import FULL_UNIVERSE, SECTOR_CAP, AnnealRecord, anneal_solver  # noqa: E402
+from core.qubo_universo import FULL_UNIVERSE, SECTOR_CAP, AnnealRecord, anneal_solver, composite_score  # noqa: E402
+from core.sinais import conservadora  # noqa: E402
+from core.views import nota_media_dos_escores  # noqa: E402
 from core.robustez import psr_da_diferenca  # noqa: E402
 from core.sinais import estrategia_conservadora  # noqa: E402
-from scripts import avaliar_conservadora, avaliar_robustez  # noqa: E402
+from scripts import avaliar_conservadora, avaliar_robustez, avaliar_valor  # noqa: E402
 from scripts.avaliar_robustez import FASES, _acoes, contar_tentativas, referencias, tabela_do_periodo  # noqa: E402
 from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT  # noqa: E402
 from scripts.qpo_avaliar import (CONSERVADORA, MATCH_MIN, _year_returns, _year_table, check_aligned,  # noqa: E402
@@ -35,6 +39,8 @@ from scripts.qpo_avaliar import (CONSERVADORA, MATCH_MIN, _year_returns, _year_t
 from scripts.qpo_montar import FOLDER, LAST_SESSION, RUN_DATE  # noqa: E402
 
 ARM = "QUBO-universo"
+ARM_VALOR = "QUBO-universo-valor"
+PASTA_CVM = FOLDER.parent / "2026-10-24-cvm"     # DFP and ITR since 2010, dated by CVM receipt (DECISOES 130's folder)
 TOP20 = "QPO-exact (top-20)"     # the nested design of the first QPO reading: context, already a trial row
 
 
@@ -82,7 +88,8 @@ def picks_profile(record: Mapping[pd.Timestamp, tuple[QuboInstance, tuple[int, .
             f"median {int(np.median(por_setor))}, max {max(por_setor)}")
 
 
-def _run_phase(fase: int, dados, mensal, cfg, cdi) -> tuple[dict[str, pd.Series], dict, dict, int]:
+def _run_phase(fase: int, dados, mensal, cfg, cdi, arm: str,
+               score_of_month: ScoreOfMonth | None) -> tuple[dict[str, pd.Series], dict, dict, int]:
     """Every curve of one phase, plus the arm's recorded QUBOs, MIQP log and refusal count."""
     acoes = _acoes(dados.precos.loc[:LAST_SESSION].iloc[fase:])
 
@@ -90,55 +97,72 @@ def _run_phase(fase: int, dados, mensal, cfg, cdi) -> tuple[dict[str, pd.Series]
         return walk_forward_dinamico(acoes, dados.universo, estrategia, CFG_BT, nome, Congelamento())
 
     def com_max_sharpe(seletor):
-        return selection_then_max_sharpe(seletor, mensal.retornos, mensal.proventos, dados.setores, cfg, cdi)
+        return selection_then_max_sharpe(seletor, mensal.retornos, mensal.proventos, dados.setores, cfg, cdi,
+                                         score_of_month)
 
     conservadora = rodar(estrategia_conservadora(mensal.retornos, mensal.proventos, dados.setores), CONSERVADORA)
     check_plumbing(fase, cagr(conservadora.valores.dropna()))          # before the arm: fail fast
     registro, log = {}, {}
     braco = rodar(com_max_sharpe(qubo_selector(dados.setores, FULL_UNIVERSE, K, anneal_solver(dados.setores,
                                                                                                SECTOR_CAP, log),
-                                               registro)), ARM)
-    curvas = {ARM: braco, TOP20: rodar(com_max_sharpe(qubo_selector(dados.setores, 20, K, exact_picks)), TOP20),
+                                               registro)), arm)
+    topo = selection_then_max_sharpe(qubo_selector(dados.setores, 20, K, exact_picks), mensal.retornos,
+                                     mensal.proventos, dados.setores, cfg, cdi)          # always the first reading's
+    curvas = {arm: braco, TOP20: rodar(topo, TOP20),
               CONSERVADORA: conservadora, **referencias(dados.precos.loc[:LAST_SESSION].iloc[fase:], CFG_BT)}
     return {nome: curva.valores for nome, curva in curvas.items()}, registro, log, len(braco.recusas)
 
 
-def main() -> int:
+def _value_score(mensal) -> tuple[ScoreOfMonth, dict[str, str]]:
+    """Attempt 48's composite score (Conservadora + value) and the CVM folder's hashes."""
+    avaliar_valor.PASTA_UNIVERSO = FOLDER                        # sectors of the same frozen folder as the engine
+    balancos, sha256 = avaliar_valor.carregar_balancos(PASTA_CVM)
+    valor = nota_media_dos_escores(*avaliar_valor.notas(balancos, mensal).values())
+    return composite_score(lambda mes, candidatos: conservadora(mensal.retornos, mensal.proventos, mes, candidatos),
+                           valor), sha256
+
+
+def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
     mensal = avaliar_conservadora.carregar_mensal(FOLDER)
+    arm, score_of_month, sha256_cvm = ARM, None, {}
+    if argv[:1] == ["valor"]:
+        arm = ARM_VALOR
+        score_of_month, sha256_cvm = _value_score(mensal)
     selic = market_data.obter_selic_meta(RUN_DATE)
     cdi = market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE)
     cfg = replace(CFG_MAX_SHARPE, taxa_livre_risco=taxa_anual_para_aritmetica(selic.valor))
     n_tentativas = contar_tentativas()
-    print(f"Files (sha256): {dados.sha256 | mensal.sha256}; k {K}, sector cap {SECTOR_CAP}, DSR N {n_tentativas}")
+    print(f"Files (sha256): {dados.sha256 | mensal.sha256 | sha256_cvm}; arm {arm}; k {K}, sector cap {SECTOR_CAP}, "
+          f"DSR N {n_tentativas}")
     p_cons, p_bova, dsr, concordancias = [], [], [], []
     for fase in FASES:
-        valores, registro, log, recusas = _run_phase(fase, dados, mensal, cfg, cdi)
+        valores, registro, log, recusas = _run_phase(fase, dados, mensal, cfg, cdi, arm, score_of_month)
         check_aligned(valores)
-        rf = market_data.serie_rf_diaria(valores[ARM].index, cdi, selic.valor)
-        tabela = tabela_do_periodo({nome: valores[nome] for nome in (ARM, TOP20, CONSERVADORA)}, valores["BOVA11"],
+        rf = market_data.serie_rf_diaria(valores[arm].index, cdi, selic.valor)
+        tabela = tabela_do_periodo({nome: valores[nome] for nome in (arm, TOP20, CONSERVADORA)}, valores["BOVA11"],
                                    rf, n_tentativas)
-        for nome in (ARM, TOP20, CONSERVADORA, "BOVA11"):
+        for nome in (arm, TOP20, CONSERVADORA, "BOVA11"):
             tabela.loc[nome, "CAGR"] = cagr(valores[nome].dropna())
             tabela.loc[nome, "MDD"] = drawdown(valores[nome].dropna())[1]
-        for nome in (ARM, TOP20):
+        for nome in (arm, TOP20):
             tabela.loc[nome, "P[> Conservadora]"] = psr_da_diferenca(valores[nome], valores[CONSERVADORA])
-        p_cons.append(float(tabela.loc[ARM, "P[> Conservadora]"]))
-        p_bova.append(float(tabela.loc[ARM, "P aritmético"]))
-        dsr.append(float(tabela.loc[ARM, "DSR"]))
+        p_cons.append(float(tabela.loc[arm, "P[> Conservadora]"]))
+        p_bova.append(float(tabela.loc[arm, "P aritmético"]))
+        dsr.append(float(tabela.loc[arm, "DSR"]))
         concordancias += [registro.agree for registro in log.values()]
-        ganhos, anos = years_beating_all(valores[ARM], [valores["BOVA11"], valores[CONSERVADORA]])
-        datas = valores[ARM].index
+        ganhos, anos = years_beating_all(valores[arm], [valores["BOVA11"], valores[CONSERVADORA]])
+        datas = valores[arm].index
         print(f"\n=== Phase {fase}: {datas[0]:%d/%m/%Y} to {datas[-1]:%d/%m/%Y}; refusals {recusas}; "
-              f"P[{ARM} > {TOP20}] {psr_da_diferenca(valores[ARM], valores[TOP20]):.3f} ===")
+              f"P[{arm} > {TOP20}] {psr_da_diferenca(valores[arm], valores[TOP20]):.3f} ===")
         print(anneal_status(log))
         print(picks_profile(registro, dados.setores))
         print(tabela.to_string(float_format=lambda x: f"{x:.3f}"))
         print(f"Years beating BOVA11 and the Conservadora (reported, not a gate; the user's target is 90%): "
               f"{ganhos} of {anos} ({ganhos / anos:.0%})")
-        print(_year_table({nome: valores[nome] for nome in (ARM, TOP20, CONSERVADORA, "BOVA11")})
+        print(_year_table({nome: valores[nome] for nome in (arm, TOP20, CONSERVADORA, "BOVA11")})
               .to_string(float_format=lambda x: f"{x:.1%}"))
         print(f"(phase {fase} done in {time.perf_counter() - inicio:.0f} s)", flush=True)
     print(f"\nAll phases: agreement of the two annealing runs {np.mean(concordancias):.1%} (>= {MATCH_MIN:.0%})")
@@ -150,4 +174,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

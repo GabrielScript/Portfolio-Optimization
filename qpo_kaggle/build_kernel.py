@@ -8,6 +8,7 @@ build_kernel.py - writes a single-file Kaggle kernel (folder + kernel-metadata.j
 """
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -32,6 +33,9 @@ def kernel_source(job_file: str, args: list[str] | None = None) -> str:
 
 def main(argv: list[str]) -> int:
     job, destino, args = argv[0], Path(argv[1]), argv[2:]
+    if any(re.match(r"^[A-Za-z]:[/\\]", arg) for arg in args):
+        raise SystemExit(f"Windows path in the kernel arguments {args}: run with MSYS_NO_PATHCONV=1 (Git Bash "
+                         "rewrites /kaggle/... to C:/Program Files/Git/kaggle/...)")
     arquivo = JOBS[job]
     if job == "spike":
         titulo, fontes = "QPO timing spike", []

@@ -30,3 +30,9 @@ def test_find_input_locates_the_folder_with_sha256sums(tmp_path):
     alvo.mkdir(parents=True)
     (alvo / "SHA256SUMS").write_text("", encoding="utf-8")
     assert find_input(tmp_path) == alvo
+
+
+def test_builder_refuses_a_windows_path_baked_by_git_bash(tmp_path):
+    # Git Bash rewrites /kaggle/working to C:/Program Files/Git/kaggle/working unless MSYS_NO_PATHCONV=1
+    with pytest.raises(SystemExit, match="MSYS_NO_PATHCONV"):
+        main(["solve", str(tmp_path), "auto", "C:/Program Files/Git/kaggle/working", "1,2,3", "0"])

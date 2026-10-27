@@ -66,3 +66,29 @@ def test_verdict_needs_the_strategy_gate_and_reproducible_picks():
     assert verdict(True, 0.80) == "CANDIDATE: pre-register a forward paper log (paper-v3)"
     assert verdict(True, 0.79) == "not a candidate (picks not reproducible): the QPO line is closed"
     assert verdict(False, 1.0) == "not a candidate: the QPO line is closed"
+
+
+def test_with_retries_returns_after_transient_failures_and_reraises_when_they_persist():
+    from core.market_data import ErroDadosMercado
+    from scripts.qubo_universo_avaliar import with_retries
+
+    chamadas = []
+
+    def instavel():
+        chamadas.append(1)
+        if len(chamadas) < 3:
+            raise ErroDadosMercado("BCB SGS 12: Expecting value")
+        return "cdi"
+
+    assert with_retries(instavel, tries=5, wait=lambda: None) == "cdi"
+    assert len(chamadas) == 3
+
+    def sempre_falha():
+        raise ErroDadosMercado("BCB fora")
+
+    try:
+        with_retries(sempre_falha, tries=3, wait=lambda: None)
+    except ErroDadosMercado as erro:
+        assert "BCB fora" in str(erro)
+    else:
+        raise AssertionError("the persistent error was swallowed")

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import sys
 import time
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import replace
 from pathlib import Path
 
@@ -46,6 +46,22 @@ TOP20 = "QPO-exact (top-20)"     # the nested design of the first QPO reading: c
 
 P_MIN = 0.95            # P[> Conservadora] and P[> BOVA11], every phase
 DSR_MIN = 0.95          # deflated Sharpe of the IR against BOVA11 (N from docs/tentativas.csv), every phase
+
+BCB_TRIES = 6           # the BCB SGS API answers an HTML page now and then (27/10/2026); core/bcb.py is paper-guarded
+BCB_WAIT = 30.0         # seconds between tries
+
+
+def with_retries(fetch: Callable[[], object], tries: int = BCB_TRIES,
+                 wait: Callable[[], None] = lambda: time.sleep(BCB_WAIT)) -> object:
+    """``fetch()`` again after a market-data error, up to ``tries`` times; the last error propagates."""
+    for tentativa in range(1, tries + 1):
+        try:
+            return fetch()
+        except market_data.ErroDadosMercado:
+            if tentativa == tries:
+                raise
+            wait()
+    raise AssertionError("unreachable")
 
 
 def strategy_gate(p_vs_conservadora: Sequence[float], p_vs_bova: Sequence[float], dsr: Sequence[float]) -> bool:
@@ -132,7 +148,7 @@ def main(argv: list[str]) -> int:
         arm = ARM_VALOR
         score_of_month, sha256_cvm = _value_score(mensal)
     selic = market_data.obter_selic_meta(RUN_DATE)
-    cdi = market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE)
+    cdi = with_retries(lambda: market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE))
     cfg = replace(CFG_MAX_SHARPE, taxa_livre_risco=taxa_anual_para_aritmetica(selic.valor))
     n_tentativas = contar_tentativas()
     print(f"Files (sha256): {dados.sha256 | mensal.sha256 | sha256_cvm}; arm {arm}; k {K}, sector cap {SECTOR_CAP}, "

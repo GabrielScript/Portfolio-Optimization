@@ -167,8 +167,33 @@ shown with Markdown escaped.
   app shows this as a caption. The real-money plans (Conservadora, registered satellite) stay Brazilian stocks only.
 - **Why off by default:** in a descriptive backtest (29/04/2014-23/10/2026), the US leg improved Min. Vol (CAGR
   11.3% -> 13.9%, vol 15.9% -> 14.0%) and hurt Kelly (18.5% -> 17.1%); no mix beat IVVB11 alone (20.8%).
-- **Next (research, pre-registered):** a quantum portfolio test (QAOA asset selection, max Sharpe weights) against
-  exact classical selection, the Conservadora and BOVA11.
+
+### After v1.2 (2026-10-27): quantum portfolio test (QPO), not adopted
+
+- **What was tested (pre-registered, `docs/superpowers/specs/2026-10-27-qpo-design.md`):** at each quarterly
+  rebalance, pick 15 of the 20 best Conservadora names by a QUBO (Conservadora score as Grinold-Kahn alpha,
+  Ledoit-Wolf risk, growth-optimal risk aversion), weight them by the existing max Sharpe, unlevered. The QUBO is
+  solved two ways: exactly (enumeration) and by QAOA (Dicke start + XY-ring mixer, p = 3, 150 Adam steps,
+  4,096 shots). Same engine, costs and frozen data as the Conservadora (2010-2026, 3 start offsets).
+- **Result (`docs/qpo-2026-10-27.txt`):** CAGR, by start offset:
+
+  | Arm | 0 | 21 | 42 |
+  |---|---|---|---|
+  | QPO-exact | 19.7% | 16.8% | 16.0% |
+  | QPO-QAOA | 19.4% | 16.5% | 16.7% |
+  | Conservadora (15, equal weights) | 17.4% | 16.4% | 16.9% |
+  | BOVA11 | 7.2% | 6.8% | 6.7% |
+
+  Both QPO arms beat BOVA11 (P 0.96-0.99) but not the Conservadora (P 0.80/0.50/0.32 for QPO-exact), and the
+  random-15 control beat QPO-exact in one offset: **not a candidate**. QAOA matched the exact optimum in 77.8% of
+  the 198 rebalances (bar 80%), mean approximation ratio 0.996.
+- **Why the quantum part cannot add return here:** with 20 candidates the exact optimum takes ~1 s classically, so
+  a simulated QAOA can at best equal it; any edge would have to come from the QUBO's inputs, and the inputs did
+  not beat the plain Conservadora. None of the papers in `Artigos_QPO` reports an out-of-sample, cost-net edge
+  either.
+- **Engineering kept:** the QAOA ansatz never leaves the 15-of-20 subspace, so `qpo_kaggle/qaoa_subspace.py`
+  simulates its 15,504 amplitudes exactly in torch (equal to PennyLane to 1e-12), ~10-20 s per rebalance on a
+  laptop CPU instead of 1-2 min on a Kaggle T4. PennyLane (`qpo_kaggle/qpo_qaoa.py`) stays as the reference.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

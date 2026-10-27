@@ -1,0 +1,83 @@
+{
+ "phase": 0,
+ "date": "2010-02-09",
+ "p": 2,
+ "sha256": "c87de9419568a3bea435acdd4140576223eff38bc3b9b65beffeb82e34c04003",
+ "picks": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  17,
+  19
+ ],
+ "exact_picks": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  16,
+  17,
+  19
+ ],
+ "tickers": [
+  "COCE5",
+  "NATU3",
+  "MOTV3",
+  "ITSA4",
+  "AMBV4",
+  "CPLE6",
+  "GETI4",
+  "TMAR5",
+  "CRUZ3",
+  "ISAE4",
+  "LIGT3",
+  "CPFE3",
+  "BBDC4",
+  "CGAS5",
+  "UGPA4"
+ ],
+ "energy": 0.022158986839750053,
+ "exact_energy": 0.021635466131710725,
+ "ratio": 0.9812176796479237,
+ "match": false,
+ "p_pick": 0.000244140625,
+ "expval_initial": 5.739299672022744,
+ "expval_final": 4.941952894279979,
+ "n_infeasible": 0,
+ "init": null,
+ "angles": [
+  [
+   0.9000052689402288,
+   2.1992672885668587
+  ],
+  [
+   0.51741970187521,
+   0.36350173407460157
+  ]
+ ],
+ "seed": 20261027,
+ "steps": 150,
+ "shots": 4096,
+ "seconds": 18.911160999999993,
+ "backend": "subspace",
+ "device": "torch-subspace:cpu",
+ "torch": "2.14.1+cpu"
+}

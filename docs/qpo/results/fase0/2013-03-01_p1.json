@@ -1,0 +1,88 @@
+{
+ "phase": 0,
+ "date": "2013-03-01",
+ "p": 1,
+ "sha256": "9305f31b0958626c19ca3aacda26ae7ed41ffbd03365013f1e5faff9119f2eab",
+ "picks": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  9,
+  11,
+  12,
+  13,
+  15,
+  16,
+  19
+ ],
+ "exact_picks": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  9,
+  11,
+  12,
+  13,
+  15,
+  16,
+  19
+ ],
+ "tickers": [
+  "GRND3",
+  "VLID3",
+  "COCE5",
+  "AMBV4",
+  "KLBN4",
+  "EGIE3",
+  "MOTV3",
+  "HBOR3",
+  "NATU3",
+  "CRUZ3",
+  "VIVT4",
+  "CGAS5",
+  "GETI4",
+  "ETER3",
+  "PSSA3"
+ ],
+ "energy": 0.009344232636927269,
+ "exact_energy": 0.009344232636927269,
+ "ratio": 1.0,
+ "match": true,
+ "p_pick": 0.001220703125,
+ "expval_initial": 3.7933372374791174,
+ "expval_final": 3.757654313785131,
+ "n_infeasible": 0,
+ "init": [
+  [
+   1.2242536524730538
+  ],
+  [
+   0.583184197867901
+  ]
+ ],
+ "angles": [
+  [
+   1.025569563326831
+  ],
+  [
+   0.556654303105415
+  ]
+ ],
+ "seed": 20261039,
+ "steps": 150,
+ "shots": 4096,
+ "seconds": 8.072635399999854,
+ "backend": "subspace",
+ "device": "torch-subspace:cpu",
+ "torch": "2.14.1+cpu"
+}

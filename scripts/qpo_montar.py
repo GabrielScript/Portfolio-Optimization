@@ -27,8 +27,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.config import taxa_anual_para_aritmetica  # noqa: E402
-from core.qpo import CFG_MAX_SHARPE, K, QuboInstance, exact_picks, qubo_selector, selection_then_max_sharpe  # noqa: E402
-from core.qpo import solve_exact  # noqa: E402
+from core.qpo import (CFG_MAX_SHARPE, K, QuboInstance, exact_picks, qubo_selector,  # noqa: E402
+                      selection_then_max_sharpe, solve_exact)
 from scripts import avaliar_conservadora, avaliar_robustez  # noqa: E402
 from scripts.avaliar_robustez import FASES, _acoes  # noqa: E402
 from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT  # noqa: E402

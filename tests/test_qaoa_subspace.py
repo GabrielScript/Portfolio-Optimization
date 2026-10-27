@@ -1,4 +1,4 @@
-"""Exact weight-k subspace QAOA (qpo_kaggle/qaoa_subspace.py) against the PennyLane reference (qpo_kaggle/qpo_qaoa.py)."""
+"""Exact weight-k subspace QAOA (qpo_kaggle/qaoa_subspace.py) against the PennyLane reference (qpo_qaoa.py)."""
 
 import itertools
 import math
@@ -57,7 +57,7 @@ def test_expectation_and_gradient_equal_pennylane_adjoint():
     angulos = torch.tensor(ANGULOS, requires_grad=True)
     valor = SubspaceQaoa(q, k).expval(angulos)
     valor.backward()
-    assert float(valor) == pytest.approx(float(valor_ref), abs=1e-12)
+    assert float(valor.detach()) == pytest.approx(float(valor_ref.detach()), abs=1e-12)
     assert angulos.grad.numpy() == pytest.approx(referencia.grad.numpy(), abs=1e-10)
 
 

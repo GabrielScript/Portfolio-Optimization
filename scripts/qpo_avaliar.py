@@ -166,7 +166,8 @@ def main(argv: list[str]) -> int:
             resultados = _results(results_dir, fase, p_escolhido)
             matches += [r["match"] for r in resultados.values()]
             ratios += [r["ratio"] for r in resultados.values()]
-        print(f"\n=== Phase {fase}: {valores['QPO-exact'].index[0]:%d/%m/%Y} to {valores['QPO-exact'].index[-1]:%d/%m/%Y};"
+        datas = valores["QPO-exact"].index
+        print(f"\n=== Phase {fase}: {datas[0]:%d/%m/%Y} to {datas[-1]:%d/%m/%Y};"
               f" refusals QPO-exact {len(curvas['QPO-exact'].recusas)}; P[QPO-exact > Conservadora-MS] (selection)"
               f" {selecao:.3f} ===")
         print(tabela.to_string(float_format=lambda x: f"{x:.3f}"))

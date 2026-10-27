@@ -24,7 +24,7 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from qpo_kaggle.qaoa_subspace import solve_qaoa as solve_subspace  # KERNEL: inlined
+from qpo_kaggle.qaoa_subspace import solve_qaoa as solve_subspace
 
 STEPS = 150
 LR = 0.05
@@ -45,7 +45,7 @@ def _solver(backend: str):
         raise ValueError(f"backend {backend!r} is not one of {BACKENDS}")
     import pennylane as qml
 
-    from qpo_kaggle.qpo_qaoa import solve_qaoa as solve_reference  # KERNEL: inlined
+    from qpo_kaggle.qpo_qaoa import solve_qaoa as solve_reference
     gpu = backend == "pennylane-gpu"
     return (partial(solve_reference, device_name="lightning.gpu" if gpu else "lightning.qubit", require_gpu=gpu),
             {"pennylane": qml.__version__})

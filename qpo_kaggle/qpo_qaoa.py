@@ -1,8 +1,8 @@
 """
-qpo_qaoa.py - QAOA solver of the QPO (docs/superpowers/specs/2026-10-27-qpo-design.md, section 7).
+qpo_qaoa.py - PennyLane reference implementation of the QPO's QAOA (design doc, section 7).
 
-Self-contained (numpy, PennyLane 0.45.1, torch) so it runs alone on Kaggle; the numpy helpers repeat the ones in
-``core/qpo.py`` and the tests check them against x'Qx directly.
+The production solver is ``qaoa_subspace.py`` (the same circuit simulated exactly on its weight-k subspace); this
+module is the full-statevector reference it is tested against, and what the Kaggle T4 run ``qpo-solve-0`` used.
 
 Ansatz: Dicke start |D(n, k)> and an XY-ring mixer (IsingXY on the ring edges), so every state stays in the
 |x| = k subspace and no penalty is needed (Hadfield et al. 2019). Cost layer: RZ(2 gamma h_i) and
@@ -14,43 +14,19 @@ from __future__ import annotations
 
 import math
 import time
-from dataclasses import dataclass
 
 import numpy as np
 import pennylane as qml
 import torch
 
+from qpo_kaggle.qaoa_subspace import QaoaResult, energy, ising_scale, linear_ramp, qubo_to_ising, ring_edges
+
 # PennyLane's torch interface returns results in torch's default dtype; float32 would round the cost and its
-# gradient (the simulators work in complex128). Process-wide on purpose: this module is the whole Kaggle job.
+# gradient (the simulators work in complex128). Process-wide on purpose: only the reference backends import it.
 torch.set_default_dtype(torch.float64)
 
-
-@dataclass(frozen=True)
-class QaoaResult:
-    picks: tuple[int, ...]       # indices of the chosen names (wire i = name i), ascending
-    energy: float                # x'Qx of the picks
-    expval_inicial: float        # <H_C> (scaled) at the starting angles
-    expval_final: float          # <H_C> (scaled) at the trained angles
-    p_optimum: float             # share of the shots on the returned pick
-    n_infeasible: int            # shots with |x| != k (0 by construction; checked)
-    angles: list[list[float]]    # [gammas, betas]
-    seconds: float
-    device: str
-
-
-def energy(q: np.ndarray, x: np.ndarray) -> float | np.ndarray:
-    """x'Qx for one bitstring (n,) or a batch (m, n)."""
-    valores = np.einsum("...i,ij,...j->...", x, q, x)
-    return float(valores) if np.ndim(valores) == 0 else valores
-
-
-def qubo_to_ising(q: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
-    """(h, J, const) with x'Qx = h'z + sum_{i<j} J_ij z_i z_j + const for x = (1 - z) / 2 (z = +1 is |0>)."""
-    s = (q + q.T) / 2.0
-    diagonal = np.diag(s)
-    fora = s - np.diag(diagonal)
-    h = -diagonal / 2.0 - fora.sum(axis=1) / 2.0
-    return h, fora / 2.0, float(diagonal.sum() / 2.0 + fora.sum() / 4.0)
+__all__ = ["QaoaResult", "cost_hamiltonian", "dicke_state", "energy", "open_device", "qaoa_circuit", "qaoa_qnodes",
+           "qubo_to_ising", "solve_qaoa"]
 
 
 def dicke_state(n: int, k: int) -> np.ndarray:
@@ -63,8 +39,7 @@ def dicke_state(n: int, k: int) -> np.ndarray:
 
 def _scaled_ising(q: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
     h, j, _ = qubo_to_ising(q)
-    escala = float(max(np.abs(h).max(), np.abs(j).max()))
-    escala = escala if escala > 0 else 1.0
+    escala = ising_scale(q)
     return h / escala, j / escala, escala
 
 
@@ -95,17 +70,13 @@ def open_device(name: str, n: int, seed: int, require_gpu: bool = False):
     return device
 
 
-def _ring(n: int) -> list[tuple[int, int]]:
-    return [(0, 1)] if n == 2 else [(i, (i + 1) % n) for i in range(n)]
-
-
 def qaoa_circuit(q: np.ndarray, k: int, p: int):
     """The quantum function of the ansatz; ``angles`` has shape (2, p): row 0 the gammas, row 1 the betas."""
     n = len(q)
     h, j, _ = _scaled_ising(q)
     inicio = dicke_state(n, k)
     pares = [(a, b) for a in range(n) for b in range(a + 1, n) if j[a, b] != 0.0]
-    anel = _ring(n)
+    anel = ring_edges(n)
 
     def _camadas(angles):
         qml.StatePrep(inicio, wires=range(n))
@@ -141,11 +112,6 @@ def qaoa_qnodes(q: np.ndarray, k: int, p: int, device, shots: int):
     return custo, amostrar
 
 
-def _linear_ramp(p: int, passo: float = 0.8) -> np.ndarray:
-    t = (np.arange(p) + 0.5) / p
-    return np.vstack([t * passo, (1.0 - t) * passo])
-
-
 def solve_qaoa(q: np.ndarray, k: int, p: int, steps: int, lr: float, shots: int, seed: int, device_name: str,
                init: np.ndarray | None = None, require_gpu: bool = False) -> QaoaResult:
     """Adam on <H_C> from ``init`` (default: a linear ramp), then ``shots`` samples scored by x'Qx."""
@@ -154,7 +120,7 @@ def solve_qaoa(q: np.ndarray, k: int, p: int, steps: int, lr: float, shots: int,
     np.random.seed(seed)
     device = open_device(device_name, len(q), seed, require_gpu)
     custo, amostrar = qaoa_qnodes(q, k, p, device, shots)
-    angulos = torch.tensor(_linear_ramp(p) if init is None else np.asarray(init, dtype=float),
+    angulos = torch.tensor(linear_ramp(p) if init is None else np.asarray(init, dtype=float),
                            dtype=torch.float64, requires_grad=True)
     otimizador = torch.optim.Adam([angulos], lr=lr)
     expval_inicial = float(custo(angulos.detach()))

@@ -3,8 +3,9 @@ spike.py - QPO timing spike (design doc, section 7): synthetic QUBOs only, no ma
 runs before the pre-registration commit. It fixes N_MAX = the largest n whose projected GPU time for the whole
 study is <= BUDGET_HOURS.
 
-Kaggle: ``python qpo_kaggle/build_kernel.py spike`` writes the single-file kernel (the solver is inlined).
-Local check: ``python qpo_kaggle/spike.py --cpu-smoke`` (lightning.qubit, tiny n).
+Historical since N_MAX = 20 was fixed (DECISOES 145): it times the PennyLane reference on lightning.gpu, not the
+production subspace solver. Kaggle: ``python qpo_kaggle/build_kernel.py spike OUT_DIR``. Local check:
+``python -m qpo_kaggle.spike --cpu-smoke`` (lightning.qubit, tiny n).
 """
 
 import json
@@ -16,7 +17,8 @@ import time
 import numpy as np
 import torch
 
-from qpo_kaggle.qpo_qaoa import _linear_ramp, open_device, qaoa_qnodes  # KERNEL: inlined
+from qpo_kaggle.qaoa_subspace import linear_ramp
+from qpo_kaggle.qpo_qaoa import open_device, qaoa_qnodes
 
 K = 15
 STEPS = 150                    # Adam steps per QUBO (design doc)
@@ -40,7 +42,7 @@ def measure(n: int, k: int, p: int, device_name: str, require_gpu: bool) -> dict
     q = synthetic_qubo(n, k, SEED + n)
     device = open_device(device_name, n, SEED, require_gpu)
     custo, amostrar = qaoa_qnodes(q, k, p, device, SHOTS)
-    angulos = torch.tensor(_linear_ramp(p), dtype=torch.float64, requires_grad=True)
+    angulos = torch.tensor(linear_ramp(p), dtype=torch.float64, requires_grad=True)
     inicio = time.perf_counter()
     custo(angulos).backward()
     primeira = time.perf_counter() - inicio

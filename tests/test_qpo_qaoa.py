@@ -1,4 +1,4 @@
-"""QAOA side of the QPO (qpo_kaggle/qpo_qaoa.py). Runs only where PennyLane and torch are installed (.venv-qpo, Kaggle)."""
+"""PennyLane reference QAOA of the QPO (qpo_kaggle/qpo_qaoa.py). Needs PennyLane and torch (.venv-qpo, Kaggle)."""
 
 import itertools
 import math

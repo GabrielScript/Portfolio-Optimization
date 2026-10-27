@@ -65,7 +65,8 @@ def weight_k_masks(n: int, k: int) -> np.ndarray:
     return np.flatnonzero(np.bitwise_count(np.arange(2 ** n, dtype=np.uint32)) == k)
 
 
-def _ring(n: int) -> list[tuple[int, int]]:
+def ring_edges(n: int) -> list[tuple[int, int]]:
+    """The XY mixer's edges in gate order: (0, 1), (1, 2), ..., (n - 1, 0)."""
     return [(0, 1)] if n == 2 else [(i, (i + 1) % n) for i in range(n)]
 
 
@@ -83,7 +84,7 @@ class SubspaceQaoa:
         diagonal = (self.energies - constante) / ising_scale(q)                   # H_C on the subspace
         self.cost_diagonal = torch.tensor(diagonal, dtype=torch.float64, device=self.device)
         self._pares = []                                                          # per ring edge, in gate order
-        for a, b in _ring(n):
+        for a, b in ring_edges(n):
             bit_a, bit_b = 1 << (n - 1 - a), 1 << (n - 1 - b)
             ativos = np.flatnonzero(((self.masks & bit_a) != 0) != ((self.masks & bit_b) != 0))
             parceiros = np.searchsorted(self.masks, self.masks[ativos] ^ (bit_a | bit_b))

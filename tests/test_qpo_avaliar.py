@@ -53,3 +53,12 @@ def test_curves_on_different_dates_stop_the_reading():
     check_aligned({"A": pd.Series(1.0, index=datas), "B": pd.Series(2.0, index=datas)})
     with pytest.raises(SystemExit, match="B"):
         check_aligned({"A": pd.Series(1.0, index=datas), "B": pd.Series(2.0, index=datas[1:])})
+
+
+def test_plumbing_check_needs_the_published_conservadora_cagr_of_the_phase():
+    # docs/conservadora-2026-10-22.txt (same frozen folder): 17.41%, 16.41%, 16.90% printed with 2 decimals
+    from scripts.qpo_avaliar import check_plumbing
+    check_plumbing(0, 0.174104)
+    check_plumbing(42, 0.16897)
+    with pytest.raises(SystemExit, match="phase 21"):
+        check_plumbing(21, 0.1652)

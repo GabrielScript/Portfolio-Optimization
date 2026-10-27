@@ -24,6 +24,7 @@ st.set_page_config(page_title="Alepha Quant · Alocação quantitativa B3", page
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
+from ativos_eua import AVISO_EUA, get_ticker_info_eua, get_tickers_eua  # noqa: E402
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objetivo,  # noqa: E402
                          limites_por_setor, taxa_anual_para_aritmetica)
@@ -173,6 +174,8 @@ def ler_sidebar() -> Entradas:
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=True, key="todos",
                             disabled=bool(setores), help="Desmarcado: só a lista líquida (mais rápido). Com setores "
                                                          "escolhidos, valem os setores.")
+        eua = st.checkbox(f"Incluir EUA ({len(get_tickers_eua())}: 30 BDRs + IVVB11 + NASD11)", value=False,
+                          key="eua", help=AVISO_EUA)
 
         with st.expander("Avançado"):
             n_max = st.slider("Máximo de ativos", 3, 30, 10, key="n_ativos_max",
@@ -199,7 +202,9 @@ def ler_sidebar() -> Entradas:
         acoes = get_all_tickers()
     else:
         acoes = get_tickers_liquidos()
-    info = get_ticker_info()
+    if eua:
+        acoes = [*acoes, *get_tickers_eua()]
+    info = _info_com_eua()
     # o teto de vol vale para todo objetivo (regra fixa); na mistura, o objetivo do satélite é o Kelly
     params = servicos.ParametrosOtimizacao(
         objetivo=Objetivo.KELLY.value if objetivo == NUCLEO_SATELITE else objetivo, peso_maximo=peso_max,
@@ -210,6 +215,11 @@ def ler_sidebar() -> Entradas:
     # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
     return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
                     reamostrar and objetivo == Objetivo.KELLY.value, modo_plano or MODO_CONSERVADORA)
+
+
+def _info_com_eua() -> dict:
+    """Nome e setor das 181 e da perna dos EUA (``ativos_eua.py``, fora do caminho do paper)."""
+    return {**get_ticker_info(), **get_ticker_info_eua()}
 
 
 def validar(entradas: Entradas) -> str | None:
@@ -260,8 +270,9 @@ def main() -> None:
     versao_dados = precos_do_app.versao_dos_dados()
     with st.spinner("Carregando preços, CDI e Selic..."):
         dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje, versao_dados)
-        precos_walk_forward = servicos.carregar_precos(universo + REFERENCIAS_DA_TELA, anos_walk_forward, hoje,
-                                                       versao_dados).precos
+        # com os EUA, o IVVB11 é ativo e referência: uma coluna só
+        precos_walk_forward = servicos.carregar_precos(tuple(dict.fromkeys(universo + REFERENCIAS_DA_TELA)),
+                                                       anos_walk_forward, hoje, versao_dados).precos
         cdi = servicos.carregar_cdi(anos_walk_forward, hoje)
         selic = servicos.carregar_selic(hoje)
     aviso = secoes.aviso_descartados(dados.descartados_sem_dados, dados.descartados_cobertura)
@@ -281,6 +292,8 @@ def main() -> None:
     c2.metric("Ativos válidos", len(colunas))
     c3.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off")
     st.caption(f"Preços: lago de dados da B3 (COTAHIST e eventos da B3/CVM, retorno total), até {precos.index[-1]:%d/%m/%Y}.")
+    if set(universo) & set(get_tickers_eua()):
+        st.caption(AVISO_EUA)
 
     carteira_hoje(entradas, precos, retornos, rf_aritmetica)
     secao_backtest(entradas, precos_walk_forward, colunas, cdi, selic.valor)
@@ -344,7 +357,7 @@ def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFra
     compraveis = acoes_compraveis(entradas, precos[acoes]) if entradas.modo_plano == MODO_ESTUDO else acoes
     momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
     mu, cov = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis]
-    info = get_ticker_info()
+    info = _info_com_eua()
 
     cfg = entradas.params.para_config(rf_aritmetica)
     try:

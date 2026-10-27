@@ -836,3 +836,17 @@ def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(mo
                   for i in range(3)]
     assert len(pagos) == 2 and "limite diário" in resultados[2].erro
     assert servicos.gerar_parecer("pacote 9", ("PETR4.SA",), date(2026, 10, 27), (), None, "k").erro is None
+
+
+def _ativos_validos(at: AppTest) -> int:
+    return int(next(m.value for m in at.metric if m.label == "Ativos válidos"))
+
+
+def test_eua_vem_desligado_e_ligado_soma_os_32_ativos_dos_eua_ao_universo(app):
+    sem_eua = _ativos_validos(app)
+    assert app.sidebar.checkbox(key="eua").value is False
+
+    app.sidebar.checkbox(key="eua").check().run()
+
+    assert not app.exception
+    assert _ativos_validos(app) == sem_eua + 32

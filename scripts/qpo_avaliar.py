@@ -73,6 +73,15 @@ def load_qaoa_picks(results_dir: Path, qubos_dir: Path, fase: int, p: int) -> di
     return escolhas
 
 
+def check_aligned(valores: Mapping[str, pd.Series]) -> None:
+    """Every curve on the same dates (as ``avaliar_conservadora.curvas_da_fase``): misaligned indexes would give NaN
+    statistics silently."""
+    primeiro = next(iter(valores.values())).index
+    desalinhadas = [nome for nome, serie in valores.items() if not serie.index.equals(primeiro)]
+    if desalinhadas:
+        raise SystemExit(f"curves on different dates: {desalinhadas}")
+
+
 def _median_curve(curvas: Sequence[ResultadoBacktest]) -> ResultadoBacktest:
     valores = pd.concat([curva.valores for curva in curvas], axis=1).median(axis=1)
     return replace(curvas[0], nome="Random-15 (mediana)", valores=valores)
@@ -123,6 +132,7 @@ def main(argv: list[str]) -> int:
             **referencias(precos.iloc[fase:], CFG_BT),
         }
         valores = {nome: curva.valores for nome, curva in curvas.items()}
+        check_aligned(valores)
         rf = market_data.serie_rf_diaria(valores["QPO-exact"].index, cdi, selic.valor)
         tabela = tabela_do_periodo({nome: valores[nome] for nome in (*ARMS, CONSERVADORA)}, valores["BOVA11"], rf,
                                    n_tentativas)

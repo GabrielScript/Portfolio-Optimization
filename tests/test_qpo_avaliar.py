@@ -44,3 +44,12 @@ def test_choose_p_takes_the_best_mean_ratio_and_the_smaller_p_on_a_tie():
     from scripts.qpo_avaliar import choose_p
     assert choose_p({1: [0.97, 0.99], 2: [1.0, 0.99], 3: [0.99, 0.99]}) == 2
     assert choose_p({1: [1.0], 2: [1.0], 3: [0.99]}) == 1
+
+
+def test_curves_on_different_dates_stop_the_reading():
+    # misaligned indexes would give NaN statistics silently, as avaliar_conservadora.curvas_da_fase guards
+    from scripts.qpo_avaliar import check_aligned
+    datas = pd.bdate_range("2020-01-01", periods=5)
+    check_aligned({"A": pd.Series(1.0, index=datas), "B": pd.Series(2.0, index=datas)})
+    with pytest.raises(SystemExit, match="B"):
+        check_aligned({"A": pd.Series(1.0, index=datas), "B": pd.Series(2.0, index=datas[1:])})

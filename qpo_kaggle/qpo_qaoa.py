@@ -99,12 +99,10 @@ def _ring(n: int) -> list[tuple[int, int]]:
     return [(0, 1)] if n == 2 else [(i, (i + 1) % n) for i in range(n)]
 
 
-def qaoa_qnodes(q: np.ndarray, k: int, p: int, device, shots: int):
-    """(cost, sample): cost(angles) = <H_C> (torch, adjoint gradient); sample(angles) = ``shots`` bitstrings
-    (shots, n). ``angles`` has shape (2, p): row 0 the gammas, row 1 the betas."""
+def qaoa_circuit(q: np.ndarray, k: int, p: int):
+    """The quantum function of the ansatz; ``angles`` has shape (2, p): row 0 the gammas, row 1 the betas."""
     n = len(q)
     h, j, _ = _scaled_ising(q)
-    hamiltoniano, _ = cost_hamiltonian(q)
     inicio = dicke_state(n, k)
     pares = [(a, b) for a in range(n) for b in range(a + 1, n) if j[a, b] != 0.0]
     anel = _ring(n)
@@ -119,6 +117,15 @@ def qaoa_qnodes(q: np.ndarray, k: int, p: int, device, shots: int):
                 qml.IsingZZ(2.0 * gamma * j[a, b], wires=[a, b])
             for a, b in anel:
                 qml.IsingXY(2.0 * beta, wires=[a, b])
+    return _camadas
+
+
+def qaoa_qnodes(q: np.ndarray, k: int, p: int, device, shots: int):
+    """(cost, sample): cost(angles) = <H_C> (torch, adjoint gradient); sample(angles) = ``shots`` bitstrings
+    (shots, n). ``angles`` has shape (2, p): row 0 the gammas, row 1 the betas."""
+    n = len(q)
+    hamiltoniano, _ = cost_hamiltonian(q)
+    _camadas = qaoa_circuit(q, k, p)
 
     @qml.qnode(device, interface="torch", diff_method="adjoint")
     def custo(angles):

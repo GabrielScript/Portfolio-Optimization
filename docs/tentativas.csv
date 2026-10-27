@@ -51,3 +51,4 @@ data,script,configuracao
 2026-10-27,qpo_avaliar.py,"Conservadora-MS: the Conservadora's 15 names (1 per issuer, 4 per sector), max Sharpe weights instead of equal, every 63 sessions"
 2026-10-27,qpo_avaliar.py,"Topk-MS: max Sharpe on all eligible names, top-15 truncation and re-solve (_resolver_com_cardinalidade), every 63 sessions"
 2026-10-27,qpo_avaliar.py,"Random-15: 15 uniform of the top-20 Conservadora names, max Sharpe weights, median of 20 seeds, every 63 sessions"
+2026-10-27,qubo_universo_avaliar.py,"QUBO-universo: QUBO k=15 of every eligible name (alpha = 0.059 x vol x z over all candidates, Ledoit-Wolf, lambda 1, at most 4 picks per sector), exact MIQP optimum (SCIP), max Sharpe weights (20% name cap, vol 40%, rf CDI), every 63 sessions"

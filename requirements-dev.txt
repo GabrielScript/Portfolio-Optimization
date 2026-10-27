@@ -13,3 +13,5 @@ interface-meta==2.0.1
 wrapt==2.5.1
 # Índices da ANBIMA (planilhas .xlsx com nome .xls; só nos scripts de pesquisa ações x títulos e filtros macro)
 fastexcel==0.21.0
+# QUBO selection over the full universe (core/qubo_universo.py, research scripts only; the screen does not import it)
+pyscipopt==6.3.0

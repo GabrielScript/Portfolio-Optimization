@@ -92,3 +92,70 @@ def test_qubo_alphas_are_zero_when_every_score_ties():
     score = pd.Series({"A": 1.0, "B": 1.0})
     cov = pd.DataFrame(np.eye(2) * 0.04, index=list("AB"), columns=list("AB"))
     assert qubo_alphas(score, cov).tolist() == [0.0, 0.0]
+
+
+# --- strategy layer: selection, then the existing max Sharpe under the fixed rules --------------------------------
+
+from core.estimation import estimar_momentos  # noqa: E402
+from core.qpo import (CFG_MAX_SHARPE, exact_picks, qubo_instance, qubo_selector, random_selector,  # noqa: E402
+                      recorded_selector, selection_then_max_sharpe)
+from core.sinais import conservadora  # noqa: E402
+from tests.test_sinais import MES, SETORES_DOS_8, _painel_de_8_papeis, _treino  # noqa: E402
+
+
+def _score():
+    retornos, proventos = _painel_de_8_papeis()
+    return conservadora(retornos, proventos, MES, list("ABCDEFGH"))
+
+
+def test_qubo_instance_is_the_qubo_of_the_top_n_candidates_with_the_ledoit_wolf_cov():
+    treino, score = _treino(0.01), _score()
+    instancia = qubo_instance(MES, treino, score, SETORES_DOS_8, n=6, k=3)
+    nomes = candidates(score, SETORES_DOS_8, 6)
+    cov = estimar_momentos(treino[nomes], shrink_mu=False).cov
+    esperado = build_qubo(qubo_alphas(score[nomes], cov).to_numpy(), cov.to_numpy(), 3, 1.0)
+    assert (instancia.tickers, instancia.k) == (tuple(nomes), 3)
+    assert instancia.q == pytest.approx(esperado)
+
+
+def test_qubo_instance_is_none_when_there_are_no_more_candidates_than_k():
+    assert qubo_instance(MES, _treino(0.01), _score(), SETORES_DOS_8, n=6, k=6) is None
+
+
+def test_exact_arm_weights_only_the_exact_picks_and_records_them():
+    # k = 5: 5 x 20% name cap and 5 sectors x 30% can reach 100% (k = 3 cannot, by the fixed rules)
+    retornos, proventos = _painel_de_8_papeis()
+    registro: dict = {}
+    estrategia = selection_then_max_sharpe(qubo_selector(SETORES_DOS_8, n=7, k=5, solve=exact_picks, record=registro),
+                                           retornos, proventos, SETORES_DOS_8, CFG_MAX_SHARPE, None)
+    treino = _treino(0.01)
+    pesos = estrategia(treino)
+    instancia, picks = registro[treino.index[-1]]
+    escolhidos = {instancia.tickers[i] for i in picks}
+    assert (len(picks), picks) == (5, solve_exact(instancia.q, 5).picks)
+    assert set(pesos[pesos > 0].index) <= escolhidos
+    assert pesos.sum() == pytest.approx(1.0)
+
+
+def test_recorded_selector_replays_the_exact_arm_and_stops_on_a_missing_date():
+    retornos, proventos = _painel_de_8_papeis()
+    registro: dict = {}
+    exata = selection_then_max_sharpe(qubo_selector(SETORES_DOS_8, n=7, k=5, solve=exact_picks, record=registro),
+                                      retornos, proventos, SETORES_DOS_8, CFG_MAX_SHARPE, None)
+    treino = _treino(0.01)
+    pesos = exata(treino)
+    instancia, picks = registro[treino.index[-1]]
+    gravadas = {treino.index[-1]: tuple(instancia.tickers[i] for i in picks)}
+    replay = selection_then_max_sharpe(recorded_selector(gravadas), retornos, proventos, SETORES_DOS_8,
+                                       CFG_MAX_SHARPE, None)
+    pd.testing.assert_series_equal(replay(treino), pesos)
+    with pytest.raises(KeyError, match="no recorded pick"):
+        replay(treino.iloc[:-1])
+
+
+def test_random_selector_is_reproducible_and_draws_k_of_the_candidates():
+    treino, score = _treino(0.01), _score()
+    sorteio = random_selector(SETORES_DOS_8, n=6, k=3, seed=4)
+    primeira = sorteio(MES, treino, score)
+    assert primeira == sorteio(MES, treino, score)
+    assert len(primeira) == 3 and set(primeira) <= set(candidates(score, SETORES_DOS_8, 6))

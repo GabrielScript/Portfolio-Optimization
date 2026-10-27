@@ -136,7 +136,7 @@ published one.
 1. Local (`.venv`): `scripts/qpo_montar.py` builds every rebalance's QUBO from the frozen data
    (`docs/qpo/qubos/fase{F}/{date}.npz`: Q, tickers, alpha, Sigma, k), the exact pick, and
    `docs/qpo/qubos/SHA256SUMS`.
-2. Kaggle (Linux, T4, free): `kaggle/qpo_qaoa.py` solves each QUBO and writes one JSON per QUBO (QUBO sha256,
+2. Kaggle (Linux, T4, free): `qpo_kaggle/qpo_qaoa.py` solves each QUBO and writes one JSON per QUBO (QUBO sha256,
    bitstring, energy, r, p, angles, seed, device, versions, seconds).
 3. Local: `scripts/qpo_avaliar.py` checks every JSON's QUBO hash, replays the recorded picks in
    `walk_forward_dinamico`, and writes `docs/qpo-2026-10-27.txt`. A missing pick stops the run.
@@ -148,7 +148,7 @@ never in `requirements.txt`, so the Streamlit app is untouched.
 ## 9. Order of work
 
 1. QUBO, exact solver, and Ising conversion (`core/qpo.py`), test-first, checked against brute force.
-2. QAOA solver (`kaggle/qpo_qaoa.py`), test-first on <= 10 qubits locally (`lightning.qubit`): it finds the exact
+2. QAOA solver (`qpo_kaggle/qpo_qaoa.py`), test-first on <= 10 qubits locally (`lightning.qubit`): it finds the exact
    optimum on small cases, stays feasible, and its gradient matches finite differences.
 3. Strategies and replay (`core/qpo.py` + `scripts/qpo_montar.py`), with a test that the exact arm's picks are
    deterministic.

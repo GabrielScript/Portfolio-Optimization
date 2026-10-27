@@ -3,19 +3,23 @@ qpo.py - Quantum Portfolio Optimization, classical side (docs/superpowers/specs/
 
 The QUBO picks k of the n best Conservadora names: E(x) = x'Qx = -alpha'x / k + (lambda / 2) x'Sigma x / k^2 with
 |x| = k (the negative mean-variance utility of the equal-weight portfolio x / k). The exact solver here is the
-ceiling a QAOA can at best reach on the same QUBO; the QAOA itself lives in ``kaggle/qpo_qaoa.py``.
+ceiling a QAOA can at best reach on the same QUBO; the QAOA itself lives in ``qpo_kaggle/qpo_qaoa.py``.
 """
 
 from __future__ import annotations
 
 import itertools
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 
+from core.backtest import Estrategia, estrategia_otimizada_nas_regras
+from core.config import ConfigOtimizacao, Objetivo
+from core.estimation import estimar_momentos
 from core.risco import emissor
+from core.sinais import conservadora
 
 IC0 = 0.059          # the Conservadora's 1998-2007 IC (DECISOES 76): before every OOS date
 
@@ -120,3 +124,94 @@ def qubo_alphas(score: pd.Series, cov: pd.DataFrame, ic: float = IC0) -> pd.Seri
     z = (score - score.mean()) / desvio if desvio > 0 else score * 0.0
     vol = np.sqrt(np.diag(cov.loc[score.index, score.index].to_numpy()))
     return ic * vol * z
+
+
+# --- strategy layer --------------------------------------------------------------------------------------------------
+
+K = 15                  # the Conservadora's size
+RISK_AVERSION = 1.0     # growth-optimal (Kelly) lambda: the "extremely aggressive" choice, unlevered
+# the user's fixed objective inside the chosen set: max Sharpe (Charnes-Cooper, rf = CDI of the date), the app's caps
+CFG_MAX_SHARPE = ConfigOtimizacao(objetivo=Objetivo.MAX_SHARPE, peso_maximo=0.20, n_ativos_max=None, vol_maxima=0.40)
+
+Selector = Callable[[pd.Timestamp, pd.DataFrame, pd.Series], list[str]]   # (decision date, treino, score) -> names
+
+
+@dataclass(frozen=True)
+class QuboInstance:
+    date: pd.Timestamp
+    tickers: tuple[str, ...]
+    q: np.ndarray
+    alpha: np.ndarray
+    cov: np.ndarray
+    k: int
+
+
+def qubo_instance(date: pd.Timestamp, treino: pd.DataFrame, score: pd.Series, sectors: Mapping[str, str], n: int,
+                  k: int = K, risk_aversion: float = RISK_AVERSION) -> QuboInstance | None:
+    """The QUBO of the decision: top-n candidates, Ledoit-Wolf Sigma of the training window. None when there are no
+    more than k candidates (nothing to choose: they all go in)."""
+    nomes = candidates(score, sectors, n)
+    if len(nomes) <= k:
+        return None
+    cov = estimar_momentos(treino[nomes], shrink_mu=False).cov
+    alpha = qubo_alphas(score[nomes], cov).to_numpy()
+    return QuboInstance(date, tuple(nomes), build_qubo(alpha, cov.to_numpy(), k, risk_aversion), alpha,
+                        cov.to_numpy(), k)
+
+
+def exact_picks(instance: QuboInstance) -> tuple[int, ...]:
+    return solve_exact(instance.q, instance.k).picks
+
+
+def qubo_selector(sectors: Mapping[str, str], n: int, k: int, solve: Callable[[QuboInstance], tuple[int, ...]],
+                  record: dict | None = None) -> Selector:
+    """Selection by a QUBO solver; ``record`` (decision date -> (instance, picks)) keeps every QUBO for export."""
+    def _select(date: pd.Timestamp, treino: pd.DataFrame, score: pd.Series) -> list[str]:
+        instancia = qubo_instance(date, treino, score, sectors, n, k)
+        if instancia is None:
+            return candidates(score, sectors, n)
+        picks = solve(instancia)
+        if record is not None:
+            record[date] = (instancia, picks)
+        return [instancia.tickers[i] for i in picks]
+    return _select
+
+
+def recorded_selector(picks_by_date: Mapping[pd.Timestamp, tuple[str, ...]]) -> Selector:
+    """Replay of picks solved elsewhere (the QAOA on Kaggle); a decision date without a pick stops the run."""
+    def _select(date: pd.Timestamp, treino: pd.DataFrame, score: pd.Series) -> list[str]:
+        if date not in picks_by_date:
+            raise KeyError(f"{date:%Y-%m-%d}: no recorded pick")
+        return list(picks_by_date[date])
+    return _select
+
+
+def random_selector(sectors: Mapping[str, str], n: int, k: int, seed: int) -> Selector:
+    """k uniform draws of the top-n candidates; the stream depends only on (seed, date): reproducible run to run."""
+    def _select(date: pd.Timestamp, treino: pd.DataFrame, score: pd.Series) -> list[str]:
+        nomes = candidates(score, sectors, n)
+        if len(nomes) <= k:
+            return nomes
+        gerador = np.random.default_rng([seed, date.toordinal()])
+        return [nomes[i] for i in sorted(gerador.choice(len(nomes), size=k, replace=False))]
+    return _select
+
+
+def selection_then_max_sharpe(select: Selector, monthly_returns: pd.DataFrame, dividends: pd.DataFrame,
+                              sectors: Mapping[str, str], cfg: ConfigOtimizacao,
+                              rf_daily: pd.Series | None) -> Estrategia:
+    """
+    Every QPO arm in the engine: the Conservadora score of the decision month (public data before it only), a
+    selection, then ``estrategia_otimizada_nas_regras`` on the chosen names (sector cap, ``checar_carteira``,
+    ``CarteiraRecusada``), Jorion-shrunk mu.
+    """
+    pesos_nas_regras = estrategia_otimizada_nas_regras(cfg, True, sectors, rf_daily)
+
+    def _strategy(treino: pd.DataFrame) -> pd.Series:
+        mes = treino.index[-1].to_period("M").to_timestamp()
+        score = conservadora(monthly_returns, dividends, mes, treino.columns)
+        nomes = select(treino.index[-1], treino, score)
+        if not nomes:
+            raise ValueError(f"{treino.index[-1]:%Y-%m-%d}: no name selected")
+        return pesos_nas_regras(treino[nomes])
+    return _strategy

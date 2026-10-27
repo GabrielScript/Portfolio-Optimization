@@ -1,0 +1,10 @@
+# QPO's QAOA environment only (docs/superpowers/specs/2026-10-27-qpo-design.md, section 8). Never in requirements.txt:
+# the Streamlit app does not import PennyLane or torch. Local: python -m venv ../.venv-qpo, then
+# pip install -r requirements-qpo.txt (torch from https://download.pytorch.org/whl/cpu). Kaggle (T4) adds
+# pennylane-lightning-gpu==0.45.0 (cuStateVec; needs compute capability >= 7.0, so not the P100).
+pennylane==0.45.1
+pennylane-lightning==0.45.0
+torch==2.14.1
+numpy>=2.0
+pandas
+pytest==9.1.1

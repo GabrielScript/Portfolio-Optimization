@@ -58,6 +58,14 @@ def test_circuit_never_leaves_the_weight_k_subspace():
     assert set(amostras.sum(axis=1).tolist()) == {3}
 
 
+def test_cost_is_float64_end_to_end():
+    # PennyLane's torch interface casts results to torch's default dtype (float32 out of the box): the energies of
+    # neighbouring subsets differ by less than float32 resolves
+    q = _random_qubo(4, seed=12)
+    custo, _ = qaoa_qnodes(q, k=2, p=1, device=open_device("lightning.qubit", 4, seed=7), shots=10)
+    assert custo(torch.tensor([[0.3], [0.2]], dtype=torch.float64)).dtype == torch.float64
+
+
 def test_adjoint_gradient_matches_finite_differences():
     q = _random_qubo(6, seed=4)
     custo, _ = qaoa_qnodes(q, k=3, p=2, device=open_device("lightning.qubit", 6, seed=7), shots=10)

@@ -139,7 +139,11 @@ published one.
 2. Kaggle (Linux, T4, free): `qpo_kaggle/qpo_qaoa.py` solves each QUBO and writes one JSON per QUBO (QUBO sha256,
    bitstring, energy, r, p, angles, seed, device, versions, seconds).
 3. Local: `scripts/qpo_avaliar.py` checks every JSON's QUBO hash, replays the recorded picks in
-   `walk_forward_dinamico`, and writes `docs/qpo-2026-10-27.txt`. A missing pick stops the run.
+   `walk_forward_dinamico`, and writes `docs/qpo-2026-10-27.txt`. A missing pick stops the run. The freeze rule
+   (`Congelamento`) moves a rebalance by the portfolio's own daily loss, so where QAOA picks differ from the exact
+   ones, the QAOA path can reach a decision date with no recorded QUBO. Those dates are built by the same code
+   (same QUBO for the same date) and solved in a second Kaggle round, until the replay closes. The script runs
+   no build or curve before the pre-registration commit (`scripts/qpo_montar.py` prints no performance number).
 4. RunPod (paid) only with the user's OK.
 
 The QAOA code lives in its own environment (`requirements-qpo.txt`: pennylane 0.45.1, torch CPU locally). It is

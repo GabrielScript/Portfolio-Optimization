@@ -16,7 +16,7 @@ BOOTSTRAP = '''import subprocess, sys
 subprocess.run([sys.executable, "-m", "pip", "install", "-q", "pennylane==0.45.1", "pennylane-lightning==0.45.0",
                 "pennylane-lightning-gpu==0.45.0"], check=True)
 '''
-JOBS = {"spike": ("spike.py", "qpo-spike", "QPO timing spike")}
+JOBS = {"spike": ("spike.py", "qpo-timing-spike", "QPO timing spike")}
 
 
 def kernel_source(job_file: str) -> str:

@@ -46,3 +46,8 @@ data,script,configuracao
 2026-10-23,avaliar_zona.py,"Conservadora with the no-trade zone (skip a resize whose cost + marginal IR > (2/2) x vol_diaria^2 x 63 x order weight^2 x patrimony; entries and exits always trade; 20% cap forces; rest in cash at 0%)"
 2026-10-24,avaliar_classicas.py,"Piotroski F-score (Walkshausl 2020 definitions, all non-financial firms, ties by book-to-market): 15 highest, equal weights, 4 per sector, every 63 sessions"
 2026-10-24,avaliar_classicas.py,"Acquirer's Multiple (EV/EBIT lowest first): 15 lowest, equal weights, 4 per sector, every 63 sessions"
+2026-10-27,qpo_avaliar.py,"QPO-exact: QUBO k=15 of the top-20 Conservadora names (alpha = 0.059 x vol x z, Ledoit-Wolf, lambda 1), exact optimum, max Sharpe weights (20% name cap, vol 40%, rf CDI), every 63 sessions"
+2026-10-27,qpo_avaliar.py,"QPO-QAOA: the same QUBO solved by QAOA (Dicke + XY ring, p chosen on phase 0), max Sharpe weights, every 63 sessions"
+2026-10-27,qpo_avaliar.py,"Conservadora-MS: the Conservadora's 15 names (1 per issuer, 4 per sector), max Sharpe weights instead of equal, every 63 sessions"
+2026-10-27,qpo_avaliar.py,"Topk-MS: max Sharpe on all eligible names, top-15 truncation and re-solve (_resolver_com_cardinalidade), every 63 sessions"
+2026-10-27,qpo_avaliar.py,"Random-15: 15 uniform of the top-20 Conservadora names, max Sharpe weights, median of 20 seeds, every 63 sessions"

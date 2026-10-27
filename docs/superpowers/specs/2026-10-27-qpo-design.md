@@ -47,7 +47,7 @@ At each decision date t (last session of the training window; month m = the mont
 1. **Candidates `C_t`:** the Conservadora score `s_i = conservadora(retornos_mensais, proventos, m, eligible)`
    (`core/sinais.py:61`, public data before m only). Walk the score in descending order and keep names with a
    sector and one class per issuer (the higher score wins), as in `carteira_da_nota`, **without** the 4-per-sector
-   cap. Stop at `n = N_MAX` names (N_MAX is fixed by the timing spike in section 7; at most 28). There is no sector
+   cap. Stop at `n = N_MAX` = **20** names (fixed by the timing spike, section 7). There is no sector
    cap in the QUBO: the weight step enforces the 30% sector cap.
 2. **Signal in return units (Grinold-Kahn, alpha = IC x vol x score):** `z_i` = the cross-sectional z-score of
    `s_i` within `C_t` (ddof 0). `alpha_i = IC0 * sigma_i * z_i`, where `sigma_i = sqrt(Sigma_ii)` and
@@ -70,7 +70,7 @@ At each decision date t (last session of the training window; month m = the mont
    rules hold (sector cap 30% in the optimizer, `checar_carteira`, `CarteiraRecusada`). Max Sharpe may put zero
    weight on some of the 15 names; that is allowed.
 
-## 5. Arms (each OOS curve is one `docs/tentativas.csv` row; N goes from 41 to 46 in the pre-registration commit)
+## 5. Arms (each OOS curve is one `docs/tentativas.csv` row; N went from 41 to 46 in the pre-registration commit)
 
 | Arm | Selection | Weights | Role |
 |---|---|---|---|
@@ -116,7 +116,8 @@ published one.
 - **Training:** PennyLane 0.45.1 QNode with the Torch interface, `torch.optim.Adam` (lr 0.05), and the adjoint
   diff method on `lightning.gpu` (`lightning.qubit` locally). The diff method is checked against finite
   differences on a 6-qubit case first. p in {1, 2, 3}, 150 steps, warm start from the previous rebalance's angles
-  (parameter concentration). Seeds: torch, numpy and the device seed all = 20261027 + rebalance index.
+  (parameter concentration). Seeds: torch, numpy and the device seed all = 20261027 + 1000 x phase + rebalance
+  index.
   No AMP; float64 statevector.
 - **Readout:** 4096 shots; score every **feasible** sampled bitstring with the classical `E(x)` and keep the
   best. Low mean energy is not the selection criterion.
@@ -125,6 +126,12 @@ published one.
 - **Timing spike (before the pre-registration commit):** synthetic random QUBOs (no market data) at
   n in {16, 20, 24, 28} on Kaggle T4. `N_MAX` = the largest n whose projected total for all rebalances of the 3
   phases is <= **H = 20 GPU-hours** (Kaggle's free quota is 30 h/week).
+  **Result (2026-10-27, kernel `gabrielestrelalopes/qpo-timing-spike` v1, Tesla T4, lightning.gpu, PennyLane
+  0.45.1, torch 2.11.0+cu128; every sample had weight 15):** seconds per QUBO (150 steps + 4096 shots) for
+  p = 1/2/3: n = 16: 10/15/23; n = 20: 61/99/133; n = 24: 1156/1832/2499; n = 28: out of GPU memory (the adjoint
+  needs several 4 GB complex128 statevectors on a 15 GB T4). Projected study: 1.8 h (16), **10.3 h (20)**, 192 h
+  (24). **N_MAX = 20** (C(20, 15) = 15,504 feasible subsets). The XY mixer is within budget, so there is no
+  penalty fallback.
 - **GPU honesty (hard checks in the kernel log):** the device name printed by PennyLane, `nvidia-smi` before and
   after, and `torch.cuda.is_available()`. Any CPU fallback aborts the run. lightning.gpu needs compute capability
   >= 7.0: the T4 (7.5) qualifies; the P100 (6.0) is not used.

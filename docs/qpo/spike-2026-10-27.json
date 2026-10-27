@@ -1,0 +1,146 @@
+{
+ "rows": [
+  {
+   "n": 16,
+   "k": 15,
+   "p": 1,
+   "device": "lightning.gpu",
+   "first_s": 0.5187302649999879,
+   "grad_s": 0.06726208999998562,
+   "sample_s": 0.01961961000000656,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 10.10893310999785
+  },
+  {
+   "n": 16,
+   "k": 15,
+   "p": 2,
+   "device": "lightning.gpu",
+   "first_s": 0.10832318699999632,
+   "grad_s": 0.1025797880000141,
+   "sample_s": 0.028628794999974616,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 15.41559699500209
+  },
+  {
+   "n": 16,
+   "k": 15,
+   "p": 3,
+   "device": "lightning.gpu",
+   "first_s": 0.1494920069999921,
+   "grad_s": 0.15573200400001497,
+   "sample_s": 0.03707489199999259,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 23.396875492002238
+  },
+  {
+   "n": 20,
+   "k": 15,
+   "p": 1,
+   "device": "lightning.gpu",
+   "first_s": 0.44932327900002633,
+   "grad_s": 0.4093228540000098,
+   "sample_s": 0.057444437000015114,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 61.45587253700148
+  },
+  {
+   "n": 20,
+   "k": 15,
+   "p": 2,
+   "device": "lightning.gpu",
+   "first_s": 0.6480659100000139,
+   "grad_s": 0.6579054430000042,
+   "sample_s": 0.10863859900001671,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 98.79445504900065
+  },
+  {
+   "n": 20,
+   "k": 15,
+   "p": 3,
+   "device": "lightning.gpu",
+   "first_s": 0.9018573790000062,
+   "grad_s": 0.8864522629999954,
+   "sample_s": 0.15274634200000037,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 133.1205857919993
+  },
+  {
+   "n": 24,
+   "k": 15,
+   "p": 1,
+   "device": "lightning.gpu",
+   "first_s": 7.732450023000013,
+   "grad_s": 7.700427411000021,
+   "sample_s": 0.8188591079999981,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 1155.8829707580032
+  },
+  {
+   "n": 24,
+   "k": 15,
+   "p": 2,
+   "device": "lightning.gpu",
+   "first_s": 12.175056581999996,
+   "grad_s": 12.205049704000004,
+   "sample_s": 1.5793192970000405,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 1832.3367748970006
+  },
+  {
+   "n": 24,
+   "k": 15,
+   "p": 3,
+   "device": "lightning.gpu",
+   "first_s": 16.688463616000035,
+   "grad_s": 16.643320177999954,
+   "sample_s": 2.3399903799999606,
+   "weights_seen": [
+    15
+   ],
+   "qubo_s": 2498.838017079993
+  },
+  {
+   "n": 28,
+   "k": 15,
+   "p": 1,
+   "error": "RuntimeError: [/project/pennylane_lightning/core/utils/cuda_utils/DataBuffer.hpp][Line:68][Method:DataBuffer]: Error in PennyLane Lightning: out of memory"
+  },
+  {
+   "n": 28,
+   "k": 15,
+   "p": 2,
+   "error": "RuntimeError: [/project/pennylane_lightning/core/utils/cuda_utils/DataBuffer.hpp][Line:68][Method:DataBuffer]: Error in PennyLane Lightning: out of memory"
+  },
+  {
+   "n": 28,
+   "k": 15,
+   "p": 3,
+   "error": "RuntimeError: [/project/pennylane_lightning/core/utils/cuda_utils/DataBuffer.hpp][Line:68][Method:DataBuffer]: Error in PennyLane Lightning: out of memory"
+  }
+ ],
+ "projected_gpu_hours": {
+  "16": 1.7547778706517885,
+  "20": 10.259554890970001,
+  "24": 192.22011960974135
+ },
+ "budget_hours": 20.0,
+ "N_MAX": 20
+}

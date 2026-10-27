@@ -1,0 +1,91 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64'}; arm QUBO-universo-valor; k 15, sector cap 4, DSR N 48
+
+=== Phase 0: 09/02/2010 to 16/10/2026; refusals 0; P[QUBO-universo-valor > QPO-exact (top-20)] 0.665 ===
+Annealing (quantum-inspired, solver of record): 66 rebalances, 0 where the two independent runs disagreed (agreement 100% >= 80%: consistent)
+candidates per rebalance: min 55, median 118, max 166; share of negative alpha 49%; most picks in one sector: median 4, max 4
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+QUBO-universo-valor               0.642 0.635         0.995  0.998 0.990          6.796 0.207 -0.401              0.851
+QPO-exact (top-20)                0.583 0.585         0.991  0.996 0.983          8.023 0.197 -0.371              0.801
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.987          7.276 0.174 -0.407                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate; the user's target is 90%): 8 of 17 (47%)
+      QUBO-universo-valor  QPO-exact (top-20)  Conservadora (15, pesos iguais)  BOVA11
+2010                33.7%               35.2%                            23.2%    6.8%
+2011                 5.6%               12.8%                             9.8%  -18.3%
+2012                38.9%               34.0%                            32.2%    6.6%
+2013                -7.2%               -7.5%                            -3.3%  -15.8%
+2014                -3.0%               -2.2%                             1.6%   -3.4%
+2015                 8.0%                7.4%                             0.4%  -13.2%
+2016                19.8%               21.0%                            25.1%   38.2%
+2017                41.5%               41.7%                            50.8%   26.8%
+2018                33.3%               11.0%                            15.7%   14.6%
+2019                54.1%               52.3%                            49.9%   31.5%
+2020                21.3%               28.1%                             3.1%    3.1%
+2021                35.9%               22.3%                            13.6%  -12.1%
+2022                19.5%               31.3%                            26.1%    5.1%
+2023                18.0%               20.2%                            22.9%   23.1%
+2024                -4.5%               -5.7%                            -7.7%  -10.1%
+2025                25.8%               23.1%                            31.5%   34.7%
+2026                18.8%               15.8%                             9.7%   28.0%
+(phase 0 done in 210 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; refusals 0; P[QUBO-universo-valor > QPO-exact (top-20)] 0.571 ===
+Annealing (quantum-inspired, solver of record): 66 rebalances, 0 where the two independent runs disagreed (agreement 100% >= 80%: consistent)
+candidates per rebalance: min 56, median 119, max 170; share of negative alpha 49%; most picks in one sector: median 4, max 4
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+QUBO-universo-valor               0.469 0.480         0.973  0.989 0.898         11.861 0.172 -0.391              0.559
+QPO-exact (top-20)                0.454 0.453         0.966  0.985 0.877         13.351 0.168 -0.341              0.504
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.956          7.901 0.164 -0.416                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate; the user's target is 90%): 7 of 17 (41%)
+      QUBO-universo-valor  QPO-exact (top-20)  Conservadora (15, pesos iguais)  BOVA11
+2010                26.7%               27.3%                            17.8%   -0.6%
+2011                11.4%               17.3%                            10.6%  -18.3%
+2012                37.8%               36.7%                            32.9%    6.6%
+2013                -3.8%               -9.3%                            -2.8%  -15.8%
+2014                -9.9%                1.6%                             3.1%   -3.4%
+2015                12.2%                3.8%                             1.3%  -13.2%
+2016                18.0%               17.0%                            15.9%   38.2%
+2017                47.7%               52.7%                            51.1%   26.8%
+2018                33.8%               21.3%                            22.4%   14.6%
+2019                33.6%               49.9%                            51.3%   31.5%
+2020                11.1%                9.7%                            -4.4%    3.1%
+2021                27.8%               26.2%                             6.2%  -12.1%
+2022                 5.8%                6.8%                            15.7%    5.1%
+2023                16.2%                5.1%                            15.7%   23.1%
+2024                -7.9%               -5.3%                            -3.3%  -10.1%
+2025                21.4%               13.4%                            27.5%   34.7%
+2026                15.9%               19.5%                            25.4%   28.0%
+(phase 21 done in 423 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; refusals 0; P[QUBO-universo-valor > QPO-exact (top-20)] 0.270 ===
+Annealing (quantum-inspired, solver of record): 66 rebalances, 0 where the two independent runs disagreed (agreement 100% >= 80%: consistent)
+candidates per rebalance: min 56, median 119, max 171; share of negative alpha 49%; most picks in one sector: median 4, max 4
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+QUBO-universo-valor               0.333 0.355         0.923  0.960 0.549         21.587 0.147 -0.422              0.191
+QPO-exact (top-20)                0.402 0.425         0.955  0.979 0.655         15.222 0.160 -0.389              0.318
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.890          6.876 0.169 -0.395                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate; the user's target is 90%): 8 of 17 (47%)
+      QUBO-universo-valor  QPO-exact (top-20)  Conservadora (15, pesos iguais)  BOVA11
+2010                31.4%               24.7%                            19.4%   -2.5%
+2011                 9.0%               17.2%                             7.2%  -18.3%
+2012                33.5%               37.9%                            32.3%    6.6%
+2013                -1.6%               -7.1%                            -4.1%  -15.8%
+2014                -8.3%                1.8%                             0.2%   -3.4%
+2015                 0.7%                0.3%                             2.9%  -13.2%
+2016                 0.9%               10.4%                            22.7%   38.2%
+2017                53.1%               46.9%                            53.1%   26.8%
+2018                26.7%               13.1%                            12.0%   14.6%
+2019                44.1%               54.1%                            43.9%   31.5%
+2020                 1.6%                4.8%                            14.2%    3.1%
+2021                31.1%               21.5%                            10.0%  -12.1%
+2022                 6.2%               12.4%                            13.9%    5.1%
+2023                14.3%               15.2%                            15.6%   23.1%
+2024                -8.2%               -7.8%                            -6.5%  -10.1%
+2025                10.7%               15.0%                            33.5%   34.7%
+2026                15.1%               18.4%                            20.9%   28.0%
+(phase 42 done in 609 s)
+
+All phases: agreement of the two annealing runs 100.0% (>= 80%)
+Strategy gate: P[> Conservadora] [0.851, 0.559, 0.191], P[> BOVA11] [0.995, 0.973, 0.923], DSR [0.99, 0.898, 0.549] (all >= 0.95): not a candidate: the QPO line is closed

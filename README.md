@@ -155,6 +155,21 @@ shown with Markdown escaped.
 - **Not a backtest:** the model was trained on the past it would be tested on (look-ahead), so its value can only be
   measured forward; a pre-registered weekly log of its opinions is proposed, not started.
 
+### After v1.2 (2026-10-27): optional US leg
+
+- **"Incluir EUA" (sidebar, off by default):** adds 30 BDRs of US companies (Apple, Microsoft, Nvidia, Alphabet,
+  Amazon, Meta, Tesla, Berkshire, JPMorgan and others) plus IVVB11 (S&P 500) and NASD11 (Nasdaq-100) to the
+  optimizer's universe, each US group under its own 30% sector cap (`ativos_eua.py`). Chosen as the US companies
+  above the app's liquidity floor on 23/10/2026 (of the ~820 BDRs listed on the B3, ~790 trade too little).
+- **Data:** the lake's COTAHIST prices with splits adjusted; the lake has **no BDR dividends**, so US returns are
+  price-only (in reais, the dollar inside). A bad AVGO34 print (17-20/09/2021) is marked as unknown return.
+- **Tax:** BDR gains pay 15% with no R$ 20 mil monthly exemption and their dividends go through the carnê-leão; the
+  app shows this as a caption. The real-money plans (Conservadora, registered satellite) stay Brazilian stocks only.
+- **Why off by default:** in a descriptive backtest (29/04/2014-23/10/2026), the US leg improved Min. Vol (CAGR
+  11.3% -> 13.9%, vol 15.9% -> 14.0%) and hurt Kelly (18.5% -> 17.1%); no mix beat IVVB11 alone (20.8%).
+- **Next (research, pre-registered):** a quantum portfolio test (QAOA asset selection, max Sharpe weights) against
+  exact classical selection, the Conservadora and BOVA11.
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

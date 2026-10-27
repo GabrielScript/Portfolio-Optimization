@@ -77,3 +77,19 @@ def test_pennylane_reference_backend_gives_the_same_angles(tmp_path):
     referencia = json.loads((tmp_path / "referencia" / "fase0" / "2010-02-09_p1.json").read_text(encoding="utf-8"))
     assert np.asarray(rapido["angles"]) == pytest.approx(np.asarray(referencia["angles"]), abs=1e-8)
     assert referencia["device"] == "lightning.qubit"
+
+
+@pytest.mark.parametrize(("campo", "outro"), [("steps", 6), ("shots", 101), ("backend", "pennylane-cpu"),
+                                              ("sha256", "0" * 64)])
+def test_resume_refuses_a_json_from_another_run_or_qubo(tmp_path, campo, outro):
+    # the stored angles warm-start the next rebalance: mixing settings or a changed QUBO would chain silently
+    entrada, saida = tmp_path / "in", tmp_path / "out"
+    _salvar(entrada, 0, "2010-02-09", seed=1)
+    _salvar(entrada, 0, "2010-05-12", seed=2)
+    run(entrada, saida, ps=(1,), phases=(0,), steps=5, shots=100)
+    arquivo = saida / "fase0" / "2010-02-09_p1.json"
+    (saida / "fase0" / "2010-05-12_p1.json").unlink()
+    arquivo.write_text(json.dumps({**json.loads(arquivo.read_text(encoding="utf-8")), campo: outro}),
+                       encoding="utf-8")
+    with pytest.raises(ValueError, match=campo):
+        run(entrada, saida, ps=(1,), phases=(0,), steps=5, shots=100)

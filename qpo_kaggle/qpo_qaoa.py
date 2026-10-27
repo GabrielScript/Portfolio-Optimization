@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import math
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 
 import numpy as np
 import pennylane as qml
@@ -21,12 +23,21 @@ import torch
 
 from qpo_kaggle.qaoa_subspace import QaoaResult, energy, ising_scale, linear_ramp, qubo_to_ising, ring_edges
 
-# PennyLane's torch interface returns results in torch's default dtype; float32 would round the cost and its
-# gradient (the simulators work in complex128). Process-wide on purpose: only the reference backends import it.
-torch.set_default_dtype(torch.float64)
+__all__ = ["QaoaResult", "cost_hamiltonian", "dicke_state", "energy", "float64_default", "open_device",
+           "qaoa_circuit", "qaoa_qnodes", "qubo_to_ising", "solve_qaoa"]
 
-__all__ = ["QaoaResult", "cost_hamiltonian", "dicke_state", "energy", "open_device", "qaoa_circuit", "qaoa_qnodes",
-           "qubo_to_ising", "solve_qaoa"]
+
+@contextmanager
+def float64_default() -> Iterator[None]:
+    """torch's default dtype at float64 inside the block, restored after. PennyLane's torch interface returns
+    results (and the adjoint gradient) in the default dtype; float32 would round the cost below the gaps between
+    neighbouring subsets. Wrap both the QNode calls and ``backward()``."""
+    anterior = torch.get_default_dtype()
+    torch.set_default_dtype(torch.float64)
+    try:
+        yield
+    finally:
+        torch.set_default_dtype(anterior)
 
 
 def dicke_state(n: int, k: int) -> np.ndarray:
@@ -114,24 +125,24 @@ def qaoa_qnodes(q: np.ndarray, k: int, p: int, device, shots: int):
 
 def solve_qaoa(q: np.ndarray, k: int, p: int, steps: int, lr: float, shots: int, seed: int, device_name: str,
                init: np.ndarray | None = None, require_gpu: bool = False) -> QaoaResult:
-    """Adam on <H_C> from ``init`` (default: a linear ramp), then ``shots`` samples scored by x'Qx."""
+    """Adam on <H_C> from ``init`` (default: a linear ramp), then ``shots`` samples scored by x'Qx. The device's
+    seed drives the sampler; nothing global is seeded, and torch's default dtype is restored on return."""
     inicio_relogio = time.perf_counter()
-    torch.manual_seed(seed)
-    np.random.seed(seed)
     device = open_device(device_name, len(q), seed, require_gpu)
     custo, amostrar = qaoa_qnodes(q, k, p, device, shots)
     angulos = torch.tensor(linear_ramp(p) if init is None else np.asarray(init, dtype=float),
                            dtype=torch.float64, requires_grad=True)
     otimizador = torch.optim.Adam([angulos], lr=lr)
-    expval_inicial = float(custo(angulos.detach()))
-    for _ in range(steps):
-        otimizador.zero_grad(set_to_none=True)
-        perda = custo(angulos)
-        perda.backward()
-        otimizador.step()
-    finais = angulos.detach()
-    expval_final = float(custo(finais))
-    amostras = np.asarray(amostrar(finais), dtype=np.int64).reshape(shots, len(q))
+    with float64_default():
+        expval_inicial = float(custo(angulos.detach()))
+        for _ in range(steps):
+            otimizador.zero_grad(set_to_none=True)
+            perda = custo(angulos)
+            perda.backward()
+            otimizador.step()
+        finais = angulos.detach()
+        expval_final = float(custo(finais))
+        amostras = np.asarray(amostrar(finais), dtype=np.int64).reshape(shots, len(q))
     viaveis = amostras[amostras.sum(axis=1) == k]
     if len(viaveis) == 0:
         raise RuntimeError("no feasible sample (|x| = k): the XY mixer should never allow this")

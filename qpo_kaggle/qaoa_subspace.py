@@ -18,6 +18,10 @@ from dataclasses import dataclass
 import numpy as np
 import torch
 
+from qpo_kaggle.qubo_math import energy, qubo_to_ising
+
+MAX_SUBSPACE = 2 ** 24      # torch.multinomial's category limit; also keeps the 2^n masks and the bit table in RAM
+
 
 @dataclass(frozen=True)
 class QaoaResult:
@@ -30,21 +34,6 @@ class QaoaResult:
     angles: list[list[float]]    # [gammas, betas]
     seconds: float
     device: str
-
-
-def energy(q: np.ndarray, x: np.ndarray) -> float | np.ndarray:
-    """x'Qx for one bitstring (n,) or a batch (m, n)."""
-    valores = np.einsum("...i,ij,...j->...", x, q, x)
-    return float(valores) if np.ndim(valores) == 0 else valores
-
-
-def qubo_to_ising(q: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
-    """(h, J, const) with x'Qx = h'z + sum_{i<j} J_ij z_i z_j + const for x = (1 - z) / 2 (z = +1 is |0>)."""
-    s = (q + q.T) / 2.0
-    diagonal = np.diag(s)
-    fora = s - np.diag(diagonal)
-    h = -diagonal / 2.0 - fora.sum(axis=1) / 2.0
-    return h, fora / 2.0, float(diagonal.sum() / 2.0 + fora.sum() / 4.0)
 
 
 def ising_scale(q: np.ndarray) -> float:
@@ -74,7 +63,17 @@ class SubspaceQaoa:
     """The QAOA state of one QUBO on its weight-k subspace; ``angles`` has shape (2, p): gammas, then betas."""
 
     def __init__(self, q: np.ndarray, k: int, device: str | torch.device = "cpu") -> None:
+        q = np.asarray(q, dtype=float)
+        if q.ndim != 2 or q.shape[0] != q.shape[1] or q.size == 0:
+            raise ValueError(f"Q has shape {q.shape}: need a non-empty square matrix")
+        if not np.isfinite(q).all():
+            raise ValueError("Q has non-finite entries")
         n = len(q)
+        if not 1 <= k <= n:
+            raise ValueError(f"k = {k} is outside 1..{n}")
+        if math.comb(n, k) > MAX_SUBSPACE:
+            raise ValueError(f"C({n}, {k}) = {math.comb(n, k):,} states exceed 2^24 (torch.multinomial's limit; "
+                             "the masks and the bit table would not fit in RAM either)")
         self.k = k
         self.device = torch.device(device)
         self.masks = weight_k_masks(n, k)

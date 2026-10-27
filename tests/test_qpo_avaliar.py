@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import pytest
 
-from scripts.qpo_avaliar import load_qaoa_picks, solver_gate, strategy_gate
+from scripts.qpo_avaliar import _year_table, load_qaoa_picks, solver_gate, strategy_gate
 
 
 def test_strategy_gate_needs_both_references_at_095_in_every_phase():
@@ -62,3 +62,12 @@ def test_plumbing_check_needs_the_published_conservadora_cagr_of_the_phase():
     check_plumbing(42, 0.16897)
     with pytest.raises(SystemExit, match="phase 21"):
         check_plumbing(21, 0.1652)
+
+
+def test_year_table_keeps_the_first_partial_year_from_the_curve_start():
+    # the phase starts mid-year: its first year runs from the first value, not from a year-end before the data
+    datas = pd.to_datetime(["2010-03-15", "2010-12-30", "2011-06-30", "2011-12-29", "2012-04-10"])
+    curva = pd.Series([100.0, 110.0, 99.0, 121.0, 133.1], index=datas)
+    tabela = _year_table({"A": curva})
+    assert list(tabela.index) == [2010, 2011, 2012]
+    assert tabela["A"].tolist() == pytest.approx([0.10, 0.10, 0.10])

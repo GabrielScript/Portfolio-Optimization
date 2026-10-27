@@ -19,7 +19,7 @@ PASTA = Path(__file__).resolve().parent
 USUARIO = "gabrielestrelalopes"
 QUBOS = f"{USUARIO}/qpo-qubos"          # private dataset with docs/qpo/qubos (scripts/qpo_montar.py)
 JOBS = {"spike": "spike", "solve": "solve"}
-MODULES = ("__init__.py", "qaoa_subspace.py", "qpo_qaoa.py", "solve.py", "spike.py")
+MODULES = ("__init__.py", "qubo_math.py", "qaoa_subspace.py", "qpo_qaoa.py", "solve.py", "spike.py")
 PACOTES = ("pennylane==0.45.1", "pennylane-lightning==0.45.0", "pennylane-lightning-gpu==0.45.0")
 MOLDE = '''import os, runpy, subprocess, sys, tempfile
 from pathlib import Path

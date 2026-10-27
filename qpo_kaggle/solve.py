@@ -25,16 +25,13 @@ import numpy as np
 import torch
 
 from qpo_kaggle.qaoa_subspace import solve_qaoa as solve_subspace
+from qpo_kaggle.qubo_math import approximation_ratio
 
 STEPS = 150
 LR = 0.05
 SHOTS = 4096
 SEED = 20261027
 BACKENDS = ("subspace", "pennylane-gpu", "pennylane-cpu")
-
-
-def _ratio(e: float, e_best: float, e_worst: float) -> float:
-    return 1.0 if e_worst == e_best else (e_worst - e) / (e_worst - e_best)
 
 
 def _solver(backend: str):
@@ -51,6 +48,14 @@ def _solver(backend: str):
             {"pennylane": qml.__version__})
 
 
+def _check_resumable(destino: Path, gravado: dict, esperado: dict) -> None:
+    """A stored result warm-starts the next rebalance, so it must come from this QUBO and this run's settings."""
+    diferentes = {campo: (gravado.get(campo), valor) for campo, valor in esperado.items()
+                  if gravado.get(campo) != valor}
+    if diferentes:
+        raise ValueError(f"{destino}: stored (found, expected) {diferentes}; delete it or use another output folder")
+
+
 def _run_chain(chain: tuple[int, int], input_dir: Path, output_dir: Path, backend: str, steps: int,
                shots: int) -> int:
     fase, p = chain
@@ -59,8 +64,12 @@ def _run_chain(chain: tuple[int, int], input_dir: Path, output_dir: Path, backen
     anterior, resolvidos = None, 0
     for indice, arquivo in enumerate(sorted((Path(input_dir) / f"fase{fase}").glob("*.npz"))):
         destino = Path(output_dir) / f"fase{fase}" / f"{arquivo.stem}_p{p}.json"
+        assinatura = hashlib.sha256(arquivo.read_bytes()).hexdigest()
         if destino.exists():
-            anterior = json.loads(destino.read_text(encoding="utf-8"))["angles"]
+            gravado = json.loads(destino.read_text(encoding="utf-8"))
+            _check_resumable(destino, gravado, {"sha256": assinatura, "backend": backend, "steps": steps,
+                                                "shots": shots})
+            anterior = gravado["angles"]
             continue
         with np.load(arquivo) as dados:
             q, k, tickers = dados["q"], int(dados["k"]), dados["tickers"]
@@ -69,10 +78,11 @@ def _run_chain(chain: tuple[int, int], input_dir: Path, output_dir: Path, backen
         semente = SEED + 1000 * fase + indice
         resultado = resolver(q, k, p=p, steps=steps, lr=LR, shots=shots, seed=semente, init=anterior)
         registro = {
-            "phase": fase, "date": arquivo.stem, "p": p, "sha256": hashlib.sha256(arquivo.read_bytes()).hexdigest(),
+            "phase": fase, "date": arquivo.stem, "p": p, "sha256": assinatura,
             "picks": list(resultado.picks), "exact_picks": list(exatas),
             "tickers": [str(tickers[i]) for i in resultado.picks],
-            "energy": resultado.energy, "exact_energy": e_exata, "ratio": _ratio(resultado.energy, e_exata, e_pior),
+            "energy": resultado.energy, "exact_energy": e_exata,
+            "ratio": approximation_ratio(resultado.energy, e_exata, e_pior),
             "match": resultado.picks == exatas, "p_pick": resultado.p_optimum,
             "expval_initial": resultado.expval_inicial, "expval_final": resultado.expval_final,
             "n_infeasible": resultado.n_infeasible, "init": anterior, "angles": resultado.angles, "seed": semente,

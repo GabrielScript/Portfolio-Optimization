@@ -194,6 +194,19 @@ shown with Markdown escaped.
 - **Engineering kept:** the QAOA ansatz never leaves the 15-of-20 subspace, so `qpo_kaggle/qaoa_subspace.py`
   simulates its 15,504 amplitudes exactly in torch (equal to PennyLane to 1e-12), ~10-20 s per rebalance on a
   laptop CPU instead of 1-2 min on a Kaggle T4. PennyLane (`qpo_kaggle/qpo_qaoa.py`) stays as the reference.
+- **Year by year against every reference (`docs/qpo-anos-2026-10-27.txt`, descriptive, no gate):** QPO-exact
+  against the Conservadora, BOVA11, IVVB11 (S&P 500 in reais) and the four most traded crypto ETFs (HASH11,
+  BITH11, ETHE11, QBTC11, from the lake, since 2021). It beat all seven in only 5, 4 and 4 of the 17 years (by
+  offset). 2025: 23.1/13.4/15.0% against BOVA11 34.7% and the Conservadora 31.5/27.5/33.5%. 2026 to 16/10:
+  15.8/19.5/18.4% against BOVA11 28.0%. It beat IVVB11 and every crypto ETF in 2025 and 2026 (the ETFs fell 15-24%
+  each year), but the crypto ETFs rose 80-175% in 2023 and 2024 and IVVB11 58% in 2024. No stock picker wins every
+  year against the best of seven unrelated assets without hindsight. Tuning the QUBO until it did would be fitting
+  the past, so it was not tried.
+- **Code review (session 54):** the QAOA reference no longer reseeds numpy/torch globally or changes torch's
+  default dtype on import (float64 only inside the solver). The subspace solver refuses sizes the sampler cannot
+  take (C(n, k) > 2^24, e.g. n = 28, k = 15) before allocating. A resumed solve refuses results from another QUBO,
+  backend, step count or shot count. The QUBO helpers have one source (`qpo_kaggle/qubo_math.py`). None of this
+  changes the recorded results.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

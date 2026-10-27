@@ -18,7 +18,7 @@ import numpy as np
 import torch
 
 from qpo_kaggle.qaoa_subspace import linear_ramp
-from qpo_kaggle.qpo_qaoa import open_device, qaoa_qnodes
+from qpo_kaggle.qpo_qaoa import float64_default, open_device, qaoa_qnodes
 
 K = 15
 STEPS = 150                    # Adam steps per QUBO (design doc)
@@ -39,6 +39,11 @@ def synthetic_qubo(n: int, k: int, seed: int) -> np.ndarray:
 
 
 def measure(n: int, k: int, p: int, device_name: str, require_gpu: bool) -> dict:
+    with float64_default():
+        return _measure(n, k, p, device_name, require_gpu)
+
+
+def _measure(n: int, k: int, p: int, device_name: str, require_gpu: bool) -> dict:
     q = synthetic_qubo(n, k, SEED + n)
     device = open_device(device_name, n, SEED, require_gpu)
     custo, amostrar = qaoa_qnodes(q, k, p, device, SHOTS)

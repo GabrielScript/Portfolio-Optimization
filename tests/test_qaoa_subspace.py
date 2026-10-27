@@ -10,8 +10,15 @@ qml = pytest.importorskip("pennylane")
 torch = pytest.importorskip("torch")
 
 from qpo_kaggle.qaoa_subspace import SubspaceQaoa, solve_qaoa, weight_k_masks  # noqa: E402
-from qpo_kaggle.qpo_qaoa import cost_hamiltonian, open_device, qaoa_circuit, qaoa_qnodes  # noqa: E402
+from qpo_kaggle.qpo_qaoa import cost_hamiltonian, float64_default, open_device, qaoa_circuit, qaoa_qnodes  # noqa: E402
 from qpo_kaggle.qpo_qaoa import solve_qaoa as solve_reference  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _float64():
+    # the reference QNodes are called directly, outside solve_qaoa's own float64 block
+    with float64_default():
+        yield
 
 
 def _random_qubo(n: int, seed: int) -> np.ndarray:
@@ -27,6 +34,42 @@ def test_weight_k_masks_are_the_ascending_basis_indices_of_weight_k():
     mascaras = weight_k_masks(6, 2)
     assert len(mascaras) == math.comb(6, 2)
     assert list(mascaras) == [i for i in range(64) if bin(i).count("1") == 2]
+
+
+def test_solvers_use_the_shared_qubo_math():
+    from qpo_kaggle import qaoa_subspace, qubo_math, solve
+
+    assert qaoa_subspace.energy is qubo_math.energy
+    assert qaoa_subspace.qubo_to_ising is qubo_math.qubo_to_ising
+    assert solve.approximation_ratio is qubo_math.approximation_ratio
+
+
+def test_subspace_too_big_for_the_sampler_fails_before_allocating(monkeypatch):
+    # torch.multinomial takes at most 2^24 categories; C(28, 15) = 37,442,160, and the 2^28 masks plus the
+    # (C(n, k), n) bit table would need about 10 GB first
+    import qpo_kaggle.qaoa_subspace as modulo
+
+    def _alocou(n, k):
+        raise AssertionError(f"allocated the 2^{n} masks before checking the subspace size")
+
+    monkeypatch.setattr(modulo, "weight_k_masks", _alocou)
+    with pytest.raises(ValueError, match="2\\^24"):
+        SubspaceQaoa(np.zeros((28, 28)), 15)
+
+
+@pytest.mark.parametrize("k", [0, 7])
+def test_cardinality_outside_one_to_n_is_rejected(k):
+    with pytest.raises(ValueError, match="k ="):
+        SubspaceQaoa(_random_qubo(6, seed=1), k)
+
+
+def test_non_square_or_non_finite_qubo_is_rejected():
+    with pytest.raises(ValueError, match="square"):
+        SubspaceQaoa(np.zeros((4, 3)), 2)
+    q = _random_qubo(4, seed=2)
+    q[1, 2] = np.nan
+    with pytest.raises(ValueError, match="finite"):
+        SubspaceQaoa(q, 2)
 
 
 @pytest.mark.parametrize(("n", "k"), [(6, 3), (8, 3), (7, 5)])

@@ -16,6 +16,15 @@ def _random_qubo(n: int, seed: int) -> np.ndarray:
     return (a + a.T) / 2.0
 
 
+def test_qubo_math_has_one_source_shared_with_the_kaggle_package():
+    # the Kaggle kernel ships qpo_kaggle without core, so the numpy-only helpers live there; core re-exports them
+    from qpo_kaggle import qubo_math
+
+    assert energy is qubo_math.energy
+    assert qubo_to_ising is qubo_math.qubo_to_ising
+    assert approximation_ratio is qubo_math.approximation_ratio
+
+
 def _brute_force(q: np.ndarray, k: int) -> tuple[tuple[int, ...], float, float]:
     n = len(q)
     energies = {c: energy(q, np.isin(np.arange(n), c).astype(float)) for c in itertools.combinations(range(n), k)}

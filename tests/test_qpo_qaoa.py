@@ -9,8 +9,15 @@ import pytest
 qml = pytest.importorskip("pennylane")
 torch = pytest.importorskip("torch")
 
-from qpo_kaggle.qpo_qaoa import (cost_hamiltonian, dicke_state, energy, open_device, qaoa_qnodes,  # noqa: E402
-                             qubo_to_ising, solve_qaoa)
+from qpo_kaggle.qpo_qaoa import (cost_hamiltonian, dicke_state, energy, float64_default, open_device,  # noqa: E402
+                                 qaoa_qnodes, qubo_to_ising, solve_qaoa)
+
+
+@pytest.fixture(autouse=True)
+def _float64():
+    # the QNodes below are called directly, outside solve_qaoa's own float64 block
+    with float64_default():
+        yield
 
 
 def _random_qubo(n: int, seed: int) -> np.ndarray:
@@ -90,6 +97,43 @@ def test_training_lowers_the_energy_and_concentrates_on_the_optimum():
     assert resultado.picks == otimo
     assert resultado.p_optimum > 1.0 / math.comb(n, k)      # better than the uniform Dicke start
     assert resultado.n_infeasible == 0
+
+
+def test_importing_the_reference_leaves_torch_default_dtype_alone():
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    codigo = "import torch, qpo_kaggle.qpo_qaoa; print(torch.get_default_dtype())"
+    saida = subprocess.run([sys.executable, "-c", codigo], capture_output=True, text=True, check=True,
+                           cwd=Path(__file__).resolve().parent.parent)
+    assert saida.stdout.strip() == "torch.float32"
+
+
+def test_solver_computes_in_float64_whatever_the_default_dtype_and_restores_it():
+    anterior = torch.get_default_dtype()
+    q = _random_qubo(6, seed=8)
+    try:
+        torch.set_default_dtype(torch.float64)
+        em_float64 = solve_qaoa(q, 3, p=2, steps=20, lr=0.05, shots=64, seed=11, device_name="lightning.qubit")
+        torch.set_default_dtype(torch.float32)
+        em_float32 = solve_qaoa(q, 3, p=2, steps=20, lr=0.05, shots=64, seed=11, device_name="lightning.qubit")
+        assert torch.get_default_dtype() == torch.float32
+    finally:
+        torch.set_default_dtype(anterior)
+    assert em_float32.angles == em_float64.angles
+
+
+def test_solver_leaves_the_global_random_streams_untouched():
+    # the device carries the seed; reseeding numpy's and torch's globals would clobber the caller's streams
+    np.random.seed(3)
+    torch.manual_seed(3)
+    esperado_np, esperado_torch = np.random.random(), torch.rand(1).item()
+    np.random.seed(3)
+    torch.manual_seed(3)
+    solve_qaoa(_random_qubo(4, seed=6), 2, p=1, steps=2, lr=0.05, shots=8, seed=11, device_name="lightning.qubit")
+    assert np.random.random() == esperado_np
+    assert torch.rand(1).item() == esperado_torch
 
 
 def test_gpu_required_never_falls_back_to_cpu():

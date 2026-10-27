@@ -98,9 +98,18 @@ def _median_curve(curvas: Sequence[ResultadoBacktest]) -> ResultadoBacktest:
     return replace(curvas[0], nome="Random-15 (mediana)", valores=valores)
 
 
+def _year_returns(valores: pd.Series) -> pd.Series:
+    """Calendar-year returns; the first (partial) year runs from the first value, the last to the last value."""
+    valores = valores.dropna()
+    fechamentos = valores.resample("YE").last()
+    bases = fechamentos.shift(1)
+    bases.iloc[0] = valores.iloc[0]
+    return fechamentos / bases - 1.0
+
+
 def _year_table(curvas: Mapping[str, pd.Series]) -> pd.DataFrame:
-    return pd.DataFrame({nome: valores.dropna().resample("YE").last().pct_change().dropna()
-                         for nome, valores in curvas.items()}).rename(index=lambda d: d.year)
+    return pd.DataFrame({nome: _year_returns(valores) for nome, valores in curvas.items()}).rename(
+        index=lambda d: d.year)
 
 
 def main(argv: list[str]) -> int:

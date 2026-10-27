@@ -69,9 +69,19 @@ def run(input_dir: Path, output_dir: Path, ps: tuple[int, ...], phases: tuple[in
     return resolvidos
 
 
+def find_input(root: Path) -> Path:
+    """The folder with the exported QUBOs' SHA256SUMS anywhere under ``root`` (Kaggle has mounted datasets at
+    /kaggle/input/<slug> and at /kaggle/input/datasets/<user>/<slug>)."""
+    achados = sorted(Path(root).rglob("SHA256SUMS"))
+    if len(achados) != 1:
+        raise FileNotFoundError(f"{len(achados)} SHA256SUMS under {root}: need exactly one")
+    return achados[0].parent
+
+
 def main(argv: list[str]) -> int:
-    """``solve.py INPUT OUTPUT PS PHASES``, e.g. ``/kaggle/input/qpo-qubos /kaggle/working 1,2,3 0``."""
-    entrada, saida = Path(argv[0]), Path(argv[1])
+    """``solve.py INPUT OUTPUT PS PHASES``, e.g. ``auto /kaggle/working 1,2,3 0`` (auto = find under /kaggle/input)."""
+    entrada = find_input(Path("/kaggle/input")) if argv[0] == "auto" else Path(argv[0])
+    saida = Path(argv[1])
     ps = tuple(int(p) for p in argv[2].split(","))
     fases = tuple(int(f) for f in argv[3].split(","))
     print(f"{run(entrada, saida, ps, fases, 'lightning.gpu', require_gpu=True)} QUBOs solved")

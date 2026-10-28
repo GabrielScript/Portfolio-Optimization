@@ -196,3 +196,22 @@ def test_composite_score_averages_normal_scores_where_both_exist_and_keeps_the_c
     assert nota["A"] == pytest.approx((z_c["A"] + z_v["A"]) / 2)
     assert nota["B"] == pytest.approx(z_c["B"])
     assert nota["E"] == pytest.approx((z_c["E"] + z_v["E"]) / 2)
+
+
+def test_composite_score_takes_a_third_signal_and_averages_the_normal_scores_each_name_has():
+    # attempt 49 (docs/superpowers/specs/2026-10-28-qubo-universo-crescimento-design.md): + profit growth
+    from scipy.stats import norm
+
+    from core.qubo_universo import composite_score
+
+    conservadora_ = pd.Series([5.0, 4.0, 3.0, 2.0], index=list("ABCD"))
+    valor = pd.Series([1.0, 2.0], index=list("AB"))
+    crescimento = pd.Series([3.0, 1.0, 2.0], index=list("ACD"))
+    nota = composite_score(lambda mes, c: conservadora_.reindex(c).dropna(), lambda mes, c: valor.reindex(c).dropna(),
+                           lambda mes, c: crescimento.reindex(c).dropna())(MES, list("ABCD"))
+    z_c = pd.Series(norm.ppf((conservadora_.rank() - 0.5) / 4), index=list("ABCD"))
+    z_v = pd.Series(norm.ppf((valor.rank() - 0.5) / 2), index=list("AB"))
+    z_g = pd.Series(norm.ppf((crescimento.rank() - 0.5) / 3), index=list("ACD"))
+    assert nota["A"] == pytest.approx((z_c["A"] + z_v["A"] + z_g["A"]) / 3)
+    assert nota["B"] == pytest.approx((z_c["B"] + z_v["B"]) / 2)
+    assert nota["C"] == pytest.approx((z_c["C"] + z_g["C"]) / 2)

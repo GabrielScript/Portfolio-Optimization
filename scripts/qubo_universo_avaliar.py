@@ -23,6 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.config import taxa_anual_para_aritmetica  # noqa: E402
+from core.crescimento_lucro import nota_de_crescimento  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
 from core.qpo import CFG_MAX_SHARPE, K, QuboInstance, ScoreOfMonth, exact_picks, qubo_selector  # noqa: E402
 from core.qpo import selection_then_max_sharpe  # noqa: E402
@@ -40,6 +41,7 @@ from scripts.qpo_montar import FOLDER, LAST_SESSION, RUN_DATE  # noqa: E402
 
 ARM = "QUBO-universo"
 ARM_VALOR = "QUBO-universo-valor"
+ARM_CRESCIMENTO = "QUBO-universo-crescimento"     # attempt 49: + profit growth
 PASTA_CVM = FOLDER.parent / "2026-10-24-cvm"     # DFP and ITR since 2010, dated by CVM receipt (DECISOES 130's folder)
 TOP20 = "QPO-exact (top-20)"     # the nested design of the first QPO reading: context, already a trial row
 
@@ -129,13 +131,15 @@ def _run_phase(fase: int, dados, mensal, cfg, cdi, arm: str,
     return {nome: curva.valores for nome, curva in curvas.items()}, registro, log, len(braco.recusas)
 
 
-def _value_score(mensal) -> tuple[ScoreOfMonth, dict[str, str]]:
-    """Attempt 48's composite score (Conservadora + value) and the CVM folder's hashes."""
+def _value_score(mensal, com_crescimento: bool = False) -> tuple[ScoreOfMonth, dict[str, str]]:
+    """Attempt 48's composite score (Conservadora + value), or 49's (+ profit growth), and the CVM folder's hashes."""
     avaliar_valor.PASTA_UNIVERSO = FOLDER                        # sectors of the same frozen folder as the engine
     balancos, sha256 = avaliar_valor.carregar_balancos(PASTA_CVM)
-    valor = nota_media_dos_escores(*avaliar_valor.notas(balancos, mensal).values())
+    outras = [nota_media_dos_escores(*avaliar_valor.notas(balancos, mensal).values())]
+    if com_crescimento:
+        outras.append(nota_de_crescimento(balancos.fundamentos))
     return composite_score(lambda mes, candidatos: conservadora(mensal.retornos, mensal.proventos, mes, candidatos),
-                           valor), sha256
+                           *outras), sha256
 
 
 def main(argv: list[str]) -> int:
@@ -147,6 +151,9 @@ def main(argv: list[str]) -> int:
     if argv[:1] == ["valor"]:
         arm = ARM_VALOR
         score_of_month, sha256_cvm = _value_score(mensal)
+    elif argv[:1] == ["crescimento"]:
+        arm = ARM_CRESCIMENTO
+        score_of_month, sha256_cvm = _value_score(mensal, com_crescimento=True)
     selic = market_data.obter_selic_meta(RUN_DATE)
     cdi = with_retries(lambda: market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE))
     cfg = replace(CFG_MAX_SHARPE, taxa_livre_risco=taxa_anual_para_aritmetica(selic.valor))

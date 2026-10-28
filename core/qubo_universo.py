@@ -213,14 +213,15 @@ def anneal_solver(sectors: Mapping[str, str], max_per_sector: int = SECTOR_CAP, 
 
 
 def composite_score(conservadora_of_month: Callable[[pd.Timestamp, Sequence[str]], pd.Series],
-                    value_of_month: Callable[[pd.Timestamp, Sequence[str]], pd.Series]
+                    *others_of_month: Callable[[pd.Timestamp, Sequence[str]], pd.Series]
                     ) -> Callable[[pd.Timestamp, Sequence[str]], pd.Series]:
-    """Attempt 48's score (docs/superpowers/specs/2026-10-27-qubo-universo-valor-design.md): over the names with a
-    Conservadora score, the mean of its normal score and the value score's normal score among those names; a name
-    without a value score keeps the Conservadora's alone. Equal weights: nothing is fitted."""
+    """Attempts 48-49's score (docs/superpowers/specs/2026-10-27-qubo-universo-valor-design.md, value; and
+    2026-10-28-qubo-universo-crescimento-design.md, + profit growth): over the names with a Conservadora score, the
+    mean of its normal score and each other signal's normal score among those names, with the ones a name has (the
+    Conservadora's always). Equal weights: nothing is fitted."""
     def _nota(mes: pd.Timestamp, candidatos: Sequence[str]) -> pd.Series:
         base = conservadora_of_month(mes, candidatos).dropna()
-        valor = value_of_month(mes, list(base.index)).dropna()
-        escores = pd.DataFrame({"conservadora": escore_normal(base), "valor": escore_normal(valor)})
+        escores = pd.DataFrame({0: escore_normal(base), **{posicao: escore_normal(outra(mes, list(base.index)).dropna())
+                                                          for posicao, outra in enumerate(others_of_month, start=1)}})
         return escores.reindex(base.index).mean(axis=1)
     return _nota

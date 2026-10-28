@@ -24,6 +24,7 @@ AVISO = ("Informação, não recomendação: nada aqui muda o plano do Alepha (a
          "regras de risco. O tom das notícias e os fatos relevantes ainda não foram testados como sinal: o teste "
          "pré-registrado lê em ~outubro de 2027 (docs/preregistro-sentimento-2026-10-23.md).")
 PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m")
+TIPOS_DA_TABELA = ("Ação", "BDR", "ETF")
 
 
 def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame | None,
@@ -114,15 +115,21 @@ def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_
 
 def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, fatos: pd.DataFrame | None,
            referencia: str) -> None:
-    st.markdown("### Todas as ações: preço, risco, balanço e fatos relevantes")
+    st.markdown("### Todas as ações, BDRs e ETFs: preço, risco, balanço e fatos relevantes")
     com_dados = precos.loc[:, precos.notna().any()]
     if referencia not in com_dados.columns:
         st.caption("Sem os preços do BOVA11 para medir o beta.")
         return
     tabela = tabela_por_acao(com_dados, info, None if fundamentos is None else fundamentos.drop(columns=["Balanço de"]),
                              referencia).rename_axis("Ticker").reset_index()
+    tabela.insert(1, "Tipo", [info.get(f"{ticker}.SA", {}).get("tipo", "") for ticker in tabela["Ticker"]])
     if fatos is not None and not fatos.empty:
         tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
+    tipos = [tipo for tipo in TIPOS_DA_TABELA if tipo in set(tabela["Tipo"])]
+    escolhidos = st.segmented_control("Tipo", tipos, selection_mode="multi", default=tipos, key="tipos_da_tabela")
+    if escolhidos:
+        tabela = tabela[tabela["Tipo"].isin(escolhidos)]
+    st.caption(f"{len(tabela)} papéis na tabela.")
     st.dataframe(tabela, width="stretch", hide_index=True, height=420,
                  column_config={"Preço (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
                                 "Fechamento de": st.column_config.DateColumn(format="DD/MM/YYYY"),
@@ -137,6 +144,11 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
                "ITR/DFP da CVM recebido (fluxos em 12 meses); bancos e seguradoras ficam sem múltiplos (outro plano de "
                "contas). "
                "Alguns valores de mercado logo depois de um IPO estão mil vezes pequenos (limitação do lago).")
+    st.caption("BDRs: retorno só de preço (o lago não tem os dividendos dos BDRs), em reais com o dólar dentro, sem "
+               "balanço da CVM; ganho em BDR paga 15% de IR sem a isenção de R$ 20 mil por mês. ETFs reinvestem. "
+               "Entram todos os papéis negociados nos últimos 15 dias, sem piso de liquidez: veja o \"Fechamento "
+               "de\" e desconfie do risco de quem quase não negocia. Nome e setor dos BDRs e ETFs vêm do cadastro da "
+               "B3; saltos de preço deles não passam pela revisão do lago.")
     if fatos is not None and not fatos.empty:
         with st.expander(f"Fatos relevantes e comunicados ao mercado dos últimos 90 dias ({len(fatos)})"):
             st.dataframe(fatos, width="stretch", hide_index=True, height=360,

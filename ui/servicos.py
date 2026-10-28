@@ -19,6 +19,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
+import ativos_tela
 from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem,
                   sentimento)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
@@ -304,7 +305,13 @@ def carregar_indicadores_bcb(dia: date) -> dict[str, tuple[pd.Timestamp, float]]
             "Dólar PTAX (R$)": (ptax.index[-1], float(ptax.iloc[-1]))}
 
 
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_ativos_da_tela() -> pd.DataFrame:
+    """Every stock, BDR and ETF of the app's daily prices, with B3's name, type and sector (``ativos_tela``)."""
+    return ativos_tela.ler_nomes()
+
+
 @st.cache_data(ttl=3600, show_spinner=False, max_entries=2)
 def carregar_precos_da_tabela(tickers: tuple[str, ...], dia: date, versao_dados: int) -> pd.DataFrame:
-    """3 years of daily closes of ``tickers``, raw (no coverage filter: the table shows every stock)."""
+    """3 years of daily closes of ``tickers``, raw (no coverage filter: the table shows every stock, BDR and ETF)."""
     return precos_do_app.ler_fechamentos(list(tickers), dia - timedelta(days=3 * 365 + 10), dia)

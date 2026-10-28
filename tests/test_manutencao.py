@@ -8,6 +8,7 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -384,6 +385,48 @@ def test_the_sessions_after_the_committed_price_file_are_committed_in_the_small_
     assert [str(d) for d in recentes["date"]] == [str(d.date()) for d in pd.bdate_range("2026-10-06", "2026-10-22")]
     assert git("status", "--porcelain", "--", "lago").splitlines() == [" M lago/precos_diarios.parquet"]
     assert atualizar_recentes(app, git) == "pregões recentes: em dia"
+
+
+def test_the_small_file_stays_small_with_every_bdr_and_etf_and_reads_back_as_the_nightlys_sessions(app):
+    # since 2026-10-27 the lake publishes ~1,550 columns (every BDR and ETF): committed every session, the small file
+    # must not carry ~1 KB of per-column metadata each time (pandas schema and statistics: 804 KB for 5 sessions)
+    from core.precos_do_app import ler_fechamentos
+    from scripts.manutencao import atualizar_recentes, git_em
+    git = git_em(app)
+    (app / "lago").mkdir()
+    datas = pd.bdate_range("2026-09-01", "2026-10-22")
+    gerador = np.random.default_rng(3)
+    largo = pd.DataFrame(gerador.uniform(5, 50, (len(datas), 1550)).astype("float32"),
+                         columns=[f"P{i:04d}34" for i in range(1550)]).assign(date=datas.date)[["date",
+                                                                                               *[f"P{i:04d}34" for i in range(1550)]]]
+    largo.iloc[:-3].to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    largo.iloc[:-3].to_parquet(app / "commitado.parquet", index=False)     # what the deployed app has as its base
+    git("add", "lago/precos_diarios.parquet")
+    git("commit", "-q", "-m", "marco")
+    largo.to_parquet(app / "lago" / "precos_diarios.parquet", index=False)
+    assert atualizar_recentes(app, git) == "pregões recentes: até 22/10/2026"
+    pequeno = app / "lago" / "precos_recentes.parquet"
+    assert pequeno.stat().st_size < 400_000
+    lido = ler_fechamentos(["P000734.SA"], date(2026, 9, 1), date(2026, 10, 22), base=app / "commitado.parquet",
+                           recentes=pequeno)
+    assert lido["P000734.SA"].tolist() == pytest.approx(largo["P000734"].astype("float64").tolist())
+    assert atualizar_recentes(app, git) == "pregões recentes: em dia"
+
+
+def test_the_lakes_list_of_the_panels_tickers_is_committed_to_lago_only_when_its_content_changes(app):
+    # the nightly writes it to the ignored data folder: a versioned file it rewrote would dirty the paper's checkout
+    from scripts.manutencao import atualizar_ativos, git_em
+    git = git_em(app)
+    assert atualizar_ativos(app, git) == "ativos: sem a lista do lago"
+    (app / "data" / "b3lake").mkdir(parents=True)
+    nomes = pd.DataFrame({"security": ["PETR4", "AAPL34"], "name": ["PETROBRAS", "APPLE"],
+                          "asset_type": ["stock", "bdr"], "sector": ["Petróleo, Gás e Biocombustíveis", None]})
+    nomes.to_parquet(app / "data" / "b3lake" / "app_names.parquet", index=False)
+    assert atualizar_ativos(app, git) == "ativos: 2 papéis"
+    assert git("show", "--name-only", "--format=%s", "HEAD").splitlines()[-1] == "lago/ativos.parquet"
+    assert pd.read_parquet(app / "lago" / "ativos.parquet").equals(nomes)
+    nomes.to_parquet(app / "data" / "b3lake" / "app_names.parquet", index=False, compression="zstd")  # same rows
+    assert atualizar_ativos(app, git) == "ativos: em dia"
 
 
 def test_the_news_panel_files_are_rebuilt_and_committed_and_without_the_lakes_log_nothing_happens(app, tmp_path):

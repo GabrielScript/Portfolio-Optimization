@@ -25,6 +25,7 @@ st.set_page_config(page_title="Alepha Quant · Alocação quantitativa B3", page
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
 from ativos_eua import AVISO_EUA, get_ticker_info_eua, get_tickers_eua  # noqa: E402
+from ativos_tela import info_curada, info_da_tela  # noqa: E402
 from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
 from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objetivo,  # noqa: E402
                          limites_por_setor, taxa_anual_para_aritmetica)
@@ -303,15 +304,18 @@ def main() -> None:
 
 
 def secao_mercado() -> None:
-    """The market panel (information only, DECISOES 124): election timing, news, macro and every stock."""
+    """The market panel (information only, DECISOES 124): election timing, news, macro and every stock, BDR and ETF
+    of the app's daily prices (``ativos_tela``)."""
     hoje = date.today()
     diario, fatos, fundamentos = servicos.carregar_painel()
-    tickers = tuple(dict.fromkeys((*get_all_tickers(), BENCHMARK_ACOES)))
+    curados = info_curada(get_ticker_info(), get_ticker_info_eua())
+    info = {**curados, **info_da_tela(servicos.carregar_ativos_da_tela(), curados)}
+    tickers = tuple(dict.fromkeys((*get_all_tickers(), *info, BENCHMARK_ACOES)))
     with st.spinner("Carregando o painel do mercado…"):
         precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
         painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
-                             servicos.carregar_selic(hoje), precos, get_ticker_info(), BENCHMARK_ACOES)
+                             servicos.carregar_selic(hoje), precos, info, BENCHMARK_ACOES)
 
 
 def secao_assessor() -> None:

@@ -22,7 +22,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core import market_data  # noqa: E402
-from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
+from core.backtest import Congelamento, ResultadoBacktest, walk_forward_dinamico  # noqa: E402
 from core.cdi_lago import daily_cdi  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
@@ -48,6 +48,13 @@ def curves_frame(capturadas: Sequence[tuple[int, Mapping[str, pd.Series]]]) -> p
                             "BOVA11": curvas["BOVA11"].reindex(curvas[ARM].index).to_numpy()})
               for fase, curvas in capturadas]
     return pd.concat(partes, ignore_index=True)
+
+
+def phase_header(fase: int, datas: pd.DatetimeIndex, braco: ResultadoBacktest,
+                 conservadora: ResultadoBacktest) -> str:
+    return (f"=== Phase {fase}: {datas[0]:%d/%m/%Y} to {datas[-1]:%d/%m/%Y}; refusals {len(braco.recusas)} "
+            f"(Conservadora {len(conservadora.recusas)}); annual turnover {braco.turnover_anual_medio:.2f} "
+            f"(Conservadora {conservadora.turnover_anual_medio:.2f}) ===")
 
 
 def main() -> int:
@@ -87,10 +94,7 @@ def main() -> int:
         p_bova.append(float(tabela.loc[ARM, "P aritmético"]))
         dsr.append(float(tabela.loc[ARM, "DSR"]))
         ganhos, anos = years_beating_all(valores[ARM], [valores["BOVA11"], valores[CONSERVADORA]])
-        datas = valores[ARM].index
-        print(f"\n=== Phase {fase}: {datas[0]:%d/%m/%Y} to {datas[-1]:%d/%m/%Y}; refusals {len(braco.recusas)} "
-              f"(Conservadora {len(conservadora.recusas)}); annual turnover {braco.turnover_anual_medio():.2f} "
-              f"(Conservadora {conservadora.turnover_anual_medio():.2f}) ===")
+        print("\n" + phase_header(fase, valores[ARM].index, braco, conservadora))
         print(tabela.to_string(float_format=lambda x: f"{x:.3f}"))
         print(f"Years beating BOVA11 and the Conservadora (reported, not a gate): {ganhos} of {anos} "
               f"({ganhos / anos:.0%})")

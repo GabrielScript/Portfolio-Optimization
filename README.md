@@ -207,6 +207,21 @@ shown with Markdown escaped.
   take (C(n, k) > 2^24, e.g. n = 28, k = 15) before allocating. A resumed solve refuses results from another QUBO,
   backend, step count or shot count. The QUBO helpers have one source (`qpo_kaggle/qubo_math.py`). None of this
   changes the recorded results.
+- **Full universe, session 55 (DECISOES 153-158; `core/qubo_universo.py`):** the first reading chose 15 of the
+  Conservadora's own top 20, so the QUBO was an overlay on its ranking. Attempt 47 (pre-registered, N 47) let the same
+  QUBO choose 15 of every eligible name of the lake's point-in-time universe (55-171 per date), at most 4 per sector,
+  solved by simulated annealing (two independent runs per rebalance; on the 198 recorded 20-name QUBOs both the
+  annealer and a SCIP MIQP reproduce the exact optimum, and at full size the runs agreed on 100% of rebalances).
+  Attempt 48 (pre-registered before 47 was read) added value (Magic Formula + Trending Value) to the score.
+
+  | Phase 0 / 21 / 42 | P[> Conservadora] | P[> BOVA11] | DSR | Years beating both (of 17) |
+  |---|---|---|---|---|
+  | 47: full universe | 0.61 / 0.50 / 0.32 | 0.98 / 0.97 / 0.95 | 0.95 / 0.87 / 0.72 | 7 / 6 / 6 |
+  | 48: + value | 0.85 / 0.56 / 0.19 | 0.995 / 0.97 / 0.92 | 0.99 / 0.90 / 0.55 | 8 / 7 / 8 |
+
+  Neither is a candidate (the gate needs 0.95 against both in every phase). 48 looked strong in phase 0 only, so
+  its edge depends on the rebalance date. The optimizer is not the bottleneck: the expected returns are. Better
+  solvers or quantum hardware would find the same portfolios.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

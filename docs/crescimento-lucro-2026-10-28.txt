@@ -1,0 +1,13 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64'}
+
+Profit growth (dNI, dGP over lagged assets): monthly Spearman IC, score of the month x total return of the month, universe of the month; names scored per month: min 0, median 146, max 223
+                   meses  IC médio  desvio     t  meses com IC > 0
+2012-2026 (gate) 175.000     0.033   0.121 3.627             0.634
+2012–2016         58.000     0.042   0.154 2.068             0.621
+2017–2021         60.000     0.014   0.109 0.960             0.567
+2022–2026         57.000     0.045   0.090 3.761             0.719
+Rank correlation with the Conservadora score: mean 0.136 over 175 months
+Rank correlation with the value (Magic Formula + Trending Value) score: mean 0.252 over 175 months
+
+Gate (IC ≥ 0,02 e t ≥ 2, 2012-01 to 2026-09): PASSED. Next: pre-register the QPO attempt with the Conservadora + value + profit growth composite.
+(total 231 s)

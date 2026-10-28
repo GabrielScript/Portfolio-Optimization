@@ -94,3 +94,17 @@ def test_upkeep_that_fails_on_import_becomes_a_failed_line_in_its_own_runs_csv(c
         linhas = list(csv.DictReader(entrada))
     assert (saida.returncode, len(linhas), list(linhas[0])) == (1, 1, ["quando", "desfecho", "nota"])
     assert (linhas[0]["desfecho"], "pandas quebrado" in linhas[0]["nota"]) == ("falhou", True)
+
+
+def test_paper_v3_that_fails_on_import_becomes_a_failed_line_in_its_own_runs_csv(checkout, tmp_path):
+    # the "paper v3" task calls the launcher with "paper_v3": the failure goes to paper-v3's folder and header
+    local = tmp_path / "local"
+    (checkout / "scripts" / "paper_v3.py").write_text("raise ImportError('pandas quebrado')\n", encoding="utf-8")
+    ambiente = {**os.environ, "LOCALAPPDATA": str(local)}
+    saida = subprocess.run([sys.executable, "-X", "utf8", str(checkout / "scripts" / "rodar_paper.py"), "paper_v3"],
+                           env=ambiente, capture_output=True, text=True, encoding="utf-8", timeout=60)
+    with (local / "paper-v3" / "runs.csv").open(encoding="utf-8", newline="") as entrada:
+        linhas = list(csv.DictReader(entrada))
+    assert (saida.returncode, len(linhas), list(linhas[0])) == (
+        1, 1, ["quando", "fechamento", "desfecho", "nota", "codigo", "guarda"])
+    assert (linhas[0]["desfecho"], "pandas quebrado" in linhas[0]["nota"]) == ("falhou", True)

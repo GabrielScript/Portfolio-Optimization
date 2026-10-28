@@ -1,0 +1,86 @@
+Files (sha256): {'composto-curvas-2026-10-28.parquet': '015c21bfac6b9618e1c98ff7bddb58648582e099d6b68739647ac2b5516e7701', 'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}
+Caveats (read before the numbers):
+- Descriptive bench, not a forecast and not a signal: it resamples 2010-2026 history; it cannot add information.
+- The grades are labeled in-sample (full-window z and quintile cut points): they describe environments, not timing.
+- A sampled month brings its own CDI level (2% in 2020, 14% in 2016): comparisons inside a path (P[a > b]) are
+  consistent; terminal levels are not "what to expect from today".
+- About 40 months per grade: each row is noisy. Taxes ignored; the curves are net of 10 bps per side.
+- Method: whole historical months resampled jointly (all sleeves take the same month), not the t-copula mentioned in
+  the chat. IVVB11 left out (history from 04/2014). No mixes, no leverage (steps 3 and 5).
+
+Window: 03/2010 to 09/2026 (199 months); score = z(trend 12m) - z(vol 63d) - z(change of the annual CDI over 6m); cut points [-1.737, -0.412, 0.575, 1.939]
+
+Months per grade and each sleeve's mean monthly return in them:
+                       months  Conservadora  BOVA11   CDI
+1 Pessimistic              40         1.98%   1.42% 0.87%
+2 Neutral-pessimistic      40         1.00%   0.11% 0.90%
+3 Neutral                  39         1.97%   1.29% 0.64%
+4 Neutral-optimistic       40         1.24%   0.16% 0.76%
+5 Optimistic               40         0.91%   0.53% 0.77%
+
+Transition counts (row = grade a month started in, column = the next month's):
+                        1   2   3   4   5
+1 Pessimistic          31   9   0   0   0
+2 Neutral-pessimistic   8  22  10   0   0
+3 Neutral               0   8  23   8   0
+4 Neutral-optimistic    1   1   6  24   8
+5 Optimistic            0   0   0   8  31
+
+Win shares over 10,000 paths per starting grade (seed 20261028):
+                               P[Conservadora > BOVA11]  P[Conservadora > CDI]  P[BOVA11 > CDI]
+starting grade        horizon                                                                  
+1 Pessimistic         1y                            77%                    71%              49%
+                      3y                            91%                    78%              43%
+                      5y                            96%                    81%              41%
+2 Neutral-pessimistic 1y                            81%                    66%              44%
+                      3y                            92%                    74%              39%
+                      5y                            96%                    78%              36%
+3 Neutral             1y                            80%                    69%              47%
+                      3y                            92%                    75%              42%
+                      5y                            96%                    79%              39%
+4 Neutral-optimistic  1y                            79%                    64%              43%
+                      3y                            91%                    71%              39%
+                      5y                            96%                    76%              36%
+5 Optimistic          1y                            75%                    58%              41%
+                      3y                            90%                    68%              37%
+                      5y                            95%                    74%              35%
+
+Conservadora: terminal return quantiles and maximum drawdown (terminal levels carry the sampled CDI era):
+                               Conservadora ret p5  Conservadora ret p50  Conservadora ret p95  Conservadora MDD p50  Conservadora MDD worst 5%
+starting grade        horizon                                                                                                                  
+1 Pessimistic         1y                       -9%                   21%                   56%                   12%                        24%
+                      3y                       -1%                   68%                  170%                   18%                        40%
+                      5y                       17%                  130%                  329%                   21%                        44%
+2 Neutral-pessimistic 1y                      -11%                   18%                   53%                   12%                        25%
+                      3y                       -6%                   62%                  155%                   18%                        41%
+                      5y                       10%                  121%                  307%                   22%                        45%
+3 Neutral             1y                      -13%                   19%                   54%                   12%                        37%
+                      3y                       -7%                   63%                  163%                   18%                        41%
+                      5y                       10%                  122%                  320%                   22%                        46%
+4 Neutral-optimistic  1y                      -19%                   16%                   53%                   12%                        37%
+                      3y                      -11%                   57%                  156%                   19%                        43%
+                      5y                        6%                  116%                  305%                   23%                        48%
+5 Optimistic          1y                      -18%                   14%                   50%                   13%                        37%
+                      3y                      -12%                   53%                  151%                   19%                        44%
+                      5y                        2%                  110%                  296%                   23%                        48%
+
+BOVA11: terminal return quantiles and maximum drawdown (terminal levels carry the sampled CDI era):
+                               BOVA11 ret p5  BOVA11 ret p50  BOVA11 ret p95  BOVA11 MDD p50  BOVA11 MDD worst 5%
+starting grade        horizon                                                                                    
+1 Pessimistic         1y                -23%             10%             56%             19%                  35%
+                      3y                -33%             26%            132%             28%                  51%
+                      5y                -36%             44%            214%             34%                  59%
+2 Neutral-pessimistic 1y                -25%              7%             50%             18%                  37%
+                      3y                -36%             21%            115%             28%                  52%
+                      5y                -39%             37%            195%             35%                  60%
+3 Neutral             1y                -25%              8%             48%             17%                  41%
+                      3y                -35%             23%            119%             28%                  53%
+                      5y                -39%             39%            202%             35%                  61%
+4 Neutral-optimistic  1y                -30%              6%             47%             17%                  43%
+                      3y                -38%             19%            113%             29%                  55%
+                      5y                -42%             34%            192%             36%                  62%
+5 Optimistic          1y                -27%              5%             43%             17%                  42%
+                      3y                -37%             18%            110%             28%                  54%
+                      5y                -41%             34%            185%             35%                  61%
+
+Today (data to 16/10/2026, before the 26/10 crash; a description, not a signal): grade 5 Optimistic; trend 45.4%, vol 22.6%, CDI change -1.00%

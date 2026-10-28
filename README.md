@@ -218,10 +218,13 @@ shown with Markdown escaped.
   |---|---|---|---|---|
   | 47: full universe | 0.61 / 0.50 / 0.32 | 0.98 / 0.97 / 0.95 | 0.95 / 0.87 / 0.72 | 7 / 6 / 6 |
   | 48: + value | 0.85 / 0.56 / 0.19 | 0.995 / 0.97 / 0.92 | 0.99 / 0.90 / 0.55 | 8 / 7 / 8 |
+  | 49: + value + profit growth | 0.80 / 0.50 / 0.43 | 0.99 / 0.96 / 0.96 | 0.99 / 0.85 / 0.77 | 10 / 7 / 7 |
 
-  Neither is a candidate (the gate needs 0.95 against both in every phase). 48 looked strong in phase 0 only, so
-  its edge depends on the rebalance date. The optimizer is not the bottleneck: the expected returns are. Better
-  solvers or quantum hardware would find the same portfolios.
+  None is a candidate (the gate needs 0.95 against both in every phase). Attempt 49 ran only because profit growth
+  first passed its own IC test (IC 0.033, t 3.63, 2012-2026, `docs/crescimento-lucro-2026-10-28.txt`). 48 looked
+  strong in phase 0 only, so its edge depends on the rebalance date. The optimizer is not the bottleneck: the
+  expected returns are. Better solvers or quantum hardware would find the same portfolios. **The QPO line is
+  finished** (DECISOES 162): the code stays, and profit growth moves on as a signal for the Conservadora's work.
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

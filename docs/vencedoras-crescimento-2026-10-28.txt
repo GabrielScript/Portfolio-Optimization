@@ -1,0 +1,84 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; arm Vencedoras-crescimento; DSR N 50
+
+=== Phase 0: 09/02/2010 to 16/10/2026; refusals 0; failures 0 ===
+stocks per rebalance: min 0, median 2, max 17; rebalances with no pick 21 of 66; mean CDI share 57%
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+Vencedoras-crescimento            0.118 0.094         0.649  0.711 0.001        303.426 0.104 -0.476              0.078
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.185          7.276 0.174 -0.407                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 6 of 17 (35%)
+      Vencedoras-crescimento  Conservadora (15, pesos iguais)  BOVA11
+2010                    8.6%                            23.2%    6.8%
+2011                   11.6%                             9.8%  -18.3%
+2012                    9.2%                            32.2%    6.6%
+2013                    8.3%                            -3.3%  -15.8%
+2014                    7.0%                             1.6%   -3.4%
+2015                   16.6%                             0.4%  -13.2%
+2016                    7.2%                            25.1%   38.2%
+2017                   55.8%                            50.8%   26.8%
+2018                    7.9%                            15.7%   14.6%
+2019                   25.5%                            49.9%   31.5%
+2020                   -4.0%                             3.1%    3.1%
+2021                   -9.4%                            13.6%  -12.1%
+2022                   -8.4%                            26.1%    5.1%
+2023                    6.3%                            22.9%   23.1%
+2024                   28.8%                            -7.7%  -10.1%
+2025                   19.8%                            31.5%   34.7%
+2026                   -3.8%                             9.7%   28.0%
+(phase 0 done in 41 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; refusals 0; failures 0 ===
+stocks per rebalance: min 0, median 2, max 17; rebalances with no pick 16 of 66; mean CDI share 57%
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+Vencedoras-crescimento            0.101 0.093         0.647  0.727 0.002        311.704 0.102 -0.384              0.084
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.200          7.901 0.164 -0.416                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 6 of 17 (35%)
+      Vencedoras-crescimento  Conservadora (15, pesos iguais)  BOVA11
+2010                    7.9%                            17.8%   -0.6%
+2011                   11.6%                            10.6%  -18.3%
+2012                   12.0%                            32.9%    6.6%
+2013                    6.6%                            -2.8%  -15.8%
+2014                    6.0%                             3.1%   -3.4%
+2015                    7.4%                             1.3%  -13.2%
+2016                   -7.5%                            15.9%   38.2%
+2017                   44.5%                            51.1%   26.8%
+2018                   28.3%                            22.4%   14.6%
+2019                   34.5%                            51.3%   31.5%
+2020                    0.9%                            -4.4%    3.1%
+2021                    2.9%                             6.2%  -12.1%
+2022                   -1.2%                            15.7%    5.1%
+2023                   11.5%                            15.7%   23.1%
+2024                   -2.3%                            -3.3%  -10.1%
+2025                   15.3%                            27.5%   34.7%
+2026                    0.7%                            25.4%   28.0%
+(phase 21 done in 86 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; refusals 0; failures 0 ===
+stocks per rebalance: min 0, median 2, max 17; rebalances with no pick 17 of 66; mean CDI share 54%
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+Vencedoras-crescimento            0.260 0.257         0.850  0.882 0.082         40.966 0.135 -0.471              0.258
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.546          6.876 0.169 -0.395                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 7 of 17 (41%)
+      Vencedoras-crescimento  Conservadora (15, pesos iguais)  BOVA11
+2010                    7.1%                            19.4%   -2.5%
+2011                   11.6%                             7.2%  -18.3%
+2012                   10.5%                            32.3%    6.6%
+2013                    0.6%                            -4.1%  -15.8%
+2014                   17.4%                             0.2%   -3.4%
+2015                   15.3%                             2.9%  -13.2%
+2016                   -0.5%                            22.7%   38.2%
+2017                   47.7%                            53.1%   26.8%
+2018                   14.9%                            12.0%   14.6%
+2019                   40.7%                            43.9%   31.5%
+2020                   20.2%                            14.2%    3.1%
+2021                   -1.6%                            10.0%  -12.1%
+2022                   -5.7%                            13.9%    5.1%
+2023                   11.0%                            15.6%   23.1%
+2024                    4.2%                            -6.5%  -10.1%
+2025                   17.5%                            33.5%   34.7%
+2026                   21.1%                            20.9%   28.0%
+(phase 42 done in 130 s)
+
+Strategy gate: P[> Conservadora] [0.078, 0.084, 0.258], P[> BOVA11] [0.649, 0.647, 0.85], DSR [0.001, 0.002, 0.082] (all >= 0.95): not a candidate: the extreme-winners line is closed (no retuning)

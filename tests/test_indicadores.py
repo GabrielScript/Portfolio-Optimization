@@ -87,6 +87,28 @@ def test_a_stock_listed_inside_the_last_year_has_no_12m_return_and_its_beta_uses
     assert risco.loc["NOVA3.SA", "Beta"] == pytest.approx(1.5)
 
 
+def test_a_thinly_traded_names_beta_uses_only_sessions_where_both_traded_and_under_two_it_is_empty_silently():
+    # since 2026-10-27 the panel has ~1,545 tickers, many BDRs trading on few sessions: one pass, no warnings
+    import warnings
+    from core.indicadores import risco_por_acao
+    datas = pd.bdate_range("2024-01-01", periods=300)
+    gerador = np.random.default_rng(11)
+    mercado = gerador.normal(0.0, 0.01, len(datas))
+    retornos = pd.DataFrame({"BOVA11.SA": mercado, "RARO34.SA": 0.8 * mercado + gerador.normal(0.0, 0.01, len(datas)),
+                             "UMDIA34.SA": mercado}, index=datas)
+    precos = 10 * (1 + retornos).cumprod()
+    precos.iloc[::3, 1] = np.nan                                          # trades 2 sessions in 3
+    precos.iloc[:-2, 2] = np.nan                                          # two prices: one return only
+    precos.iloc[100, 0] = np.nan                                          # a gap in the reference too
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        risco = risco_por_acao(precos, "BOVA11.SA")
+    juntos = precos.pct_change(fill_method=None).iloc[-252:][["RARO34.SA", "BOVA11.SA"]].dropna()
+    assert risco.loc["RARO34.SA", "Beta"] == pytest.approx(juntos.iloc[:, 0].cov(juntos.iloc[:, 1])
+                                                           / juntos.iloc[:, 1].var())
+    assert np.isnan(risco.loc["UMDIA34.SA", "Beta"])
+
+
 def test_the_per_stock_table_joins_name_sector_last_close_risk_and_fundamentals_by_ticker_without_the_suffix():
     from core.indicadores import tabela_por_acao
     datas = pd.bdate_range("2024-01-01", periods=300)

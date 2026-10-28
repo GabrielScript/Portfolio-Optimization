@@ -45,15 +45,25 @@ def risco_por_acao(precos: pd.DataFrame, referencia: str) -> pd.DataFrame:
     where both the stock and ``referencia`` have a return."""
     retornos = precos.pct_change(fill_method=None).iloc[-PREGOES_NO_ANO:]
     corridos = precos.ffill()
-    mercado = retornos[referencia]
-
-    def beta(serie: pd.Series) -> float:
-        juntos = pd.concat([serie, mercado], axis=1).dropna()
-        return float(juntos.iloc[:, 0].cov(juntos.iloc[:, 1]) / juntos.iloc[:, 1].var())
     return pd.DataFrame({"Retorno 12m": corridos.iloc[-1] / corridos.iloc[-PREGOES_NO_ANO - 1] - 1,
                          "Vol anual": retornos.std() * np.sqrt(PREGOES_NO_ANO),
-                         "Beta": retornos.apply(beta),
+                         "Beta": _betas(retornos, referencia),
                          "Queda máx.": (precos.ffill() / precos.ffill().cummax() - 1).min()})
+
+
+def _betas(retornos: pd.DataFrame, referencia: str) -> pd.Series:
+    """Per column, cov(column, ``referencia``) / var(``referencia``) over the sessions where both have a return, in one
+    pass over the matrix (the panel has ~1,545 columns); empty with fewer than 2 such sessions."""
+    juntos = retornos.notna().to_numpy() & retornos[referencia].notna().to_numpy()[:, None]
+    x = np.where(juntos, retornos.to_numpy(), 0.0)
+    y = np.where(juntos, retornos[referencia].to_numpy()[:, None], 0.0)
+    n = juntos.sum(axis=0).astype(float)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        soma_x, soma_y = x.sum(axis=0), y.sum(axis=0)
+        cov = ((x * y).sum(axis=0) - soma_x * soma_y / n) / (n - 1)
+        var = ((y * y).sum(axis=0) - soma_y**2 / n) / (n - 1)
+        beta = np.where(n >= 2, cov / var, np.nan)
+    return pd.Series(beta, index=retornos.columns)
 
 
 def tabela_por_acao(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None,

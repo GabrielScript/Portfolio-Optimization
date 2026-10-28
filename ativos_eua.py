@@ -3,8 +3,9 @@ ativos_eua.py - The screen's optional US leg: BDRs of US companies traded on the
 
 The 30 BDRs are the US companies (level-I BDRs, suffix 34) above the app's floor on 2026-10-23: traded in >= 90% of
 the sessions of the last 12 months with a median daily volume >= R$ 1 mi. Left out: ROXO34, STOC34, MELI34 (Latin
-American businesses), TSMC34, BABA34, ASML34 (not US) and S2GM34 (issuer not checked). Same list as the lake's
-``APP_US_SET`` (``b3lake.export``), which puts their prices in ``lago/precos_diarios.parquet``.
+American businesses), TSMC34, BABA34, ASML34 (not US) and S2GM34 (issuer not checked). Their prices come in
+``lago/precos_diarios.parquet`` with every BDR and ETF the lake exports (``b3lake.export.APP_ASSET_TYPES``); the
+market panel lists all of those (``ativos_tela.py``), the optimizer only these.
 
 Kept apart from ``assets.py``, which is in the paper-v1 guard path: the 181 and the paper do not change.
 

@@ -11,6 +11,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
 - the app's liquidity snapshot (``scripts/liquidez_do_app.py``) when the lake has a newer closed month;
 - ``lago/precos_recentes.parquet``: the nightly's sessions after the committed price file (``core.precos_do_app``),
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
+- ``lago/ativos.parquet``: the lake's list of the market panel's stocks, BDRs and ETFs (name, type, B3 sector), when
+  its rows changed;
 - the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
   filings only (DECISOES 124);
 - the newest scored headlines (title, link, topic, tone) to the private repository ``alepha-manchetes`` through its
@@ -49,6 +51,7 @@ ARQUIVO_CALENDARIO = Path("lago/precos_diarios.parquet")
 ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
+ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
 SOBREPOSICAO = 10           # committed sessions repeated in the small file (a stock may not trade on the last one)
 ARQUIVOS_DO_PAINEL = (Path("lago/sentimento_diario.parquet"), Path("lago/fatos_relevantes.parquet"),
@@ -247,12 +250,29 @@ def atualizar_recentes(raiz: Path, git: Git) -> str:
     recentes = precos.loc[precos["date"] >= inicio].reset_index(drop=True)
     destino = raiz / ARQUIVO_RECENTES
     if not destino.exists() or not pd.read_parquet(destino).equals(recentes):
-        recentes.to_parquet(destino, index=False)
+        # ~1,550 columns since every BDR and ETF: no pandas schema or statistics (about 1 KB per column per commit)
+        recentes.to_parquet(destino, index=False, compression="zstd", store_schema=False, write_statistics=False)
     if not pendentes(git, [ARQUIVO_RECENTES.as_posix()]):
         return "pregões recentes: em dia"
     fim = f"{pd.Timestamp(recentes['date'].max()):%d/%m/%Y}"
     commitar(git, [ARQUIVO_RECENTES.as_posix()], f"data: pregões recentes até {fim} (manutenção)")
     return f"pregões recentes: até {fim}"
+
+
+def atualizar_ativos(raiz: Path, git: Git) -> str:
+    """Copies the lake's list of the market panel's tickers (``data/b3lake/app_names.parquet``) to
+    ``lago/ativos.parquet`` and commits it when its rows changed. The nightly writes only to the ignored folder: a
+    versioned file it rewrote would leave the checkout dirty for the paper routines until this upkeep."""
+    origem = raiz / PASTA_DO_LAGO / "app_names.parquet"
+    if not origem.exists():
+        return "ativos: sem a lista do lago"
+    nomes, destino = pd.read_parquet(origem), raiz / ARQUIVO_ATIVOS
+    if destino.exists() and pd.read_parquet(destino).equals(nomes):
+        return "ativos: em dia"
+    destino.parent.mkdir(exist_ok=True)
+    nomes.to_parquet(destino, index=False)
+    commitar(git, [ARQUIVO_ATIVOS.as_posix()], f"data: lista de ativos da tela, {len(nomes)} papéis (manutenção)")
+    return f"ativos: {len(nomes)} papéis"
 
 
 def atualizar_painel(raiz: Path, git: Git, pasta_do_log: Path | None,
@@ -315,9 +335,9 @@ def _gerar_manchetes(pasta_do_log: Path) -> pd.DataFrame:
 
 
 def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    from assets import get_all_tickers
-    from scripts.painel_do_app import gerar
-    return gerar(pasta_do_log, raiz / PASTA_DO_LAGO, get_all_tickers(), date.today())
+    from ativos_tela import ler_nomes
+    from scripts.painel_do_app import gerar, tickers_do_painel
+    return gerar(pasta_do_log, raiz / PASTA_DO_LAGO, tickers_do_painel(ler_nomes(raiz / ARQUIVO_ATIVOS)), date.today())
 
 
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
@@ -340,6 +360,7 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     passos = [("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
               ("liquidez", lambda: _liquidez(raiz, git)),
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
+              ("ativos", lambda: atualizar_ativos(raiz, git)),          # before the panel, which reads the list
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
     if manchetes is not None:
         passos.append(("manchetes", lambda: atualizar_manchetes(*manchetes, agora)))

@@ -688,6 +688,24 @@ def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monke
     assert any("nada aqui muda o plano" in c.value for c in at.caption)
 
 
+def test_the_market_panel_lists_bdrs_and_etfs_with_a_type_column_and_filters_by_type(monkeypatch):
+    # the user's request of 2026-10-27: every BDR and ETF of the B3 in the table, next to the stocks
+    _servicos_sinteticos(monkeypatch)
+    nomes = pd.DataFrame({"security": ["TSMC34", "XINA11"], "name": ["TAIWANSMFAC", "XPETFCHINA"],
+                          "asset_type": ["bdr", "fund_etf"], "sector": [None, None]})
+    monkeypatch.setattr(servicos, "carregar_ativos_da_tela", lambda: nomes)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    tabela = [df.value for df in at.dataframe if "P/L" in df.value.columns][0].set_index("Ticker")
+    assert (tabela.loc["TSMC34", ["Tipo", "Empresa", "Setor"]].tolist(), tabela.loc["XINA11", "Tipo"],
+            tabela.loc["PETR4", "Tipo"]) == (["BDR", "TAIWANSMFAC", "BDR"], "ETF", "Ação")
+    assert any("BDRs: retorno só de preço" in c.value for c in at.caption)
+    at.segmented_control(key="tipos_da_tabela").set_value(["BDR"]).run()
+    tabela = [df.value for df in at.dataframe if "P/L" in df.value.columns][0]
+    assert set(tabela["Tipo"]) == {"BDR"}
+
+
 def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch):
     # review finding 2: the core kept in small-capital mode is BOVA11, not every ETF of the screen (IVVB11, SMAL11...)
     from ui import alepha

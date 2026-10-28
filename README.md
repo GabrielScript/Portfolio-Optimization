@@ -54,7 +54,10 @@ which runs and reports by itself.
 - **On the screen:** the Conservadora's backtest by period and calendar year (bad years included), and a market panel
   with the election timing (the pre-registered study: election weeks x1.43 more volatile, p 0.0013, direction not
   tested), the news tone of the forward log scored by Jev, the CVM material filings, the Focus survey, and a table of
-  all 181 stocks with risk, multiples and dividend yield. Information only: none of it changes the plan.
+  every stock, BDR and ETF the lake exports (about 1,545 traded in the last 15 days: 374 stocks and units, 907 BDRs,
+  264 ETFs; filter by type) with risk, multiples and dividend yield. Names and sectors of BDRs and ETFs come from
+  B3's registry (`lago/ativos.parquet`); BDRs are price-only and have no CVM statements. Information only: none of
+  it changes the plan.
 - **Sidebar:** "Todos os ativos (181)" ticked by default; the "Alepha" group holds the fields that change the
   plan (amount, plan, cost), the "Estudo" group the ones that change only the study below it.
 - **Upkeep three times a day** (Mon-Fri 10:00, 16:00 and 22:30, the last after the nightly lake run; 16:00 since
@@ -440,6 +443,7 @@ mesmas condições.
 Portfolio-Optimization/
 ├── app.py                    # Orquestrador Streamlit (camada fina)
 ├── assets.py                 # Universo de ativos e setores da B3
+├── ativos_tela.py            # Market panel's full list: every stock, BDR and ETF of the lake, named and typed
 ├── visualizations.py         # Gráficos Plotly
 ├── core/                     # Lógica pura, sem Streamlit
 │   ├── config.py             #   Objetivos, configurações, Selic → taxa aritmética
@@ -480,7 +484,7 @@ Portfolio-Optimization/
 ├── ui/
 │   ├── servicos.py           # Cache do Streamlit com chaves explícitas
 │   ├── alepha.py             # Alepha plan blocks: positions, month IR, orders table, CVM note
-│   ├── painel.py             # Market panel: election timing, news, macro and every stock
+│   ├── painel.py             # Market panel: election timing, news, macro and every stock, BDR and ETF
 │   └── secoes.py             # Seções e textos da interface
 ├── scripts/
 │   ├── conferir_painel_macro.py  # Conferência ao vivo do painel macro (usa rede)

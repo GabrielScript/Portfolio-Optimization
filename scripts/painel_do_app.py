@@ -54,10 +54,18 @@ def gerar(pasta: Path, exports: Path, tickers: list[str], hoje: date) -> tuple[p
     return diario, fatos, tabela
 
 
-def main() -> int:
+def tickers_do_painel(nomes: pd.DataFrame) -> list[str]:
+    """The tickers that get fundamentals and filings: the app's 181, then every other stock and unit of the lake's
+    names (``ativos_tela.acoes_da_tela``); never a BDR or ETF, whose prefix could match a B3 issuer."""
     from assets import get_all_tickers
+    from ativos_tela import acoes_da_tela
+    return list(dict.fromkeys((*get_all_tickers(), *acoes_da_tela(nomes))))
+
+
+def main() -> int:
+    from ativos_tela import ler_nomes
     pasta = Path(sys.argv[1]) if len(sys.argv) > 1 else PASTA_DO_LOG
-    diario, fatos, fundamentos = gerar(pasta, EXPORTS_DO_LAGO, get_all_tickers(), date.today())
+    diario, fatos, fundamentos = gerar(pasta, EXPORTS_DO_LAGO, tickers_do_painel(ler_nomes()), date.today())
     diario.to_parquet(DESTINO_DIARIO)
     fatos.to_parquet(DESTINO_FATOS)
     fundamentos.to_parquet(DESTINO_FUNDAMENTOS)

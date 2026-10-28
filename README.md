@@ -229,6 +229,24 @@ shown with Markdown escaped.
   expected returns are. Better solvers or quantum hardware would find the same portfolios. **The QPO line is
   finished** (DECISOES 162): the code stays, and profit growth moves on as a signal for the Conservadora's work.
 
+### After v1.2 (2026-10-28): the composite and its forward paper log (paper-v3)
+
+- **Attempt 51 (pre-registered, `docs/superpowers/specs/2026-10-28-composto-crescimento-design.md`):** the
+  Conservadora's own rule (15 names, 4 per sector, equal weights, fixed rules) ordered by the mean of three scores that
+  each passed their own IC test: the Conservadora score, value (Magic Formula + Trending Value) and profit growth.
+  CAGR 21.4 / 19.9 / 19.1% against the Conservadora's 17.4 / 16.4 / 16.9% (phases 0 / 21 / 42), but P[> Conservadora]
+  0.968 / 0.955 / **0.864**: it missed the 0.95 bar in one phase, so it is **not adopted** and its backtest line is
+  closed (`docs/composto-crescimento-2026-10-28.txt`). It is the closest of the 51 trials.
+- **Paper-v3 (pre-registered before any code, `docs/superpowers/specs/2026-10-28-paper-v3-composto-design.md`):** the
+  same rule, unchanged, recorded on data nobody has seen yet. Every 63 sessions, `scripts/paper_v3.py` decides the
+  composite **and** a Conservadora control on the same close from the lake's live files (it runs the lake's
+  `universe` and `fundamentals` first and does not decide without the month's market values), and appends both to
+  `paper-v3/composto.csv` and `paper-v3/conservadora.csv` with the input files' hashes. No money moves. Decision at
+  252 sessions: the composite passes if its exit value after costs and income tax is at least the Conservadora's.
+  One year cannot separate skill from luck, so a pass is evidence, not adoption. Task "paper v3", weekdays 10:30;
+  the 12:00 watchdog checks it. Paper-v2 is unchanged. The DSR N stays 51: the same configuration on new data is
+  not a new trial (`docs/tentativas.csv`).
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

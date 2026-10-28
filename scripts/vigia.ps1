@@ -16,6 +16,8 @@ the tasks run is not on main. The notification itself is scripts/avisar.ps1.
 Since 2026-10-23 (DECISOES 123) it also reads the lake's news/social log runs (%LOCALAPPDATA%\b3lake\
 sentiment_runs.csv, task "b3lake sentimento", every 2 h): no "ok" or "partial" run on the day, or a day whose last
 run "failed".
+Since 2026-10-28 (DECISOES 166) it also reads the paper-v3 runs.csv (%LOCALAPPDATA%\paper-v3, scripts/paper_v3.py,
+task "paper v3" at 10:30): no line today, or "falhou" / "bloqueada" / "lago rodando".
 
 .EXAMPLE
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\vigia.ps1 -SoMostrar -SemEspera
@@ -26,6 +28,7 @@ param(
     [string]$PastaLago = (Join-Path $env:LOCALAPPDATA 'b3lake'),
     [string]$PastaPaper = (Join-Path $env:LOCALAPPDATA 'paper-trading'),
     [string]$PastaPaperV2 = (Join-Path $env:LOCALAPPDATA 'paper-v2'),
+    [string]$PastaPaperV3 = (Join-Path $env:LOCALAPPDATA 'paper-v3'),
     [string]$PastaManutencao = (Join-Path $env:LOCALAPPDATA 'paper-manutencao'),
     [string]$Repositorio = (Split-Path -Parent $PSScriptRoot),     # o checkout do app que as rotinas rodam
     [switch]$ManutencaoRodando,     # a manutenção ainda roda (teste; sem ele, pergunta à tarefa, fora do -SemEspera)
@@ -35,7 +38,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$RotinasVigiadas = @('b3lake daily', 'paper trading', 'paper v2', 'paper manutencao')
+$RotinasVigiadas = @('b3lake daily', 'paper trading', 'paper v2', 'paper v3', 'paper manutencao')
 $RamoDasRotinas = 'main'
 $EsperaMaxima = [TimeSpan]::FromMinutes(45)
 $FalhasDoLago = @('failed', 'missing_overdue')
@@ -73,7 +76,8 @@ function Ler-Rodadas([string]$Arquivo) {
 }
 
 function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [object[]]$DoPaperV2,
-                         [object[]]$DoManutencao, [bool]$ManutencaoAindaRoda, [object[]]$DoSentimento) {
+                         [object[]]$DoManutencao, [bool]$ManutencaoAindaRoda, [object[]]$DoSentimento,
+                         [object[]]$DoPaperV3) {
     $problemas = New-Object System.Collections.Generic.List[string]
     # log de notícias (b3lake.sentiment, a cada 2 h, todo dia): ao menos uma rodada certa no dia (UTC do started)
     $sentimentoHoje = @($DoSentimento | Where-Object { "$($_.started)".StartsWith($Dia) })
@@ -97,6 +101,13 @@ function Problemas-DoDia([string]$Dia, [object[]]$DoLago, [object[]]$DoPaper, [o
         $problemas.Add('paper v2: nenhuma rodada hoje (tarefa "paper v2")')
     } elseif ($FalhasDoPaper -contains $v2Hoje[-1].desfecho) {
         $problemas.Add("paper v2: $($v2Hoje[-1].desfecho) ($($v2Hoje[-1].nota))")
+    }
+    # paper-v3: the same check as paper-v2
+    $v3Hoje = @($DoPaperV3 | Where-Object { "$($_.quando)".StartsWith($Dia) })
+    if ($v3Hoje.Count -eq 0) {
+        $problemas.Add('paper v3: nenhuma rodada hoje (tarefa "paper v3")')
+    } elseif ($FalhasDoPaper -contains $v3Hoje[-1].desfecho) {
+        $problemas.Add("paper v3: $($v3Hoje[-1].desfecho) ($($v3Hoje[-1].nota))")
     }
     $lagoHoje = @($DoLago | Where-Object { "$($_.started)".StartsWith($Dia) })
     if ($lagoHoje.Count -eq 0) {
@@ -155,13 +166,14 @@ try {
     $doLago = Ler-Rodadas (Join-Path $PastaLago 'runs.csv')
     $doPaper = Ler-Rodadas (Join-Path $PastaPaper 'runs.csv')
     $doPaperV2 = Ler-Rodadas (Join-Path $PastaPaperV2 'runs.csv')
+    $doPaperV3 = Ler-Rodadas (Join-Path $PastaPaperV3 'runs.csv')
     $doManutencao = Ler-Rodadas (Join-Path $PastaManutencao 'runs.csv')
     $doSentimento = Ler-Rodadas (Join-Path $PastaLago 'sentiment_runs.csv')
     $dia = if ($Hoje) { $Hoje } else { Dia-Vigiado $Agora }
     $daManutencao = @(Get-ScheduledTask -TaskName 'paper manutencao' -ErrorAction SilentlyContinue)
     $tarefaRodando = -not $SemEspera -and @($daManutencao | Where-Object State -eq 'Running').Count -gt 0
     $aindaRoda = $ManutencaoRodando.IsPresent -or $tarefaRodando
-    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao $aindaRoda $doSentimento)
+    $problemas = @(Problemas-DoDia $dia $doLago $doPaper $doPaperV2 $doManutencao $aindaRoda $doSentimento $doPaperV3)
     $doRamo = Problema-DoRamo $Repositorio
     if ($doRamo) { $problemas += $doRamo }
     $texto = $problemas -join '; '

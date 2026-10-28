@@ -14,7 +14,7 @@ HOJE = "2026-10-20"
 
 def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = None,
             manutencao: list[str] | None = None, ramo: str = "main",
-            sentimento: list[str] | None = None) -> tuple[Path, Path, Path, Path, Path]:
+            sentimento: list[str] | None = None, v3: list[str] | None = None) -> tuple[Path, Path, Path, Path, Path]:
     """runs.csv do lago (formato do b3lake), do paper (formato do ``anotar``), do paper-v2 (formato do ``_anotar``
     dele), da manutenção (``scripts/manutencao.py``) e do log de notícias do lago (``sentiment_runs.csv``), mais um
     checkout git no ``ramo``; sem ``v2``, ``manutencao`` ou ``sentimento``, uma rodada certa dela hoje e em cada dia
@@ -22,6 +22,8 @@ def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = 
     dias = sorted({HOJE, *(linha[:10] for linha in paper)})
     if v2 is None:
         v2 = [f"{dia}T08:45:05,,aguardar,,abc1234," for dia in dias]
+    if v3 is None:
+        v3 = [f"{dia}T10:30:05,,aguardar,,abc1234," for dia in dias]
     if manutencao is None:
         manutencao = [f"{dia}T10:03:05,ok,leituras: nenhuma devida" for dia in dias]
     if sentimento is None:
@@ -31,6 +33,7 @@ def _pastas(tmp_path, lago: list[str], paper: list[str], v2: list[str] | None = 
     for pasta, cabecalho, linhas in ((pasta_lago, "started,finished,expected,outcome,detail", lago),
                                      (pasta_paper, "inicio,fim,fechamento,desfecho,nota", paper),
                                      (pasta_v2, "quando,fechamento,desfecho,nota,codigo,guarda", v2),
+                                     (tmp_path / "paper-v3", "quando,fechamento,desfecho,nota,codigo,guarda", v3),
                                      (pasta_manutencao, "quando,desfecho,nota", manutencao)):
         pasta.mkdir()
         (pasta / "runs.csv").write_text("\n".join([cabecalho, *linhas]) + "\n", encoding="utf-8")
@@ -47,6 +50,7 @@ def _vigiar(pasta_lago: Path, pasta_paper: Path, pasta_v2: Path, pasta_manutenca
     return subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File",
                            str(VIGIA), *(quando or ("-Hoje", HOJE)), "-PastaLago", str(pasta_lago),
                            "-PastaPaper", str(pasta_paper), "-PastaPaperV2", str(pasta_v2),
+                           "-PastaPaperV3", str(pasta_v2.parent / "paper-v3"),
                            "-PastaManutencao", str(pasta_manutencao), "-Repositorio", str(checkout), "-SoMostrar",
                            "-SemEspera"],
                           capture_output=True, text=True, encoding="utf-8", timeout=120)
@@ -181,3 +185,17 @@ def test_the_news_log_whose_runs_all_failed_on_the_day_warns_with_the_last_detai
     saida = _vigiar(*_pastas(tmp_path, [LAGO_EM_DIA, LAGO_HOJE], [PAPER_HOJE], sentimento=falhas))
     assert saida.returncode == 1
     assert "vigia: log de notícias: failed (every source failed: offline)" in saida.stdout
+
+
+def test_paper_v3_without_a_run_today_warns(tmp_path):
+    ontem = "2026-10-19T10:30:05,2026-10-16,aguardar,,abc1234,"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], v3=[ontem]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, 'vigia: paper v3: nenhuma rodada hoje (tarefa "paper v3")'), saida.stderr
+
+
+def test_paper_v3_that_failed_today_warns_with_the_note(tmp_path):
+    falhou = "2026-10-20T10:30:05,2026-10-19,aguardar,lake update failed: CalledProcessError,abc1234,"
+    saida = _vigiar(*_pastas(tmp_path, [LAGO_HOJE], [PAPER_HOJE], v3=[falhou.replace("aguardar", "falhou")]))
+    assert (saida.returncode, saida.stdout.strip()) == (
+        1, "vigia: paper v3: falhou (lake update failed: CalledProcessError)"), saida.stderr

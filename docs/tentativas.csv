@@ -53,3 +53,4 @@ data,script,configuracao
 2026-10-27,qpo_avaliar.py,"Random-15: 15 uniform of the top-20 Conservadora names, max Sharpe weights, median of 20 seeds, every 63 sessions"
 2026-10-27,qubo_universo_avaliar.py,"QUBO-universo: QUBO k=15 of every eligible name (alpha = 0.059 x vol x z over all candidates, Ledoit-Wolf, lambda 1, at most 4 picks per sector), exact MIQP optimum (SCIP), max Sharpe weights (20% name cap, vol 40%, rf CDI), every 63 sessions"
 2026-10-27,qubo_universo_avaliar.py valor,"QUBO-universo-valor: as QUBO-universo, with alpha from the mean of the normal scores of the Conservadora and of value (Magic Formula + Trending Value, S3 definition), equal weights, IC0 0.059"
+2026-10-28,qubo_universo_avaliar.py crescimento,"QUBO-universo-crescimento: as QUBO-universo-valor, with alpha from the mean of the normal scores of the Conservadora, value and profit growth (dNI, dGP over lagged assets), equal weights, IC0 0.059"

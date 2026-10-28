@@ -13,6 +13,7 @@ Lean 4 (`v4.36.0-rc1`) + Mathlib proofs of the algebra behind `qpo_kaggle/` and 
 | `Ratio` | approximation ratio in `[0, 1]`, `1` exactly at the optimum | `qubo_math.approximation_ratio` |
 | `Sizes` | `C(20,15) = 15,504 ≤ 2^24 < C(28,15) = 37,442,160` | `MAX_SUBSPACE` guard |
 | `Subspace` | Dicke start + diagonal cost layers + XY gates never leave weight `k` | `qaoa_subspace.py`, no penalty |
+| `NormalScore` (unverified) | normal scores: monotone invariance, bound `g(1 - 1/(2n))`, zero sum without ties | `core.views.escore_normal` |
 
 Status (session 54): every module builds. Proven: `Energy`, `BuildQubo`, `Turnover`, `Minimizers`, `Ratio`,
 `Sizes`, and in `Subspace` the weight-k invariance (`qaoa_supported`, `qaoa_never_infeasible`). Still `sorry`:

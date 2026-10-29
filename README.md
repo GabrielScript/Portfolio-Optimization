@@ -676,3 +676,10 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   `scripts/sensibilidade_caps.py` shows the value score and attempt 51 unchanged (`docs/sensibilidade-caps-2026-10-29.txt`).
 - Quantum Portfolio Optimization is closed and not adopted (DECISOES 144-150).
 - Next: NPY pre-registration, then a BR/US sleeve rotation after adding PTAX to the lake (PLAN §15).
+
+## Session 59 notes (2026-10-29)
+
+- Three pre-registered lines read once, none adopted: net payout yield (no gain over the dividend yield), fund
+  managers' best ideas from the CVM CDA (attempt 52) and the BR/US/gold rotation with a CDI filter (attempt 53).
+  Results in `docs/npy-ic-2026-10-29.txt`, `docs/cda-best-ideas-2026-10-29.txt` and `docs/h2-rotacao-2026-10-29.txt`.
+- The lake now exports CVM CDA fund stock positions and the daily PTAX. N = 53 (PLAN §16).

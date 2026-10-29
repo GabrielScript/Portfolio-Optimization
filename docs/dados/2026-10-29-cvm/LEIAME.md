@@ -17,3 +17,5 @@ illiquid names whose scale flips every few months (BLUT 2013-14, TCNO 2019-20).
 
 `scripts/sensibilidade_caps.py` reads only `market_caps.parquet` from here, paired with the 2026-10-24
 `fundamentals.parquet`, so that the market value is the only input that changes.
+In its output the `Files (sha256)` line carries both market-value files: `market_caps.parquet` is the
+2026-10-24 folder's, hashed with its statements and not used; `market_caps.parquet (2026-10-29)` is this one.

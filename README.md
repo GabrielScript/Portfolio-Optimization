@@ -687,3 +687,16 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   of every traded B3 option since 1994 computed from COTAHIST, B3's daily Price Report from 2018 (futures, options
   on futures, open interest) and a daily snapshot of opcoes.net.br chains to cross-check the greeks.
 - Quantum Portfolio Optimization: finalized, not adopted (see the QPO section above); no further QPO attempt.
+
+## Session 60 notes (2026-10-29)
+
+- Options and derivatives data finished in the lake (research only): B3 Price Reports 2018-2026 (47.97 M rows),
+  1.72 M instruments with their terms, and the first full day of opcoes.net.br chains (245 underlyings; its implied
+  volatility matches ours within ~1 point). B3's own files had five defects, each handled and tested.
+- The lake now keeps CVM's daily fund report (quota, NAV, flows and holders per fund and month, 2000 on, closed funds
+  included).
+- Attempt 54 pre-registered before any data was read: copy the 15 equity funds with the best 12-month return
+  (`docs/superpowers/specs/2026-10-29-top-fundos-copia-design.md`, branch `feat/top-fundos`). It must beat attempt
+  52's fund signal and the same score built from all funds, or the line closes. Not run yet; N = 53.
+- Leverage 1.5x chosen by the user; it goes into the plan screen once the broker's margin rate is known. The paper
+  logs stay unlevered (PLAN §17).

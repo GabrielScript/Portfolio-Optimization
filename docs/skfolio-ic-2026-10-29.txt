@@ -1,0 +1,7 @@
+Monthly Spearman IC, 2012-01 to 2026-09, score of the month x total return of the month, point-in-time universe
+                                   months  our IC  skfolio IC  our t (iid)  skfolio t (HAC)  skfolio p          95% CI  hit rate
+signal                                                                                                                          
+Conservadora                          177   0.085       0.085        5.791            4.947      0.001  [0.045, 0.126]     0.667
+value (MF + TV)                       177   0.070       0.070        6.472            6.426      0.000  [0.045, 0.095]     0.672
+profit growth                         175   0.033       0.033        3.627            3.283      0.009  [0.010, 0.056]     0.634
+composite (attempt 51 / paper-v3)     177   0.078       0.078        6.038            5.658      0.000  [0.046, 0.110]     0.661

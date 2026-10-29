@@ -1,0 +1,42 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'market_caps.parquet (2026-10-29)': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0'}
+
+NPY-Conservadora: monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2012-06 to 2026-09 (gate) 172.000     0.082   0.191 5.656             0.663
+2012-2016                  55.000     0.079   0.181 3.242             0.655
+2017-2021                  60.000     0.050   0.193 2.016             0.583
+2022-2026                  57.000     0.120   0.196 4.615             0.754
+
+DY-Conservadora: monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2012-06 to 2026-09 (gate) 172.000     0.085   0.192 5.779             0.669
+2012-2016                  55.000     0.081   0.179 3.357             0.655
+2017-2021                  60.000     0.054   0.198 2.096             0.600
+2022-2026                  57.000     0.121   0.195 4.676             0.754
+
+NPY alone: monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2012-06 to 2026-09 (gate) 172.000     0.055   0.116 6.213             0.686
+2012-2016                  55.000     0.048   0.108 3.296             0.673
+2017-2021                  60.000     0.026   0.119 1.684             0.617
+2022-2026                  57.000     0.092   0.111 6.233             0.772
+
+DY alone: monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2012-06 to 2026-09 (gate) 172.000     0.060   0.129 6.103             0.663
+2012-2016                  55.000     0.054   0.107 3.755             0.655
+2017-2021                  60.000     0.030   0.142 1.629             0.583
+2022-2026                  57.000     0.097   0.127 5.806             0.754
+
+NPY minus DY (Conservadora): monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio      t  meses com IC > 0
+2012-06 to 2026-09 (gate) 172.000    -0.002   0.020 -1.458             0.430
+2012-2016                  55.000    -0.002   0.021 -0.592             0.473
+2017-2021                  60.000    -0.003   0.025 -1.099             0.417
+2022-2026                  57.000    -0.001   0.013 -0.831             0.404
+
+Universe name-months with a 24-month issuance: 85.0%; mean |issuance| 0.073
+Rank correlation NPY-Conservadora vs DY-Conservadora: mean 0.974 over 172 months
+
+Gate: (1) IC ≥ 0,02 e t ≥ 2 on NPY-Conservadora: passed; (2) mean paired difference >= 0: NOT passed. NOT passed: stop; no attempt row; the Conservadora keeps the dividend yield.
+(total 35 s)

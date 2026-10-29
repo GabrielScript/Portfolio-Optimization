@@ -74,3 +74,12 @@ attempt 51 (`scripts/composto_crescimento_avaliar.py`): P[> Conservadora], P[> B
 The published edge used fresher holdings (45-60 days); ours are 5-7 months old by the confidentiality rule, and the
 liquidity universe holds the stocks funds crowd into. Expected: IC small and positive (0.01-0.03), t between 1 and
 2.5, so the gate is close to a coin flip; if stage B runs, not a candidate (P[> Conservadora] < 0.95 in some phase).
+
+## 7. Stage B addendum (committed with the trial row, after stage A passed and before any stage-B code or curve)
+
+Stage A read once (`docs/cda-ic-2026-10-29.txt`): IC 0.032, t 3.75, 183 months: passed. Completing §5 for months the
+panel does not cover: the engine decides from 2010-02, the panel has scores from 2011-07. In a month with no panel
+row or fewer than 30 qualifying funds, every name's best-ideas score is 0, and a name of the month's candidates that
+is missing from the panel scores 0. So the arm is ordered by the Conservadora's tie-break alone in those months (it
+equals the Conservadora before 2011-07). Script: `scripts/cda_best_ideas_avaliar.py`, the attempt-51 harness with this
+score.

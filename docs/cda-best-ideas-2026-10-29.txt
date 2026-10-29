@@ -1,0 +1,81 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'best_ideas_panel.parquet': '26f831b1f38316be573f2f7fc32b2155f22f53f306afc99a6904382e3ae39447', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; arm BestIdeas-15; DSR N 52
+
+=== Phase 0: 09/02/2010 to 16/10/2026; refusals 0 (Conservadora 0); annual turnover 1.99 (Conservadora 2.97) ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+BestIdeas-15                      0.226 0.535         0.985  0.989 0.950          9.458 0.128 -0.465              0.123
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.975          7.276 0.174 -0.407                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 4 of 17 (24%)
+      BestIdeas-15  Conservadora (15, pesos iguais)  BOVA11
+2010         23.2%                            23.2%    6.8%
+2011         -0.6%                             9.8%  -18.3%
+2012         29.0%                            32.2%    6.6%
+2013         -2.9%                            -3.3%  -15.8%
+2014         -3.1%                             1.6%   -3.4%
+2015         -8.3%                             0.4%  -13.2%
+2016         22.0%                            25.1%   38.2%
+2017         26.1%                            50.8%   26.8%
+2018         20.1%                            15.7%   14.6%
+2019         34.4%                            49.9%   31.5%
+2020          9.7%                             3.1%    3.1%
+2021         -9.3%                            13.6%  -12.1%
+2022         17.0%                            26.1%    5.1%
+2023         29.1%                            22.9%   23.1%
+2024        -17.8%                            -7.7%  -10.1%
+2025         34.7%                            31.5%   34.7%
+2026         27.8%                             9.7%   28.0%
+(phase 0 done in 18 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; refusals 0 (Conservadora 0); annual turnover 1.92 (Conservadora 2.98) ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+BestIdeas-15                      0.189 0.491         0.976  0.981 0.909         11.268 0.119 -0.487              0.133
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.958          7.901 0.164 -0.416                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 4 of 17 (24%)
+      BestIdeas-15  Conservadora (15, pesos iguais)  BOVA11
+2010         17.8%                            17.8%   -0.6%
+2011         -1.0%                            10.6%  -18.3%
+2012         15.1%                            32.9%    6.6%
+2013         -4.1%                            -2.8%  -15.8%
+2014         -1.4%                             3.1%   -3.4%
+2015         -6.8%                             1.3%  -13.2%
+2016         26.5%                            15.9%   38.2%
+2017         23.1%                            51.1%   26.8%
+2018         21.6%                            22.4%   14.6%
+2019         28.1%                            51.3%   31.5%
+2020          5.5%                            -4.4%    3.1%
+2021         -9.3%                             6.2%  -12.1%
+2022         22.1%                            15.7%    5.1%
+2023         24.7%                            15.7%   23.1%
+2024        -17.6%                            -3.3%  -10.1%
+2025         41.5%                            27.5%   34.7%
+2026         28.0%                            25.4%   28.0%
+(phase 21 done in 29 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; refusals 0 (Conservadora 0); annual turnover 2.07 (Conservadora 3.03) ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
+BestIdeas-15                      0.144 0.390         0.942  0.952 0.500         17.763 0.107 -0.462              0.051
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.833          6.876 0.169 -0.395                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497                NaN
+Years beating BOVA11 and the Conservadora (reported, not a gate): 4 of 17 (24%)
+      BestIdeas-15  Conservadora (15, pesos iguais)  BOVA11
+2010         19.4%                            19.4%   -2.5%
+2011         -5.6%                             7.2%  -18.3%
+2012         21.4%                            32.3%    6.6%
+2013         -8.0%                            -4.1%  -15.8%
+2014         -3.1%                             0.2%   -3.4%
+2015        -12.1%                             2.9%  -13.2%
+2016         18.7%                            22.7%   38.2%
+2017         29.4%                            53.1%   26.8%
+2018         20.1%                            12.0%   14.6%
+2019         29.2%                            43.9%   31.5%
+2020         16.2%                            14.2%    3.1%
+2021        -12.6%                            10.0%  -12.1%
+2022         16.7%                            13.9%    5.1%
+2023         24.9%                            15.6%   23.1%
+2024        -15.7%                            -6.5%  -10.1%
+2025         32.8%                            33.5%   34.7%
+2026         23.4%                            20.9%   28.0%
+(phase 42 done in 43 s)
+
+Strategy gate: P[> Conservadora] [0.123, 0.133, 0.051], P[> BOVA11] [0.985, 0.976, 0.942], DSR [0.95, 0.909, 0.5] (all >= 0.95): not a candidate: the best-ideas line is closed

@@ -1,0 +1,6 @@
+# Test-only oracle (DECISOES 168): skfolio checks the hand-written optimizer, estimators and PSR/DSR in
+# tests/test_skfolio_oracle.py. Never in requirements.txt: the app does not import skfolio. Local:
+# python -m venv ../.venv-skfolio, then pip install -r requirements.txt -r requirements-dev.txt -r requirements-skfolio.txt
+# (skfolio 1.12.2 keeps the app's pins: cvxpy 1.9.3, scikit-learn 1.9.1). PySCIPOpt = exact cardinality (MIQP).
+skfolio==1.12.2
+PySCIPOpt==6.3.0

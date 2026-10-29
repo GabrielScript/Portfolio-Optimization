@@ -669,3 +669,10 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
 ---
 
 © 2026 Gabriel Estrela Lopes
+
+## Session 58 notes (2026-10-29)
+
+- Market values with the lake's 1000x share-count slips fixed are frozen in `docs/dados/2026-10-29-cvm`;
+  `scripts/sensibilidade_caps.py` shows the value score and attempt 51 unchanged (`docs/sensibilidade-caps-2026-10-29.txt`).
+- Quantum Portfolio Optimization is closed and not adopted (DECISOES 144-150).
+- Next: NPY pre-registration, then a BR/US sleeve rotation after adding PTAX to the lake (PLAN §15).

@@ -206,6 +206,28 @@ def test_a_run_saves_the_due_readings_and_the_new_snapshot_commits_them_and_push
     assert "Critério principal" in resultado.avisos[0][1]
 
 
+def _saida_v3(pregoes: int) -> str:
+    return (f"Paper-v3 from 19/10/2026 to 26/04/2027: {pregoes} pregões, 3 records; guard: no change\n"
+            "tabela\nDecision (pre-registered, only at 252 sessions): composite final exit >= the Conservadora's\n")
+
+
+def test_a_run_saves_paper_v3s_due_reading_in_its_own_folder_commits_and_notifies_it(app):
+    # paper-v3 (DECISOES 166) reads at 126 and 252 sessions after its own first record; no monthly progress
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 126)
+    (app / "paper-v3").mkdir()
+    (app / "paper-v3" / "composto.csv").write_text("data,ticker,peso,preco\n2026-10-19,PETR4,1.0,30.0\n",
+                                                   encoding="utf-8")
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2027, 4, 27, 10, 0), lambda: _saida(126),
+                         ler_leitura_v3=lambda: _saida_v3(126))
+    publicados = set(_origem(app, "ls-tree", "-r", "--name-only", "main").splitlines())
+    assert resultado.desfecho == "ok"
+    assert "paper-v3/leituras/leitura-126.txt" in publicados
+    assert not any(caminho.startswith("paper-v3/leituras/progresso") for caminho in publicados)
+    aviso = dict(resultado.avisos)["Alepha: paper-v3, leitura de 126 pregões"]
+    assert aviso.startswith("Decision (pre-registered")
+
+
 def _nada_lido() -> str:
     raise AssertionError("the reading must not run")
 
@@ -321,6 +343,14 @@ def test_the_reading_runs_paper_v2_with_leitura_in_the_checkout_and_returns_its_
     from scripts.manutencao import ler_leitura
     raiz = _paper_v2_de_mentira(tmp_path, "import sys\nprint('Paper-v2 de x a y: 126 pregões,', sys.argv[1:])\n")
     assert ler_leitura(raiz) == "Paper-v2 de x a y: 126 pregões, ['--leitura']\n"
+
+
+def test_the_reading_can_run_paper_v3_with_leitura_in_the_checkout(tmp_path):
+    from scripts.manutencao import ler_leitura
+    raiz = _paper_v2_de_mentira(tmp_path, "")
+    (raiz / "scripts" / "paper_v3.py").write_text(
+        "import sys\nprint('Paper-v3 from x to y: 126 pregões,', sys.argv[1:])\n", encoding="utf-8")
+    assert ler_leitura(raiz, "scripts/paper_v3.py") == "Paper-v3 from x to y: 126 pregões, ['--leitura']\n"
 
 
 def test_a_reading_that_fails_raises_with_its_error_output(tmp_path):

@@ -8,6 +8,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
 - paper-v2 readings: with 126 and 252 sessions after the first record (the pre-registered report and decision of
   ``scripts/paper_v2.py``), and once a month as information only (DECISOES 121), it runs ``paper_v2.py --leitura`` and
   saves its output to ``paper-v2/leituras/``; a reading counts only when its own session count reaches the target;
+- paper-v3 readings: the same at 126 and 252 sessions after its first record (``scripts/paper_v3.py --leitura``,
+  ``paper-v3/leituras/``), no monthly one (DECISOES 166 and 188);
 - the app's liquidity snapshot (``scripts/liquidez_do_app.py``) when the lake has a newer closed month;
 - ``lago/precos_recentes.parquet``: the nightly's sessions after the committed price file (``core.precos_do_app``),
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
@@ -50,6 +52,8 @@ RAMO = "main"                   # the branch the scheduled routines run on
 ARQUIVO_CALENDARIO = Path("lago/precos_diarios.parquet")
 ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
+ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite book (DECISOES 166)
+PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
@@ -80,10 +84,11 @@ def pregoes_desde_o_registro(calendario: pd.DatetimeIndex, registro: pd.DataFram
     return int((calendario > registro["data"].min()).sum())
 
 
-def leituras_devidas(pregoes: int, pasta: Path, hoje: date) -> dict[str, int]:
+def leituras_devidas(pregoes: int, pasta: Path, hoje: date, progresso: bool = True) -> dict[str, int]:
     """The readings not yet saved in ``pasta`` whose target was reached, name -> sessions the reading itself must
-    count: the pre-registered ones at 126 and 252 sessions and this month's progress (information only)."""
-    alvos = {f"leitura-{alvo}": alvo for alvo in LEITURAS} | {f"progresso-{hoje:%Y-%m}": 1}
+    count: the pre-registered ones at 126 and 252 sessions and, with ``progresso``, this month's progress
+    (information only)."""
+    alvos = {f"leitura-{alvo}": alvo for alvo in LEITURAS} | ({f"progresso-{hoje:%Y-%m}": 1} if progresso else {})
     return {nome: alvo for nome, alvo in alvos.items()
             if pregoes >= alvo and not (pasta / f"{nome}.txt").exists()}
 
@@ -182,35 +187,56 @@ class Resultado:
     avisos: list[tuple[str, str]]       # Windows notifications: (title, body)
 
 
-def _titulo(nome: str) -> str:
+@dataclass(frozen=True)
+class Paper:
+    """A forward log whose readings the upkeep saves: its registry, its readings folder, its name (commit prefix and
+    attempts subfolder), the notification's prefix, whether it has the monthly progress reading and the start of the
+    lines that sum a reading up in the notification."""
+    registro: Path
+    leituras: Path
+    nome: str
+    titulo: str
+    progresso: bool
+    resumo: str
+
+
+PAPER_V2 = Paper(ARQUIVO_REGISTRO, PASTA_LEITURAS, "paper-v2", "Alepha: ", True, "Critério")
+PAPER_V3 = Paper(ARQUIVO_REGISTRO_V3, PASTA_LEITURAS_V3, "paper-v3", "Alepha: paper-v3, ", False, "Decision")
+
+
+def _titulo(nome: str, prefixo: str = PAPER_V2.titulo) -> str:
     if nome.startswith("leitura-"):
-        return f"Alepha: leitura de {nome.removeprefix('leitura-')} pregões"
+        return f"{prefixo}leitura de {nome.removeprefix('leitura-')} pregões"
     ano, mes = nome.removeprefix("progresso-").split("-")
-    return f"Alepha: progresso de {mes}/{ano}"
+    return f"{prefixo}progresso de {mes}/{ano}"
 
 
 def _leituras(raiz: Path, git: Git, agora: datetime, ler_leitura: Callable[[], str], tentativas: Path,
-              avisos: list[tuple[str, str]]) -> str:
+              avisos: list[tuple[str, str]], paper: Paper = PAPER_V2) -> str:
     from scripts.paper_trading import ler_registro
     calendario = pd.DatetimeIndex(pd.read_parquet(raiz / ARQUIVO_CALENDARIO, columns=["date"])["date"])
-    registro = ler_registro(raiz / ARQUIVO_REGISTRO)
-    devidas = leituras_devidas(pregoes_desde_o_registro(calendario, registro), raiz / PASTA_LEITURAS, agora.date())
+    registro = ler_registro(raiz / paper.registro)
+    devidas = leituras_devidas(pregoes_desde_o_registro(calendario, registro), raiz / paper.leituras, agora.date(),
+                               paper.progresso)
+    if paper is not PAPER_V2:           # paper-v2's attempts stay where they always were
+        tentativas = tentativas / paper.nome
     notas = []
     if devidas:
         texto = ler_leitura()
-        if not salvar_leituras(texto, devidas, raiz / PASTA_LEITURAS, agora, tentativas):
+        if not salvar_leituras(texto, devidas, raiz / paper.leituras, agora, tentativas):
             notas.append(f"{', '.join(devidas)} sem os pregões na saída, de novo na próxima rodada")
     # every saved reading not yet in HEAD, this run's or one whose commit failed before: commit, then notify
     salvas = pendentes(git, [caminho.relative_to(raiz).as_posix()
-                             for caminho in sorted((raiz / PASTA_LEITURAS).glob("*.txt"))])
+                             for caminho in sorted((raiz / paper.leituras).glob("*.txt"))])
     if salvas:
-        commitar(git, salvas, f"paper-v2: {', '.join(Path(caminho).stem for caminho in salvas)}")
+        commitar(git, salvas, f"{paper.nome}: {', '.join(Path(caminho).stem for caminho in salvas)}")
         for caminho in salvas:
             texto = (raiz / caminho).read_text(encoding="utf-8")
-            resumo = "\n".join(linha for linha in texto.splitlines() if linha.startswith("Critério"))
-            avisos.append((_titulo(Path(caminho).stem), resumo or texto.splitlines()[0]))
+            resumo = "\n".join(linha for linha in texto.splitlines() if linha.startswith(paper.resumo))
+            avisos.append((_titulo(Path(caminho).stem, paper.titulo), resumo or texto.splitlines()[0]))
         notas.append(", ".join(Path(caminho).stem for caminho in salvas))
-    return f"leituras: {'; '.join(notas) or 'nenhuma devida'}"
+    rotulo = "leituras" if paper is PAPER_V2 else f"leituras {paper.nome}"
+    return f"{rotulo}: {'; '.join(notas) or 'nenhuma devida'}"
 
 
 def _liquidez(raiz: Path, git: Git) -> str:
@@ -342,11 +368,11 @@ def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.Data
 
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
              tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None,
-             manchetes: LojaDeManchetes | None = None) -> Resultado:
+             manchetes: LojaDeManchetes | None = None, ler_leitura_v3: Callable[[], str] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
-    the time (None: no headlines step)."""
+    the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -357,8 +383,11 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         return Resultado("falhou", f"checkout: {type(erro).__name__}: {erro}"[:300], [])
     avisos: list[tuple[str, str]] = []
     notas, desfecho = [], "ok"
-    passos = [("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos)),
-              ("liquidez", lambda: _liquidez(raiz, git)),
+    passos = [("leituras", lambda: _leituras(raiz, git, agora, ler_leitura, tentativas, avisos))]
+    if ler_leitura_v3 is not None:
+        passos.append(("leituras paper-v3",
+                       lambda: _leituras(raiz, git, agora, ler_leitura_v3, tentativas, avisos, PAPER_V3)))
+    passos += [("liquidez", lambda: _liquidez(raiz, git)),
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
               ("ativos", lambda: atualizar_ativos(raiz, git)),          # before the panel, which reads the list
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
@@ -387,16 +416,16 @@ def esperar(rodando: Callable[[], bool], dormir: Callable[[float], None], pausa:
         esperado += passo
 
 
-def ler_leitura(raiz: Path) -> str:
-    """The output of ``scripts/paper_v2.py --leitura`` run in the checkout ``raiz`` (it runs the lake's ``universe``
-    first); ``RuntimeError`` with its error output when it fails."""
+def ler_leitura(raiz: Path, script: str = "scripts/paper_v2.py") -> str:
+    """The output of ``script --leitura`` (paper-v2's or paper-v3's) run in the checkout ``raiz`` (it runs the lake's
+    ``universe`` first); ``RuntimeError`` with its error output when it fails."""
     # python.exe next to the task's pythonw.exe: pythonw has no stdout to pipe
     python = Path(sys.executable).with_name("python.exe")
-    feita = subprocess.run([str(python if python.exists() else sys.executable), "-X", "utf8", "scripts/paper_v2.py",
-                            "--leitura"], cwd=raiz, capture_output=True, text=True, encoding="utf-8",
-                           timeout=7_200, creationflags=_SEM_JANELA)
+    feita = subprocess.run([str(python if python.exists() else sys.executable), "-X", "utf8", script, "--leitura"],
+                           cwd=raiz, capture_output=True, text=True, encoding="utf-8", timeout=7_200,
+                           creationflags=_SEM_JANELA)
     if feita.returncode:
-        raise RuntimeError(f"paper_v2.py --leitura saiu com {feita.returncode}: {feita.stderr.strip()[-300:]}")
+        raise RuntimeError(f"{Path(script).name} --leitura saiu com {feita.returncode}: {feita.stderr.strip()[-300:]}")
     return feita.stdout
 
 
@@ -451,7 +480,8 @@ def main() -> int:
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
     resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG,
                          manchetes=(CLONE_DAS_MANCHETES, URL_DAS_MANCHETES, PASTA_DO_LOG,
-                                    lambda: _gerar_manchetes(PASTA_DO_LOG)))
+                                    lambda: _gerar_manchetes(PASTA_DO_LOG)),
+                         ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"))
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

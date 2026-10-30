@@ -683,7 +683,7 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   managers' best ideas from the CVM CDA (attempt 52) and the BR/US/gold rotation with a CDI filter (attempt 53).
   Results in `docs/npy-ic-2026-10-29.txt`, `docs/cda-best-ideas-2026-10-29.txt` and `docs/h2-rotacao-2026-10-29.txt`.
 - The lake now exports CVM CDA fund stock positions and the daily PTAX. N = 53 (PLAN §16).
-- Options data in the lake (research only: the fund's rules bar trading derivatives): implied volatility and greeks
+- Options data in the lake (research only until a pre-registered test passes; the no-derivatives rule was lifted on 30/10, DECISOES 191): implied volatility and greeks
   of every traded B3 option since 1994 computed from COTAHIST, B3's daily Price Report from 2018 (futures, options
   on futures, open interest) and a daily snapshot of opcoes.net.br chains to cross-check the greeks.
 - Quantum Portfolio Optimization: finalized, not adopted (see the QPO section above); no further QPO attempt.

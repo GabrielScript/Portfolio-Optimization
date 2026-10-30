@@ -1,0 +1,27 @@
+Files (sha256): {'fund_monthly_quota.parquet': '296fd03dcb36e250bcf12664ce77085414bbfa91b2a0903aad2e801a711dfbab', 'fund_stock_holdings.parquet': 'cd997a5d06f1b41b4988ef0da06518c1a032768380bd2ebee350af5e78b14feb', 'fund_nav.parquet': 'e12d47008b06a5a7eca999c0e00c3554bda862dfaceeacbb6f8893a4896121ee', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd'}
+CDA portfolios 423,212 of 9,630 funds; 2,216 funds qualify at least once (227 s)
+Funds with a monthly return series: 9,476 of 9,630 CDA funds, 2,215 of 2,216 that qualify at least once
+Panel 31,174 rows, sha256 6767feaf3ba5cf583dd0eb20b1ede1cb3bfe3cb72cdeb2f44be234dbdd9c84bd
+
+Coverage by year (medians over the months; shares of the qualifying funds):
+       months  qualifying  with_quotas  ranked  dropped
+month                                                  
+2011       12       53.00         0.99    0.88        6
+2012       12      196.00         1.00    0.85        0
+2013       12      205.00         1.00    0.83        0
+2014       12      229.00         1.00    0.88        0
+2015       12      228.00         1.00    0.89        0
+2016       12      154.00         1.00    0.93        0
+2017       12      217.50         1.00    0.92        0
+2018       12      287.00         1.00    0.85        0
+2019       12      366.50         1.00    0.89        0
+2020       12      445.00         1.00    0.86        0
+2021       12      631.00         1.00    0.84        0
+2022       12      732.00         1.00    0.85        0
+2023       12      688.00         1.00    0.91        0
+2024       12      690.00         1.00    0.93        0
+2025       12      669.50         1.00    0.90        0
+2026        9      624.00         1.00    0.90        0
+
+Months read: 183 of 189
+(total 448 s)

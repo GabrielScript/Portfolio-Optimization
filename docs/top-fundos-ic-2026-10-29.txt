@@ -1,0 +1,38 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'top_fundos_panel.parquet': '6767feaf3ba5cf583dd0eb20b1ede1cb3bfe3cb72cdeb2f44be234dbdd9c84bd', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0'}
+Months read: 183 of 189 (dropped with < 30 qualifying or < 15 ranked funds: 6)
+
+Top-15 funds (score, gate): monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2011-01 to 2026-09 (gate) 183.000     0.029   0.105 3.785             0.601
+2011-2015                  54.000     0.034   0.120 2.076             0.593
+2016-2020                  60.000     0.018   0.090 1.567             0.617
+2021-2026                  69.000     0.036   0.106 2.802             0.594
+
+All ranked funds (score_all, baseline): monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio     t  meses com IC > 0
+2011-01 to 2026-09 (gate) 183.000     0.028   0.119 3.242             0.612
+2011-2015                  54.000     0.017   0.127 0.978             0.556
+2016-2020                  60.000     0.008   0.110 0.587             0.550
+2021-2026                  69.000     0.055   0.116 3.925             0.710
+
+Top-15 active weight (reported): monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio      t  meses com IC > 0
+2011-01 to 2026-09 (gate) 183.000    -0.001   0.098 -0.182             0.486
+2011-2015                  54.000     0.004   0.078  0.363             0.481
+2016-2020                  60.000     0.011   0.116  0.721             0.533
+2021-2026                  69.000    -0.016   0.095 -1.389             0.449
+
+Paired difference top-15 - all ranked (gate c): monthly Spearman IC, score of the month x total return of the month, universe of the month
+                            meses  IC médio  desvio      t  meses com IC > 0
+2011-01 to 2026-09 (gate) 183.000     0.001   0.071  0.184             0.525
+2011-2015                  54.000     0.017   0.053  2.371             0.667
+2016-2020                  60.000     0.010   0.077  1.000             0.533
+2021-2026                  69.000    -0.019   0.075 -2.144             0.406
+
+Per month read (median): qualifying 329, with a return in the window 328, ranked 285
+Rank correlation of the top-15 score with the Conservadora score: mean 0.198 over 183 months
+Rank correlation of the top-15 score with market cap: mean 0.367 over 183 months
+
+Gate (2011-01 to 2026-09): (a) IC ≥ 0,02 e t ≥ 2: yes; (b) IC >= 0.032: no; (c) paired difference > 0 with t >= 2: no.
+NOT passed. Stop: no attempt row; the copycat line is closed.
+(total 18 s)

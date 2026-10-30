@@ -700,3 +700,14 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   52's fund signal and the same score built from all funds, or the line closes. Not run yet; N = 53.
 - Leverage 1.5x chosen by the user; it goes into the plan screen once the broker's margin rate is known. The paper
   logs stay unlevered (PLAN §17).
+
+## Session 61 notes (2026-10-29)
+
+- Attempt 54 read once and not passed: copying the 15 equity funds with the best 12-month return gives a monthly IC
+  of 0.029 (t 3.79), under attempt 52's 0.032, and no gain over the same score built from all ranked funds (0.001,
+  t 0.18). The score leans to large caps (rank correlation 0.37 with market value). The copycat line is closed and
+  N stays 53 (`docs/top-fundos-ic-2026-10-29.txt`; coverage in `docs/top-fundos-painel-2026-10-29.txt`).
+- Leverage: the broker rate the user found (0.45% a day) is the fee for covering a margin call, not a loan rate, and
+  would cost far more than 1.5x could earn. The plan screen keeps 1.0x until an annual borrowing rate (a stock
+  forward, "termo", or the broker's leveraged-investment product) is known.
+- Next: one pre-registered IC test of option signals as a veto on the Conservadora (PLAN §18).

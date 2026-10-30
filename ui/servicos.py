@@ -64,8 +64,8 @@ ARQUIVOS_DO_PAINEL = tuple(Path(__file__).resolve().parents[1] / "lago" / nome f
     "sentimento_diario.parquet", "fatos_relevantes.parquet", "fundamentos.parquet"))
 PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")
 INDICADORES_DO_FOCUS = ("Selic", "IPCA", "PIB Total", "Câmbio")
-# the frozen rerun's daily curves (scripts/curvas_conservadora.py): the Conservadora's results by period and year
-ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "conservadora-curvas-2026-10-23.parquet"
+# the live rerun's daily curves (scripts/curvas_ao_vivo.py, DECISOES 188): results by period and year
+ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "curvas-ao-vivo.parquet"
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
@@ -100,7 +100,8 @@ def setores_do_lago(tickers: tuple[str, ...], pasta: Path = PASTA_MARCOS_V2) -> 
 
 @st.cache_data(show_spinner=False, max_entries=2)
 def carregar_curvas_conservadora(arquivo: Path = ARQUIVO_CURVAS) -> pd.DataFrame | None:
-    """The Conservadora's and BOVA11's daily values in the 3 phases of the frozen rerun, or None without the file."""
+    """The live rerun's daily values (3 phases: the Conservadora, the composite, BOVA11, BITH11, QBTC11 and the
+    CDI), or None without the file."""
     return pd.read_parquet(arquivo) if arquivo.exists() else None
 
 

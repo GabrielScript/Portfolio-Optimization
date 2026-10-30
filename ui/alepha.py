@@ -14,7 +14,7 @@ import pandas as pd
 import streamlit as st
 
 from core.impostos import ISENCAO_DE_VENDAS
-from core.periodos import desde_inicio_comum, medidas_por_periodo, retornos_por_ano
+from core.periodos import desde_inicio_comum, medidas_por_ano, medidas_por_periodo, resumo_do_periodo
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
 
@@ -174,45 +174,94 @@ def _rotulo_do_ano(ano: int, datas: pd.DatetimeIndex) -> str:
     return str(ano)
 
 
+BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)
+CURVAS_DA_TELA = (*BRACOS, "BITH11", "QBTC11")
+EXCESSO_BOVA11 = "Excesso sobre o BOVA11"
+MEDIDAS_POR_ANO = ("Retorno", EXCESSO_BOVA11, "Excesso sobre o CDI", "Vol", "Queda máx.", "Pior mês", "Sharpe",
+                   "Sortino", "Calmar", "Beta (BOVA11)")
+SEM_PORCENTO = {"Sharpe", "Sortino", "Calmar", "Beta (BOVA11)", "t do alfa", "Information ratio"}
+PRIMEIRO_ANO = 2010
+
+
+def _tabela_por_ano(curvas: pd.DataFrame, cdi: pd.Series, medida: str) -> pd.DataFrame:
+    """Years since ``PRIMEIRO_ANO`` x columns of ``curvas``: ``medida`` of ``core.periodos.medidas_por_ano``, or the
+    year's return minus BOVA11's."""
+    medidas = medidas_por_ano(curvas, cdi)
+    if medida == EXCESSO_BOVA11:
+        retornos = medidas["Retorno"].unstack()
+        tabela = retornos.sub(retornos["BOVA11"], axis=0)
+    else:
+        tabela = medidas[medida].unstack()
+    tabela = tabela.reindex(columns=list(curvas.columns)).astype(float)
+    return tabela.loc[tabela.index >= PRIMEIRO_ANO]
+
+
 def resultados_da_conservadora(quadro: pd.DataFrame | None) -> None:
-    """The frozen backtest of the Conservadora against BOVA11 (DECISOES 122): whole period, last 5 and 3 years, and
-    each calendar year, the bad ones included. Phase 0; the whole period's CAGR range covers the 3 phases."""
-    st.markdown("### A Conservadora no backtest: por período e por ano")
+    """The registered Conservadora and attempt 51's composite (paper-v3's candidate) rerun on the lake up to the last
+    close (``scripts/curvas_ao_vivo.py``, descriptive, DECISOES 188), next to BOVA11 and the B3's two bitcoin ETFs:
+    whole period, last 5 and 3 years, each calendar year since 2010 in the measure picked, and an aggressive investor's
+    risk summary. The rebalance phase (0, 21 or 42 sessions cut from the start) can be picked: timing alone moves a
+    year by several points."""
+    st.markdown("### Conservadora e Composto no backtest até o último pregão: por período e por ano")
     if quadro is None:
-        st.caption("Sem as curvas do backtest (docs/dados/conservadora-curvas-2026-10-23.parquet).")
+        st.caption("Sem as curvas do backtest (docs/dados/curvas-ao-vivo.parquet).")
         return
-    fases = {fase: parte.set_index("date")[["Conservadora", "BOVA11"]] for fase, parte in quadro.groupby("fase")}
-    curvas = fases[min(fases)]
-    medidas = medidas_por_periodo(curvas)
+    fases = {int(fase): parte.set_index("date") for fase, parte in quadro.groupby("fase")}
+    escolhida = st.segmented_control("Fase de rebalanceio (pregões cortados do início)", list(fases),
+                                     default=min(fases), key="fase_das_curvas",
+                                     help="As 3 fases do pré-registro: o mesmo método, com os rebalanceios em datas "
+                                          "diferentes. A diferença entre elas é só o acaso da data.")
+    parte = fases[min(fases) if escolhida is None else int(escolhida)]
+    cdi = parte["CDI"].fillna(0.0)
+    medidas = medidas_por_periodo(parte[list(BRACOS)])
     tabela = pd.DataFrame({
         "Período": medidas.index,
         "De": [f"{data:%d/%m/%Y}" for data in medidas[("Início", "")]],
         "Até": [f"{data:%d/%m/%Y}" for data in medidas[("Fim", "")]],
         **{f"{medida} {nome}": medidas[(nome, coluna)].astype(float).to_numpy()
            for medida, coluna in (("Retorno a.a.", "CAGR"), ("Vol", "Vol anual"), ("Queda máx.", "MDD"))
-           for nome in ("Conservadora", "BOVA11")}})
+           for nome in BRACOS}})
     st.dataframe(tabela, width="stretch", hide_index=True,
                  column_config={coluna: st.column_config.NumberColumn(format="percent")
                                 for coluna in tabela.columns[3:]},
-                 alt="Conservadora contra BOVA11 no período inteiro e nos últimos 5 e 3 anos")
-    anos = retornos_por_ano(curvas)
-    por_ano = pd.DataFrame({"Ano": [_rotulo_do_ano(ano, curvas.index) for ano in anos.index],
-                            "Conservadora": anos["Conservadora"].to_numpy(), "BOVA11": anos["BOVA11"].to_numpy(),
-                            "Diferença": (anos["Conservadora"] - anos["BOVA11"]).to_numpy()})
-    c1, c2 = st.columns([2, 3])
+                 alt="Conservadora, Composto e BOVA11 no período inteiro e nos últimos 5 e 3 anos")
+
+    curvas = parte[list(CURVAS_DA_TELA)]
+    medida = st.selectbox("Medida de cada ano", MEDIDAS_POR_ANO, key="medida_por_ano")
+    anos = _tabela_por_ano(curvas, cdi, medida)
+    por_ano = pd.DataFrame({"Ano": [_rotulo_do_ano(ano, parte.index) for ano in anos.index],
+                            **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA}})
+    formato = "%.2f" if medida in SEM_PORCENTO else "percent"
+    c1, c2 = st.columns([3, 2])
     c1.dataframe(por_ano, width="stretch", hide_index=True,
-                 column_config={coluna: st.column_config.NumberColumn(format="percent")
-                                for coluna in ("Conservadora", "BOVA11", "Diferença")},
-                 alt="Retorno de cada ano civil da Conservadora e do BOVA11")
-    c2.bar_chart(por_ano.set_index("Ano")[["Conservadora", "BOVA11"]], stack=False, y_label="Retorno no ano",
-                 color=["#2e7d32", "#9e9e9e"])
-    inteiro = [float(medidas_por_periodo(parte, anos=()).iloc[0][("Conservadora", "CAGR")]) for parte in fases.values()]
-    st.caption(f"Backtest sem viés de sobrevivência no lago, antes de custos e IR (motor do pré-registro, entradas "
-               f"congeladas de 22/10/2026, preços até {curvas.index[-1]:%d/%m/%Y}); fase 0 da tabela. No período "
-               f"inteiro, as 3 fases de rebalanceio dão {min(inteiro):.1%} a {max(inteiro):.1%} ao ano. Os anos ruins "
-               "ficam na tabela: a vantagem do período inteiro vem quase toda de 2010–2022; nos últimos 3 anos o "
-               "BOVA11 rendeu mais, com volatilidade parecida. Passado não garante futuro; a prova ao vivo é o "
-               "paper-v2 (decisão em 252 pregões, ~25/10/2027).")
+                 column_config={nome: st.column_config.NumberColumn(format=formato) for nome in CURVAS_DA_TELA},
+                 alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: Conservadora, Composto, BOVA11, BITH11, QBTC11")
+    c2.bar_chart(por_ano.set_index("Ano")[list(BRACOS)], stack=False, y_label=medida,
+                 color=["#2e7d32", "#1565c0", "#9e9e9e"])
+
+    inicio_cripto = curvas[["BITH11", "QBTC11"]].dropna().index[0]
+    mesma_janela = st.toggle(f"Mesma janela para todos (desde {inicio_cripto:%d/%m/%Y}, quando os dois ETFs de "
+                             "bitcoin já negociavam)", key="mesma_janela")
+    resumo = resumo_do_periodo(curvas.loc[inicio_cripto:] if mesma_janela else curvas, cdi)
+    resumo = resumo.assign(Desde=[f"{data:%d/%m/%Y}" for data in resumo["Desde"]]).rename_axis(
+        "Estratégia").reset_index()
+    numericas = [coluna for coluna in resumo.columns if coluna not in ("Estratégia", "Desde", "Anos acima do BOVA11")]
+    st.dataframe(resumo.astype({coluna: float for coluna in numericas}), width="stretch", hide_index=True,
+                 column_config={coluna: st.column_config.NumberColumn(
+                     format="%.2f" if coluna in SEM_PORCENTO else "percent") for coluna in numericas},
+                 alt="Retorno, risco e alfa de cada estratégia no período")
+    inteiro = {nome: [float(medidas_por_periodo(fase[[nome]], anos=()).iloc[0][(nome, "CAGR")])
+                      for fase in fases.values()] for nome in ("Conservadora", "Composto")}
+    st.caption(
+        f"Backtest sem viés de sobrevivência no lago, antes de custos e IR, rodado de novo até "
+        f"{parte.index[-1]:%d/%m/%Y} (descritivo: as configurações registradas, sem mudar regra; DECISOES 188). No "
+        f"período inteiro, as 3 fases dão {min(inteiro['Conservadora']):.1%} a {max(inteiro['Conservadora']):.1%} ao "
+        f"ano na Conservadora e {min(inteiro['Composto']):.1%} a {max(inteiro['Composto']):.1%} no Composto. A "
+        "Conservadora é a estratégia adotada; o Composto (Conservadora + valor + crescimento do lucro, tentativa 51) "
+        "não passou no portão da fase 42 e só vale como candidato no paper-v3 (decisão ~10/2027). BITH11 e QBTC11 "
+        "(bitcoin, preço) são só comparação e não entram no plano. Sharpe e Sortino sobre o CDI do dia; alfa e beta "
+        "contra o BOVA11 (CAPM, t de Newey-West); CVaR 95%: perda média dos 5% piores dias. Passado não garante "
+        "futuro; a prova ao vivo é o paper-v2 (decisão em 252 pregões, ~25/10/2027).")
 
 
 def bova11_e_cripto(precos: pd.DataFrame | None) -> None:

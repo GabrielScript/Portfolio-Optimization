@@ -650,15 +650,23 @@ def test_all_assets_is_ticked_by_default_and_the_sidebar_says_what_each_group_ch
 
 
 def _curvas_sinteticas() -> pd.DataFrame:
-    datas = pd.bdate_range("2019-01-01", "2026-10-16")
-    crescimento = np.linspace(1.0, 3.0, len(datas))
+    """The live rerun's file (scripts/curvas_ao_vivo.py): 3 phases, the two arms, BOVA11, two crypto ETFs, the CDI."""
+    datas = pd.bdate_range("2019-01-01", "2026-10-29")
+    crescimento = np.linspace(1.0, 3.0, len(datas)) * (1 + 0.01 * np.sin(np.arange(len(datas)) / 7))
+    cripto = np.where(datas >= "2021-08-05", np.linspace(50.0, 100.0, len(datas)), np.nan)
     return pd.concat([pd.DataFrame({"fase": fase, "date": datas, "Conservadora": crescimento * (1 + fase / 1000),
-                                    "BOVA11": np.linspace(1.0, 2.0, len(datas))}) for fase in (0, 21, 42)],
+                                    "Composto": crescimento * (1.1 + fase / 1000),
+                                    "BOVA11": np.linspace(1.0, 2.0, len(datas)) * (1 + 0.01 * np.cos(np.arange(
+                                        len(datas)) / 5)),
+                                    "BITH11": cripto, "QBTC11": cripto / 4, "CDI": 0.0004}).iloc[fase:]
+                      for fase in (0, 21, 42)],
                      ignore_index=True)
 
 
-def test_the_fundo_alepha_section_shows_the_conservadoras_results_by_period_and_calendar_year(monkeypatch):
-    # A2 (user's request of 2026-10-23): the frozen backtest by period (whole, last 5 and 3 years) and by year
+def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with_the_composite_and_crypto(monkeypatch):
+    # A2 (2026-10-23) made live (user's request of 2026-10-30, DECISOES 188): the registered Conservadora and the
+    # composite rerun to the last close, by period and by calendar year, next to BOVA11, BITH11 and QBTC11, with the
+    # risk measures of an aggressive investor; the rebalance phase can be picked
     _servicos_sinteticos(monkeypatch)
     monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
@@ -667,8 +675,23 @@ def test_the_fundo_alepha_section_shows_the_conservadoras_results_by_period_and_
     periodos = [df.value for df in at.dataframe if "Período" in df.value.columns]
     assert len(periodos) == 1
     assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
+    assert {"Retorno a.a. Conservadora", "Retorno a.a. Composto", "Retorno a.a. BOVA11"} <= set(periodos[0].columns)
     anos = [df.value for df in at.dataframe if "Ano" in df.value.columns]
-    assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 16/10)"
+    assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 29/10)"
+    assert ["Conservadora", "Composto", "BOVA11", "BITH11", "QBTC11"] == list(anos[0].columns[1:6])
+    assert np.isnan(anos[0].set_index("Ano").loc["2019", "BITH11"])               # before its listing
+    resumo = [df.value for df in at.dataframe if "Sortino" in df.value.columns]
+    assert len(resumo) == 1 and list(resumo[0]["Estratégia"]) == ["Conservadora", "Composto", "BOVA11", "BITH11",
+                                                                   "QBTC11"]
+    assert {"Alfa a.a. (BOVA11)", "Queda máx.", "Calmar", "CVaR 95% diário"} <= set(resumo[0].columns)
+    antes = periodos[0]["Retorno a.a. Conservadora"].iloc[0]
+    at.segmented_control(key="fase_das_curvas").set_value(42).run()
+    depois = [df.value for df in at.dataframe if "Período" in df.value.columns][0]["Retorno a.a. Conservadora"].iloc[0]
+    assert depois != antes
+    at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
+    assert not at.exception
+    anos = [df.value for df in at.dataframe if "Ano" in df.value.columns][0]
+    assert (anos[["Conservadora", "BOVA11"]].dropna() <= 0).all().all()
 
 
 def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monkeypatch):

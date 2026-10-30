@@ -711,3 +711,20 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   would cost far more than 1.5x could earn. The plan screen keeps 1.0x until an annual borrowing rate (a stock
   forward, "termo", or the broker's leveraged-investment product) is known.
 - Next: one pre-registered IC test of option signals as a veto on the Conservadora (PLAN §18).
+
+## Session 62 notes (2026-10-30)
+
+- The Alepha screen's backtest table is now live: the registered Conservadora and the attempt-51 composite rerun on
+  the lake to the last close (`scripts/curvas_ao_vivo.py`, descriptive, no rule changed), next to BOVA11, BITH11 and
+  QBTC11. Each year since 2010 in the measure picked (return, excess over BOVA11 or the CDI, volatility, drawdown,
+  worst month, Sharpe, Sortino, Calmar, beta), a whole-period risk summary (alpha against BOVA11 with its t, CVaR,
+  best and worst year) and the rebalance phase to choose. The daily upkeep reruns it about once a week.
+- To 29/10/2026 (phase 0): Conservadora 16.1% a year since 02/2010, composite 19.8%, BOVA11 6.0%; in 2026 to date
+  -8.7%, -11.0% and +5.4%. The composite is still only a forward candidate (paper-v3).
+- The upkeep now also saves paper-v3's readings at 126 and 252 sessions.
+- The three funds asked about (Capyvara FIA, AMI FIF Ações, Trend Bolsa Americana Alavancado), invested and copied
+  from their public CVM holdings in all 7 combinations (`docs/tres-fundos-2026-10-30.txt`): high past returns, but
+  picked after the fact; Capyvara's return does not come from its public stock book (index futures, trading inside
+  the month), AMI is almost all one BDR (AURA33), and Trend holds S&P 500 futures, nothing to copy. None enters the
+  plan.
+- Leverage stays 1.0x. Next: the options veto test (spec approved).

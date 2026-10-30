@@ -15,6 +15,8 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
 - ``lago/ativos.parquet``: the lake's list of the market panel's stocks, BDRs and ETFs (name, type, B3 sector), when
   its rows changed;
+- the live backtest curves of the Alepha screen (``scripts/curvas_ao_vivo.py``, DECISOES 188) when they are 5
+  sessions behind the lake (about weekly; a ~3 minute run);
 - the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
   filings only (DECISOES 124);
 - the newest scored headlines (title, link, topic, tone) to the private repository ``alepha-manchetes`` through its
@@ -58,6 +60,9 @@ ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
 SOBREPOSICAO = 10           # committed sessions repeated in the small file (a stock may not trade on the last one)
+# the live backtest curves of the Alepha screen (scripts/curvas_ao_vivo.py, DECISOES 188), rerun about weekly
+ARQUIVOS_DAS_CURVAS = (Path("docs/dados/curvas-ao-vivo.parquet"), Path("docs/curvas-ao-vivo.txt"))
+DEFASAGEM_DAS_CURVAS = 5
 ARQUIVOS_DO_PAINEL = (Path("lago/sentimento_diario.parquet"), Path("lago/fatos_relevantes.parquet"),
                       Path("lago/fundamentos.parquet"))
 PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")           # the lake's news/social log and CVM IPE filings
@@ -285,6 +290,24 @@ def atualizar_recentes(raiz: Path, git: Git) -> str:
     return f"pregões recentes: até {fim}"
 
 
+def atualizar_curvas(raiz: Path, git: Git, gerar: Callable[[], object]) -> str:
+    """Reruns the live backtest curves of the Alepha screen (``gerar``: ``scripts/curvas_ao_vivo.py``, ~3 minutes)
+    when the file is missing or ``DEFASAGEM_DAS_CURVAS`` sessions of the lake's calendar behind, and commits both of
+    its files (also a pair a failed commit left behind)."""
+    arquivo = raiz / ARQUIVOS_DAS_CURVAS[0]
+    calendario = pd.read_parquet(raiz / ARQUIVO_CALENDARIO, columns=["date"])["date"]
+    ultima = pd.read_parquet(arquivo, columns=["date"])["date"].max() if arquivo.exists() else None
+    atrasada = ultima is None or int((calendario > ultima).sum()) >= DEFASAGEM_DAS_CURVAS
+    if atrasada:
+        gerar()
+        ultima = pd.read_parquet(arquivo, columns=["date"])["date"].max()
+    mudados = pendentes(git, [caminho.as_posix() for caminho in ARQUIVOS_DAS_CURVAS])
+    if mudados:
+        commitar(git, mudados, f"data: curvas ao vivo até {pd.Timestamp(ultima):%d/%m/%Y} (manutenção)")
+    return (f"curvas ao vivo: até {pd.Timestamp(ultima):%d/%m/%Y}" if atrasada else
+            f"curvas ao vivo: em dia (até {pd.Timestamp(ultima):%d/%m/%Y})")
+
+
 def atualizar_ativos(raiz: Path, git: Git) -> str:
     """Copies the lake's list of the market panel's tickers (``data/b3lake/app_names.parquet``) to
     ``lago/ativos.parquet`` and commits it when its rows changed. The nightly writes only to the ignored folder: a
@@ -368,11 +391,13 @@ def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.Data
 
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
              tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None,
-             manchetes: LojaDeManchetes | None = None, ler_leitura_v3: Callable[[], str] | None = None) -> Resultado:
+             manchetes: LojaDeManchetes | None = None, ler_leitura_v3: Callable[[], str] | None = None,
+             gerar_curvas: Callable[[], object] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
-    the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step)."""
+    the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step);
+    ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -391,6 +416,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
               ("ativos", lambda: atualizar_ativos(raiz, git)),          # before the panel, which reads the list
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
+    if gerar_curvas is not None:
+        passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
         passos.append(("manchetes", lambda: atualizar_manchetes(*manchetes, agora)))
     passos.append(("push", lambda: publicar(git)))
@@ -427,6 +454,16 @@ def ler_leitura(raiz: Path, script: str = "scripts/paper_v2.py") -> str:
     if feita.returncode:
         raise RuntimeError(f"{Path(script).name} --leitura saiu com {feita.returncode}: {feita.stderr.strip()[-300:]}")
     return feita.stdout
+
+
+def rodar_curvas(raiz: Path) -> None:
+    """Runs ``scripts/curvas_ao_vivo.py`` in the checkout ``raiz`` on its lake copy; ``RuntimeError`` on failure."""
+    python = Path(sys.executable).with_name("python.exe")
+    feita = subprocess.run([str(python if python.exists() else sys.executable), "-X", "utf8",
+                            "scripts/curvas_ao_vivo.py"], cwd=raiz, capture_output=True, text=True, encoding="utf-8", timeout=3_600,
+                           creationflags=_SEM_JANELA)
+    if feita.returncode:
+        raise RuntimeError(f"curvas_ao_vivo.py saiu com {feita.returncode}: {feita.stderr.strip()[-300:]}")
 
 
 def tarefas_rodando(nomes: tuple[str, ...]) -> int:
@@ -481,7 +518,8 @@ def main() -> int:
     resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG,
                          manchetes=(CLONE_DAS_MANCHETES, URL_DAS_MANCHETES, PASTA_DO_LOG,
                                     lambda: _gerar_manchetes(PASTA_DO_LOG)),
-                         ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"))
+                         ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"),
+                         gerar_curvas=lambda: rodar_curvas(RAIZ))
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

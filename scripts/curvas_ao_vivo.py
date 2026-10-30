@@ -10,7 +10,8 @@ published 16/10/2026) and the gate lines in the output mean nothing here. The fr
 Copies the exports it reads to a temporary folder with their SHA256SUMS (the frozen loaders check them; the hashes go
 to the output), then writes docs/dados/curvas-ao-vivo.parquet (phase, date, Conservadora, Composto, BOVA11, BITH11,
 QBTC11, CDI) and docs/curvas-ao-vivo.txt. The two crypto ETFs (the app's closes: lago/precos_diarios.parquet spliced
-with lago/precos_recentes.parquet) and the lake's daily CDI ride along for the screen's year table. Commit both files to refresh the screen.
+with lago/precos_recentes.parquet) and the lake's daily CDI ride along for the screen's year table. Commit both files
+to refresh the screen (the daily upkeep does it when they are 5 sessions behind).
 """
 
 from __future__ import annotations

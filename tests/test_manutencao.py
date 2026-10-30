@@ -547,3 +547,43 @@ def test_a_private_store_not_reachable_blocks_only_the_headlines_step_and_the_ap
     assert resultado.desfecho == "bloqueada"
     assert "manchetes: sem acesso ao repositório privado" in resultado.nota
     assert "lago/liquidez.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
+
+
+def _curvas_ate(app: Path, ultima: str) -> None:
+    destino = app / "docs" / "dados"
+    destino.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame({"fase": 0, "date": pd.bdate_range(end=ultima, periods=3), "Conservadora": 1.0}).to_parquet(
+        destino / "curvas-ao-vivo.parquet", index=False)
+
+
+def test_the_live_curves_are_rerun_and_committed_once_they_are_five_sessions_behind_the_lake(app):
+    # DECISOES 188: the screen's backtest table is a live descriptive rerun; refreshed about weekly, not nightly (RAM)
+    from scripts.manutencao import atualizar_curvas, git_em
+    _checkout(app, 10)                                       # calendar 19/10/2026 .. 02/11/2026
+    _curvas_ate(app, "2026-10-27")                           # 28, 29, 30/10, 2/11: 4 sessions behind
+    rodadas = []
+
+    def gerar() -> None:
+        rodadas.append(1)
+        _curvas_ate(app, "2026-11-02")
+        (app / "docs" / "curvas-ao-vivo.txt").write_text("saída\n", encoding="utf-8")
+    git = git_em(app)
+    assert atualizar_curvas(app, git, gerar).startswith("curvas ao vivo: em dia") and rodadas == []
+    _curvas_ate(app, "2026-10-26")                           # 5 sessions behind
+    assert atualizar_curvas(app, git, gerar) == "curvas ao vivo: até 02/11/2026"
+    assert rodadas == [1]
+    assert git("log", "-1", "--format=%s") == "data: curvas ao vivo até 02/11/2026 (manutenção)"
+    assert not git("status", "--porcelain", "--", "docs")
+
+
+def test_a_run_with_the_live_curves_step_reruns_them_and_pushes_the_commit(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+
+    def gerar() -> None:
+        _curvas_ate(app, "2026-11-02")
+        (app / "docs" / "curvas-ao-vivo.txt").write_text("saída\n", encoding="utf-8")
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 3, 22, 30), lambda: _saida(10),
+                         gerar_curvas=gerar)
+    assert resultado.desfecho == "ok" and "curvas ao vivo: até 02/11/2026" in resultado.nota
+    assert "docs/dados/curvas-ao-vivo.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()

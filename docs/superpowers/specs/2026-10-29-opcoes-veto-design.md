@@ -1,4 +1,4 @@
-# Option signals as a veto on the Conservadora (forward from put-call parity) — design and pre-registration (IC test, then attempt 54)
+# Option signals as a veto on the Conservadora (put-call parity forward) — pre-registration (IC test, then attempt 54)
 
 _2026-10-29, session 61. Written and committed before any forward, implied volatility on the forward, option signal
 or IC of these signals exists. What was looked at: the lake's `b3.option_greeks` and `b3.option_daily` schemas and
@@ -32,21 +32,31 @@ when priced off the spot.
 ## 2. Lake work (b3-datalake, built test-first in a worktree before any signal exists)
 
 1. **Forward per (underlying, date, expiry)** from `b3.option_daily` (is_exercise = 0, the options' own rows), for
-   expiries with 5 or more business days left. Pairs = strikes where a call and a put both have a row that day. Each
-   leg's price = the mid of the closing best bid and best ask when 0 < bid <= ask **for both legs**, otherwise both
+   expiries with 5 or more business days left. Pairs = strikes where a call and a put **both traded** that day
+   (trades > 0, close > 0; a quote-only or stale row never enters). Each leg's price = the mid of the closing best
+   bid and best ask when 0 < bid <= ask **for both legs**, otherwise both
    legs' closes (the closing quotes are nearer in time to the stock's close than a last trade; the source is
    recorded). `F_k = K + (C - P) e^{r t}`, with r and t exactly as today's greeks (rate = 252 ln(1 + CDI of the day),
-   t = business days / 252). Pairs with K / S outside [0.8, 1.2] (S = the spot close used today) are not used.
+   t = business days / 252). Pairs with K / S outside [0.9, 1.1] (S = the spot close used today) are not used:
+   B3 stock calls are American and puts European, so an in-the-money call before an ex-date carries an
+   early-exercise premium that pushes F up; near the money it is small. The bias is accepted and disclosed
+   (`option_daily` has no exercise-style field before the Price Reports).
    `forward` = the median of `F_k`; `pairs` = their count; no pair = null. New table `b3.option_forwards` (date,
    underlying_issuer, underlying_isin, expiry, du, rate, spot, forward, pairs, source).
 2. **Black-76 on the forward** in `b3.option_greeks` (new nullable columns `forward`, `iv_fwd`, `delta_fwd`; a
-   migration adds them, then every year is rebuilt, one job at a time): call = e^{-rt}[F N(d1) - K N(d2)], put by
+   migration adds them, then every year is rebuilt, one job at a time; the rows stay the traded option-days, so
+   coverage does not change). `iv_fwd` inverts the same kind of price as the forward: the mid of the row's closing
+   bid and ask when 0 < bid <= ask, else its close. Call = e^{-rt}[F N(d1) - K N(d2)], put by
    parity, d1 = [ln(F/K) + sigma^2 t / 2] / (sigma sqrt t); the same bisection bracket as today; `delta_fwd` = N(d1) for
    calls and N(d1) - 1 for puts (forward delta). Rows without a forward keep the old columns and have null `_fwd`.
 3. **Checks (descriptive, no gate):** implied dividend-plus-borrow yield `r - ln(F/S)/t` by year (median and 5-95%),
    expected roughly 0-10% a year; the opcoes.net.br IV gap recomputed with `iv_fwd` beside the old one.
 4. **Monthly signal export** `option_signals_monthly.parquet` (sha256 printed and written in the app's panel builder),
    one row per (issuer, month m = first day), computed only from sessions of month m-1:
+   - **Issuer and chain:** only issuers of the month's universe (`universe_monthly` of `docs/dados/2026-10-22/`,
+     so ETFs, BDRs and index options are out). An issuer with chains on two classes (ITUB3 and ITUB4) is represented
+     by the chain (underlying ISIN) with the most option contracts in the 5 sessions for `iv_atm` and `skew`;
+     `pc_ratio` sums every chain of the issuer.
    - Daily, per underlying: the **reference expiry** = the one with a forward whose business days left are nearest
      to 21 within [10, 60] (ties: the earlier expiry).
    - `iv_atm(d)` = the mean of the `iv_fwd` of the call and the put (those that exist) at the strike nearest to F
@@ -54,8 +64,9 @@ when priced off the spot.
    - `skew(d)` = `iv_fwd` of the put with K / F nearest to 0.95 within [0.80, 0.97] minus `iv_fwd` of the call with
      K / F nearest to 1.00 within [0.95, 1.05], same expiry (Xing-Zhang-Zhao's definition, on the forward).
    - Monthly: `iv_atm` and `skew` = the medians of the daily values over the last 5 sessions of m-1 that have them
-     (at least 3, else missing); `pc_ratio` = put contracts / (put + call contracts) summed over all expiries in the
-     last 5 sessions of m-1 (missing when the sum is 0); reported only: `rv21` (annualized realized vol of the stock's
+     (at least 3, else missing); `pc_ratio` = put contracts / (put + call contracts) (`quantity`, no exercise rows,
+     expiries with 5 or more business days left) summed over the last 5 sessions of m-1 (missing when the sum is
+     0); reported only: `rv21` (annualized realized vol of the stock's
      last 21 daily total returns of m-1) and `n_days`.
 
 ## 3. The signals and their direction (fixed now)
@@ -89,11 +100,13 @@ the count of months read and dropped is printed). Three signals, so the t thresh
 ## 5. Stage B: attempt 54 (read once, only after stage A passes)
 
 `Conservadora-veto`: at each decision, the Conservadora score with every candidate whose signal is in the **bottom
-quintile** of that month's names with the signal removed (names without the signal are not vetoed), then
+quintile** removed, then
 `core.sinais.carteira_da_nota` as the Conservadora (15 names, 4 per sector, one class per issuer, equal weights, the
 fund's fixed rules; refusal keeps the portfolio). Engine, phases, data cut, CDI, plumbing check and gate exactly as
 attempts 51-52: P[> Conservadora], P[> BOVA11] and DSR >= 0.95 in all 3 phases. Months without the signal panel:
-no veto (the plain Conservadora).
+no veto (the plain Conservadora). The quintile is taken over the **issuers** of the month's universe that have the
+signal (one rank per issuer; the bottom floor(n/5) are vetoed, with every class of a vetoed issuer), and only in months
+where at least 20 issuers have it (the stage-A month rule); in other months, and for names without the signal, no veto.
 
 - **Candidate:** pre-register a forward paper log against the same-day Conservadora.
 - **Not a candidate:** the line is closed; no other quintile, signal or combination.
@@ -105,7 +118,14 @@ evidence, but before 2017 fewer than 20 issuers have it, so most of its months a
 volume at a monthly horizon, where Pan and Poteshman's effect was weak even with open-buy volume. Expected: no signal
 passes both gates; S2 the likeliest. Whatever the outcome: no other window, threshold, expiry rule or rerun.
 
-## 7. Files (to be written after this commit)
+## 7. Calls made after the builder check (author's, before any data)
+
+Both legs traded for a pair; pairs only within K/S [0.9, 1.1] (American calls); `iv_fwd` on the same price kind as the
+forward; universe issuers only (no ETFs, BDRs, index options); the most traded chain per issuer, `pc_ratio` over all
+chains; contracts = `quantity` without exercise rows and expiries under 5 business days; the stage-B quintile over the
+universe's issuers with the signal, only in months with 20 or more.
+
+## 8. Files (to be written after this commit)
 
 Lake (worktree): `b3lake/option_forward.py` (pairs, forward, Black-76), migration `0013`, the rebuild of
 `option_greeks`, the `option-signals` export; tests first. App: `scripts/opcoes_painel.py` (frozen panel in

@@ -460,8 +460,8 @@ def rodar_curvas(raiz: Path) -> None:
     """Runs ``scripts/curvas_ao_vivo.py`` in the checkout ``raiz`` on its lake copy; ``RuntimeError`` on failure."""
     python = Path(sys.executable).with_name("python.exe")
     feita = subprocess.run([str(python if python.exists() else sys.executable), "-X", "utf8",
-                            "scripts/curvas_ao_vivo.py"], cwd=raiz, capture_output=True, text=True, encoding="utf-8", timeout=3_600,
-                           creationflags=_SEM_JANELA)
+                            "scripts/curvas_ao_vivo.py"], cwd=raiz, capture_output=True, text=True, encoding="utf-8",
+                           timeout=3_600, creationflags=_SEM_JANELA)
     if feita.returncode:
         raise RuntimeError(f"curvas_ao_vivo.py saiu com {feita.returncode}: {feita.stderr.strip()[-300:]}")
 

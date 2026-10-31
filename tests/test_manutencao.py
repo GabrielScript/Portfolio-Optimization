@@ -587,3 +587,37 @@ def test_a_run_with_the_live_curves_step_reruns_them_and_pushes_the_commit(app):
                          gerar_curvas=gerar)
     assert resultado.desfecho == "ok" and "curvas ao vivo: até 02/11/2026" in resultado.nota
     assert "docs/dados/curvas-ao-vivo.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
+
+
+def test_pendentes_sem_caminhos_nao_devolve_o_repositorio_inteiro():
+    """git status with no path lists every dirty file; paper-v3's readings folder does not exist before its 1st reading,
+    and on 30/10/2026 the upkeep tried to add and push the user's loose files."""
+    from scripts.manutencao import pendentes
+
+    def git(*_argumentos: str) -> str:
+        return " M lago/precos_diarios.parquet\n?? Artigos_PO/TRIAGEM.md"
+    assert pendentes(git, []) == []
+
+
+def test_commitar_sem_caminhos_nao_toca_no_git():
+    from scripts.manutencao import commitar
+
+    def git(*argumentos: str) -> str:
+        raise AssertionError(f"git called: {argumentos}")
+    assert commitar(git, [], "nada") == []
+
+
+def test_arquivo_novo_com_espaco_no_nome_volta_sem_aspas(app):
+    from scripts.manutencao import git_em, pendentes
+    (app / "um arquivo.txt").write_text("x", encoding="utf-8")
+    assert pendentes(git_em(app), ["um arquivo.txt"]) == ["um arquivo.txt"]
+
+
+def test_curvas_com_o_calendario_em_date_como_o_arquivo_publicado(app):
+    from scripts.manutencao import ARQUIVO_CALENDARIO, atualizar_curvas, git_em
+    _checkout(app, 10)
+    calendario = pd.read_parquet(app / ARQUIVO_CALENDARIO)
+    calendario["date"] = pd.to_datetime(calendario["date"]).dt.date             # pyarrow date32, as the lake writes it
+    calendario.to_parquet(app / ARQUIVO_CALENDARIO, index=False)
+    _curvas_ate(app, "2026-10-27")
+    assert atualizar_curvas(app, git_em(app), lambda: None).startswith("curvas ao vivo: em dia")

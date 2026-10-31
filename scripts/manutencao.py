@@ -146,14 +146,20 @@ def git_em(raiz: Path) -> Git:
 
 
 def pendentes(git: Git, caminhos: list[str]) -> list[str]:
-    """The paths of ``caminhos`` that differ from HEAD (new or changed): what a commit of them would take."""
-    saida = git("status", "--porcelain", "--untracked-files=all", "--", *caminhos)
-    return [linha[3:] for linha in saida.splitlines()]
+    """The paths of ``caminhos`` that differ from HEAD (new or changed): what a commit of them would take. No paths
+    means nothing: ``git status`` without them lists the whole checkout, the user's loose files included. ``-z`` keeps a
+    name with spaces unquoted."""
+    if not caminhos:
+        return []
+    saida = git("status", "--porcelain", "-z", "--untracked-files=all", "--", *caminhos)
+    return [entrada[3:] for entrada in saida.split(chr(0)) if entrada]
 
 
 def commitar(git: Git, caminhos: list[str], mensagem: str) -> list[str]:
     """Commits exactly ``caminhos`` (never ``add -A``: the root has loose untracked files); returns the paths the
     commit took, none when they did not change."""
+    if not caminhos:
+        return []
     git("add", "--", *caminhos)
     feitos = git("diff", "--cached", "--name-only", "--", *caminhos).splitlines()
     if feitos:
@@ -295,7 +301,7 @@ def atualizar_curvas(raiz: Path, git: Git, gerar: Callable[[], object]) -> str:
     when the file is missing or ``DEFASAGEM_DAS_CURVAS`` sessions of the lake's calendar behind, and commits both of
     its files (also a pair a failed commit left behind)."""
     arquivo = raiz / ARQUIVOS_DAS_CURVAS[0]
-    calendario = pd.read_parquet(raiz / ARQUIVO_CALENDARIO, columns=["date"])["date"]
+    calendario = pd.to_datetime(pd.read_parquet(raiz / ARQUIVO_CALENDARIO, columns=["date"])["date"])
     ultima = pd.read_parquet(arquivo, columns=["date"])["date"].max() if arquivo.exists() else None
     atrasada = ultima is None or int((calendario > ultima).sum()) >= DEFASAGEM_DAS_CURVAS
     if atrasada:

@@ -741,3 +741,19 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
 - Audit so far: universe vs French's market -0.3% a year, correlation 0.987; the review is not closed. Known limit: few dead companies
   in the source; a free Tiingo download is filling them at 500 symbols a month.
 - The Alepha strategies on US stocks are pre-registered (N stays 53) and have not run, so there is no US result yet.
+
+## US stocks (2026-10-31)
+
+The screen "Ações americanas" shows, from derived files in `docs/dados/us-*`: the Alepha strategies in R$ against SPY, ETFs and
+Brazilian funds, the gate, today's 15 names, each universe stock's indicators and the US macro. Information only: **no strategy
+passes the gate** (`docs/us-estrategias-2026-10-31.txt`; best is the Composite, P at most 0.78, DSR at most 0.22), with 310 of 1,505
+dead names so far. Real money stays on the Conservadora. Provider prices never reach git or the app; data, ClickHouse tables and
+audit are in the lake's README.
+
+```bash
+python -X utf8 scripts/us_avaliar.py > docs/us-estrategias-<date>.txt   # about 30 minutes, after `us-gold` in the lake
+python -X utf8 scripts/us_indicadores.py
+```
+
+Risk reads monthly returns, since dead names have no daily history. Banks keep P/E and P/B here, unlike the B3 panel, because
+EDGAR's equity is a bank's equity. Empty market values are names whose cap the checks reject (16% today, BRK.B among them).

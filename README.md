@@ -732,3 +732,12 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
   the month), AMI is almost all one BDR (AURA33), and Trend holds S&P 500 futures, nothing to copy. None enters the
   plan.
 - Leverage stays 1.0x. Next: the options veto test (spec approved).
+## Session 64 notes (2026-10-31)
+
+- Fictitious-account simulator built on a branch, not in `main` yet: first buy at the close of 03/11, R$ 9,000 in the composite and
+  R$ 1,000 in the CDI, against BOVA11, IVVB11 and the CDI. Real money stays on the Conservadora until paper-v3 decides.
+- US stocks and ETFs, on branches: a lake with the same layers as the B3 one (raw files on the local disk only, bronze, ClickHouse,
+  gold), joined with FRED, French and EDGAR. Only derived results will reach this repository and the deployed app.
+- Audit so far: universe vs French's market -0.3% a year, correlation 0.987; the review is not closed. Known limit: few dead companies
+  in the source; a free Tiingo download is filling them at 500 symbols a month.
+- The Alepha strategies on US stocks are pre-registered (N stays 53) and have not run, so there is no US result yet.

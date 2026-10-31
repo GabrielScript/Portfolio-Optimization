@@ -1,0 +1,106 @@
+Coverage: {'companies': 5474, 'dead_from_tiingo': 315, 'first_month': '2016-11-01', 'floor_today': 1000000.0, 'last_month': '2026-09-01', 'stopped': 599}; DSR N 53. Dead names from Tiingo in this run: 310 (list of 1,505 candidates, largest first).
+
+=== Phase 0: 11/2019 to 09/2026, 82 months; refusals {'Composto': 0, 'Conservadora': 0, 'Fórmula Mágica': 0, 'Trending Value': 4, 'Piotroski': 0, 'Múltiplo do Adquirente': 0, 'Universo inteiro, pesos iguais': 0} ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR    Giro
+Composto                       0.185 0.183   0.872      -0.218      0.057  1.438     0.699 0.197  92.655
+Conservadora                   0.172 0.196   0.774      -0.279      0.040  0.909     0.641 0.157 101.193
+Fórmula Mágica                 0.074 0.272   0.294      -0.396     -0.039 -0.636     0.250 0.022  80.947
+Trending Value                 0.122 0.294   0.456      -0.508     -0.042 -1.088     0.513 0.094 118.657
+Piotroski                      0.088 0.206   0.378      -0.297     -0.037 -1.359     0.142 0.008 117.465
+Múltiplo do Adquirente         0.085 0.294   0.331      -0.466     -0.043 -0.827     0.331 0.037  78.337
+Universo inteiro, pesos iguais 0.113 0.221   0.473      -0.325     -0.015 -1.491     0.261 0.023  19.729
+SPY: {'CAGR': 0.1553906075299254, 'Vol': 0.16750746910944897, 'Sharpe': 0.7861979265120455, 'Queda máx.': -0.23927904301531733}
+      Composto  Conservadora  Fórmula Mágica  Trending Value  Piotroski  Múltiplo do Adquirente  Universo inteiro, pesos iguais   SPY
+2020      17.4          13.2            11.0           -11.4        7.9                   -15.2                            16.0  18.4
+2021      20.5           9.9            13.6            50.6       30.7                    30.8                            22.4  28.7
+2022       5.5           2.9           -18.6            -8.2       -7.7                   -14.2                           -16.0 -18.2
+2023      10.3          10.9            22.0             8.3        1.3                    31.3                            18.6  26.2
+2024       6.5          14.1            -8.1            30.0       22.2                    -7.8                            12.2  24.9
+2025      31.0          26.2            -1.1             8.2        1.8                    12.8                            14.1  17.7
+2026      36.5          41.3            34.8             9.6        4.0                    18.1                            10.3  12.7
+(phase 0 done in 270 s)
+
+=== Phase 1: 12/2019 to 09/2026, 81 months; refusals {'Composto': 0, 'Conservadora': 0, 'Fórmula Mágica': 0, 'Trending Value': 5, 'Piotroski': 0, 'Múltiplo do Adquirente': 0, 'Universo inteiro, pesos iguais': 0} ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR    Giro
+Composto                       0.201 0.186   0.932      -0.202      0.082  1.850     0.781 0.049  93.204
+Conservadora                   0.188 0.202   0.821      -0.301      0.049  1.245     0.747 0.042  98.554
+Fórmula Mágica                 0.082 0.273   0.321      -0.394     -0.029 -0.487     0.303 0.002  79.636
+Trending Value                 0.021 0.277   0.122      -0.474     -0.117 -1.949     0.101 0.000 112.630
+Piotroski                      0.035 0.201   0.130      -0.270     -0.085 -2.617     0.017 0.000 116.100
+Múltiplo do Adquirente         0.127 0.304   0.454      -0.468     -0.003 -0.056     0.544 0.011  78.679
+Universo inteiro, pesos iguais 0.116 0.223   0.481      -0.316     -0.007 -0.742     0.309 0.002  19.780
+SPY: {'CAGR': 0.15255559360435944, 'Vol': 0.16843909891461928, 'Sharpe': 0.7672469047571662, 'Queda máx.': -0.23927904301531744}
+      Composto  Conservadora  Fórmula Mágica  Trending Value  Piotroski  Múltiplo do Adquirente  Universo inteiro, pesos iguais   SPY
+2020      13.3           6.7            16.3           -27.7       22.0                     3.6                            20.4  18.4
+2021      22.0          23.7            17.0            31.2       15.8                    29.1                            22.4  28.7
+2022      17.5           2.8            -7.1           -14.6      -12.8                     3.5                           -15.7 -18.2
+2023      14.3          17.9            22.4            17.4       -2.5                    25.2                            18.3  26.2
+2024       0.9          17.2           -13.7            -2.3        8.7                    -5.7                            11.7  24.9
+2025      25.0          24.6             0.0             7.5       -6.1                    12.1                            15.3  17.7
+2026      46.9          36.8            27.6            15.5        2.5                    22.4                            11.0  12.7
+(phase 1 done in 497 s)
+
+=== Phase 2: 01/2020 to 09/2026, 80 months; refusals {'Composto': 0, 'Conservadora': 0, 'Fórmula Mágica': 0, 'Trending Value': 5, 'Piotroski': 0, 'Múltiplo do Adquirente': 0, 'Universo inteiro, pesos iguais': 0} ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR    Giro
+Composto                       0.174 0.182   0.823      -0.226      0.046  1.202     0.637 0.216  98.152
+Conservadora                   0.137 0.204   0.600      -0.301     -0.001 -0.032     0.440 0.100 105.883
+Fórmula Mágica                 0.108 0.271   0.410      -0.333     -0.017 -0.268     0.398 0.082  80.971
+Trending Value                 0.134 0.306   0.483      -0.460     -0.019 -0.294     0.577 0.176 114.338
+Piotroski                      0.088 0.204   0.380      -0.220     -0.046 -1.421     0.118 0.009 112.743
+Múltiplo do Adquirente         0.124 0.278   0.464      -0.369      0.002  0.043     0.489 0.123  83.260
+Universo inteiro, pesos iguais 0.120 0.222   0.495      -0.296     -0.012 -1.044     0.316 0.054  19.960
+SPY: {'CAGR': 0.15467282211085842, 'Vol': 0.16941943923808908, 'Sharpe': 0.7737975675564752, 'Queda máx.': -0.23927904301531744}
+      Composto  Conservadora  Fórmula Mágica  Trending Value  Piotroski  Múltiplo do Adquirente  Universo inteiro, pesos iguais   SPY
+2021      20.2          15.3            11.9            54.7       27.6                    29.1                            23.5  28.7
+2022       3.7          -6.4            -1.1            -5.5      -12.0                   -16.4                           -16.1 -18.2
+2023      16.6          26.6            30.2            15.0       15.5                    45.4                            19.5  26.2
+2024      12.3          11.9           -10.1             2.6        4.9                    -1.7                            12.5  24.9
+2025      38.2          21.2             5.5            32.2        5.3                    23.8                            14.7  17.7
+2026      16.7          18.0            20.2             6.2       -5.7                    13.1                             8.5  12.7
+(phase 2 done in 722 s)
+
+=== Gate: P[> SPY] and DSR >= 0.95 in all three phases ===
+Composto: P [0.699, 0.781, 0.637], DSR [0.197, 0.049, 0.216]: not a candidate
+Conservadora: P [0.641, 0.747, 0.44], DSR [0.157, 0.042, 0.1]: not a candidate
+Fórmula Mágica: P [0.25, 0.303, 0.398], DSR [0.022, 0.002, 0.082]: not a candidate
+Trending Value: P [0.513, 0.101, 0.577], DSR [0.094, 0.0, 0.176]: not a candidate
+Piotroski: P [0.142, 0.017, 0.118], DSR [0.008, 0.0, 0.009]: not a candidate
+Múltiplo do Adquirente: P [0.331, 0.544, 0.489], DSR [0.037, 0.011, 0.123]: not a candidate
+
+=== In R$, phase 0's dates. The hindsight lines could not have been chosen at the start ===
+                                                 CAGR   Vol  Queda máx.  R$ 1 vira      Desde
+Capyvara                                        1.031 0.241      -0.102      6.239 2024-02-29
+AMI                                             0.806 0.516      -0.342     12.344 2022-06-30
+15 ETFs, melhores do período (retrospecto)      0.438 0.452      -0.661     11.980 2019-11-30
+15 ETFs, melhores 12 meses                      0.425 0.508      -0.415     11.229 2019-11-30
+15 fundos BR, melhores do período (retrospecto) 0.389 0.238      -0.363      9.426 2019-11-30
+Trend EUA 2x                                    0.303 0.315      -0.444      5.118 2020-07-31
+QQQ                                             0.251 0.213      -0.370      4.617 2019-11-30
+15 fundos BR, melhores 12 meses                 0.237 0.234      -0.252      4.267 2019-11-30
+Composto                                        0.221 0.151      -0.123      3.907 2019-11-30
+B3 Composto                                     0.212 0.238      -0.310      3.721 2019-11-30
+Conservadora                                    0.207 0.163      -0.122      3.626 2019-11-30
+SPY                                             0.190 0.164      -0.263      3.291 2019-11-30
+VTI                                             0.184 0.167      -0.273      3.177 2019-11-30
+IVVB11                                          0.181 0.166      -0.273      3.115 2019-11-30
+Trending Value                                  0.157 0.269      -0.366      2.701 2019-11-30
+B3 Conservadora                                 0.148 0.210      -0.317      2.566 2019-11-30
+Universo inteiro, pesos iguais                  0.147 0.199      -0.287      2.550 2019-11-30
+IWM                                             0.129 0.208      -0.335      2.296 2019-11-30
+Piotroski                                       0.121 0.198      -0.253      2.179 2019-11-30
+Múltiplo do Adquirente                          0.118 0.271      -0.311      2.139 2019-11-30
+Fórmula Mágica                                  0.106 0.262      -0.365      1.993 2019-11-30
+CDI                                             0.099 0.013       0.000      1.908 2019-11-30
+BOVA11                                          0.087 0.226      -0.377      1.764 2019-11-30
+
+=== Sensitivities, phase 0: CAGR ===
+                                Base  Perda de 30% ao sair (quem não foi comprada)  Sem os nomes mortos do Tiingo  Piso de US$ 5 milhões
+Composto                       0.185                                         0.182                          0.183                  0.162
+Conservadora                   0.172                                         0.155                          0.166                  0.146
+Fórmula Mágica                 0.074                                         0.070                          0.070                  0.092
+Trending Value                 0.122                                         0.108                          0.268                  0.330
+Piotroski                      0.088                                         0.088                          0.087                  0.085
+Múltiplo do Adquirente         0.085                                         0.082                          0.099                  0.143
+Universo inteiro, pesos iguais 0.113                                         0.110                          0.112                  0.115
+
+Done in 1674 s

@@ -21,7 +21,7 @@ import streamlit as st
 
 import ativos_tela
 from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem,
-                  sentimento)
+                  sentimento, simulador)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -66,6 +66,8 @@ PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")
 INDICADORES_DO_FOCUS = ("Selic", "IPCA", "PIB Total", "Câmbio")
 # the live rerun's daily curves (scripts/curvas_ao_vivo.py, DECISOES 188): results by period and year
 ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "curvas-ao-vivo.parquet"
+# the fictitious account's ledger (core/simulador.py), written by the daily upkeep
+ARQUIVO_SIMULADOR = Path(__file__).resolve().parents[1] / "simulador" / "ordens.csv"
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
@@ -124,6 +126,18 @@ def carregar_cdi(anos: int, dia: date) -> pd.Series:
         return cdi_lago.daily_cdi(anos, dia)
     except market_data.ErroDadosMercado:
         return pd.Series(dtype=float)
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_simulador(dia: date, versao_dados: int, arquivo: Path = ARQUIVO_SIMULADOR) -> simulador.Painel | None:
+    """The fictitious account on the app's price files; None before its first buy."""
+    ordens = simulador.ler_ordens(arquivo)
+    if ordens.empty:
+        return None
+    papeis = [*ordens["ticker"].unique(), *simulador.REFERENCIAS]
+    precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], ordens["data"].min().date(), dia)
+    return simulador.painel(ordens, precos.rename(columns=lambda papel: papel.removesuffix(".SA")),
+                            carregar_cdi(dia.year - simulador.INICIO.year + 1, dia))
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

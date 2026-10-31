@@ -589,6 +589,69 @@ def test_a_run_with_the_live_curves_step_reruns_them_and_pushes_the_commit(app):
     assert "docs/dados/curvas-ao-vivo.parquet" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
 
 
+def _ordens_do_dia(data: str) -> pd.DataFrame:
+    return pd.DataFrame({"data": [pd.Timestamp(data)], "carteira": ["Composto"], "ticker": ["PETR4"], "ordem": [100],
+                         "preco": [30.0], "custo": [1.5]})
+
+
+def test_the_simulator_step_appends_the_orders_due_commits_them_and_then_is_up_to_date(app):
+    from scripts.manutencao import ARQUIVO_SIMULADOR, atualizar_simulador, git_em
+    git = git_em(app)
+    devidas = [_ordens_do_dia("2026-11-03"), pd.DataFrame()]
+    assert atualizar_simulador(app, git, lambda _ordens: devidas.pop(0)) == "simulador: até 03/11/2026"
+    assert git("log", "-1", "--format=%s") == "data: simulador até 03/11/2026 (manutenção)"
+    assert git("show", "--name-only", "--format=", "HEAD").splitlines() == [ARQUIVO_SIMULADOR.as_posix()]
+    vistas = []
+    assert atualizar_simulador(app, git, lambda ordens: vistas.append(ordens) or devidas.pop(0)) == "simulador: em dia"
+    assert vistas[0]["ticker"].tolist() == ["PETR4"]             # the next run sees the ledger it wrote
+
+
+def test_the_simulator_step_with_nothing_due_commits_nothing(app):
+    from scripts.manutencao import atualizar_simulador, git_em
+    git = git_em(app)
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_simulador(app, git, lambda _ordens: pd.DataFrame()) == "simulador: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
+def test_a_ledger_a_failed_commit_left_behind_is_committed_on_the_next_run(app):
+    from core.simulador import acrescentar_ordens
+    from scripts.manutencao import ARQUIVO_SIMULADOR, atualizar_simulador, git_em
+    acrescentar_ordens(app / ARQUIVO_SIMULADOR, _ordens_do_dia("2026-11-03"))
+    git = git_em(app)
+    assert atualizar_simulador(app, git, lambda _ordens: pd.DataFrame()) == "simulador: até 03/11/2026"
+    assert not git("status", "--porcelain", "--", "simulador")
+
+
+def test_a_run_with_the_simulator_step_pushes_its_ledger(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 4, 10, 0), lambda: _saida(10),
+                         simular=lambda _ordens: _ordens_do_dia("2026-11-03"))
+    assert resultado.desfecho == "ok" and "simulador: até 03/11/2026" in resultado.nota
+    assert "simulador/ordens.csv" in _origem(app, "ls-tree", "-r", "--name-only", "main").splitlines()
+
+
+def test_the_simulator_reads_the_paper_records_the_price_files_and_buys_on_the_first_close(app, monkeypatch):
+    from scripts import manutencao as m
+    (app / "lago").mkdir()
+    (app / "paper-v3").mkdir()
+    papeis = ["AAAA3", "BBBB3", "CCCC3", "DDDD3", "EEEE3"]
+    dias = pd.bdate_range("2026-11-03", periods=2)
+    pd.DataFrame({"date": dias[:1], **dict.fromkeys(papeis, 10.0), "BOVA11": 100.0, "IVVB11": 100.0}).to_parquet(
+        app / m.ARQUIVO_CALENDARIO, index=False)
+    for nome in ("composto", "conservadora"):
+        pd.DataFrame({"data": "2026-10-27", "ticker": papeis, "peso": 0.2, "preco": 9.0}).to_csv(
+            app / "paper-v3" / f"{nome}.csv", index=False)
+    monkeypatch.setattr("core.cdi_lago.daily_cdi", lambda _anos, _hoje: pd.Series(dtype=float))
+    from core.simulador import ler_ordens
+    novas = m.ordens_do_simulador(app, date(2026, 11, 4), ler_ordens(app / m.ARQUIVO_SIMULADOR))
+    assert set(novas["carteira"]) == {"Composto", "Conservadora"}
+    assert set(novas["data"]) == {dias[0]}
+    assert set(novas["ticker"]) == set(papeis)
+    assert (novas["custo"] > 0).all()                            # no snapshot: the 10 bps of a name outside it
+
+
 def test_pendentes_sem_caminhos_nao_devolve_o_repositorio_inteiro():
     """git status with no path lists every dirty file; paper-v3's readings folder does not exist before its 1st reading,
     and on 30/10/2026 the upkeep tried to add and push the user's loose files."""

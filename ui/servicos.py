@@ -10,6 +10,7 @@ hasheáveis (tuplas, números, DataFrames) e montam os objetos do core dentro.
 
 from __future__ import annotations
 
+import json
 import os
 import threading
 from dataclasses import dataclass, replace
@@ -25,6 +26,7 @@ from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
+from ui.eua import ResultadoEUA
 
 
 @dataclass(frozen=True)
@@ -68,6 +70,8 @@ INDICADORES_DO_FOCUS = ("Selic", "IPCA", "PIB Total", "Câmbio")
 ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "curvas-ao-vivo.parquet"
 # the fictitious account's ledger (core/simulador.py), written by the daily upkeep
 ARQUIVO_SIMULADOR = Path(__file__).resolve().parents[1] / "simulador" / "ordens.csv"
+# the derived results of the US test (scripts/us_avaliar.py)
+PASTA_EUA = Path(__file__).resolve().parents[1] / "docs" / "dados"
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:
@@ -98,6 +102,17 @@ def setores_do_lago(tickers: tuple[str, ...], pasta: Path = PASTA_MARCOS_V2) -> 
     setores = lago.ler_setores(marcos[-1] / "sectors.parquet")
     return {ticker: setores[ticker.removesuffix(".SA")[:4]] for ticker in tickers
             if ticker.removesuffix(".SA")[:4] in setores.index}
+
+
+def carregar_eua(pasta: Path = PASTA_EUA) -> ResultadoEUA | None:
+    """The derived results of the US test, or None before it has run."""
+    if not (pasta / "us-cobertura.json").exists():
+        return None
+    curvas = pd.read_parquet(pasta / "us-curvas.parquet")
+    return ResultadoEUA(curvas.set_index(pd.DatetimeIndex(pd.to_datetime(curvas.pop("date")))),
+                        pd.read_parquet(pasta / "us-resumo.parquet"), pd.read_parquet(pasta / "us-portao.parquet"),
+                        pd.read_parquet(pasta / "us-carteiras.parquet"),
+                        json.loads((pasta / "us-cobertura.json").read_text(encoding="utf-8")))
 
 
 @st.cache_data(show_spinner=False, max_entries=2)

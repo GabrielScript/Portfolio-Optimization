@@ -195,3 +195,51 @@ def test_the_screen_says_when_the_test_has_not_run(tmp_path):
     tela = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=60).run()
     assert not tela.exception
     assert tela.info and not tela.dataframe
+
+
+def test_the_cdi_of_the_live_curves_is_a_daily_rate_and_compounds(tmp_path, monkeypatch):
+    """The live curves hold levels for the portfolios and the day's rate for the CDI: read as a level, it fell 60%."""
+    from scripts import us_avaliar
+
+    dias = pd.bdate_range("2020-01-01", periods=60)
+    pd.DataFrame({"fase": 0, "date": dias, "Composto": 100.0, "Conservadora": 100.0, "BOVA11": 100.0,
+                  "CDI": np.r_[np.full(30, 0.001), np.full(29, 0.0005), np.nan]}).to_parquet(tmp_path / "curvas.parquet")
+    pd.DataFrame({"date": dias, "IVVB11": 100.0}).to_parquet(tmp_path / "precos.parquet")
+    monkeypatch.setattr(us_avaliar, "CURVAS_B3", tmp_path / "curvas.parquet")
+    monkeypatch.setattr(us_avaliar, "PRECOS_B3", tmp_path / "precos.parquet")
+    cdi = us_avaliar.curvas_b3(pd.DatetimeIndex([dias[29], dias[58], dias[59]]))["CDI"]
+    assert cdi.iloc[0] == pytest.approx(1.001 ** 30)
+    assert cdi.iloc[1] == pytest.approx(1.001 ** 30 * 1.0005 ** 29)
+    assert cdi.iloc[2] == cdi.iloc[1]                        # the day without a rate yet keeps the last level
+
+
+def _com_indicadores(pasta):
+    _pasta_de_resultados(pasta)
+    pd.DataFrame({"Ticker": ["AAPL", "JPM"], "Empresa": ["Apple", "JPMorgan"], "Setor": ["BusEq", "Financeiro"],
+                  "Valor de mercado": [4e12, 8e11], "Retorno 12m": [0.3, 0.07], "Vol anual": [0.2, 0.18], "Beta": [0.7, 1.0],
+                  "Queda máx. (3 anos)": [-0.2, -0.1], "P/L": [37.0, 14.0], "P/VP": [45.0, 2.0], "ROE": [1.2, 0.15],
+                  "Margem líquida": [0.27, 0.3], "Dív. líq./EBITDA": [0.1, np.nan], "DY 12m": [0.004, 0.014],
+                  "Balanço de": pd.Timestamp("2026-06-30")}).to_parquet(pasta / "us-indicadores.parquet", index=False)
+    pd.DataFrame({"Indicador": ["Juro de 10 anos"], "Valor": [5.0], "Unidade": ["% ao ano"],
+                  "Mês": [pd.Timestamp("2026-10-01")]}).to_parquet(pasta / "us-macro.parquet", index=False)
+
+
+def test_the_screen_shows_each_stocks_indicators_and_the_macro_and_filters_by_sector(tmp_path):
+    from streamlit.testing.v1 import AppTest
+    _com_indicadores(tmp_path)
+    tela = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=60).run()
+    assert not tela.exception
+    tabelas = {tuple(tabela.value.columns)[0]: tabela.value for tabela in tela.dataframe}
+    assert tabelas["Ticker"]["Ticker"].tolist() == ["AAPL", "JPM"]
+    assert tabelas["Indicador"]["Valor"].iloc[0] == 5.0
+    tela.selectbox[0].select("Financeiro").run()
+    assert not tela.exception
+    filtrada = {tuple(tabela.value.columns)[0]: tabela.value for tabela in tela.dataframe}["Ticker"]
+    assert filtrada["Ticker"].tolist() == ["JPM"]
+
+
+def test_results_without_the_indicators_still_show(tmp_path):
+    from streamlit.testing.v1 import AppTest
+    _pasta_de_resultados(tmp_path)
+    tela = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=60).run()
+    assert not tela.exception and len(tela.dataframe) == 3 and not tela.selectbox

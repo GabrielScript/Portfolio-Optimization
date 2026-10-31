@@ -192,9 +192,10 @@ def curvas_b3(datas: pd.DatetimeIndex) -> pd.DataFrame:
     vivas = vivas[vivas["fase"] == 0].set_index(pd.DatetimeIndex(pd.to_datetime(vivas.loc[vivas["fase"] == 0, "date"])))
     ivvb = pd.read_parquet(PRECOS_B3, columns=["date", "IVVB11"])
     ivvb = ivvb.set_index(pd.DatetimeIndex(pd.to_datetime(ivvb["date"])))["IVVB11"]
-    juntas = pd.concat([vivas[["Composto", "Conservadora", "BOVA11", "CDI"]].rename(
+    cdi = (1.0 + vivas["CDI"].dropna()).cumprod()       # that file holds the day's rate, the portfolios' levels
+    juntas = pd.concat([vivas[["Composto", "Conservadora", "BOVA11"]].rename(
         columns=lambda nome: f"B3 {nome}" if nome in ("Composto", "Conservadora") else nome),
-        ivvb.rename("IVVB11")], axis=1).sort_index().ffill()
+        cdi.rename("CDI"), ivvb.rename("IVVB11")], axis=1).sort_index().ffill()
     return juntas.reindex(datas, method="ffill")
 
 

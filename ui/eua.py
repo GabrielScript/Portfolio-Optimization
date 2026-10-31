@@ -17,6 +17,14 @@ COLUNAS_DO_RESUMO = {"CAGR": st.column_config.NumberColumn("Retorno a.a. (R$)", 
                      "Desde": st.column_config.DateColumn(format="MM/YYYY")}
 COLUNAS_DO_PORTAO = {"P[> SPY] mínimo": st.column_config.NumberColumn(format="%.3f"),
                      "DSR mínimo": st.column_config.NumberColumn(format="%.3f")}
+TODOS_OS_SETORES = "Todos os setores"
+COLUNAS_DOS_INDICADORES = {"Valor de mercado": st.column_config.NumberColumn("Valor de mercado (US$)", format="compact"),
+                           "Retorno 12m": PERCENTUAL, "Vol anual": PERCENTUAL, "Beta": st.column_config.NumberColumn(format="%.2f"),
+                           "Queda máx. (3 anos)": PERCENTUAL, "P/L": st.column_config.NumberColumn(format="%.1f"),
+                           "P/VP": st.column_config.NumberColumn(format="%.1f"), "ROE": PERCENTUAL, "Margem líquida": PERCENTUAL,
+                           "Dív. líq./EBITDA": st.column_config.NumberColumn(format="%.1f"), "DY 12m": PERCENTUAL,
+                           "Balanço de": st.column_config.DateColumn(format="MM/YYYY")}
+COLUNAS_DA_MACRO = {"Valor": st.column_config.NumberColumn(format="%.2f"), "Mês": st.column_config.DateColumn(format="MM/YYYY")}
 LINHAS_DO_GRAFICO = ("Composto", "Conservadora", "SPY", "B3 Composto", "B3 Conservadora", "BOVA11", "CDI",
                      "15 fundos BR, melhores 12 meses")
 
@@ -28,10 +36,31 @@ class ResultadoEUA:
     portao: pd.DataFrame
     carteiras: pd.DataFrame
     cobertura: dict
+    indicadores: pd.DataFrame | None = None     # one row per stock of the last universe (``scripts/us_indicadores.py``)
+    macro: pd.DataFrame | None = None
 
 
 def _milhar(valor: int) -> str:
     return f"{valor:,}".replace(",", ".")
+
+
+def _indicadores(tabela: pd.DataFrame) -> None:
+    st.markdown("### Indicadores por ação")
+    st.caption(f"As {_milhar(len(tabela))} ações do universo atual, das maiores às menores. Múltiplos dos balanços do EDGAR, "
+               "como conhecidos hoje; risco de retornos mensais, com beta contra o mercado do Ken French. Vazio é falta de "
+               "dado: valor de mercado que não bate com o site ou com o volume negociado fica de fora. Informação, não "
+               "recomendação.")
+    setor = st.selectbox("Setor", [TODOS_OS_SETORES, *sorted(tabela["Setor"].dropna().unique())], key="eua_setor")
+    vistas = tabela if setor == TODOS_OS_SETORES else tabela[tabela["Setor"] == setor]
+    st.dataframe(vistas, width="stretch", hide_index=True, column_config=COLUNAS_DOS_INDICADORES,
+                 alt="Valor de mercado, retorno, risco e múltiplos de cada ação americana do universo")
+
+
+def _macro(tabela: pd.DataFrame) -> None:
+    st.markdown("### Macro dos Estados Unidos")
+    st.caption("Última leitura de cada série do FRED e os fatores do Ken French em 12 meses.")
+    st.dataframe(tabela, width="stretch", hide_index=True, column_config=COLUNAS_DA_MACRO,
+                 alt="Última leitura de juros, inflação, desemprego, volatilidade, crédito e fatores nos Estados Unidos")
 
 
 def secao(resultado: ResultadoEUA | None) -> None:
@@ -65,3 +94,7 @@ def secao(resultado: ResultadoEUA | None) -> None:
     st.caption("Informação, não recomendação: mostra o que cada regra lê hoje.")
     st.dataframe(resultado.carteiras.drop(columns="mes"), width="stretch", hide_index=True,
                  column_config={"peso": PERCENTUAL}, alt="As 15 ações do Composto e da Conservadora nos Estados Unidos")
+    if resultado.indicadores is not None:
+        _indicadores(resultado.indicadores)
+    if resultado.macro is not None:
+        _macro(resultado.macro)

@@ -109,10 +109,13 @@ def carregar_eua(pasta: Path = PASTA_EUA) -> ResultadoEUA | None:
     if not (pasta / "us-cobertura.json").exists():
         return None
     curvas = pd.read_parquet(pasta / "us-curvas.parquet")
+    def opcional(nome: str) -> pd.DataFrame | None:
+        return pd.read_parquet(pasta / nome) if (pasta / nome).exists() else None
     return ResultadoEUA(curvas.set_index(pd.DatetimeIndex(pd.to_datetime(curvas.pop("date")))),
                         pd.read_parquet(pasta / "us-resumo.parquet"), pd.read_parquet(pasta / "us-portao.parquet"),
                         pd.read_parquet(pasta / "us-carteiras.parquet"),
-                        json.loads((pasta / "us-cobertura.json").read_text(encoding="utf-8")))
+                        json.loads((pasta / "us-cobertura.json").read_text(encoding="utf-8")),
+                        opcional("us-indicadores.parquet"), opcional("us-macro.parquet"))
 
 
 @st.cache_data(show_spinner=False, max_entries=2)

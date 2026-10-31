@@ -17,6 +17,7 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
   its rows changed;
 - the live backtest curves of the Alepha screen (``scripts/curvas_ao_vivo.py``, DECISOES 188) when they are 5
   sessions behind the lake (about weekly; a ~3 minute run);
+- the fictitious account's ledger (``core.simulador``), which only follows the paper-v3 records;
 - the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
   filings only (DECISOES 124);
 - the newest scored headlines (title, link, topic, tone) to the private repository ``alepha-manchetes`` through its
@@ -56,6 +57,8 @@ ARQUIVO_REGISTRO = Path("paper-v2/carteiras.csv")
 PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite book (DECISOES 166)
 PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
+ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
+ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
@@ -395,15 +398,46 @@ def _gerar_painel(raiz: Path, pasta_do_log: Path) -> tuple[pd.DataFrame, pd.Data
     return gerar(pasta_do_log, raiz / PASTA_DO_LAGO, tickers_do_painel(ler_nomes(raiz / ARQUIVO_ATIVOS)), date.today())
 
 
+def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.DataFrame:
+    """The fictitious account's rebalances due on this checkout's records and price files, after ``ordens``."""
+    from core import cdi_lago, precos_do_app, simulador
+    from core.rebalanceio import custo_com_liquidez
+    registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
+                 "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
+    papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
+    precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], simulador.INICIO.date(), hoje,
+                                           raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
+    foto = pd.read_parquet(raiz / ARQUIVO_LIQUIDEZ) if (raiz / ARQUIVO_LIQUIDEZ).exists() else None
+    return simulador.ordens_devidas(ordens, registros, precos.rename(columns=lambda papel: papel.removesuffix(".SA")),
+                                    cdi_lago.daily_cdi(hoje.year - simulador.INICIO.year + 1, hoje),
+                                    custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
+
+
+def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], pd.DataFrame]) -> str:
+    """Appends to the ledger what ``devidas`` returns for it and commits it (also rows a failed commit left behind)."""
+    from core import simulador
+    arquivo = raiz / ARQUIVO_SIMULADOR
+    novas = devidas(simulador.ler_ordens(arquivo))
+    if not novas.empty:
+        simulador.acrescentar_ordens(arquivo, novas)
+    if not pendentes(git, [ARQUIVO_SIMULADOR.as_posix()]):
+        return "simulador: em dia"
+    fim = f"{simulador.ler_ordens(arquivo)['data'].max():%d/%m/%Y}"
+    commitar(git, [ARQUIVO_SIMULADOR.as_posix()], f"data: simulador até {fim} (manutenção)")
+    return f"simulador: até {fim}"
+
+
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
              tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None,
              manchetes: LojaDeManchetes | None = None, ler_leitura_v3: Callable[[], str] | None = None,
-             gerar_curvas: Callable[[], object] | None = None) -> Resultado:
+             gerar_curvas: Callable[[], object] | None = None,
+             simular: Callable[[pd.DataFrame], pd.DataFrame] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
     the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step);
-    ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step)."""
+    ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step); ``simular``: the account's orders
+    due for its ledger (None: no simulator step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -422,6 +456,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
               ("ativos", lambda: atualizar_ativos(raiz, git)),          # before the panel, which reads the list
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
+    if simular is not None:
+        passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular)))
     if gerar_curvas is not None:
         passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
@@ -525,7 +561,8 @@ def main() -> int:
                          manchetes=(CLONE_DAS_MANCHETES, URL_DAS_MANCHETES, PASTA_DO_LOG,
                                     lambda: _gerar_manchetes(PASTA_DO_LOG)),
                          ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"),
-                         gerar_curvas=lambda: rodar_curvas(RAIZ))
+                         gerar_curvas=lambda: rodar_curvas(RAIZ),
+                         simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens))
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

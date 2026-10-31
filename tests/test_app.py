@@ -705,7 +705,7 @@ def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monke
     at.run()
     assert not at.exception
     assert any("Mercado agora" in m.value for m in at.markdown)
-    acoes = [df.value for df in at.dataframe if "P/L" in df.value.columns]
+    acoes = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)]
     assert len(acoes) == 1 and len(acoes[0]) >= 100 and "Retorno 12m" in acoes[0].columns
     assert any("Selic" in df.value.index for df in at.dataframe if "Pesquisa" in df.value.columns)
     assert any("nada aqui muda o plano" in c.value for c in at.caption)
@@ -720,12 +720,12 @@ def test_the_market_panel_lists_bdrs_and_etfs_with_a_type_column_and_filters_by_
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    tabela = [df.value for df in at.dataframe if "P/L" in df.value.columns][0].set_index("Ticker")
+    tabela = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)][0].set_index("Ticker")
     assert (tabela.loc["TSMC34", ["Tipo", "Empresa", "Setor"]].tolist(), tabela.loc["XINA11", "Tipo"],
             tabela.loc["PETR4", "Tipo"]) == (["BDR", "TAIWANSMFAC", "BDR"], "ETF", "Ação")
     assert any("BDRs: retorno só de preço" in c.value for c in at.caption)
     at.segmented_control(key="tipos_da_tabela").set_value(["BDR"]).run()
-    tabela = [df.value for df in at.dataframe if "P/L" in df.value.columns][0]
+    tabela = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)][0]
     assert set(tabela["Tipo"]) == {"BDR"}
 
 

@@ -686,6 +686,10 @@ Esta é uma ferramenta de **apoio à decisão**, sem vantagem comprovada sobre o
 - Options data in the lake (research only until a pre-registered test passes; the no-derivatives rule was lifted on 30/10, DECISOES 191): implied volatility and greeks
   of every traded B3 option since 1994 computed from COTAHIST, B3's daily Price Report from 2018 (futures, options
   on futures, open interest) and a daily snapshot of opcoes.net.br chains to cross-check the greeks.
+- Session 63 (30/10/2026): the no-derivatives rule is lifted; options and futures enter only if a pre-registered
+  test shows they help (DECISOES 191, 194). Next: a fictitious R$ 10,000 simulator (R$ 9,000 Composite, R$ 1,000 in
+  CDI for options) with a dashboard vs BOVA11, IVVB11 and CDI (DECISOES 192); every buy or sell needs an official
+  source, never news or sentiment alone (193). US data without survivorship bias: free route researched (195).
 - Quantum Portfolio Optimization: finalized, not adopted (see the QPO section above); no further QPO attempt.
 
 ## Session 60 notes (2026-10-29)

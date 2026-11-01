@@ -64,8 +64,8 @@ def _anos(tabela: pd.DataFrame) -> None:
 
 def _hrp(tabela: pd.DataFrame) -> None:
     st.markdown("### HRP e variantes desde 2026, em reais")
-    st.caption("Todas as linhas nas mesmas datas, do último fechamento de 2025 ao último mês da base americana, com 10 bps por lado e "
-               "antes de IR. Leitura descritiva sobre a base incompleta: nove meses e cerca de três rebalanceios não decidem nada. "
+    st.caption("Todas as linhas nas mesmas datas, do último fechamento de 2025 ao último mês da base americana. As estratégias americanas pagam 10 bps "
+               "por lado; tudo antes de IR. Leitura descritiva sobre a base incompleta: nove meses e cerca de três rebalanceios não decidem nada. "
                "\"Menor fase\" e \"Maior fase\" mostram quanto o resultado muda só por deslocar a data do rebalanceio em 1 ou 2 meses.")
     st.dataframe(tabela, width="stretch", hide_index=True, column_config=COLUNAS_DO_HRP,
                  alt="Retorno desde 2026 em reais de cada variante de HRP, do Composto, da Conservadora, do BOVA11 e do CDI")

@@ -757,3 +757,5 @@ python -X utf8 scripts/us_indicadores.py
 
 Risk reads monthly returns, since dead names have no daily history. Banks keep P/E and P/B here, unlike the B3 panel, because
 EDGAR's equity is a bank's equity. Empty market values are names whose cap the checks reject (16% today, BRK.B among them).
+
+**Still being fixed (2026-11-01, not merged):** five months where the site left a split in the prices move on a lake branch (UAVS 2024-10 goes from +2,727% to -43.5%), and the dead-name list grows from 1,505 to 2,114 names, including Sears, Endo and Seagen. At 500 names a month on Tiingo's free plan the download ends on 01/02/2027. Until then the US numbers may be optimistic, and US readings so far ran on the old panel. 7,133 dead names are not on Tiingo's list at all. DECISOES 229.

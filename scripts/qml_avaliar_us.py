@@ -21,7 +21,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import us_teste as ut  # noqa: E402
 from core.backtest import walk_forward_dinamico  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
-from core.mv_continuo import estrategia_mv_continua  # noqa: E402
+from core.mv_continuo import estrategia_mv_continua_grande  # noqa: E402
 from core.periodos import anos_em_reais  # noqa: E402
 from core.qml_nota import nota_da_previsao  # noqa: E402
 from core.qubo_giro import TAU, estrategia_qubo_giro  # noqa: E402
@@ -60,7 +60,7 @@ def main(argv: list[str]) -> int:
                        "VQC-15": estrategia_por_nota(nota_da_previsao(previsoes_do_modelo(previsoes, "VQC")), dados.setores),
                        "Fourier-15": estrategia_por_nota(nota_da_previsao(previsoes_do_modelo(previsoes, "Fourier")), dados.setores),
                        "QUBO-giro": estrategia_qubo_giro(nota, dados.setores, log=log_da_fase),
-                       "MV-continuo": estrategia_mv_continua(nota, dados.setores)}
+                       "MV-continuo": estrategia_mv_continua_grande(nota, dados.setores)}
         resultados = {nome: walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia), ut.CONFIG, nome)
                       for nome, estrategia in estrategias.items()}
         conferir_previsoes(resultados)

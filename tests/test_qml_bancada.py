@@ -51,6 +51,46 @@ def test_soft_qaoa_is_the_textbook_circuit_on_one_qubit():
         p[1] == pytest.approx((1.0 + np.sin(g) * np.sin(2 * beta)) / 2.0)
 
 
+def test_soft_qaoa_runs_on_sixteen_qubits():
+    # PennyLane's DiagonalQubitUnitary builds the dense 2^16 x 2^16 matrix: 68.7 GB, a crash on the bench's real size
+    diagonal = np.random.default_rng(0).normal(size=2 ** 16)
+    assert b.probabilidades_qaoa_soft(diagonal, np.full((2, 3), 0.4)).sum() == pytest.approx(1.0)
+
+
+def _soft_qaoa_de_referencia(n: int, diagonal):
+    """The bench's circuit gate by gate in PennyLane, usable only on small n."""
+    import pennylane as qml
+    import torch
+
+    @qml.qnode(qml.device("default.qubit", wires=n), interface="torch", diff_method="backprop")
+    def circuito(angulos):
+        for fio in range(n):
+            qml.Hadamard(wires=fio)
+        for gama, beta in zip(angulos[0], angulos[1], strict=True):
+            qml.DiagonalQubitUnitary(torch.exp(-1j * gama * diagonal), wires=range(n))
+            for fio in range(n):
+                qml.RX(2.0 * beta, wires=fio)
+        return qml.probs(wires=range(n))
+    return circuito
+
+
+def test_soft_qaoa_gives_the_probabilities_and_gradient_of_pennylanes_circuit():
+    import torch
+    n = 5
+    diagonal = torch.tensor(np.random.default_rng(1).normal(size=2 ** n), dtype=torch.float64)
+    custo = diagonal - diagonal.mean()
+    inicio = np.random.default_rng(2).normal(size=(2, 3))
+    resultados = []
+    for no in (b._no_qaoa_soft(n, diagonal), _soft_qaoa_de_referencia(n, diagonal)):
+        angulos = torch.tensor(inicio, dtype=torch.float64, requires_grad=True)
+        probabilidades = no(angulos)
+        (probabilidades * custo).sum().backward()
+        resultados.append((probabilidades.detach().numpy(), angulos.grad.numpy()))
+    (p_nosso, g_nosso), (p_ref, g_ref) = resultados
+    assert p_nosso == pytest.approx(p_ref, abs=1e-12)
+    assert g_nosso == pytest.approx(g_ref, abs=1e-12)
+
+
 def test_vqe_at_zero_angles_is_the_zero_state_and_training_lowers_the_energy():
     diagonal = b.energias_com_penalidade(_q(4), 2, 1.0)
     assert b.probabilidades_vqe(np.zeros((4, 4)))[0] == pytest.approx(1.0)

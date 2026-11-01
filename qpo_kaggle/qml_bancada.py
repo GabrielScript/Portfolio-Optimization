@@ -64,16 +64,24 @@ def _escalada(diagonal: np.ndarray) -> np.ndarray:
     return (diagonal - diagonal.mean()) / max(float(diagonal.max() - diagonal.min()), TOLERANCIA)
 
 
+def _mixer_x(estado: torch.Tensor, beta: torch.Tensor, n: int) -> torch.Tensor:
+    """RX(2 beta) on every wire: the same angle on all, so the wire order does not matter."""
+    cosseno, seno = torch.cos(beta), -1j * torch.sin(beta)
+    for fio in range(n):
+        pares = estado.reshape(-1, 2, 2 ** fio)
+        estado = torch.stack((cosseno * pares[:, 0] + seno * pares[:, 1],
+                              seno * pares[:, 0] + cosseno * pares[:, 1]), dim=1).reshape(-1)
+    return estado
+
+
 def _no_qaoa_soft(n: int, diagonal: torch.Tensor):
-    @qml.qnode(qml.device("default.qubit", wires=n), interface="torch", diff_method="backprop")
-    def circuito(angulos: torch.Tensor):
-        for fio in range(n):
-            qml.Hadamard(wires=fio)
+    """Simulated by hand from the diagonal: PennyLane's DiagonalQubitUnitary builds the dense 2^n x 2^n matrix, 68.7 GB at
+    n = 16. A test holds its probabilities and gradient to PennyLane's circuit on small n."""
+    def circuito(angulos: torch.Tensor) -> torch.Tensor:
+        estado = torch.full((2 ** n,), 2.0 ** (-n / 2.0), dtype=torch.complex128)
         for gama, beta in zip(angulos[0], angulos[1], strict=True):
-            qml.DiagonalQubitUnitary(torch.exp(-1j * gama * diagonal), wires=range(n))
-            for fio in range(n):
-                qml.RX(2.0 * beta, wires=fio)
-        return qml.probs(wires=range(n))
+            estado = _mixer_x(torch.exp(-1j * gama * diagonal) * estado, beta, n)
+        return estado.real ** 2 + estado.imag ** 2
     return circuito
 
 

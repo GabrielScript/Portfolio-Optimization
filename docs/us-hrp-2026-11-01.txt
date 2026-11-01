@@ -1,0 +1,155 @@
+Descriptive reading: nothing here decides. Coverage: {'companies': 5474, 'dead_from_tiingo': 315, 'first_month': '2016-11-01', 'floor_today': 1000000.0, 'last_month': '2026-09-01', 'stopped': 599}; DSR N 75; results in D:\b3-datalake\exports\hrp\us\0c1b67416665
+
+=== Phase 0: 11/2019 to 09/2026, 82 months, in dollars ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR  P[> Composto]  P[> Conservadora]
+HRP amostral                   0.086 0.167   0.413      -0.260     -0.033 -2.655     0.022 0.000          0.013              0.026
+HRP-dendrograma                0.091 0.210   0.389      -0.418     -0.004 -0.061     0.237 0.004          0.158              0.196
+Hierárquico 1/N                0.137 0.221   0.571      -0.336      0.003  0.170     0.449 0.013          0.260              0.315
+HERC 1/N                       0.118 0.276   0.443      -0.356     -0.026 -0.690     0.441 0.012          0.318              0.355
+HERC IVarP                     0.089 0.185   0.407      -0.283     -0.029 -1.945     0.055 0.000          0.031              0.046
+HERC CDaR                      0.093 0.204   0.405      -0.287     -0.035 -1.718     0.103 0.000          0.063              0.088
+Schur 0,5                      0.100 0.186   0.461      -0.282     -0.024 -2.060     0.077 0.000          0.049              0.073
+Composto                       0.185 0.183   0.872      -0.218      0.057  1.438     0.699 0.053            NaN              0.631
+Conservadora                   0.172 0.196   0.774      -0.279      0.040  0.909     0.641 0.039          0.369                NaN
+Universo inteiro, pesos iguais 0.113 0.221   0.473      -0.325     -0.015 -1.491     0.261 0.003          0.157              0.196
+SPY: {'CAGR': 0.1553906075299254, 'Vol': 0.16750746910944897, 'Sharpe': 0.7861979265120455, 'Queda máx.': -0.23927904301531733}
+      HRP amostral  HRP-dendrograma  Hierárquico 1/N  HERC 1/N  HERC IVarP  HERC CDaR  Schur 0,5  Composto  Conservadora  Universo inteiro, pesos iguais   SPY
+2020           6.5             21.1             13.1      14.1         9.7       11.7       11.2      17.4          13.2                            16.0  18.4
+2021          21.9              5.4             20.2      21.3        16.5       15.4       21.0      20.5           9.9                            22.4  28.7
+2022         -11.4            -25.9            -13.5      -9.3       -13.4      -13.7      -14.0       5.5           2.9                           -16.0 -18.2
+2023          13.1             18.7             18.9      13.4        12.1       11.8       15.2      10.3          10.9                            18.6  26.2
+2024          12.1             40.7             15.4      13.7        12.9       11.3       13.3       6.5          14.1                            12.2  24.9
+2025           9.0             18.5             25.1      15.6        12.6       15.5       11.6      31.0          26.2                            14.1  17.7
+2026           7.6             -4.1             13.8       8.8         8.3        9.2       10.4      36.5          41.3                            10.3  12.7
+(phase 0 done in 3 s)
+
+=== Phase 1: 12/2019 to 09/2026, 81 months, in dollars ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR  P[> Composto]  P[> Conservadora]
+HRP amostral                   0.086 0.167   0.412      -0.259     -0.029 -2.020     0.033 0.000          0.007              0.008
+HRP-dendrograma                0.055 0.209   0.226      -0.452     -0.018 -0.316     0.133 0.001          0.055              0.075
+Hierárquico 1/N                0.130 0.222   0.538      -0.295      0.009  0.533     0.415 0.007          0.170              0.193
+HERC 1/N                       0.079 0.265   0.315      -0.341     -0.042 -1.259     0.238 0.002          0.129              0.148
+HERC IVarP                     0.088 0.186   0.400      -0.268     -0.024 -1.528     0.066 0.000          0.019              0.019
+HERC CDaR                      0.085 0.201   0.367      -0.294     -0.031 -1.670     0.084 0.000          0.032              0.036
+Schur 0,5                      0.097 0.187   0.445      -0.282     -0.022 -1.792     0.080 0.000          0.028              0.029
+Composto                       0.201 0.186   0.932      -0.202      0.082  1.850     0.781 0.068            NaN              0.594
+Conservadora                   0.188 0.202   0.821      -0.301      0.049  1.245     0.747 0.058          0.406                NaN
+Universo inteiro, pesos iguais 0.116 0.223   0.481      -0.316     -0.007 -0.742     0.309 0.003          0.126              0.139
+SPY: {'CAGR': 0.15255559360435944, 'Vol': 0.16843909891461928, 'Sharpe': 0.7672469047571662, 'Queda máx.': -0.23927904301531744}
+      HRP amostral  HRP-dendrograma  Hierárquico 1/N  HERC 1/N  HERC IVarP  HERC CDaR  Schur 0,5  Composto  Conservadora  Universo inteiro, pesos iguais   SPY
+2020           6.9             25.7             21.0      19.7        16.3       20.2       12.3      13.3           6.7                            20.4  18.4
+2021          20.8             -1.0             15.6      11.4        13.2        8.6       20.3      22.0          23.7                            22.4  28.7
+2022         -11.0            -26.8            -13.4     -18.0       -16.6      -18.3      -13.7      17.5           2.8                           -15.7 -18.2
+2023          13.3             10.2             22.2      13.1        14.1       15.9       14.3      14.3          17.9                            18.3  26.2
+2024          11.2              3.8             16.9       4.3        10.9        6.7       12.8       0.9          17.2                            11.7  24.9
+2025           9.6             33.9             17.2      28.0        14.5       19.1       12.3      25.0          24.6                            15.3  17.7
+2026           9.9              2.6             12.4       1.3        11.3       10.2       11.1      46.9          36.8                            11.0  12.7
+(phase 1 done in 3 s)
+
+=== Phase 2: 01/2020 to 09/2026, 80 months, in dollars ===
+                                CAGR   Vol  Sharpe  Queda máx.  Alfa a.a.      t  P[> SPY]   DSR  P[> Composto]  P[> Conservadora]
+HRP amostral                   0.088 0.167   0.423      -0.246     -0.033 -2.510     0.030 0.000          0.026              0.107
+HRP-dendrograma                0.137 0.326   0.437      -0.364      0.073  0.612     0.541 0.049          0.477              0.568
+Hierárquico 1/N                0.109 0.219   0.459      -0.305     -0.023 -1.075     0.245 0.008          0.185              0.343
+HERC 1/N                       0.108 0.267   0.413      -0.328     -0.024 -0.629     0.371 0.022          0.301              0.435
+HERC IVarP                     0.096 0.188   0.437      -0.264     -0.021 -1.117     0.111 0.002          0.085              0.208
+HERC CDaR                      0.098 0.206   0.425      -0.272     -0.024 -0.979     0.156 0.004          0.131              0.265
+Schur 0,5                      0.103 0.188   0.467      -0.268     -0.023 -1.875     0.105 0.002          0.083              0.221
+Composto                       0.174 0.182   0.823      -0.226      0.046  1.202     0.637 0.088            NaN              0.800
+Conservadora                   0.137 0.204   0.600      -0.301     -0.001 -0.032     0.440 0.033          0.200                NaN
+Universo inteiro, pesos iguais 0.120 0.222   0.495      -0.296     -0.012 -1.044     0.316 0.015          0.239              0.412
+SPY: {'CAGR': 0.15467282211085842, 'Vol': 0.16941943923808908, 'Sharpe': 0.7737975675564752, 'Queda máx.': -0.23927904301531744}
+      HRP amostral  HRP-dendrograma  Hierárquico 1/N  HERC 1/N  HERC IVarP  HERC CDaR  Schur 0,5  Composto  Conservadora  Universo inteiro, pesos iguais   SPY
+2021          22.2             69.6             16.4      17.0        17.4       14.2       23.7      20.2          15.3                            23.5  28.7
+2022         -10.9            -11.1            -14.6     -12.5       -12.1      -13.0      -13.2       3.7          -6.4                           -16.1 -18.2
+2023          13.5             -6.4             16.1      12.4        12.5       15.3       16.0      16.6          26.6                            19.5  26.2
+2024          11.5             13.5             18.2       6.9        10.9        5.4       12.7      12.3          11.9                            12.5  24.9
+2025           9.3             25.7             18.7      38.1        14.2       24.0       11.5      38.2          21.2                            14.7  17.7
+2026           6.7              3.1              5.4      -2.9         7.8        5.7        6.8      16.7          18.0                             8.5  12.7
+(phase 2 done in 4 s)
+
+=== Gate, information only today: smallest reading over the phases, all must be >= 0.95 ===
+                 P[> Composto]  P[> Conservadora]  P[> SPY]   DSR Passou
+HRP amostral             0.007              0.008     0.022 0.000  False
+HRP-dendrograma          0.055              0.075     0.133 0.001  False
+Hierárquico 1/N          0.170              0.193     0.245 0.007  False
+HERC 1/N                 0.129              0.148     0.238 0.002  False
+HERC IVarP               0.019              0.019     0.055 0.000  False
+HERC CDaR                0.032              0.036     0.084 0.000  False
+Schur 0,5                0.028              0.029     0.077 0.000  False
+
+=== Since 2026: 31/12/2025 to 30/09/2026, in reais through PTAX, every row on these dates ===
+                                Retorno   Vol  Queda máx.  Retorno US$  Menor fase  Maior fase  CAGR inteiro  Nomes efetivos  Maior peso  Giro a.a.
+HRP amostral                      0.013 0.116      -0.057        0.076       0.005       0.035         0.119        1106.451       0.005      2.091
+HRP-dendrograma                  -0.097 0.134      -0.104       -0.041      -0.097      -0.030         0.124          10.920       0.221      5.786
+Hierárquico 1/N                   0.071 0.133      -0.054        0.138      -0.008       0.071         0.172         885.566       0.008      4.333
+HERC 1/N                          0.024 0.286      -0.111        0.088      -0.085       0.024         0.152         309.610       0.021      3.422
+HERC IVarP                        0.020 0.138      -0.061        0.083       0.015       0.048         0.122        2663.794       0.000      2.778
+HERC CDaR                         0.028 0.170      -0.075        0.092      -0.005       0.038         0.126        1368.921       0.009      3.131
+Schur 0,5                         0.040 0.133      -0.060        0.104       0.006       0.046         0.134        2100.807       0.001      1.416
+Composto EUA                      0.285 0.150      -0.041        0.365       0.098       0.384         0.221          15.000       0.067      4.412
+Conservadora EUA                  0.330 0.159      -0.037        0.413       0.111       0.330         0.207          15.000       0.067      4.819
+Universo inteiro, pesos iguais    0.038 0.151      -0.057        0.103       0.022       0.045         0.147        3110.000       0.000      0.939
+SPY                               0.061 0.140      -0.093        0.127         NaN         NaN         0.190             NaN         NaN        NaN
+B3 Composto                      -0.044 0.154      -0.150          NaN      -0.044       0.013         0.212             NaN         NaN        NaN
+B3 Conservadora                   0.009 0.162      -0.140          NaN       0.009       0.131         0.148             NaN         NaN        NaN
+BOVA11                            0.165 0.191      -0.087          NaN         NaN         NaN         0.087             NaN         NaN        NaN
+CDI                               0.105 0.002       0.000          NaN         NaN         NaN         0.099             NaN         NaN        NaN
+
+=== By year, in reais, phase 0 ===
+                   Ano  HRP amostral  HRP-dendrograma  Hierárquico 1/N  HERC 1/N  HERC IVarP  HERC CDaR  Schur 0,5  Composto EUA  Conservadora EUA  Universo inteiro, pesos iguais  BOVA11   CDI  Selic
+0   2010 (desde 09/02)           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN    6.8%  8.7%   8.8%
+1                 2011           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN  -18.3% 11.6%  11.6%
+2                 2012           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN    6.6%  8.4%   8.5%
+3                 2013           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN  -15.8%  8.1%   8.2%
+4                 2014           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN   -3.4% 10.8%  10.9%
+5                 2015           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN  -13.2% 13.2%  13.3%
+6                 2016           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN   38.2% 14.0%  14.0%
+7                 2017           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN   26.8% 10.0%  10.0%
+8                 2018           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN   14.6%  6.4%   6.4%
+9                 2019           NaN              NaN              NaN       NaN         NaN        NaN        NaN           NaN               NaN                             NaN   31.5%  6.0%   6.0%
+10                2020         37.4%            56.2%            45.8%     47.1%       41.5%      44.0%      43.4%         51.3%             45.9%                           49.6%    3.1%  2.8%   2.8%
+11                2021         30.9%            13.2%            29.0%     30.2%       25.1%      24.0%      30.0%         29.4%             18.1%                           31.4%  -12.1%  4.4%   4.4%
+12                2022        -17.2%           -30.7%           -19.1%    -15.2%      -19.0%     -19.3%     -19.6%         -1.3%             -3.8%                          -21.4%    5.1% 12.4%  12.4%
+13                2023          4.9%            10.1%            10.3%      5.2%        4.0%       3.7%       6.8%          2.3%              2.9%                           10.0%   23.1% 13.0%  13.0%
+14                2024         43.3%            79.9%            47.6%     45.4%       44.5%      42.3%      45.0%         36.2%             45.9%                           43.6%  -10.1% 10.9%  10.9%
+15                2025         -3.1%             5.3%            11.1%      2.7%        0.0%       2.6%      -0.9%         16.4%             12.2%                            1.4%   34.7% 14.3%  14.3%
+16    2026 (até 30/09)          1.3%            -9.7%             7.1%      2.4%        2.0%       2.8%       4.0%         28.5%             33.0%                            3.8%   16.5% 10.6%  10.6%
+
+Done in 4 s
+
+From the first run's log (this file was rebuilt from its saved results, 3,904 s in all):
+HRP amostral: 353 s, refusals 0, failures 0 []
+HRP-dendrograma: 18 s, refusals 0, failures 0 []
+Hierárquico 1/N: 68 s, refusals 0, failures 0 []
+HERC 1/N: 331 s, refusals 0, failures 0 []
+HERC IVarP: 53 s, refusals 0, failures 0 []
+HERC CDaR: 51 s, refusals 0, failures 0 []
+Schur 0,5: 367 s, refusals 0, failures 0 []
+Composto: 138 s, refusals 0, failures 0 []
+Conservadora: 4 s, refusals 0, failures 0 []
+Universo inteiro, pesos iguais: 1 s, refusals 0, failures 0 []
+HRP amostral: 274 s, refusals 0, failures 0 []
+HRP-dendrograma: 16 s, refusals 0, failures 0 []
+Hierárquico 1/N: 57 s, refusals 0, failures 0 []
+HERC 1/N: 293 s, refusals 2, failures 0 []
+HERC IVarP: 44 s, refusals 0, failures 0 []
+HERC CDaR: 44 s, refusals 0, failures 0 []
+Schur 0,5: 327 s, refusals 0, failures 0 []
+Composto: 120 s, refusals 0, failures 0 []
+Conservadora: 4 s, refusals 0, failures 0 []
+Universo inteiro, pesos iguais: 1 s, refusals 0, failures 0 []
+HRP amostral: 280 s, refusals 0, failures 0 []
+HRP-dendrograma: 19 s, refusals 0, failures 0 []
+Hierárquico 1/N: 69 s, refusals 0, failures 0 []
+HERC 1/N: 328 s, refusals 1, failures 0 []
+HERC IVarP: 53 s, refusals 0, failures 0 []
+HERC CDaR: 50 s, refusals 0, failures 0 []
+Schur 0,5: 387 s, refusals 0, failures 0 []
+Composto: 142 s, refusals 0, failures 0 []
+Conservadora: 4 s, refusals 0, failures 0 []
+Universo inteiro, pesos iguais: 1 s, refusals 0, failures 0 []
+Schur's gamma this run: 220,735 splits, mean 0.432, 83.8% at the full value, 1.8% at 0.
+
+Checks read with the table: extreme months above +300% add at most 0.10 pp to any arm's 2026 (phase 0, target weights).
+No Composite or Conservadora contribution in 2026 comes from a suspect split. PTAX 5.5024 -> 5.1809 (-5.8%) takes that off every US arm in reais.

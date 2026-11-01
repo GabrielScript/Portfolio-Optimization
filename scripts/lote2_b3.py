@@ -59,10 +59,11 @@ def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.Da
     return resultado_salvo(PASTA / f"{nome}-fase{fase}.pkl", rodar)
 
 
-def trabalhador(fase: int, dados: avaliar_robustez.Dados, construtores: dict[str, Construtor]) -> None:
+def trabalhador(fase: int, dados: avaliar_robustez.Dados, construtores: dict[str, Construtor], ao_contrario: bool) -> None:
     """Saves that phase's arms. About 500 MB, measured, so it may run through the nightly window: no gold, no ClickHouse."""
     acoes = _acoes(dados.precos.loc[:LAST_SESSION].iloc[fase:])
-    for nome, construir in construtores.items():
+    ordem = list(construtores.items())
+    for nome, construir in reversed(ordem) if ao_contrario else ordem:      # two workers on a phase meet in the middle
         resultado_do_braco(nome, construir, fase, acoes, dados, na_janela=True)
 
 
@@ -81,7 +82,7 @@ def main(argv: list[str]) -> int:
     construtores = bracos_lote2(nota)
     fase_pedida = fase_do_trabalhador(argv)
     if fase_pedida is not None:
-        trabalhador(fase_pedida, dados, construtores)
+        trabalhador(fase_pedida, dados, construtores, "--ao-contrario" in argv)
         return 0
     bracos = tuple(construtores)
     medidas: dict[str, dict[str, list[float]]] = {nome: {"composto": [], "conservadora": [], "bova": [], "dsr": []} for nome in bracos}

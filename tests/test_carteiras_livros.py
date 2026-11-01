@@ -192,7 +192,7 @@ def test_robust_mean_variance_with_kappa_zero_is_kelly_with_lambda_one():
     sigma = ledoit_wolf_baixo_posto(retornos, 12)
     mu = retornos.mean() * 12
     esperado = otimizar(mu, densa(sigma), replace(_cfg(), aversao_risco=1.0)).pesos
-    assert pesos_robusto(mu, sigma, replace(_cfg(), aversao_risco=1.0), 60, kappa=0.0).to_numpy() == pytest.approx(esperado.to_numpy(), abs=5e-4)
+    assert pesos_robusto(mu, sigma, replace(_cfg(), aversao_risco=1.0), 5.0, kappa=0.0).to_numpy() == pytest.approx(esperado.to_numpy(), abs=5e-4)
 
 
 def test_a_larger_kappa_lowers_the_portfolios_volatility():
@@ -204,10 +204,23 @@ def test_a_larger_kappa_lowers_the_portfolios_volatility():
     cov = densa(sigma).to_numpy()
 
     def vol(kappa: float) -> float:
-        w = pesos_robusto(mu, sigma, replace(_cfg(), aversao_risco=1.0), 60, kappa=kappa).to_numpy()
+        w = pesos_robusto(mu, sigma, replace(_cfg(), aversao_risco=1.0), 5.0, kappa=kappa).to_numpy()
         return float(np.sqrt(w @ cov @ w))
 
     assert vol(40.0) < vol(0.0)
+
+
+def test_the_robust_portfolio_does_not_depend_on_the_unit_of_time():
+    """S = Sigma/T holds per period. Annualizing multiplies the whole objective by the same factor, so the portfolio cannot move."""
+    from core.carteiras_livros import pesos_robusto
+
+    retornos = _retornos()
+    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.40, n_ativos_max=None, vol_maxima=None, aversao_risco=1.0)
+
+    def pesos(periodos: int) -> np.ndarray:
+        return pesos_robusto(retornos.mean() * periodos, ledoit_wolf_baixo_posto(retornos, periodos), cfg, 60 / periodos, kappa=1.0).to_numpy()
+
+    assert pesos(12) == pytest.approx(pesos(1), abs=2e-4)
 
 
 def test_the_cardinality_holds_and_the_sector_caps_hold_on_the_concentrated_arms():

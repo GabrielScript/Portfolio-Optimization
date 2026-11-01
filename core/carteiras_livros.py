@@ -200,13 +200,14 @@ def pesos_cdar(retornos: pd.DataFrame, media: pd.Series, sigma: CovarianciaBaixo
     return _duas_etapas(sigma, cfg, resolver)
 
 
-def pesos_robusto(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao, linhas: int, kappa: float = 1.0) -> pd.Series:
-    """max w'mu - kappa ||S^(1/2) w|| - (lambda/2) w'Sigma w with S = Sigma/T: the worst case of mu in an ellipsoid (Palomar ch. 14)."""
+def pesos_robusto(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao, anos: float, kappa: float = 1.0) -> pd.Series:
+    """max w'mu - kappa ||S^(1/2) w|| - (lambda/2) w'Sigma w with S = Sigma/T: the worst case of mu in an ellipsoid (Palomar ch. 14).
+    ``mu`` and ``sigma`` are annual, so T is in years: with T in rows the penalty would shrink by the root of the periods per year."""
     def resolver(indices: np.ndarray) -> np.ndarray:
         parte = _parte(sigma, indices)
         w = cp.Variable(len(indices))
         risco, desvio = _risco_e_desvio(w, parte)
-        objetivo = mu.to_numpy()[indices] @ w - kappa * desvio / np.sqrt(linhas) - (cfg.aversao_risco / 2.0) * risco
+        objetivo = mu.to_numpy()[indices] @ w - kappa * desvio / np.sqrt(anos) - (cfg.aversao_risco / 2.0) * risco
         return _maximizar_com_teto(objetivo, w, parte, cfg, [])
     return _duas_etapas(sigma, cfg, resolver)
 

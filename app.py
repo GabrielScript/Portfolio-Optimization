@@ -47,6 +47,7 @@ from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_mini
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
 from ui import alepha, painel, secoes, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
+from ui import estrategias_livro as ui_estrategias_livro  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import qpo_hibrido as ui_qpo_hibrido  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -264,6 +265,8 @@ def main() -> None:
     ui_eua.secao(servicos.carregar_eua())
     st.markdown("---")
     ui_qpo_hibrido.secao(ui_qpo_hibrido.carregar())
+    st.markdown("---")
+    ui_estrategias_livro.secao(ui_estrategias_livro.carregar())
     st.markdown("---")
     secao_mercado()
     st.markdown("---")

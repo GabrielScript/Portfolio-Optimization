@@ -256,7 +256,7 @@ def main(argv: list[str]) -> int:
         print(f"\n=== Phase {fase}: {datas[0]:%m/%Y} to {datas[-1]:%m/%Y}, {len(datas) - 1} months ===")
         print(_texto(tabela))
         for nome, resultado in {**resultados, COMPOSTO: composto, CONSERVADORA: cons}.items():
-            print(f"{nome}: refusals {len(resultado.recusas)}, failures {len(resultado.falhas)}, annual turnover {resultado.turnover_anual_medio:.2f}")
+            print(f"{nome}: refusals {len(resultado.recusas)}, failures {len(resultado.falhas)}, annual turnover {ut.giro_anual_mensal(resultado):.2f}")
         print(f"SPY: {ut.medidas(spy, rf)}")
         print(_texto(anos({**comparadas, SPY: spy}) * 100, 1))
         print(f"(phase {fase} done in {time.perf_counter() - inicio:.0f} s)", flush=True)

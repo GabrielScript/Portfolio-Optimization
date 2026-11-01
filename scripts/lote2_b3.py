@@ -3,6 +3,7 @@ lote2_b3.py - The one reading of the book's second batch on the B3 (docs/superpo
 Runs only after the pre-registration commit (`5e5c376`). No network: everything frozen.
 
     python -X utf8 scripts/lote2_b3.py > D:/b3-datalake/exports/lote2/b3/leitura.txt
+    python -X utf8 scripts/lote2_b3.py --so-fase 21     # one worker per phase, then the plain run reads what they saved
 
 Each arm's result is saved per phase, so a crash resumes where it stopped. Writes docs/dados/lote2-{anos,portao}-b3.parquet.
 """
@@ -41,9 +42,16 @@ PASTA = Path("D:/b3-datalake/exports/lote2/b3")
 DIAS_DO_ANO = 252
 
 
-def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.DataFrame, dados: avaliar_robustez.Dados) -> ResultadoBacktest:
+def fase_do_trabalhador(argv: list[str]) -> int | None:
+    """``--so-fase N`` runs only that phase's arms and prints no table."""
+    return int(argv[argv.index("--so-fase") + 1]) if "--so-fase" in argv else None
+
+
+def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.DataFrame, dados: avaliar_robustez.Dados,
+                       na_janela: bool = False) -> ResultadoBacktest:
     def rodar() -> ResultadoBacktest:
-        esperar_a_janela_passar()
+        if not na_janela:
+            esperar_a_janela_passar()
         inicio = time.perf_counter()
         resultado = walk_forward_dinamico(acoes, dados.universo, construir(dados.setores, DIAS_DO_ANO), CFG_BT, nome, Congelamento())
         print(f"{nome} phase {fase}: {time.perf_counter() - inicio:.0f} s; first failures {resultado.falhas[:2]}", flush=True)
@@ -51,7 +59,14 @@ def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.Da
     return resultado_salvo(PASTA / f"{nome}-fase{fase}.pkl", rodar)
 
 
-def main() -> int:
+def trabalhador(fase: int, dados: avaliar_robustez.Dados, construtores: dict[str, Construtor]) -> None:
+    """Saves that phase's arms. About 500 MB, measured, so it may run through the nightly window: no gold, no ClickHouse."""
+    acoes = _acoes(dados.precos.loc[:LAST_SESSION].iloc[fase:])
+    for nome, construir in construtores.items():
+        resultado_do_braco(nome, construir, fase, acoes, dados, na_janela=True)
+
+
+def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
     PASTA.mkdir(parents=True, exist_ok=True)
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
@@ -64,6 +79,10 @@ def main() -> int:
     print(f"Files (sha256): {dados.sha256 | mensal.sha256 | sha256_cvm | sha256_cdi}; DSR N {n_tentativas}", flush=True)
 
     construtores = bracos_lote2(nota)
+    fase_pedida = fase_do_trabalhador(argv)
+    if fase_pedida is not None:
+        trabalhador(fase_pedida, dados, construtores)
+        return 0
     bracos = tuple(construtores)
     medidas: dict[str, dict[str, list[float]]] = {nome: {"composto": [], "conservadora": [], "bova": [], "dsr": []} for nome in bracos}
     anos = None
@@ -120,4 +139,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

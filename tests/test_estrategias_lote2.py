@@ -146,3 +146,10 @@ def test_an_arm_on_the_volatility_cap_stays_clear_of_the_rule_by_more_than_solve
     cov = densa(ledoit_wolf_baixo_posto(treino, 252)).to_numpy()
     pesos = _bracos()["Kelly-exato"](setores, 252)(treino).to_numpy()
     assert np.sqrt(pesos @ cov @ pesos) <= 0.40 * (1.0 - 5e-5)
+
+
+def test_a_reading_worker_takes_one_phase_and_the_plain_run_takes_all():
+    from scripts.lote2_b3 import fase_do_trabalhador
+
+    assert fase_do_trabalhador(["--so-fase", "21"]) == 21
+    assert fase_do_trabalhador([]) is None

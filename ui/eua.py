@@ -47,9 +47,9 @@ def _milhar(valor: int) -> str:
 
 def _anos(tabela: pd.DataFrame) -> None:
     st.markdown("### Ano a ano, em reais")
-    st.caption("O teste das estratégias americanas começa em 11/2019, e 2020 é o primeiro ano inteiro: a base de preços "
-               "das ações não chega a 2010, então os anos anteriores ficam vazios em vez de estimados. As estratégias "
-               "pagam 10 bps por lado, antes de IR. BOVA11, CDI e Selic vão até a mesma data; CDI e Selic são as taxas "
+    st.caption("A base de preços das ações americanas vai de 11/2016 a hoje, e não chega a 2010. Os 36 primeiros meses "
+               "treinam as regras, então o resultado das estratégias começa em 11/2019 e 2020 é o primeiro ano inteiro; "
+               "os anos anteriores ficam vazios em vez de estimados. As estratégias pagam 10 bps por lado, antes de IR. BOVA11, CDI e Selic vão até a mesma data; CDI e Selic são as taxas "
                "diárias do Banco Central acumuladas, antes de IR. Só a primeira data de rebalanceio.")
     st.dataframe(tabela, width="stretch", hide_index=True,
                  column_config={nome: PERCENTUAL for nome in tabela.columns[1:]},

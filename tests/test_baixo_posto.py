@@ -60,6 +60,33 @@ def test_an_impossible_volatility_cap_falls_back_to_the_minimum_variance():
     assert otimizar_baixo_posto(mu, ledoit_wolf_baixo_posto(retornos), cfg).to_numpy() == pytest.approx(densa.pesos.to_numpy(), abs=2e-4)
 
 
+def test_monthly_returns_annualize_by_twelve():
+    from core.baixo_posto import ledoit_wolf_baixo_posto
+
+    retornos = _retornos(36, 50)
+    mensal = ledoit_wolf_baixo_posto(retornos, periodos=12)
+    diario = ledoit_wolf_baixo_posto(retornos)
+    assert mensal.diagonal * 21 == pytest.approx(diario.diagonal)
+    assert (mensal.fator.T @ mensal.fator) * 21 == pytest.approx(diario.fator.T @ diario.fator)
+
+
+@pytest.mark.parametrize(("objetivo", "extra", "setorizado"), [
+    ("MIN_VOL", {}, False), ("MIN_VOL", {"n_ativos_max": 10}, True),
+    ("MAX_SHARPE", {"taxa_livre_risco": 0.02}, False), ("MAX_SHARPE", {"taxa_livre_risco": 0.02, "n_ativos_max": 10}, True),
+    ("MAX_SHARPE", {"taxa_livre_risco": 0.02, "vol_maxima": 0.12}, False),
+    ("MAX_SHARPE", {"taxa_livre_risco": 5.0}, False),      # no portfolio beats this rate: the minimum variance, as the dense code
+])
+def test_the_other_objectives_give_the_dense_optimizers_weights(objetivo, extra, setorizado):
+    from core.baixo_posto import ledoit_wolf_baixo_posto, otimizar_baixo_posto
+    from core.config import Objetivo
+    from core.optimization import otimizar
+
+    retornos, mu, cfg = _caso({"objetivo": Objetivo[objetivo], **extra}, setorizado)
+    densa = otimizar(mu, estimar_momentos(retornos, shrink_mu=False).cov, cfg).pesos
+    pesos = otimizar_baixo_posto(mu, ledoit_wolf_baixo_posto(retornos), cfg)
+    assert pesos.to_numpy() == pytest.approx(densa.to_numpy(), abs=5e-4)
+
+
 def test_it_refuses_what_it_cannot_solve_instead_of_answering_wrongly():
     from core.baixo_posto import ledoit_wolf_baixo_posto, otimizar_baixo_posto
     from core.config import Objetivo
@@ -67,8 +94,8 @@ def test_it_refuses_what_it_cannot_solve_instead_of_answering_wrongly():
 
     retornos, mu, cfg = _caso({})
     sigma = ledoit_wolf_baixo_posto(retornos)
-    with pytest.raises(ValueError, match="only Kelly"):
-        otimizar_baixo_posto(mu, sigma, replace(cfg, objetivo=Objetivo.MAX_SHARPE))
+    with pytest.raises(ValueError, match="no low-rank form"):
+        otimizar_baixo_posto(mu, sigma, replace(cfg, objetivo=Objetivo.HRP))
     with pytest.raises(ValueError, match="same names"):
         otimizar_baixo_posto(mu.iloc[::-1], sigma, cfg)
     with pytest.raises(ValueError, match="NaN"):

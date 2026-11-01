@@ -41,15 +41,16 @@ def _encolhimento(centrados: np.ndarray) -> tuple[float, float]:
     return min(beta, distancia) / distancia, escala
 
 
-def ledoit_wolf_baixo_posto(retornos: pd.DataFrame) -> CovarianciaBaixoPosto:
-    """``estimar_momentos(retornos).cov`` in low-rank form: annualized by the same 252, from the same scale of returns."""
+def ledoit_wolf_baixo_posto(retornos: pd.DataFrame, periodos: int = DIAS_UTEIS_ANO) -> CovarianciaBaixoPosto:
+    """``estimar_momentos(retornos).cov`` in low-rank form, annualized by ``periodos``: the engine's 252 for daily returns, 12 for
+    monthly ones."""
     if retornos.isna().any().any():
         raise ValueError("retornos contains NaN")
     valores = retornos.to_numpy(dtype=float)
     centrados = valores - valores.mean(axis=0)
     intensidade, escala = _encolhimento(centrados)
-    fator = np.sqrt(DIAS_UTEIS_ANO * (1.0 - intensidade) / len(valores)) * centrados
-    return CovarianciaBaixoPosto(DIAS_UTEIS_ANO * intensidade * escala, fator, list(retornos.columns))
+    fator = np.sqrt(periodos * (1.0 - intensidade) / len(valores)) * centrados
+    return CovarianciaBaixoPosto(periodos * intensidade * escala, fator, list(retornos.columns))
 
 
 def densa(sigma: CovarianciaBaixoPosto, indices: np.ndarray | None = None) -> pd.DataFrame:
@@ -65,30 +66,64 @@ def _risco_e_desvio(w: cp.Variable, sigma: CovarianciaBaixoPosto) -> tuple[cp.Ex
             cp.norm(cp.hstack([np.sqrt(sigma.diagonal) * w, sigma.fator @ w]), 2))
 
 
-def _kelly_relaxado(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> np.ndarray:
-    """The dense ``_kelly``'s first stage: with the volatility cap; if no portfolio meets it, the minimum variance."""
+def _min_vol(sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> np.ndarray:
+    w = cp.Variable(len(sigma.nomes))
+    return _resolver(cp.Problem(cp.Minimize(_risco_e_desvio(w, sigma)[0]), _restricoes(w, sigma.nomes, cfg)), w)[0]
+
+
+def _kelly(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> np.ndarray:
+    """The dense ``_kelly``: with the volatility cap; if no portfolio meets it, the minimum variance."""
     w = cp.Variable(len(mu))
     risco, desvio = _risco_e_desvio(w, sigma)
     restricoes = _restricoes(w, sigma.nomes, cfg)
-    com_teto = restricoes if cfg.vol_maxima is None else [*restricoes, desvio <= cfg.vol_maxima]
+    if cfg.vol_maxima is not None:
+        restricoes.append(desvio <= cfg.vol_maxima)
     try:
-        return _resolver(cp.Problem(cp.Maximize(mu.to_numpy() @ w - (cfg.aversao_risco / 2.0) * risco), com_teto), w)[0]
+        return _resolver(cp.Problem(cp.Maximize(mu.to_numpy() @ w - (cfg.aversao_risco / 2.0) * risco), restricoes), w)[0]
     except ErroInviavel:
         if cfg.vol_maxima is None:
             raise
-    return _resolver(cp.Problem(cp.Minimize(risco), restricoes), w)[0]
+    return _min_vol(sigma, cfg)
+
+
+def _max_sharpe(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> np.ndarray:
+    """The dense ``_max_sharpe`` (Charnes-Cooper): the minimum variance when no feasible portfolio beats the risk-free rate or
+    none with a positive Sharpe meets the volatility cap."""
+    w = cp.Variable(len(mu))
+    _resolver(cp.Problem(cp.Maximize(mu.to_numpy() @ w), _restricoes(w, sigma.nomes, cfg)), w)
+    if float(mu.to_numpy() @ w.value) <= cfg.taxa_livre_risco + 1e-10:
+        return _min_vol(sigma, cfg)
+    y = cp.Variable(len(mu))
+    kappa = cp.Variable(nonneg=True)
+    risco, desvio = _risco_e_desvio(y, sigma)
+    restricoes = [*_restricoes(y, sigma.nomes, cfg, escala=kappa), (mu.to_numpy() - cfg.taxa_livre_risco) @ y == 1]
+    if cfg.vol_maxima is not None:
+        restricoes.append(desvio <= cfg.vol_maxima * kappa)
+    try:
+        return _resolver(cp.Problem(cp.Minimize(risco), restricoes), y)[0] / float(kappa.value)
+    except ErroInviavel:
+        return _min_vol(sigma, cfg)
+
+
+def _relaxado(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> np.ndarray:
+    if cfg.objetivo is Objetivo.KELLY:
+        return _kelly(mu, sigma, cfg)
+    if cfg.objetivo is Objetivo.MAX_SHARPE:
+        return _max_sharpe(mu, sigma, cfg)
+    if cfg.objetivo is Objetivo.MIN_VOL:
+        return _min_vol(sigma, cfg)
+    raise ValueError(f"{cfg.objetivo} has no low-rank form here")
 
 
 def otimizar_baixo_posto(mu: pd.Series, sigma: CovarianciaBaixoPosto, cfg: ConfigOtimizacao) -> pd.Series:
-    """``otimizar(mu, cov, cfg).pesos`` for Kelly, with its checks, its caps and its two-stage cardinality; the second stage holds
-    at most ``n_ativos_max`` names, so it runs on the dense optimizer itself. Raises as ``otimizar`` does."""
-    if cfg.objetivo is not Objetivo.KELLY:
-        raise ValueError(f"only Kelly has a low-rank form here, not {cfg.objetivo}")
+    """``otimizar(mu, cov, cfg).pesos`` for Kelly, max Sharpe and minimum variance, with its checks, its caps and its two-stage
+    cardinality; the second stage holds at most ``n_ativos_max`` names, so it runs on the dense optimizer itself. Raises as
+    ``otimizar`` does."""
     if list(mu.index) != sigma.nomes:
         raise ValueError("mu and the covariance need the same names in the same order")
     _checar_capacidade(len(mu), cfg)
     _checar_capacidade_grupos(sigma.nomes, cfg)
-    pesos = _limpar_pesos(_kelly_relaxado(mu, sigma, cfg))
+    pesos = _limpar_pesos(_relaxado(mu, sigma, cfg))
     if cfg.n_ativos_max is not None and int((pesos > 0).sum()) > cfg.n_ativos_max:
         selecionados = np.argsort(pesos)[::-1][:cfg.n_ativos_max]
         try:

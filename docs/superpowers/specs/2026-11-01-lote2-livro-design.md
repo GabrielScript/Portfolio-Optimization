@@ -70,6 +70,9 @@ gates. Each configuration is read once per market.
 **Order:** the first batch's US reading goes first. Then this batch on the B3, then on the US, in the row order above, one heavy job at a time,
 outside 21:30-00:30.
 
+**Changed on 01/11/2026 at 18:20, before any reading:** this batch's B3 reading goes first, because the first batch's US reading waits for the Tiingo
+batch and the splits fix. Nothing is tunable between them and the data is frozen (DECISOES 230).
+
 ## 3. Prior, written before any reading
 
 No arm passes against the Composite on either market, nor on the US against SPY. Rows 76 and 88 will sit close to Kelly at lambda 1 on the B3,

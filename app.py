@@ -252,7 +252,7 @@ def main() -> None:
     entradas = ler_sidebar()
     if entradas.modo_plano == MODO_CONSERVADORA:    # the real-money plans use only the amount and the cost: first
         secao_conservadora(entradas)
-        alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora())
+        alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
         alepha.bova11_e_cripto(servicos.carregar_etfs_de_cripto(date.today()))
         st.markdown("---")
     elif entradas.modo_plano == MODO_DINHEIRO_REAL:

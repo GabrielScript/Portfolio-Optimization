@@ -64,7 +64,8 @@ ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tick
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
 SOBREPOSICAO = 10           # committed sessions repeated in the small file (a stock may not trade on the last one)
 # the live backtest curves of the Alepha screen (scripts/curvas_ao_vivo.py, DECISOES 188), rerun about weekly
-ARQUIVOS_DAS_CURVAS = (Path("docs/dados/curvas-ao-vivo.parquet"), Path("docs/curvas-ao-vivo.txt"))
+ARQUIVOS_DAS_CURVAS = (Path("docs/dados/curvas-ao-vivo.parquet"), Path("docs/curvas-ao-vivo.txt"),
+                       Path("docs/dados/juros-diarios.parquet"))
 DEFASAGEM_DAS_CURVAS = 5
 ARQUIVOS_DO_PAINEL = (Path("lago/sentimento_diario.parquet"), Path("lago/fatos_relevantes.parquet"),
                       Path("lago/fundamentos.parquet"))

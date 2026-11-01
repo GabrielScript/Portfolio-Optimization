@@ -38,10 +38,22 @@ class ResultadoEUA:
     cobertura: dict
     indicadores: pd.DataFrame | None = None     # one row per stock of the last universe (``scripts/us_indicadores.py``)
     macro: pd.DataFrame | None = None
+    anos: pd.DataFrame | None = None            # by year in reais, with BOVA11, the CDI and the Selic
 
 
 def _milhar(valor: int) -> str:
     return f"{valor:,}".replace(",", ".")
+
+
+def _anos(tabela: pd.DataFrame) -> None:
+    st.markdown("### Ano a ano, em reais")
+    st.caption("O teste das estratégias americanas começa em 11/2019, e 2020 é o primeiro ano inteiro: a base de preços "
+               "das ações não chega a 2010, então os anos anteriores ficam vazios em vez de estimados. As estratégias "
+               "pagam 10 bps por lado, antes de IR. BOVA11, CDI e Selic vão até a mesma data; CDI e Selic são as taxas "
+               "diárias do Banco Central acumuladas, antes de IR. Só a primeira data de rebalanceio.")
+    st.dataframe(tabela, width="stretch", hide_index=True,
+                 column_config={nome: PERCENTUAL for nome in tabela.columns[1:]},
+                 alt="Retorno de cada ano em reais: estratégias americanas, BOVA11, CDI e Selic")
 
 
 def _indicadores(tabela: pd.DataFrame) -> None:
@@ -84,6 +96,8 @@ def secao(resultado: ResultadoEUA | None) -> None:
                "no início. Os três fundos citados começam quando passam a existir na janela.")
     linhas = [nome for nome in LINHAS_DO_GRAFICO if nome in resultado.curvas.columns]
     st.line_chart(resultado.curvas[linhas], y_label="R$ 1 aplicado no início")
+    if resultado.anos is not None:
+        _anos(resultado.anos)
     st.markdown("### Passou no teste?")
     st.caption(f"Mesmo portão das estratégias na B3: P[> SPY] e DSR de pelo menos 0,95 nas três fases, com N = "
                f"{cobertura['n_tentativas']}. Passar faz da estratégia candidata a um registro ao vivo, nada mais.")

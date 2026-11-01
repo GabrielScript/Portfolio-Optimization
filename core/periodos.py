@@ -31,6 +31,48 @@ def retornos_por_ano(curvas: pd.DataFrame) -> pd.DataFrame:
     return fechamentos / anteriores - 1
 
 
+FOLGA_DOS_JUROS = pd.Timedelta(days=7)
+
+
+def juro_por_ano(taxa: pd.Series, datas: pd.DatetimeIndex) -> pd.Series:
+    """Year of ``datas`` -> ``taxa`` (decimal per day, one row per published day) compounded over the window of that
+    year's return in ``retornos_por_ano``: after the last date of the year before (or the first date) up to the year's
+    last date. A year the rates stop more than ``FOLGA_DOS_JUROS`` before is NaN: a short return would look like a low one."""
+    juros = {}
+    for ano in sorted(set(datas.year)):
+        anteriores = datas[datas.year < ano]
+        do_ano = datas[datas.year == ano]
+        inicio = anteriores[-1] if len(anteriores) else do_ano[0]
+        trecho = taxa[(taxa.index > inicio) & (taxa.index <= do_ano[-1])]
+        chega = len(taxa) and taxa.index[-1] >= do_ano[-1] - FOLGA_DOS_JUROS
+        juros[ano] = float((1.0 + trecho).prod() - 1.0) if chega else float("nan")
+    return pd.Series(juros, name=taxa.name, dtype=float)
+
+
+def rotulo_do_ano(ano: int, datas: pd.DatetimeIndex) -> str:
+    """The calendar year, saying so when ``datas`` cover only part of it at either end."""
+    do_ano = datas[datas.year == ano]
+    if ano == datas[0].year and do_ano[0].month > 1:
+        return f"{ano} (desde {do_ano[0]:%d/%m})"
+    if ano == datas[-1].year and do_ano[-1].month < 12:
+        return f"{ano} (até {do_ano[-1]:%d/%m})"
+    return str(ano)
+
+
+def anos_em_reais(estrategias: pd.DataFrame, bova11: pd.Series, juros: pd.DataFrame) -> pd.DataFrame:
+    """One row per year of ``bova11`` up to the last date of ``estrategias``: each strategy's return in its full years
+    (from the last value of the year before, so its first, partial year stays blank), BOVA11's, and the CDI and Selic
+    compounded on the same dates. ``estrategias``: values in reais; ``juros``: decimal per day, columns CDI and Selic."""
+    sessoes = bova11.dropna().loc[:estrategias.index[-1]]
+    anos = pd.Index(sorted(set(sessoes.index.year)), name="Ano")
+    fechamentos = estrategias.groupby(estrategias.index.year).last()
+    tabela = fechamentos.pct_change().reindex(anos)
+    tabela["BOVA11"] = retornos_por_ano(sessoes.to_frame("BOVA11"))["BOVA11"]
+    for nome in ("CDI", "Selic"):
+        tabela[nome] = juro_por_ano(juros[nome].dropna(), sessoes.index)
+    return tabela.reset_index().assign(Ano=lambda t: [rotulo_do_ano(ano, sessoes.index) for ano in t["Ano"]])
+
+
 def _medidas(curvas: pd.DataFrame) -> dict[tuple[str, str], float]:
     medidas = {}
     for nome in curvas.columns:

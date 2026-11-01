@@ -139,3 +139,50 @@ def test_period_summary_has_the_aggressive_investors_risk_measures_from_each_col
     assert resumo.loc["NOVO", "Desde"] == pd.Timestamp("2025-03-03")
     assert resumo.loc["NOVO", "CAGR"] == pytest.approx(cagr(curvas["NOVO"].dropna()))
     assert np.isnan(resumo.loc["BOVA11", "t do alfa"]) or abs(resumo.loc["BOVA11", "Alfa a.a. (BOVA11)"]) < 1e-12
+
+
+def test_a_rate_compounds_over_the_same_window_as_a_years_return():
+    # the CDI and the Selic next to the strategies (the user's request of 2026-11-01): a year starts after the last
+    # session of the year before and every published day counts, also one without a session (a B3 holiday)
+    from core.periodos import juro_por_ano
+
+    datas = pd.DatetimeIndex(["2020-02-10", "2020-12-30", "2021-12-30"])
+    taxa = pd.Series(0.01, index=pd.DatetimeIndex(["2020-02-10", "2020-02-11", "2020-12-30", "2020-12-31",
+                                                   "2021-01-25", "2021-12-30", "2021-12-31"]))
+    resultado = juro_por_ano(taxa, datas)
+    assert resultado[2020] == pytest.approx(1.01 ** 2 - 1)      # not the first date's own rate
+    assert resultado[2021] == pytest.approx(1.01 ** 3 - 1)      # 31/12/2020 counts in the next year, 31/12/2021 does not
+
+
+def test_a_year_the_rates_do_not_reach_stays_blank_instead_of_a_short_return():
+    # the curves are rerun weekly: rates a few days short of them are fine, a file left far behind must not understate
+    from core.periodos import juro_por_ano
+
+    datas = pd.DatetimeIndex(["2020-12-30", "2021-12-30", "2022-06-30"])
+    taxa = pd.Series(0.01, index=pd.date_range("2021-01-01", "2022-06-20", freq="D"))
+    assert np.isnan(juro_por_ano(taxa, datas)[2022])
+    quase = pd.Series(0.01, index=pd.date_range("2021-01-01", "2022-06-27", freq="D"))
+    assert juro_por_ano(quase, datas)[2022] > 0
+
+
+def test_the_us_table_runs_every_year_of_bova11_with_the_us_strategies_only_in_their_full_years():
+    # the user's request of 2026-11-01: US strategies next to BOVA11, CDI and Selic from 2010. The US curves start years
+    # later (blank before, never filled in), and a row compares the same dates: BOVA11 stops where the US curves stop
+    from core.periodos import anos_em_reais
+
+    bova11 = pd.Series([100.0, 110.0, 121.0, 110.0, 132.0, 66.0],
+                       index=pd.DatetimeIndex(["2018-02-09", "2018-12-28", "2019-12-30", "2020-12-30", "2021-06-30",
+                                               "2021-10-29"]), name="BOVA11")
+    estrategias = pd.DataFrame({"Composto EUA": [1.0, 1.1, 1.65, 1.815]},
+                               index=pd.DatetimeIndex(["2019-11-30", "2019-12-31", "2020-12-31", "2021-06-30"]))
+    juros = pd.DataFrame({"CDI": 0.01, "Selic": 0.02},
+                         index=pd.DatetimeIndex(["2018-02-10", "2019-01-02", "2020-01-02", "2021-01-04", "2021-09-01"]))
+    tabela = anos_em_reais(estrategias, bova11, juros).set_index("Ano")
+    assert list(tabela.index) == ["2018 (desde 09/02)", "2019", "2020", "2021 (até 30/06)"]
+    assert list(tabela.columns) == ["Composto EUA", "BOVA11", "CDI", "Selic"]
+    assert tabela["Composto EUA"].isna().tolist() == [True, True, False, False]      # 2019 has only its last month
+    assert tabela.loc["2020", "Composto EUA"] == pytest.approx(0.5)
+    assert tabela.loc["2021 (até 30/06)", "Composto EUA"] == pytest.approx(0.1)
+    assert tabela.loc["2021 (até 30/06)", "BOVA11"] == pytest.approx(0.2)            # not the -40% to October
+    assert tabela.loc["2021 (até 30/06)", "Selic"] == pytest.approx(0.02)            # September's rate is out
+    assert tabela.loc["2018 (desde 09/02)", "CDI"] == pytest.approx(0.01)

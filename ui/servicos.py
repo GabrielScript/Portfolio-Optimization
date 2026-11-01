@@ -26,6 +26,7 @@ from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
+from core.periodos import anos_em_reais
 from ui.eua import ResultadoEUA
 
 
@@ -68,6 +69,8 @@ PASTA_DO_LOG = Path("D:/b3-datalake/sentiment")
 INDICADORES_DO_FOCUS = ("Selic", "IPCA", "PIB Total", "Câmbio")
 # the live rerun's daily curves (scripts/curvas_ao_vivo.py, DECISOES 188): results by period and year
 ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "curvas-ao-vivo.parquet"
+# the CDI and the Selic next to the curves (scripts/juros_diarios.py)
+ARQUIVO_JUROS = ARQUIVO_CURVAS.with_name("juros-diarios.parquet")
 # the fictitious account's ledger (core/simulador.py), written by the daily upkeep
 ARQUIVO_SIMULADOR = Path(__file__).resolve().parents[1] / "simulador" / "ordens.csv"
 # the derived results of the US test (scripts/us_avaliar.py)
@@ -109,13 +112,25 @@ def carregar_eua(pasta: Path = PASTA_EUA) -> ResultadoEUA | None:
     if not (pasta / "us-cobertura.json").exists():
         return None
     curvas = pd.read_parquet(pasta / "us-curvas.parquet")
+    curvas = curvas.set_index(pd.DatetimeIndex(pd.to_datetime(curvas.pop("date"))))
     def opcional(nome: str) -> pd.DataFrame | None:
         return pd.read_parquet(pasta / nome) if (pasta / nome).exists() else None
-    return ResultadoEUA(curvas.set_index(pd.DatetimeIndex(pd.to_datetime(curvas.pop("date")))),
-                        pd.read_parquet(pasta / "us-resumo.parquet"), pd.read_parquet(pasta / "us-portao.parquet"),
+    return ResultadoEUA(curvas, pd.read_parquet(pasta / "us-resumo.parquet"), pd.read_parquet(pasta / "us-portao.parquet"),
                         pd.read_parquet(pasta / "us-carteiras.parquet"),
                         json.loads((pasta / "us-cobertura.json").read_text(encoding="utf-8")),
-                        opcional("us-indicadores.parquet"), opcional("us-macro.parquet"))
+                        opcional("us-indicadores.parquet"), opcional("us-macro.parquet"),
+                        _anos_dos_eua(curvas, opcional(ARQUIVO_CURVAS.name), opcional(ARQUIVO_JUROS.name)))
+
+
+def _anos_dos_eua(curvas: pd.DataFrame, b3: pd.DataFrame | None, juros: pd.DataFrame | None) -> pd.DataFrame | None:
+    """The US strategies by year next to BOVA11 (the live curves' first phase, the one the US curves use), the CDI and
+    the Selic, or None without those two files."""
+    if b3 is None or juros is None:
+        return None
+    fase = b3[b3["fase"] == b3["fase"].min()].set_index("date")
+    estrategias = curvas[[nome for nome in ("Composto", "Conservadora") if nome in curvas.columns]].rename(
+        columns=lambda nome: f"{nome} EUA")
+    return anos_em_reais(estrategias, fase["BOVA11"], juros.set_index("date"))
 
 
 @st.cache_data(show_spinner=False, max_entries=2)
@@ -123,6 +138,12 @@ def carregar_curvas_conservadora(arquivo: Path = ARQUIVO_CURVAS) -> pd.DataFrame
     """The live rerun's daily values (3 phases: the Conservadora, the composite, BOVA11, BITH11, QBTC11 and the
     CDI), or None without the file."""
     return pd.read_parquet(arquivo) if arquivo.exists() else None
+
+
+@st.cache_data(show_spinner=False, max_entries=1)
+def carregar_juros(arquivo: Path = ARQUIVO_JUROS) -> pd.DataFrame | None:
+    """The CDI and Selic of each published day, decimal per day and indexed by date, or None without the file."""
+    return pd.read_parquet(arquivo).set_index("date") if arquivo.exists() else None
 
 
 def carregar_liquidez(arquivo: Path = ARQUIVO_LIQUIDEZ) -> pd.DataFrame | None:

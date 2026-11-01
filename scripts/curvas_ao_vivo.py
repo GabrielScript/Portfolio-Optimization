@@ -72,6 +72,18 @@ def extras_do_app(cdi: Path) -> pd.DataFrame:
     return etfs.join(taxa, how="outer").sort_index()
 
 
+def atualizar_juros(hoje: date) -> None:
+    """The rates next to the curves. The curves are already saved: without the BCB the old file stays, and the screen
+    leaves a year it no longer reaches blank (``core.periodos.juro_por_ano``)."""
+    from core import bcb
+    from scripts import juros_diarios
+
+    try:
+        print(f"Rates up to {juros_diarios.escrever(hoje):%d/%m/%Y}")
+    except bcb.ErroBcb as erro:
+        print(f"Rates not refreshed: {erro}", file=sys.stderr)
+
+
 def main(argv: list[str]) -> int:
     from scripts import composto_crescimento_avaliar as tentativa_51
     from scripts import qubo_universo_avaliar
@@ -94,6 +106,7 @@ def main(argv: list[str]) -> int:
         quadro = quadro_ao_vivo(pd.read_parquet(entradas / "curvas.parquet"),
                                 extras_do_app(entradas / "cdi_daily.parquet"))
     quadro.to_parquet(CURVAS, index=False)
+    atualizar_juros(date.today())
     print(f"{CURVAS.relative_to(RAIZ)} up to {ultima:%d/%m/%Y}; output in {SAIDA.relative_to(RAIZ)}")
     return codigo
 

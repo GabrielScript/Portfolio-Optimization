@@ -243,3 +243,35 @@ def test_results_without_the_indicators_still_show(tmp_path):
     _pasta_de_resultados(tmp_path)
     tela = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=60).run()
     assert not tela.exception and len(tela.dataframe) == 3 and not tela.selectbox
+
+
+
+def _com_anos(pasta):
+    _pasta_de_resultados(pasta)
+    dias = pd.bdate_range("2018-02-09", "2020-03-31")
+    pd.concat([pd.DataFrame({"fase": fase, "date": dias, "BOVA11": valor, "CDI": 0.0004})
+               for fase, valor in ((0, 100.0), (21, 7.0))]).to_parquet(pasta / "curvas-ao-vivo.parquet", index=False)
+    pd.DataFrame({"date": dias, "CDI": 0.0004, "Selic": 0.00041}).to_parquet(pasta / "juros-diarios.parquet", index=False)
+
+
+def test_the_screen_compares_each_year_with_bova11_the_cdi_and_the_selic(tmp_path):
+    # the user's request of 2026-11-01: the US strategies by year from BOVA11's first year, in reais; blank before they start
+    from streamlit.testing.v1 import AppTest
+    _com_anos(tmp_path)
+    at = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=30).run()
+    assert not at.exception
+    anos = [df.value for df in at.dataframe if "Ano" in df.value.columns]
+    assert len(anos) == 1
+    assert list(anos[0].columns) == ["Ano", "Composto EUA", "BOVA11", "CDI", "Selic"]
+    assert anos[0]["Ano"].tolist() == ["2018 (desde 09/02)", "2019", "2020 (até 31/03)"]
+    assert anos[0]["Composto EUA"].isna().all()                  # the fixture's curves have only their first year
+    assert anos[0]["BOVA11"].tolist() == [0.0, 0.0, 0.0]         # phase 0's, not another phase's
+    assert any("2010" in legenda.value or "começa" in legenda.value for legenda in at.caption)
+
+
+def test_results_without_the_rates_or_the_b3_curves_still_show(tmp_path):
+    from streamlit.testing.v1 import AppTest
+    _pasta_de_resultados(tmp_path)
+    at = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=30).run()
+    assert not at.exception
+    assert not [df.value for df in at.dataframe if "Ano" in df.value.columns]

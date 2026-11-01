@@ -14,7 +14,8 @@ import pandas as pd
 import streamlit as st
 
 from core.impostos import ISENCAO_DE_VENDAS
-from core.periodos import desde_inicio_comum, medidas_por_ano, medidas_por_periodo, resumo_do_periodo
+from core.periodos import (desde_inicio_comum, juro_por_ano, medidas_por_ano, medidas_por_periodo, resumo_do_periodo,
+                           rotulo_do_ano)
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
 
@@ -165,15 +166,6 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
                    "das 3 fases com R\\$ 10 mil e em todas com R\\$ 100 mil. O plano manda todas as ordens.")
 
 
-def _rotulo_do_ano(ano: int, datas: pd.DatetimeIndex) -> str:
-    do_ano = datas[datas.year == ano]
-    if ano == datas[0].year and do_ano[0].month > 1:
-        return f"{ano} (desde {do_ano[0]:%d/%m})"
-    if ano == datas[-1].year and do_ano[-1].month < 12:
-        return f"{ano} (até {do_ano[-1]:%d/%m})"
-    return str(ano)
-
-
 BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)
 CURVAS_DA_TELA = (*BRACOS, "BITH11", "QBTC11")
 EXCESSO_BOVA11 = "Excesso sobre o BOVA11"
@@ -181,6 +173,7 @@ MEDIDAS_POR_ANO = ("Retorno", EXCESSO_BOVA11, "Excesso sobre o CDI", "Vol", "Que
                    "Sortino", "Calmar", "Beta (BOVA11)")
 SEM_PORCENTO = {"Sharpe", "Sortino", "Calmar", "Beta (BOVA11)", "t do alfa", "Information ratio"}
 PRIMEIRO_ANO = 2010
+JUROS_DA_TABELA = ("CDI", "Selic")
 
 
 def _tabela_por_ano(curvas: pd.DataFrame, cdi: pd.Series, medida: str) -> pd.DataFrame:
@@ -196,12 +189,13 @@ def _tabela_por_ano(curvas: pd.DataFrame, cdi: pd.Series, medida: str) -> pd.Dat
     return tabela.loc[tabela.index >= PRIMEIRO_ANO]
 
 
-def resultados_da_conservadora(quadro: pd.DataFrame | None) -> None:
+def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame | None = None) -> None:
     """The registered Conservadora and attempt 51's composite (paper-v3's candidate) rerun on the lake up to the last
     close (``scripts/curvas_ao_vivo.py``, descriptive, DECISOES 188), next to BOVA11 and the B3's two bitcoin ETFs:
     whole period, last 5 and 3 years, each calendar year since 2010 in the measure picked, and an aggressive investor's
     risk summary. The rebalance phase (0, 21 or 42 sessions cut from the start) can be picked: timing alone moves a
-    year by several points."""
+    year by several points. ``juros``: the CDI and Selic of each published day (``scripts/juros_diarios.py``), columns
+    of the year table when it shows returns."""
     st.markdown("### Conservadora e Composto no backtest até o último pregão: por período e por ano")
     if quadro is None:
         st.caption("Sem as curvas do backtest (docs/dados/curvas-ao-vivo.parquet).")
@@ -229,15 +223,21 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None) -> None:
     curvas = parte[list(CURVAS_DA_TELA)]
     medida = st.selectbox("Medida de cada ano", MEDIDAS_POR_ANO, key="medida_por_ano")
     anos = _tabela_por_ano(curvas, cdi, medida)
-    por_ano = pd.DataFrame({"Ano": [_rotulo_do_ano(ano, parte.index) for ano in anos.index],
-                            **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA}})
+    taxas = {nome: juro_por_ano(juros[nome].dropna(), parte.index).reindex(anos.index).to_numpy()
+             for nome in JUROS_DA_TABELA} if juros is not None and medida == "Retorno" else {}
+    por_ano = pd.DataFrame({"Ano": [rotulo_do_ano(ano, parte.index) for ano in anos.index],
+                            **{nome: anos[nome].to_numpy() for nome in BRACOS}, **taxas,
+                            **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA[len(BRACOS):]}})
     formato = "%.2f" if medida in SEM_PORCENTO else "percent"
     c1, c2 = st.columns([3, 2])
     c1.dataframe(por_ano, width="stretch", hide_index=True,
-                 column_config={nome: st.column_config.NumberColumn(format=formato) for nome in CURVAS_DA_TELA},
-                 alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: Conservadora, Composto, BOVA11, BITH11, QBTC11")
+                 column_config={nome: st.column_config.NumberColumn(format=formato) for nome in por_ano.columns[1:]},
+                 alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
     c2.bar_chart(por_ano.set_index("Ano")[list(BRACOS)], stack=False, y_label=medida,
                  color=["#2e7d32", "#1565c0", "#9e9e9e"])
+    if taxas:
+        st.caption("CDI e Selic: taxas diárias do Banco Central acumuladas nas mesmas datas de cada linha, antes de IR, "
+                   "como as estratégias nesta tabela, que também estão antes de custos.")
 
     inicio_cripto = curvas[["BITH11", "QBTC11"]].dropna().index[0]
     mesma_janela = st.toggle(f"Mesma janela para todos (desde {inicio_cripto:%d/%m/%Y}, quando os dois ETFs de "

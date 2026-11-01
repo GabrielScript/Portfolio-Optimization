@@ -669,6 +669,7 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     # risk measures of an aggressive investor; the rebalance phase can be picked
     _servicos_sinteticos(monkeypatch)
     monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
+    monkeypatch.setattr(servicos, "carregar_juros", lambda: None)             # no file: the table without them
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
@@ -676,7 +677,7 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     assert len(periodos) == 1
     assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
     assert {"Retorno a.a. Conservadora", "Retorno a.a. Composto", "Retorno a.a. BOVA11"} <= set(periodos[0].columns)
-    anos = [df.value for df in at.dataframe if "Ano" in df.value.columns]
+    anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)]
     assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 29/10)"
     assert ["Conservadora", "Composto", "BOVA11", "BITH11", "QBTC11"] == list(anos[0].columns[1:6])
     assert np.isnan(anos[0].set_index("Ano").loc["2019", "BITH11"])               # before its listing
@@ -690,8 +691,26 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     assert depois != antes
     at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
     assert not at.exception
-    anos = [df.value for df in at.dataframe if "Ano" in df.value.columns][0]
+    anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
     assert (anos[["Conservadora", "BOVA11"]].dropna() <= 0).all().all()
+
+
+def test_the_year_table_has_the_cdi_and_the_selic_next_to_the_returns_and_only_there(monkeypatch):
+    # the user's request of 2026-11-01: compare each year's return with the CDI and the Selic, from the published rates
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
+    dias = pd.date_range("2015-01-01", "2026-10-30", freq="D")
+    monkeypatch.setattr(servicos, "carregar_juros", lambda: pd.DataFrame({"CDI": 0.0004, "Selic": 0.00041}, index=dias))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
+    assert list(anos.columns[1:6]) == ["Conservadora", "Composto", "BOVA11", "CDI", "Selic"]
+    assert anos.set_index("Ano").loc["2020", "Selic"] == pytest.approx(1.00041 ** 366 - 1)
+    at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
+    assert not at.exception                                     # a rate has no drawdown to show
+    anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
+    assert not {"CDI", "Selic"} & set(anos.columns)
 
 
 def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monkeypatch):

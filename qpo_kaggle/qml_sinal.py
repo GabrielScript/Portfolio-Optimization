@@ -6,7 +6,7 @@ Runs in ``.venv-qpo``: the app imports neither torch nor PennyLane, so inputs an
 
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -15,6 +15,7 @@ import pennylane as qml
 import torch
 from torch import nn
 
+from qpo_kaggle.qml_pacote import Pacote
 from qpo_kaggle.qpo_qaoa import float64_default
 
 N_ATRIBUTOS = 6
@@ -71,17 +72,6 @@ class Mlp(nn.Module):
 
 
 # --- the walk-forward ------------------------------------------------------------------------------------------------
-
-
-@dataclass(frozen=True)
-class Pacote:
-    """The panel as it crosses from the app's environment. The training rows are built and leak-checked there."""
-
-    theta: np.ndarray             # (rows, 6)
-    y: np.ndarray                 # (rows,)
-    mes: np.ndarray               # (rows,) month number
-    previstos: np.ndarray         # the months to forecast, ascending
-    treinos: Sequence[np.ndarray]   # per forecast month, the row positions that may train it
 
 
 @dataclass(frozen=True)

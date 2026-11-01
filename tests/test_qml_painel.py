@@ -80,3 +80,34 @@ def test_training_keeps_the_last_120_months_and_at_most_20000_rows_the_same_for_
     assert meses.iloc[primeira].min() >= pd.Timestamp("2009-10-01")
     assert meses.iloc[primeira].max() == pd.Timestamp("2019-10-01")
     assert not np.array_equal(primeira, linhas_de_treino(meses, pd.Timestamp("2020-02-01")))
+
+
+def test_the_package_keeps_only_closed_labels_and_survives_the_trip_to_the_other_environment(tmp_path):
+    from core.qml_painel import ATRIBUTOS, pacote_do_painel
+    from qpo_kaggle.qml_pacote import guardar_pacote, ler_pacote
+
+    meses = pd.date_range("2019-01-01", periods=10, freq="MS")
+    painel = pd.DataFrame({"month": meses.repeat(2), "security": ["A", "B"] * 10,
+                           **{nome: 0.1 for nome in ATRIBUTOS}, "y": 1.0})
+    painel.loc[painel["month"] >= meses[8], "y"] = np.nan              # labels not closed yet
+    pacote, chaves = pacote_do_painel(painel, meses[3:])
+    assert pacote.theta.shape == (20, 6) and len(chaves) == 20
+    assert list(pacote.previstos) == sorted(pacote.previstos) and len(pacote.previstos) == 7
+    # month index 9 trains on s <= t - 3 = month 6, and month 8 with a NaN label never trains anything
+    treino_do_ultimo = pacote.treinos[-1]
+    assert np.isfinite(pacote.y[treino_do_ultimo]).all()
+    assert pacote.mes[treino_do_ultimo].max() == pacote.previstos[-1] - 3
+    guardar_pacote(tmp_path / "p.npz", pacote)
+    lido = ler_pacote(tmp_path / "p.npz")
+    assert np.array_equal(lido.theta, pacote.theta) and np.array_equal(lido.previstos, pacote.previstos)
+    assert all(np.array_equal(a, b) for a, b in zip(lido.treinos, pacote.treinos, strict=True))
+    assert np.array_equal(lido.y, pacote.y, equal_nan=True)
+
+
+def test_a_month_with_nothing_to_train_on_stops_instead_of_forecasting_from_nothing():
+    from core.qml_painel import ATRIBUTOS, pacote_do_painel
+
+    meses = pd.date_range("2019-01-01", periods=4, freq="MS")
+    painel = pd.DataFrame({"month": meses.repeat(2), "security": ["A", "B"] * 4, **{nome: 0.1 for nome in ATRIBUTOS}, "y": 1.0})
+    with pytest.raises(ValueError, match="no closed label"):
+        pacote_do_painel(painel, meses[2:])

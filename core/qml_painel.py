@@ -13,6 +13,7 @@ import pandas as pd
 from core.sinais import _meses_antes
 from core.valor import NotaDoMes
 from core.views import escore_normal
+from qpo_kaggle.qml_pacote import Pacote
 
 MESES_DA_VOL = 36
 MINIMO_DA_VOL = 12
@@ -79,3 +80,28 @@ def painel_de_atributos(notas: Mapping[str, NotaDoMes], retornos: pd.DataFrame, 
         tabela = pd.DataFrame({nome: angulos(notas[nome](mes, candidatos).reindex(candidatos)) for nome in ATRIBUTOS})
         partes.append(tabela.assign(y=alvo_3m(retornos, mes, candidatos), month=mes).rename_axis("security").reset_index())
     return pd.concat(partes, ignore_index=True)
+
+
+def _numero_do_mes(meses: pd.Series | pd.DatetimeIndex) -> np.ndarray:
+    datas = pd.DatetimeIndex(meses)
+    return np.asarray(datas.year * 12 + datas.month - 1)
+
+
+def pacote_do_painel(painel: pd.DataFrame, previstos: Iterable[pd.Timestamp]) -> tuple[Pacote, pd.DataFrame]:
+    """The panel as numpy, plus the (month, security) of each row, which never leaves this environment. Each forecast
+    month carries the rows that may train it: closed labels only, checked by ``sem_vazamento``."""
+    ordenado = painel.sort_values(["month", "security"], kind="stable").reset_index(drop=True)
+    com_rotulo = ordenado.index[ordenado["y"].notna()].to_numpy()
+    meses_com_rotulo = ordenado.loc[com_rotulo, "month"]
+    previstos = sorted(pd.Timestamp(mes) for mes in previstos)
+    treinos = []
+    for mes in previstos:
+        linhas = com_rotulo[linhas_de_treino(meses_com_rotulo, mes)]
+        if len(linhas) == 0:
+            raise ValueError(f"{mes:%Y-%m}: no closed label to train on")
+        if not sem_vazamento(ordenado.loc[linhas, "month"], mes):
+            raise AssertionError(f"{mes:%Y-%m}: a training label had not closed")
+        treinos.append(linhas)
+    pacote = Pacote(ordenado[list(ATRIBUTOS)].to_numpy(dtype=float), ordenado["y"].to_numpy(dtype=float),
+                    _numero_do_mes(ordenado["month"]), _numero_do_mes(pd.DatetimeIndex(previstos)), treinos)
+    return pacote, ordenado[["month", "security"]]

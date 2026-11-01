@@ -68,8 +68,8 @@ def main(argv: list[str]) -> int:
     tabela_de_anos = None
     for fase in FASES:
         precos = ut.indice_total(dados.retornos).iloc[fase:]
-        composto = walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia_por_nota(nota, dados.setores)), ut.CONFIG, COMPOSTO)
-        cons = walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia_conservadora(dados.retornos, dados.proventos, dados.setores)), ut.CONFIG, CONSERVADORA)
+        composto = resultado_salvo(PASTA / f"{COMPOSTO}-fase{fase}.pkl", lambda: walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia_por_nota(nota, dados.setores)), ut.CONFIG, COMPOSTO))
+        cons = resultado_salvo(PASTA / f"{CONSERVADORA}-fase{fase}.pkl", lambda: walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia_conservadora(dados.retornos, dados.proventos, dados.setores)), ut.CONFIG, CONSERVADORA))
         um_para_n = walk_forward_dinamico(precos, dados.universo, ut.no_grid_mensal(estrategia_equiponderada), ut.CONFIG, UM_PARA_N)
         referencias = {COMPOSTO: composto.valores.dropna(), CONSERVADORA: cons.valores.dropna()}
         datas = referencias[COMPOSTO].index

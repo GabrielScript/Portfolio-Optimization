@@ -25,6 +25,11 @@ COLUNAS_DOS_INDICADORES = {"Valor de mercado": st.column_config.NumberColumn("Va
                            "Dív. líq./EBITDA": st.column_config.NumberColumn(format="%.1f"), "DY 12m": PERCENTUAL,
                            "Balanço de": st.column_config.DateColumn(format="MM/YYYY")}
 COLUNAS_DA_MACRO = {"Valor": st.column_config.NumberColumn(format="%.2f"), "Mês": st.column_config.DateColumn(format="MM/YYYY")}
+COLUNAS_DO_HRP = {"nome": st.column_config.TextColumn("Carteira"), "Retorno": st.column_config.NumberColumn("Retorno (R$)", format="percent"),
+                  "Retorno US$": PERCENTUAL, "Vol": PERCENTUAL, "Queda máx.": PERCENTUAL, "Menor fase": PERCENTUAL, "Maior fase": PERCENTUAL,
+                  "CAGR inteiro": st.column_config.NumberColumn("Retorno a.a. desde 11/2019", format="percent"),
+                  "Nomes efetivos": st.column_config.NumberColumn(format="%.0f"), "Maior peso": PERCENTUAL,
+                  "Giro a.a.": st.column_config.NumberColumn(format="%.1f")}
 LINHAS_DO_GRAFICO = ("Composto", "Conservadora", "SPY", "B3 Composto", "B3 Conservadora", "BOVA11", "CDI",
                      "15 fundos BR, melhores 12 meses")
 
@@ -39,6 +44,7 @@ class ResultadoEUA:
     indicadores: pd.DataFrame | None = None     # one row per stock of the last universe (``scripts/us_indicadores.py``)
     macro: pd.DataFrame | None = None
     anos: pd.DataFrame | None = None            # by year in reais, with BOVA11, the CDI and the Selic
+    hrp: pd.DataFrame | None = None             # HRP's variants since 2026 (``scripts/hrp_us.py``)
 
 
 def _milhar(valor: int) -> str:
@@ -54,6 +60,15 @@ def _anos(tabela: pd.DataFrame) -> None:
     st.dataframe(tabela, width="stretch", hide_index=True,
                  column_config={nome: PERCENTUAL for nome in tabela.columns[1:]},
                  alt="Retorno de cada ano em reais: estratégias americanas, BOVA11, CDI e Selic")
+
+
+def _hrp(tabela: pd.DataFrame) -> None:
+    st.markdown("### HRP e variantes desde 2026, em reais")
+    st.caption("Todas as linhas nas mesmas datas, do último fechamento de 2025 ao último mês da base americana, com 10 bps por lado e "
+               "antes de IR. Leitura descritiva sobre a base incompleta: nove meses e cerca de três rebalanceios não decidem nada. "
+               "\"Menor fase\" e \"Maior fase\" mostram quanto o resultado muda só por deslocar a data do rebalanceio em 1 ou 2 meses.")
+    st.dataframe(tabela, width="stretch", hide_index=True, column_config=COLUNAS_DO_HRP,
+                 alt="Retorno desde 2026 em reais de cada variante de HRP, do Composto, da Conservadora, do BOVA11 e do CDI")
 
 
 def _indicadores(tabela: pd.DataFrame) -> None:
@@ -98,6 +113,8 @@ def secao(resultado: ResultadoEUA | None) -> None:
     st.line_chart(resultado.curvas[linhas], y_label="R$ 1 aplicado no início")
     if resultado.anos is not None:
         _anos(resultado.anos)
+    if resultado.hrp is not None:
+        _hrp(resultado.hrp)
     st.markdown("### Passou no teste?")
     st.caption(f"Mesmo portão das estratégias na B3: P[> SPY] e DSR de pelo menos 0,95 nas três fases, com N = "
                f"{cobertura['n_tentativas']}. Passar faz da estratégia candidata a um registro ao vivo, nada mais.")

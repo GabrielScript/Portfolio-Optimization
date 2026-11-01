@@ -119,7 +119,8 @@ def carregar_eua(pasta: Path = PASTA_EUA) -> ResultadoEUA | None:
                         pd.read_parquet(pasta / "us-carteiras.parquet"),
                         json.loads((pasta / "us-cobertura.json").read_text(encoding="utf-8")),
                         opcional("us-indicadores.parquet"), opcional("us-macro.parquet"),
-                        _anos_dos_eua(curvas, opcional(ARQUIVO_CURVAS.name), opcional(ARQUIVO_JUROS.name)))
+                        _anos_dos_eua(curvas, opcional(ARQUIVO_CURVAS.name), opcional(ARQUIVO_JUROS.name)),
+                        opcional("us-hrp-desde-2026.parquet"))
 
 
 def _anos_dos_eua(curvas: pd.DataFrame, b3: pd.DataFrame | None, juros: pd.DataFrame | None) -> pd.DataFrame | None:

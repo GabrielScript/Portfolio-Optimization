@@ -20,10 +20,18 @@ from core.valor import NotaDoMes
 
 DIAS_DO_MOTOR = 252
 MESES_POR_ANO = 12
+FOLGA_DO_TETO = 1e-4       # solver noise put a portfolio 3.8e-6 above the 40%, past the rule's 1e-6: the target is 39.996%
 
 
 def bloco_de_um_mes(periodos: int) -> int:
     return periodos // MESES_POR_ANO
+
+
+def _nas_regras(braco: Braco) -> Construtor:
+    """An arm under the rules, its optimizer's volatility target just inside the rule's cap."""
+    def com_folga(decisao: Decisao) -> pd.Series:
+        return braco(replace(decisao, cfg=replace(decisao.cfg, vol_maxima=decisao.cfg.vol_maxima * (1.0 - FOLGA_DO_TETO))))
+    return _construtor(com_folga)
 
 
 def _utilidade(utilidade: Utilidade) -> Braco:
@@ -75,7 +83,7 @@ def _tilting(nota: NotaDoMes) -> Construtor:
 
             def braco(decisao: Decisao) -> pd.Series:
                 return pesos_tilting(decisao.retornos, referencia, decisao.media, decisao.sigma, decisao.periodos, decisao.cfg)
-            return _construtor(braco)(setores, periodos, limites)(treino)
+            return _nas_regras(braco)(setores, periodos, limites)(treino)
         return _estrategia
     return construir
 
@@ -83,18 +91,18 @@ def _tilting(nota: NotaDoMes) -> Construtor:
 def bracos_lote2(nota: NotaDoMes) -> dict[str, Construtor]:
     """In the spec's row order. ``nota`` is the Composite's score, which only the tilting arm reads."""
     return {
-        "Kelly-exato": _construtor(_utilidade(LOG)),
+        "Kelly-exato": _nas_regras(_utilidade(LOG)),
         "Kelly-exato-sem-teto": _kelly_sem_teto,
-        "Quintil-mu": _construtor(_quintil("mu")),
-        "Quintil-mu-sigma": _construtor(_quintil("mu_sigma")),
-        "Quintil-mu-sigma2": _construtor(_quintil("mu_sigma2")),
-        "Box-robusto": _construtor(_box),
-        "Subset-resampling": _construtor(_subconjunto(com_linhas=False)),
-        "Subset-bagging": _construtor(_subconjunto(com_linhas=True)),
-        "Downside-1": _construtor(_downside(1)),
-        "Semi-variancia": _construtor(_downside(2)),
-        "Downside-3": _construtor(_downside(3)),
+        "Quintil-mu": _nas_regras(_quintil("mu")),
+        "Quintil-mu-sigma": _nas_regras(_quintil("mu_sigma")),
+        "Quintil-mu-sigma2": _nas_regras(_quintil("mu_sigma2")),
+        "Box-robusto": _nas_regras(_box),
+        "Subset-resampling": _nas_regras(_subconjunto(com_linhas=False)),
+        "Subset-bagging": _nas_regras(_subconjunto(com_linhas=True)),
+        "Downside-1": _nas_regras(_downside(1)),
+        "Semi-variancia": _nas_regras(_downside(2)),
+        "Downside-3": _nas_regras(_downside(3)),
         "MVSK-tilting": _tilting(nota),
-        "Utilidade-raiz": _construtor(_utilidade(RAIZ)),
-        "Retorno-minimo": _construtor(_retorno_minimo),
+        "Utilidade-raiz": _nas_regras(_utilidade(RAIZ)),
+        "Retorno-minimo": _nas_regras(_retorno_minimo),
     }

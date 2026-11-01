@@ -123,7 +123,7 @@ def test_each_arm_is_wired_to_its_own_formulation(nome):
     treino = _treino(colunas=100 if nome.startswith("Quintil") else 30)
     setores = _setores(treino)
     sigma = ledoit_wolf_baixo_posto(treino, 252)
-    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.20, n_ativos_max=10, vol_maxima=0.40, aversao_risco=1.0,
+    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.20, n_ativos_max=10, vol_maxima=0.40 * (1.0 - 1e-4), aversao_risco=1.0,
                            grupos=limites_por_setor(setores, 0.30))
     media = media_por_periodo(treino, sigma, 252)
     esperado = {"Kelly-exato": lambda: cl.pesos_utilidade(treino, sigma, cfg, cl.LOG),
@@ -137,3 +137,12 @@ def test_each_arm_is_wired_to_its_own_formulation(nome):
                 "Downside-3": lambda: cl.pesos_downside(treino, sigma, cfg, 3),
                 "Retorno-minimo": lambda: cl.pesos_retorno_minimo(media * 252, sigma, cfg)}[nome]()
     assert _bracos()[nome](setores, 252)(treino).to_numpy() == pytest.approx(esperado.reindex(treino.columns).fillna(0.0).to_numpy(), abs=1e-9)
+
+
+def test_an_arm_on_the_volatility_cap_stays_clear_of_the_rule_by_more_than_solver_noise():
+    """The first real decision came out 3.8e-6 above the cap, past the rule's 1e-6 tolerance, and a refusal at the first decision is fatal."""
+    treino = _treino(escala=3.0)
+    setores = _setores(treino)
+    cov = densa(ledoit_wolf_baixo_posto(treino, 252)).to_numpy()
+    pesos = _bracos()["Kelly-exato"](setores, 252)(treino).to_numpy()
+    assert np.sqrt(pesos @ cov @ pesos) <= 0.40 * (1.0 - 5e-5)

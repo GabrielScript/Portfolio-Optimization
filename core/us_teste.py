@@ -12,6 +12,8 @@ from dataclasses import dataclass
 import numpy as np
 import pandas as pd
 
+from core.backtest import ResultadoBacktest
+
 MESES_POR_ANO = 12
 DIAS_DO_ANO_DO_MOTOR = 252
 FATORES = ("mkt_rf", "smb", "hml", "rmw", "cma", "mom")
@@ -61,6 +63,11 @@ def no_grid_mensal(estrategia: Callable[[pd.DataFrame], pd.Series]) -> Callable[
         return estrategia(pd.DataFrame(treino.to_numpy() * escala, columns=treino.columns,
                                        index=treino.index + pd.offsets.MonthEnd(1)))
     return _estrategia
+
+
+def giro_anual_mensal(resultado: ResultadoBacktest) -> float:
+    """Turnover per year on the monthly grid: the engine's ``turnover_anual_medio`` takes each row as one of 252 sessions."""
+    return float(resultado.turnover.sum() / ((len(resultado.valores) - 1) / MESES_POR_ANO))
 
 
 def medidas(valores: pd.Series, rf: pd.Series) -> dict[str, float]:

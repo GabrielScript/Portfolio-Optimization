@@ -80,7 +80,7 @@ def main(argv: list[str]) -> int:
         print(_texto(tabela))
         for nome, resultado in resultados.items():
             print(f"{nome}: refusals {len(resultado.recusas)}, failures {len(resultado.falhas)}, "
-                  f"annual turnover {resultado.turnover_anual_medio:.2f}")
+                  f"annual turnover {ut.giro_anual_mensal(resultado):.2f}")
         print(f"SPY: {ut.medidas(spy, rf)}")
         print(_texto(anos({**curvas, SPY: spy}) * 100, 1))
         print(f"(phase {fase} done in {time.perf_counter() - inicio:.0f} s)", flush=True)

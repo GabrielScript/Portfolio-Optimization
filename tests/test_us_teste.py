@@ -275,3 +275,13 @@ def test_results_without_the_rates_or_the_b3_curves_still_show(tmp_path):
     at = AppTest.from_function(_tela_eua, args=(str(tmp_path),), default_timeout=30).run()
     assert not at.exception
     assert not [df.value for df in at.dataframe if "Ano" in df.value.columns]
+
+
+def test_the_monthly_turnover_counts_months_not_the_engines_sessions():
+    """24 months with two full turnovers a year: the engine's ``turnover_anual_medio`` takes those rows as sessions, about 21x too high."""
+    from core.backtest import ResultadoBacktest
+    from core.us_teste import giro_anual_mensal
+
+    datas = pd.date_range("2020-01-31", periods=25, freq="ME")
+    resultado = ResultadoBacktest("x", "y", pd.Series(1.0, index=datas), pd.DataFrame(), pd.Series(1.0, index=datas[::6][:4]), 0.0)
+    assert giro_anual_mensal(resultado) == pytest.approx(2.0)

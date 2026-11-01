@@ -53,7 +53,7 @@ from scripts.paper_v3 import nota_do_composto  # noqa: E402
 from scripts.qml_avaliar_b3 import COMPOSTO, JUROS, SAIDA  # noqa: E402
 from scripts.qml_avaliar_us import CURVAS_DA_B3  # noqa: E402
 from scripts.todas_comum import esperar_a_janela_passar, resultado_salvo  # noqa: E402
-from scripts.us_avaliar import CONSERVADORA, FASES, SPY, Dados, _texto, anos, carregar, medidas_da_fase  # noqa: E402
+from scripts.us_avaliar import CONSERVADORA, FASES, SPY, UM_PARA_N, Dados, _texto, anos, carregar, medidas_da_fase  # noqa: E402
 
 PASTA = Path("D:/b3-datalake/exports/todas/us")
 AGG = "AGG"
@@ -215,7 +215,7 @@ def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
     PASTA.mkdir(parents=True, exist_ok=True)
     dados = carregar(Path(argv[0]))
-    publicado = cagrs_do_relatorio(Path(argv[1]).read_text(encoding="utf-8"), (COMPOSTO, CONSERVADORA))
+    publicado = cagrs_do_relatorio(Path(argv[1]).read_text(encoding="utf-8"), (COMPOSTO, CONSERVADORA, UM_PARA_N))
     n = contar_tentativas()
     rf = dados.fatores["rf"]
     log: dict = {}
@@ -235,7 +235,8 @@ def main(argv: list[str]) -> int:
         referencias = {COMPOSTO: composto.valores.dropna(), CONSERVADORA: cons.valores.dropna()}
         datas = referencias[COMPOSTO].index
         spy = ut.referencia_nas_datas(dados.etfs[SPY], datas)
-        conferir_encanamento(publicado[fase], {nome: ut.medidas(curva, rf)["CAGR"] for nome, curva in referencias.items()}, fase)
+        um_para_n = _rodar_braco("1/N", construtores["1/N"], fase, precos, dados).valores.dropna()     # no optimizer, on this grid too
+        conferir_encanamento(publicado[fase], {nome: ut.medidas(curva, rf)["CAGR"] for nome, curva in {**referencias, UM_PARA_N: um_para_n}.items()}, fase)
 
         resultados = {nome: _rodar_braco(nome, construir, fase, precos, dados) for nome, construir in construtores.items()}
         resultados["Vencedoras-crescimento"] = _vencedoras(fase, precos, dados, rf)

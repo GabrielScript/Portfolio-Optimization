@@ -145,7 +145,7 @@ def main() -> int:
         if nome == "QUBO-giro":
             passa = passa and concordancia >= MATCH_MIN - 1e-12
         portao.append({"braco": nome, "p_composto": p_composto[nome], "p_conservadora": p_conservadora[nome],
-                       "p_bova": p_bova[nome], "dsr": dsr[nome], "passa": passa})
+                       "p_referencia": p_bova[nome], "dsr": dsr[nome], "passa": passa})
         print(f"{nome}: P[> Composite] {np.round(p_composto[nome], 3)}, P[> Conservadora] {np.round(p_conservadora[nome], 3)}, "
               f"P[> BOVA11] {np.round(p_bova[nome], 3)}, DSR {np.round(dsr[nome], 3)}: {'PASSES' if passa else 'does not pass'}")
 

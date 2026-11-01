@@ -16,9 +16,10 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.qml_ic import IC_MINIMO, T_MINIMO, ic_do_alvo, passa_no_ic, t_newey_west  # noqa: E402
+from core.qml_ic import IC_MINIMO, T_MINIMO, ic_do_alvo, passa_no_ic, t_newey_west, trocar_mercado  # noqa: E402
 
 PASTA = Path("D:/b3-datalake/exports/qml")
+DOCS = Path(__file__).resolve().parent.parent / "docs" / "dados"
 # the frozen returns end in a partial month, so the last whole target starts 3 months before the partial one
 JANELA = {"b3": (pd.Timestamp("2012-01-01"), pd.Timestamp("2026-07-01")),
           "us": (pd.Timestamp("2019-11-01"), pd.Timestamp("2026-07-01"))}
@@ -34,6 +35,12 @@ def tabela_das_previsoes(pasta: Path) -> pd.DataFrame:
     return chaves.assign(**modelos).merge(painel, on=["month", "security"], validate="one_to_one")
 
 
+def gravar(nome: str, tabela: pd.DataFrame, mercado: str) -> None:
+    """The screen's table: this market's rows replace the ones it had."""
+    arquivo = DOCS / f"qpo-hibrido-{nome}.parquet"
+    trocar_mercado(pd.read_parquet(arquivo) if arquivo.exists() else None, tabela, mercado).to_parquet(arquivo, index=False)
+
+
 def main(argv: list[str]) -> int:
     mercado = argv[0]
     tabela = tabela_das_previsoes(PASTA / mercado)
@@ -46,10 +53,18 @@ def main(argv: list[str]) -> int:
                      "share > 0": (serie > 0).mean(), "passes": passa_no_ic(serie.mean(), t_newey_west(serie))}
               for nome, serie in ics.items()}
     print(pd.DataFrame(linhas).T.to_string(float_format=lambda valor: f"{valor:.3f}"))
+    gravar("ic", pd.DataFrame({"mercado": mercado, "modelo": list(linhas), "meses": [linha["months"] for linha in linhas.values()],
+                               "IC": [linha["IC"] for linha in linhas.values()], "t": [linha["t"] for linha in linhas.values()],
+                               "passa": [bool(linha["passes"]) for linha in linhas.values()]}), mercado)
+    diferencas = []
     for um, outro in DIFERENCAS:
         if um in ics and outro in ics:
             diferenca = (ics[um] - ics[outro]).dropna()
             print(f"{um} - {outro}: {diferenca.mean():+.4f}, t {t_newey_west(diferenca):+.2f}")
+            diferencas.append({"mercado": mercado, "comparacao": f"{um} - {outro}", "diferenca": diferenca.mean(),
+                               "t": t_newey_west(diferenca)})
+    if diferencas:
+        gravar("diferencas", pd.DataFrame(diferencas), mercado)
     sementes = [nome for nome in tabela.columns if nome.startswith("VQC_")]
     if sementes:
         print("VQC by seed: " + ", ".join(f"{nome} {ic_do_alvo(tabela, nome, 'y').mean():.4f}" for nome in sementes))

@@ -48,6 +48,7 @@ from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noq
 from ui import alepha, painel, secoes, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
+from ui import qpo_hibrido as ui_qpo_hibrido  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
 from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
                             grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
@@ -261,6 +262,8 @@ def main() -> None:
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
     st.markdown("---")
     ui_eua.secao(servicos.carregar_eua())
+    st.markdown("---")
+    ui_qpo_hibrido.secao(ui_qpo_hibrido.carregar())
     st.markdown("---")
     secao_mercado()
     st.markdown("---")

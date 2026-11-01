@@ -27,6 +27,13 @@ def passa_no_ic(ic: float, t: float) -> bool:
     return ic >= IC_MINIMO and t >= T_MINIMO
 
 
+def trocar_mercado(antiga: pd.DataFrame | None, nova: pd.DataFrame, mercado: str) -> pd.DataFrame:
+    """A reading's table with this market's rows replaced by the new ones; the other market's stay."""
+    if antiga is None:
+        return nova
+    return pd.concat([antiga[antiga["mercado"] != mercado], nova], ignore_index=True)
+
+
 def ic_do_alvo(tabela: pd.DataFrame, previsao: str, alvo: str) -> pd.Series:
     """Spearman IC of each month with a closed target, over the rows that have both. Columns: ``month``, the two given."""
     validas = tabela.dropna(subset=[previsao, alvo])

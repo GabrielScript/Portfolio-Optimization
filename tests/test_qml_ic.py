@@ -30,3 +30,15 @@ def test_the_ic_is_a_spearman_per_month_and_ignores_months_without_a_closed_targ
     ics = ic_do_alvo(tabela, "previsao", "y")
     assert list(ics.index) == [pd.Timestamp("2020-01-01"), pd.Timestamp("2020-02-01")]
     assert ics.iloc[0] == pytest.approx(1.0) and ics.iloc[1] == pytest.approx(-1.0)
+
+
+def test_a_market_reading_replaces_only_its_own_rows():
+    import pandas as pd
+
+    from core.qml_ic import trocar_mercado
+
+    antiga = pd.DataFrame({"mercado": ["b3", "us"], "IC": [0.1, 0.2]})
+    nova = pd.DataFrame({"mercado": ["us"], "IC": [0.3]})
+    junta = trocar_mercado(antiga, nova, "us")
+    assert junta.set_index("mercado")["IC"].to_dict() == {"b3": 0.1, "us": 0.3}
+    assert trocar_mercado(None, nova, "us").equals(nova)

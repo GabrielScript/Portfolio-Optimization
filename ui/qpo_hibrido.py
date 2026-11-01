@@ -94,8 +94,10 @@ def secao(resultado: ResultadoHibrido | None) -> None:
         return
     st.warning(_veredito(resultado.mercados))
     st.caption("Nenhum dos quatro artigos prevê retornos: todos recebem o retorno esperado pronto. A previsão aqui é trabalho "
-               "novo, e o circuito é comparado com o seu gêmeo clássico (Fourier), que usa os mesmos 729 termos. Só haveria "
-               "ganho quântico se o circuito passasse no teste e também batesse esse gêmeo, com t de pelo menos 2.")
+               "novo, e o circuito, simulado em CPU, é comparado com o seu gêmeo clássico (Fourier), que usa os mesmos 729 "
+               "termos. A regra escrita antes do teste só admite ganho quântico se o circuito passar e também bater esse "
+               "gêmeo, com t de pelo menos 2. Mas bater o gêmeo não basta para valer a pena: compare também com o MLP e o "
+               "Composto, modelos clássicos mais simples, na tabela de diferenças.")
     st.markdown("### A previsão acerta a ordem das ações?")
     st.caption("IC de Spearman de cada mês contra o retorno dos 3 meses seguintes, t de Newey-West. Passa com IC de pelo menos "
                "0,02 e t de pelo menos 2.")

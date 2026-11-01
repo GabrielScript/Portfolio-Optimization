@@ -37,6 +37,13 @@ def test_it_says_so_when_no_arm_passed_and_shows_the_quantum_edge_rule():
     assert "Informação, não recomendação" in _textos(tela)
 
 
+def test_beating_the_twin_is_not_shown_as_a_quantum_gain_by_itself():
+    # on the B3 the circuit beat its twin, the weakest of the five models, and tied the simple classical ones
+    textos = _textos(_tela(False))
+    assert "simulado em CPU" in textos
+    assert "bater o gêmeo não basta" in textos
+
+
 def test_a_passing_arm_is_only_a_candidate():
     tela = _tela(True)
     assert "candidato" in " ".join(aviso.value for aviso in tela.warning)

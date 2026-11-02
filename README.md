@@ -759,3 +759,14 @@ Risk reads monthly returns, since dead names have no daily history. Banks keep P
 EDGAR's equity is a bank's equity. Empty market values are names whose cap the checks reject (16% today, BRK.B among them).
 
 **Still being fixed (2026-11-01, not merged):** five months where the site left a split in the prices move on a lake branch (UAVS 2024-10 goes from +2,727% to -43.5%), and the dead-name list grows from 1,505 to 2,114 names, including Sears, Endo and Seagen. At 500 names a month on Tiingo's free plan the download ends on 01/02/2027. Until then the US numbers may be optimistic, and US readings so far ran on the old panel. 7,133 dead names are not on Tiingo's list at all. DECISOES 229.
+
+## The book's strategies and the hybrid QPO (2026-11-01, in progress)
+
+Testing the formulations of Palomar's book that had not run, on the B3 and on US stocks, with the app's caps and the same gate as every other attempt. **The code is on the branches `feat/qml`, `feat/us-todas` and `feat/us-lote2`, not on this one yet; the app does not show these results until they merge.**
+
+- **Finished on the B3, nothing passes:** the first batch (HRP-projetado, IVarP, IVolP, MDivP, MDecP, RPP, HERC, Mean-CVaR, Mean-CDaR, MVSK, Robust-MV) and the hybrid quantum forecast and QPO. The best new arm, HRP-projetado, makes 16.9-17.6% a year against the Composite's 19.1-21.4%.
+- **Running or waiting:** the second batch (exact Kelly with and without the volatility cap, quintiles, box robust mean, subset resampling and bagging, downside risk, MVSK tilting from the Composite, root utility, a return constraint), 14 arms, pre-registered, reading on the B3 under way. Everything on US stocks waits for the frozen data.
+- **What the tests say so far:** the forecast matters more than the optimizer. Markowitz with the Composite's signal ties the Composite (18.9-20.3%); with historical means it makes 13-14% with a 62% drawdown.
+- **US data:** the Tiingo batch stopped at the free plan's 500 symbols a month, now with a clean stop. Dead names from Tiingo: 978 of 1,505 candidates. Five missed splits were repaired and the gold now builds byte for byte the same.
+
+Past results, before tax, no promise for the future. Details: `DECISOES.md` 226-234.

@@ -64,6 +64,49 @@ def test_the_opinion_keeps_plan_tickers_once_and_needs_three_bcb_counter_reasons
     assert any("VALE3" in aviso and "bcb" in aviso for aviso in resultado.descartes)
 
 
+def test_news_web_and_post_claims_count_only_when_an_official_source_confirms_them():
+    # the user's rule of 2026-11-03 (DECISOES 240): news and social posts are sensationalist and often false, so a claim
+    # from them is used only when CVM, BCB, B3 (market data) or ANBIMA evidence confirms it, numbers included
+    from core.assessor import validar_parecer
+    evidencias = _evidencias() | {
+        "E6": Evidencia("E6", "social", "2026-10-25", "@trader: PETR4 vai quebrar, dívida explodiu 300%"),
+        "E7": Evidencia("E7", "cvm", "2026-10-20", "PETR4 Fato Relevante em 20/10/2026: Plano de investimentos "
+                                                   "2027-2031; tom Jev: good"),
+        "E8": Evidencia("E8", "web", "2026-10-21", "CVM: Petrobras divulga plano de investimentos [autoridade 4, "
+                                                   "relevância 2,10; https://www.gov.br/cvm/pt-br/noticias/x]"),
+        "E9": Evidencia("E9", "noticia", "2026-10-22", "Petrobras teve P/L de 4,8 segundo analistas [https://x.com]")}
+    contra = [_afirmacao("Selic de 15%", "E1", "15,00%"), _afirmacao("IPCA de 5,17%", "E2", "5,17%"),
+              _afirmacao("Focus vê Selic de 12,25%", "E3", "12,25%")]
+    confirmada = {**_afirmacao("Novo plano de investimentos", "E5", "novo plano de investimentos"),
+                  "confirmacao": {"evidencia": "E7", "citacao": "Plano de investimentos 2027-2031"}}
+    numero_confirmado = {**_afirmacao("P/L de 4,8", "E9", "P/L de 4,8"),
+                         "confirmacao": {"evidencia": "E4", "citacao": "P/L 4,8"}}
+    numero_sem_confirmar = {**_afirmacao("Dívida subiu 300%", "E6", "dívida explodiu 300%"),
+                            "confirmacao": {"evidencia": "E7", "citacao": "Plano de investimentos"}}
+    acao = {"ticker": "PETR4", "contra_tese_macro": contra, "postura": "favoravel", "confianca": 0.7,
+            "tese": [confirmada, numero_confirmado, _afirmacao("Plano divulgado na CVM", "E8", "Petrobras divulga plano")],
+            "riscos": [_afirmacao("Vai quebrar", "E6", "PETR4 vai quebrar"), numero_sem_confirmar]}
+    resultado = validar_parecer({"acoes": [acao], "ranking": ["PETR4"]}, evidencias, ["PETR4"])
+    petr4 = resultado.parecer["acoes"][0]
+    assert [a["evidencia"] for a in petr4["tese"]] == ["E5", "E9", "E8"]     # E8: a web page of an official domain
+    assert petr4["tese"][0]["confirmacao"] == {"evidencia": "E7", "citacao": "Plano de investimentos 2027-2031"}
+    assert petr4["riscos"] == []
+    assert [a["evidencia"] for a in petr4["nao_confirmadas"]] == ["E6", "E6"]
+    assert petr4["postura"] == "favoravel"
+    assert any("PETR4 riscos" in aviso and "não confirmada" in aviso for aviso in resultado.descartes)
+    # a stance needs a thesis claim the official sources back: news alone leave the stock with insufficient evidence
+    so_noticia = {**acao, "tese": [_afirmacao("Novo plano", "E5", "novo plano")]}
+    assert validar_parecer({"acoes": [so_noticia]}, evidencias, ["PETR4"]).parecer["acoes"][0]["postura"] == (
+        "evidencia_insuficiente")
+
+
+def test_the_stance_becomes_a_traffic_light_and_the_effort_is_max():
+    from core.assessor import ESFORCO, cor_da_postura
+    assert ESFORCO == "max"
+    assert [cor_da_postura(p) for p in ("favoravel", "neutra", "evidencia_insuficiente", "desfavoravel", "?")] == [
+        "verde", "amarelo", "amarelo", "vermelho", "amarelo"]
+
+
 def test_free_text_with_numbers_is_dropped_and_a_non_object_answer_is_a_structural_error():
     from core.assessor import validar_parecer
     bruto = {"resumo": "Retorno esperado de 30% ao ano.", "cenario_macro": [], "acoes": [], "ranking": [],
@@ -105,7 +148,7 @@ def test_the_pack_numbers_each_fact_in_a_fixed_order_with_brazilian_numbers_and_
     assert [e.classe for e in pacote] == ["bcb", "plano", "plano", "mercado", "mercado", "cvm", "cvm", "cvm", "cvm",
                                           "aviso"]
     textos = [e.texto for e in pacote]
-    assert textos[1] == "PETR4 está na carteira do Alepha registrada em 23/10/2026, peso alvo 50,0%"
+    assert textos[1] == "PETR4 está na carteira do Aleph Neumann registrada em 23/10/2026, peso alvo 50,0%"
     assert textos[3] == ("PETR4 (Petrobras, Petróleo): Preço (R$) 30,13; Retorno 12m 5,1%; Vol anual 27,5%; "
                          "Beta 0,85; P/L 4,80; DY 12m 11,2%; Fechamento de 24/10/2026; Balanço de 30/06/2026")
     assert "Beta" not in textos[4] and "Retorno 12m -12,3%" in textos[4]
@@ -249,7 +292,7 @@ def test_a_tool_round_sends_the_reasoning_back_keeps_the_cached_prefix_and_check
     assert resultado.validacao.parecer["acoes"][0]["tese"][0]["evidencia"] == "E1001"
     primeiro, segundo = corpos
     assert primeiro["model"] == "deepseek-flash" and primeiro["thinking"] == {"type": "enabled"}
-    assert primeiro["reasoning_effort"] == "high" and primeiro["response_format"] == {"type": "json_object"}
+    assert primeiro["reasoning_effort"] == "max" and primeiro["response_format"] == {"type": "json_object"}
     assert "temperature" not in primeiro and primeiro["tools"] == FERRAMENTAS == segundo["tools"]
     assert segundo["messages"][:2] == primeiro["messages"]
     assert "E4 | mercado | 2026-10-24 | PETR4: P/L 4,8" in primeiro["messages"][0]["content"]

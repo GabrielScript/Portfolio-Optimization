@@ -1,6 +1,11 @@
-# 📊 Alepha Quant — Alocação quantitativa em ações da B3
+# 📊 Aleph Neumann — Alocação quantitativa em ações da B3
 
 > **Autor:** Gabriel Estrela Lopes
+
+**2026-11-03: renamed from "Alepha Quant" to "Aleph Neumann", and B3 only** (DECISOES 240). The app covers B3
+stocks, ETFs and BDRs (the US BDRs and ETFs listed on B3 included) with CVM, BCB and ANBIMA data. The US stocks
+screen and the US stock pipelines (Tiingo tasks, `alepha-quant-eua`) are on standby: code and data kept, nothing
+deleted, nothing on the screen. Older sections below keep the old name where they record history.
 
 ## Version 1.0 (2026-10-23)
 

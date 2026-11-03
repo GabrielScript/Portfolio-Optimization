@@ -1,5 +1,5 @@
 """
-Daily upkeep of the Alepha (task "paper manutencao", weekdays at 10:00, 16:00 and 22:30, through
+Daily upkeep of the Aleph Neumann (task "paper manutencao", weekdays at 10:00, 16:00 and 22:30, through
 ``scripts/rodar_paper.py manutencao``), so nothing after v1.0 depends on the user remembering it.
 
 Usage: .venv/Scripts/python -X utf8 scripts/manutencao.py
@@ -15,7 +15,7 @@ Each run, in the app checkout on ``main``, after the lake and the paper routines
   so the deployed app is one session old, not one rebalance old (DECISOES 124);
 - ``lago/ativos.parquet``: the lake's list of the market panel's stocks, BDRs and ETFs (name, type, B3 sector), when
   its rows changed;
-- the live backtest curves of the Alepha screen (``scripts/curvas_ao_vivo.py``, DECISOES 188) when they are 5
+- the live backtest curves of the Aleph Neumann screen (``scripts/curvas_ao_vivo.py``, DECISOES 188) when they are 5
   sessions behind the lake (about weekly; a ~3 minute run);
 - the fictitious account's ledger (``core.simulador``), which only follows the paper-v3 records;
 - the news/sentiment panel files (``scripts/painel_do_app.py``) from the lake's log on D:, numbers and public CVM
@@ -63,7 +63,7 @@ ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
 SOBREPOSICAO = 10           # committed sessions repeated in the small file (a stock may not trade on the last one)
-# the live backtest curves of the Alepha screen (scripts/curvas_ao_vivo.py, DECISOES 188), rerun about weekly
+# the live backtest curves of the Aleph Neumann screen (scripts/curvas_ao_vivo.py, DECISOES 188), rerun about weekly
 ARQUIVOS_DAS_CURVAS = (Path("docs/dados/curvas-ao-vivo.parquet"), Path("docs/curvas-ao-vivo.txt"),
                        Path("docs/dados/juros-diarios.parquet"))
 DEFASAGEM_DAS_CURVAS = 5
@@ -215,8 +215,8 @@ class Paper:
     resumo: str
 
 
-PAPER_V2 = Paper(ARQUIVO_REGISTRO, PASTA_LEITURAS, "paper-v2", "Alepha: ", True, "Critério")
-PAPER_V3 = Paper(ARQUIVO_REGISTRO_V3, PASTA_LEITURAS_V3, "paper-v3", "Alepha: paper-v3, ", False, "Decision")
+PAPER_V2 = Paper(ARQUIVO_REGISTRO, PASTA_LEITURAS, "paper-v2", "Aleph Neumann: ", True, "Critério")
+PAPER_V3 = Paper(ARQUIVO_REGISTRO_V3, PASTA_LEITURAS_V3, "paper-v3", "Aleph Neumann: paper-v3, ", False, "Decision")
 
 
 def _titulo(nome: str, prefixo: str = PAPER_V2.titulo) -> str:
@@ -301,7 +301,7 @@ def atualizar_recentes(raiz: Path, git: Git) -> str:
 
 
 def atualizar_curvas(raiz: Path, git: Git, gerar: Callable[[], object]) -> str:
-    """Reruns the live backtest curves of the Alepha screen (``gerar``: ``scripts/curvas_ao_vivo.py``, ~3 minutes)
+    """Reruns the live backtest curves of the Aleph Neumann screen (``gerar``: ``scripts/curvas_ao_vivo.py``, ~3 minutes)
     when the file is missing or ``DEFASAGEM_DAS_CURVAS`` sessions of the lake's calendar behind, and commits both of
     its files (also a pair a failed commit left behind)."""
     arquivo = raiz / ARQUIVOS_DAS_CURVAS[0]

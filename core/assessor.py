@@ -1,5 +1,5 @@
 """
-assessor.py - The DeepSeek adviser of the Alepha page (DECISOES 136, design in
+assessor.py - The DeepSeek adviser of the Aleph Neumann page (DECISOES 136, design in
 docs/superpowers/specs/2026-10-25-assessor-deepseek-design.md): DeepSeek V4.1 Flash reads an evidence pack (the
 plan's stocks, their numbers, BCB macro data, CVM filings, headlines), may call tools that add evidence, and answers
 one JSON opinion per stock. Every factual claim cites one evidence id and quotes it; ``validar_parecer`` keeps only the
@@ -17,6 +17,7 @@ import unicodedata
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
+from urllib.parse import urlsplit
 
 import pandas as pd
 import requests
@@ -91,8 +92,54 @@ def validar_afirmacao(afirmacao: object, evidencias: dict[str, Evidencia]) -> st
     return None
 
 
+# The user's rule of 2026-11-03 (DECISOES 240): news, web pages and posts are often sensationalist or false, so a claim
+# citing them counts only when an official source (CVM, BCB, B3 market data, ANBIMA, the plan) confirms it.
+CLASSES_OFICIAIS = frozenset({"plano", "mercado", "cvm", "bcb", "anbima"})
+CLASSES_A_CONFIRMAR = frozenset({"noticia", "web", "social"})
+DOMINIOS_OFICIAIS = ("cvm.gov.br", "bcb.gov.br", "b3.com.br", "anbima.com.br", "tesourodireto.com.br",
+                     "tesourotransparente.gov.br")
+CAMINHOS_OFICIAIS_DO_GOV_BR = ("/cvm/", "/bcb/", "/tesouronacional/")
+_URL = re.compile(r"https?://[^\s\]\)]+", re.IGNORECASE)
+
+
+def _url_oficial(url: str) -> bool:
+    partes = urlsplit(url)
+    host = (partes.hostname or "").casefold()
+    if any(host == dominio or host.endswith("." + dominio) for dominio in DOMINIOS_OFICIAIS):
+        return True
+    return host in ("gov.br", "www.gov.br") and partes.path.casefold().startswith(CAMINHOS_OFICIAIS_DO_GOV_BR)
+
+
+def evidencia_oficial(evidencia: Evidencia) -> bool:
+    """CVM, BCB, B3 market data, ANBIMA and the plan; a web page only when every link in it is an official site's."""
+    if evidencia.classe in CLASSES_OFICIAIS:
+        return True
+    links = _URL.findall(evidencia.texto) if evidencia.classe == "web" else []
+    return bool(links) and all(_url_oficial(link) for link in links)
+
+
+def _motivo_sem_confirmacao(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str | None:
+    """None when the claim's ``confirmacao`` ({evidencia, citacao}) quotes official evidence holding every number of the
+    claim; else the reason, in Portuguese."""
+    confirmacao = afirmacao.get("confirmacao")
+    if not isinstance(confirmacao, dict) or not all(isinstance(confirmacao.get(campo), str)
+                                                    for campo in ("evidencia", "citacao")):
+        return "sem confirmação de fonte oficial"
+    oficial = evidencias.get(confirmacao["evidencia"].strip())
+    if oficial is None or not evidencia_oficial(oficial):
+        return f"a confirmação {confirmacao['evidencia']} não é de fonte oficial"
+    return validar_afirmacao({"afirmacao": afirmacao["afirmacao"], "evidencia": oficial.id,
+                              "citacao": confirmacao["citacao"]}, evidencias)
+
+
 POSTURAS = ("favoravel", "neutra", "desfavoravel", "evidencia_insuficiente")
 INSUFICIENTE = "evidencia_insuficiente"
+CORES = {"favoravel": "verde", "neutra": "amarelo", INSUFICIENTE: "amarelo", "desfavoravel": "vermelho"}
+
+
+def cor_da_postura(postura: object) -> str:
+    """The traffic light of a stance: green to hold, red to avoid, yellow when neutral or unknown."""
+    return CORES.get(postura, "amarelo") if isinstance(postura, str) else "amarelo"
 CONTRA_RAZOES = 3                # the user's rule: three macro reasons, from the BCB data only, against each thesis
 CLASSE_MACRO = "bcb"             # BCB SGS, Focus and Tesouro evidence
 
@@ -106,15 +153,31 @@ class Validacao:
     estrutura: list[str]
 
 
-def _afirmacoes_validas(lista: object, evidencias: dict[str, Evidencia], onde: str,
-                        descartes: list[str]) -> list[dict]:
+def _limpa(afirmacao: dict) -> dict:
+    limpa = {campo: afirmacao[campo].strip() for campo in ("afirmacao", "evidencia", "citacao")}
+    if isinstance(afirmacao.get("confirmacao"), dict):
+        limpa["confirmacao"] = {campo: afirmacao["confirmacao"][campo].strip() for campo in ("evidencia", "citacao")}
+    return limpa
+
+
+def _afirmacoes_validas(lista: object, evidencias: dict[str, Evidencia], onde: str, descartes: list[str],
+                        nao_confirmadas: list[dict]) -> list[dict]:
+    """The claims that pass ``validar_afirmacao``; one citing news, web or a post also needs an official confirmation,
+    and without it goes to ``nao_confirmadas`` (shown apart, never counted)."""
     validas = []
     for afirmacao in lista if isinstance(lista, list) else []:
         motivo = validar_afirmacao(afirmacao, evidencias)
         if motivo:
             descartes.append(f"{onde}: {motivo}")
+            continue
+        evidencia = evidencias[afirmacao["evidencia"].strip()]
+        sem_confirmacao = None if evidencia_oficial(evidencia) else _motivo_sem_confirmacao(afirmacao, evidencias)
+        if sem_confirmacao:
+            descartes.append(f"{onde}: afirmação de {evidencia.classe} não confirmada por fonte oficial "
+                             f"({sem_confirmacao})")
+            nao_confirmadas.append({campo: afirmacao[campo].strip() for campo in ("afirmacao", "evidencia", "citacao")})
         else:
-            validas.append({campo: afirmacao[campo].strip() for campo in ("afirmacao", "evidencia", "citacao")})
+            validas.append(_limpa(afirmacao))
     return validas
 
 
@@ -134,15 +197,16 @@ def _ticker(bruto: object) -> str:
 
 def _acao_valida(acao: dict, evidencias: dict[str, Evidencia], descartes: list[str]) -> dict:
     ticker = _ticker(acao["ticker"])
-    tese = _afirmacoes_validas(acao.get("tese"), evidencias, f"{ticker} tese", descartes)
+    nao_confirmadas: list[dict] = []
+    tese = _afirmacoes_validas(acao.get("tese"), evidencias, f"{ticker} tese", descartes, nao_confirmadas)
     contra = []
     for afirmacao in _afirmacoes_validas(acao.get("contra_tese_macro"), evidencias, f"{ticker} contra-tese",
-                                         descartes):
+                                         descartes, nao_confirmadas):
         if evidencias[afirmacao["evidencia"]].classe == CLASSE_MACRO:
             contra.append(afirmacao)
         else:
             descartes.append(f"{ticker} contra-tese: a evidência {afirmacao['evidencia']} não é do {CLASSE_MACRO}")
-    riscos = _afirmacoes_validas(acao.get("riscos"), evidencias, f"{ticker} riscos", descartes)
+    riscos = _afirmacoes_validas(acao.get("riscos"), evidencias, f"{ticker} riscos", descartes, nao_confirmadas)
     postura = acao.get("postura") if acao.get("postura") in POSTURAS else INSUFICIENTE
     if postura != INSUFICIENTE and (len(contra) < CONTRA_RAZOES or not tese):
         descartes.append(f"{ticker}: postura '{postura}' sem tese ou sem {CONTRA_RAZOES} razões macro do "
@@ -151,7 +215,7 @@ def _acao_valida(acao: dict, evidencias: dict[str, Evidencia], descartes: list[s
     confianca = acao.get("confianca")
     confianca = min(max(float(confianca), 0.0), 1.0) if isinstance(confianca, (int, float)) else 0.0
     return {"ticker": ticker, "tese": tese, "contra_tese_macro": contra[:CONTRA_RAZOES], "riscos": riscos,
-            "postura": postura, "confianca": confianca}
+            "postura": postura, "confianca": confianca, "nao_confirmadas": nao_confirmadas}
 
 
 def validar_parecer(bruto: object, evidencias: dict[str, Evidencia], universo: list[str]) -> Validacao:
@@ -174,10 +238,12 @@ def validar_parecer(bruto: object, evidencias: dict[str, Evidencia], universo: l
     ranking = list(dict.fromkeys(_ticker(t) for t in bruto.get("ranking") or [] if _ticker(t) in acoes))
     limitacoes = [texto for i, item in enumerate(bruto.get("limitacoes") or [])
                   if (texto := _texto_sem_numeros(item, f"limitação {i + 1}", descartes))]
+    macro_nao_confirmadas: list[dict] = []
     parecer = {"resumo": _texto_sem_numeros(bruto.get("resumo"), "resumo", descartes),
                "cenario_macro": _afirmacoes_validas(bruto.get("cenario_macro"), evidencias, "cenário macro",
-                                                    descartes),
-               "acoes": list(acoes.values()), "ranking": ranking, "limitacoes": limitacoes}
+                                                    descartes, macro_nao_confirmadas),
+               "acoes": list(acoes.values()), "ranking": ranking, "limitacoes": limitacoes,
+               "nao_confirmadas": macro_nao_confirmadas}
     return Validacao(parecer, descartes, [])
 
 
@@ -228,7 +294,7 @@ def montar_pacote(*, plano: pd.Series, registrada: date, acoes: pd.DataFrame, pe
     itens: list[tuple[str, str, str]] = [("bcb", quando, texto) for quando, texto in macro]
     tickers = sorted(ticker.removesuffix(".SA") for ticker in plano.index)
     registro = f"{registrada:%Y-%m-%d}"
-    itens += [("plano", registro, f"{ticker} está na carteira do Alepha registrada em {registrada:%d/%m/%Y}, "
+    itens += [("plano", registro, f"{ticker} está na carteira do Aleph Neumann registrada em {registrada:%d/%m/%Y}, "
                                   f"peso alvo {_br(100 * float(plano[ticker + '.SA']), 1)}%") for ticker in tickers]
     for ticker in tickers:
         if ticker in acoes.index:
@@ -496,7 +562,7 @@ class Ferramentas:
 # --- the model call ----------------------------------------------------------------------------------------------
 MODELO = "deepseek-flash"            # DeepSeek-V4.1-Flash-1017 on the official API (pricing page, 2026-10-25)
 MODELO_PRO = "deepseek-v4-pro"       # DeepSeek-V4-Pro-0813, compared with Flash in DECISOES 137
-ESFORCO = "high"                     # thinking effort: low / high / max; temperature is ignored in thinking mode
+ESFORCO = "max"                      # thinking effort (low / high / max): the user's choice of 2026-11-03, DECISOES 240
 MAX_TOKENS = 64_000                  # per request, reasoning + answer: 15 stocks of claims took ~20k in a real run
 MAX_RODADAS_DE_FERRAMENTA = 6
 MAX_CHAMADAS_DE_FERRAMENTA = 12
@@ -508,8 +574,8 @@ HORAS_DE_PICO_UTC = frozenset({1, 2, 3, 6, 7, 8, 9})     # 01-04 and 06-10 UTC, 
 PRECO_DA_FERRAMENTA_DEEPSEEK = 0.00075                     # per successful Search or Fetch call
 COBRANCA_DAS_FERRAMENTAS_DESDE = datetime(2026, 10, 31, 16, 0, tzinfo=timezone.utc)   # 01/11 00:00 in Beijing
 
-INSTRUCOES = """You are the Alepha adviser: an impartial, skeptical equity analyst inside a personal study tool for \
-Brazilian stocks (B3). You judge the stocks of the Alepha plan, a rule-based Conservative Formula portfolio (low \
+INSTRUCOES = """You are the Aleph Neumann adviser: an impartial, skeptical equity analyst inside a personal study tool for \
+Brazilian stocks (B3). You judge the stocks of the Aleph Neumann plan, a rule-based Conservative Formula portfolio (low \
 volatility, dividends and momentum; equal weights; at most 4 per sector; rebalanced every 63 sessions), for an \
 extremely aggressive investor ("extremamente arrojado"): one who seeks the highest possible return over five years \
 or more, accepts high volatility, deep drawdowns and concentrated, asymmetric bets when the potential return pays \
@@ -553,7 +619,7 @@ Judge every stock of the plan exactly once.
 
 EVIDENCE (id | class | date | text)
 """
-PEDIDO = ("Emita o parecer do Alepha para o investidor extremamente arrojado sobre as ações do plano: {tickers}. "
+PEDIDO = ("Emita o parecer do Aleph Neumann para o investidor extremamente arrojado sobre as ações do plano: {tickers}. "
           "Hoje é {hoje}.")
 CORTADA = ("a resposta foi cortada no limite de tokens: seja mais curto, no máximo 3 afirmações por lista e frases "
            "curtas")

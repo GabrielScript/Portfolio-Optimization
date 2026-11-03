@@ -549,9 +549,10 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
     assert app_alepha.sidebar.segmented_control(key="modo_plano").value == "conservadora"
-    assert any(">Alepha Quant<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    # renamed "Aleph Neumann" by the user on 2026-11-03 (DECISOES 240)
+    assert any(">Aleph Neumann<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
     textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
-    assert not any("Fundo Alepha" in texto for texto in textos)
+    assert not any("Fundo Alepha" in texto or "Alepha Quant" in texto for texto in textos)
     assert any("não é um fundo de investimento" in c.value for c in app_alepha.caption)
     _, alvo = _conservadora_sintetica()
     ordens = _ordens_alepha(app_alepha)
@@ -646,7 +647,7 @@ def test_all_assets_is_ticked_by_default_and_the_sidebar_says_what_each_group_ch
     assert not at.exception
     assert at.sidebar.checkbox(key="todos").value is True
     textos = [m.value for m in at.sidebar.markdown] + [c.value for c in at.sidebar.caption]
-    assert any("não mudam o plano do Alepha" in texto for texto in textos)
+    assert any("não mudam o plano do Aleph Neumann" in texto for texto in textos)
 
 
 def _curvas_sinteticas() -> pd.DataFrame:
@@ -900,6 +901,13 @@ def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(mo
 
 def _ativos_validos(at: AppTest) -> int:
     return int(next(m.value for m in at.metric if m.label == "Ativos válidos"))
+
+
+def test_the_us_stocks_screen_is_on_standby_while_the_b3_listed_us_assets_stay(app_alepha):
+    # the user's decision of 2026-11-03 (DECISOES 240): B3 only; US stocks off the screen, code and data kept
+    assert not app_alepha.exception
+    assert not any(m.value == "## Ações americanas" for m in app_alepha.markdown)
+    assert app_alepha.sidebar.checkbox(key="eua").value is False
 
 
 def test_eua_vem_desligado_e_ligado_soma_os_32_ativos_dos_eua_ao_universo(app):

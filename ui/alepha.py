@@ -1,5 +1,5 @@
 """
-alepha.py - Screen blocks of the Alepha plan: the Conservadora registered in paper-v2 as the real-money plan
+alepha.py - Screen blocks of the Aleph Neumann plan: the Conservadora registered in paper-v2 as the real-money plan
 (the user's decision of 2026-10-23, DECISOES 117), from the current positions (``core.rebalanceio``).
 
 Advice boundary (prediction-market-risk-review): backtest numbers appear as measured past, with the live proof still
@@ -19,7 +19,7 @@ from core.periodos import (desde_inicio_comum, juro_por_ano, medidas_por_ano, me
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
 
-AVISO_CVM = ("Alepha é o nome de uma ferramenta pessoal de estudo e decisão: não é um fundo de investimento "
+AVISO_CVM = ("Aleph Neumann é o nome de uma ferramenta pessoal de estudo e decisão: não é um fundo de investimento "
              "oferecido a terceiros nem recomendação de investimento (fundos: Resolução CVM 175/2022; análise de "
              "valores mobiliários: Resolução CVM 20/2021).")
 
@@ -42,7 +42,7 @@ COLUNAS_ORDENS = {
 
 
 def aviso_conservadora(data: date) -> str:
-    return (f"Alepha: a Conservadora (15 ações de baixa volatilidade, dividendos e momentum, pesos iguais, até 4 "
+    return (f"Aleph Neumann: a Conservadora (15 ações de baixa volatilidade, dividendos e momentum, pesos iguais, até 4 "
             f"por setor), registrada no paper-v2 em {data:%d/%m/%Y}. No backtest sem viés de sobrevivência (2010–2026, "
             "3 fases), 16% a 17% ao ano contra 7% do BOVA11, com volatilidade de 18% contra 23% e queda máxima de −40% "
             "contra −50%; depois de custos e IR, com R$ 10 mil, P[> BOVA11] de 0,98 a 0,995. Passado não garante "
@@ -140,7 +140,7 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
         tabela["Zona"] = ["pularia" if situacao == SITUACAO_PULAR else ""
                           for situacao in zona.ordens["situacao"].reindex(ordens.index).fillna("")]
     st.dataframe(tabela, width="stretch", hide_index=True, column_config=COLUNAS_ORDENS,
-                 alt="Plano do Alepha: ordens de compra e venda a partir das posições atuais")
+                 alt="Plano do Aleph Neumann: ordens de compra e venda a partir das posições atuais")
     vendas = ordens["delta"] < 0
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Patrimônio", f"R$ {patrimonio:,.2f}", border=True)

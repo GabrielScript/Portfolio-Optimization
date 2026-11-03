@@ -1,9 +1,9 @@
 """
-app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Alepha.
+app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Aleph Neumann.
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-The plan the screen opens is Alepha's: the Conservadora registered in paper-v2, from the current positions
+The plan the screen opens is Aleph Neumann's: the Conservadora registered in paper-v2, from the current positions
 (the user's decisions of 2026-10-23, DECISOES 117). BOVA11 + satellite and the study stay as options.
 
 Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
@@ -20,7 +20,7 @@ from datetime import date
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Alepha Quant · Alocação quantitativa B3", page_icon="🚀", layout="wide")
+st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon="🚀", layout="wide")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
@@ -97,13 +97,13 @@ AVISO_REGRAS_DE_RISCO = (
     "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
     "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
-# Purchase plan: the default is Alepha's, the Conservadora registered in paper-v2 (the only one that passed the
+# Purchase plan: the default is Aleph Neumann's, the Conservadora registered in paper-v2 (the only one that passed the
 # final proof after IR, DECISOES 82; the user's choice on 2026-10-23, DECISOES 117). BOVA11 + paper-v1's satellite
 # (DECISOES 69) and the sidebar's optimized portfolio (the study) stay as options.
 MODO_CONSERVADORA, MODO_DINHEIRO_REAL, MODO_ESTUDO = "conservadora", "dinheiro_real", "estudo"
-ROTULOS_MODO = {MODO_CONSERVADORA: "Alepha", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
+ROTULOS_MODO = {MODO_CONSERVADORA: "Aleph Neumann", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
 AJUDA_MODO = (
-    "Alepha: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
+    "Aleph Neumann: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
     "satélite: BOVA11 com ~70% e o satélite Kelly do paper-v1 com ~30%. Estudo: o plano da carteira otimizada pela "
     "barra lateral, só ações, para comparar."
 )
@@ -114,7 +114,10 @@ ETFS_DA_TELA = frozenset(REFERENCIAS_DA_TELA)
 NUCLEO_DO_PEQUENO_CAPITAL = frozenset({BENCHMARK_ACOES})     # the ETF kept below the minimum capital (DECISOES 124)
 # Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
 QUANTIDADE_MINIMA_POR_ACAO = 2
-PREGOES_PARA_FECHAMENTO = 10      # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
+# The US stocks screen (ui/eua.py, scraped US data) is on standby since the user's decision of 2026-11-03
+# (DECISOES 240): B3 only. Code and data stay; the B3-listed BDRs and ETFs of ativos_eua.py stay in the sidebar.
+MOSTRAR_ACOES_EUA = False
+PREGOES_PARA_FECHAMENTO = 10     # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
 
 
 @dataclass(frozen=True)
@@ -143,7 +146,7 @@ class CarteiraCalculada:
 
 def ler_sidebar() -> Entradas:
     with st.sidebar:
-        st.markdown("## Alepha")
+        st.markdown("## Aleph Neumann")
         st.caption("O plano de dinheiro real: a Conservadora registrada no paper-v2 (15 ações, pesos iguais). Estes "
                    "três campos mudam o plano.")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
@@ -156,7 +159,7 @@ def ler_sidebar() -> Entradas:
 
         st.markdown("## Estudo")
         st.caption("Carteira de hoje e walk-forward, mais abaixo na página: estes seletores mudam o estudo e não "
-                   "mudam o plano do Alepha (a Conservadora tem regras fixas, testadas antes). Cada mudança "
+                   "mudam o plano do Aleph Neumann (a Conservadora tem regras fixas, testadas antes). Cada mudança "
                    "recalcula o estudo: com todos os ativos, leva alguns minutos.")
         objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
                                 key="objetivo")
@@ -245,7 +248,7 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Alepha Quant</h1>'
+    st.markdown('<h1 class="main-title">Aleph Neumann</h1>'
                 '<p class="subtitle">Alocação quantitativa em ações da B3 · Conservadora no lago sem viés de sobrevivência · '
                 'Walk-forward com custos e IR · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     st.caption(alepha.AVISO_CVM)
@@ -260,8 +263,9 @@ def main() -> None:
         st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
     st.markdown("---")
-    ui_eua.secao(servicos.carregar_eua())
-    st.markdown("---")
+    if MOSTRAR_ACOES_EUA:
+        ui_eua.secao(servicos.carregar_eua())
+        st.markdown("---")
     secao_mercado()
     st.markdown("---")
     secao_assessor()
@@ -325,7 +329,7 @@ def secao_mercado() -> None:
 
 
 def secao_assessor() -> None:
-    """The DeepSeek adviser on the registered Alepha plan (information only, DECISOES 136)."""
+    """The DeepSeek adviser on the registered Aleph Neumann plan (information only, DECISOES 136)."""
     registrado = servicos.carregar_conservadora_registrada()
     chave = servicos.chave_da_api("deepseek", "DEEPSEEK_API_KEY")
     indisponivel = ("sem carteira registrada no paper-v2" if registrado is None else
@@ -506,10 +510,10 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
 
 
 def secao_conservadora(entradas: Entradas) -> None:
-    st.markdown("### Plano de compra: Alepha (Conservadora, dinheiro real)")
+    st.markdown("### Plano de compra: Aleph Neumann (Conservadora, dinheiro real)")
     registrado = servicos.carregar_conservadora_registrada()
     if registrado is None:
-        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Alepha usa a de lá.")
+        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Aleph Neumann usa a de lá.")
         return
     data, alvo = registrado
     st.info(alepha.aviso_conservadora(data))

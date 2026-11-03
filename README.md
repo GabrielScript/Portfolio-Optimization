@@ -770,3 +770,13 @@ Testing the formulations of Palomar's book that had not run, on the B3 and on US
 - **US data:** the Tiingo batch stopped at the free plan's 500 symbols a month, now with a clean stop. Dead names from Tiingo: 978 of 1,505 candidates. Five missed splits were repaired and the gold now builds byte for byte the same.
 
 Past results, before tax, no promise for the future. Details: `DECISOES.md` 226-234.
+
+## Where things stand (2026-11-03)
+
+- **B3, 2010-2026:** the Composite makes 17.4-19.5% a year against the CDI's 9.8% and BOVA11's 5-6%; over the last 5 years 14.7-16.6% against the CDI's 12.7%. The Conservadora makes 14.8-15.8%, and over the last 5 years it only ties the CDI. No formulation from the book beats the Composite; a second batch of 14 has run and has not been read.
+- **US stocks, 11/2019-09/2026:** the Composite makes 17.0-20.2% against SPY's 15.5% (22.6% in reais against the CDI's 9.9%).
+- **Alepha Quant US (disruptive stocks):** the lake now holds market caps for multi-class and foreign filers, R&D and capex (`exports/us_eua`). The pre-registered funnel (score, QUBO to 15, HRP with a momentum tilt) makes 20.4-27.4% a year against QQQ's 21% and SPY's 15.5%, with 2022 at -26% and drawdowns of 33-43%. Code in the separate repository `alepha-quant-eua`; nothing on the screen yet.
+- **None of these passes the gate** (DSR at most 0.89 on the B3 and 0.22 on the US, against 0.95). Real money stays on the Conservadora.
+- **Operations:** after the laptop crashed on 02/11, the lake's two scheduled tasks run on the base Python 3.14 interpreter with the venv's packages, because the venv interpreters were blocked from writing outside the project folders.
+
+Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-239.

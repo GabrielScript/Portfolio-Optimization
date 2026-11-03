@@ -100,6 +100,27 @@ def test_news_web_and_post_claims_count_only_when_an_official_source_confirms_th
         "evidencia_insuficiente")
 
 
+def test_the_rules_describe_the_judged_portfolio_and_ask_news_claims_for_an_official_confirmation():
+    from core.assessor import CARTEIRA_COMPOSTA, CARTEIRA_CONSERVADORA, mensagem_de_sistema
+    pacote = list(_evidencias().values())
+    conservadora, composta = mensagem_de_sistema(pacote), mensagem_de_sistema(pacote, CARTEIRA_COMPOSTA)
+    assert CARTEIRA_CONSERVADORA in conservadora and "Composite" not in conservadora
+    assert CARTEIRA_COMPOSTA in composta and "<<CARTEIRA>>" not in composta
+    assert '"confirmacao"' in composta and composta.endswith(pacote[-1].linha())
+    from datetime import datetime, timezone
+
+    from core.assessor import pedir_parecer
+    enviados = []
+
+    def post(url, json, timeout, headers):
+        enviados.append(json["messages"][0]["content"])
+        return _resposta_do_modelo({"content": _parecer_com("E4", "P/L 4,8"), "reasoning_content": "ok"},
+                                   _uso(100, 0, 10))
+    pedir_parecer(pacote, ["VALE3"], _ferramentas(), "ds", datetime(2026, 11, 3, 15, 0, tzinfo=timezone.utc), post=post,
+                  carteira=CARTEIRA_COMPOSTA)
+    assert enviados == [composta]
+
+
 def test_the_stance_becomes_a_traffic_light_and_the_effort_is_max():
     from core.assessor import ESFORCO, cor_da_postura
     assert ESFORCO == "max"

@@ -26,6 +26,38 @@ def _sinal(valor: float) -> str:
     return f"{valor:+.2%}".replace(".", ",")
 
 
+SINAIS = {"favoravel": "🟢 compra", "neutra": "🟡 fora", "evidencia_insuficiente": "🟡 fora (evidência insuficiente)",
+          "desfavoravel": "🔴 fora"}
+SEM_PARECER = "🟡 fora (sem parecer)"
+ORDEM_DOS_SINAIS = {"🟢": 0, "🟡": 1, "🔴": 2}
+
+
+def tabela_do_parecer(registro: dict) -> pd.DataFrame:
+    """Each Composite name of the DeepSeek opinion (``deepseek/pareceres/*.json``) with its light, green first."""
+    acoes = {acao["ticker"]: acao for acao in registro["parecer"]["acoes"]}
+    linhas = [(ticker, SINAIS.get(acoes[ticker]["postura"], SEM_PARECER) if ticker in acoes else SEM_PARECER,
+               acoes[ticker]["confianca"] if ticker in acoes else None) for ticker in registro["universo"]]
+    linhas.sort(key=lambda linha: ORDEM_DOS_SINAIS[linha[1][0]])
+    return pd.DataFrame(linhas, columns=["Ticker", "Sinal", "Confiança"])
+
+
+def parecer_do_deepseek(registro: dict | None) -> None:
+    """The DeepSeek portfolio's last opinion: which Composite names it holds (green) and which it leaves out."""
+    st.markdown("**Carteira do DeepSeek: último parecer**")
+    if registro is None:
+        st.caption("O DeepSeek ainda não deu parecer sobre a Composite.")
+        return
+    st.caption(f"Parecer de {pd.Timestamp(registro['quando']):%d/%m/%Y %H:%M} sobre a Composite de "
+               f"{pd.Timestamp(registro['base_do_composto']):%d/%m/%Y} ({registro['modelo']}, esforço "
+               f"{registro['esforco']}): a carteira compra só as verdes, em pesos iguais (até 20% por ação), e o resto "
+               "fica no CDI. Notícias e posts só contaram quando a CVM, o Banco Central, a B3 ou a ANBIMA confirmaram. "
+               "Opinião de um modelo de linguagem, sem teste de que acerte: só o tempo mede.")
+    st.dataframe(tabela_do_parecer(registro), width="stretch", hide_index=True,
+                 column_config={"Confiança": st.column_config.ProgressColumn(min_value=0.0, max_value=1.0,
+                                                                             format="percent")},
+                 alt="Sinal do DeepSeek para cada ação da Composite: verde compra, amarelo e vermelho ficam de fora")
+
+
 def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
@@ -35,7 +67,8 @@ def secao(painel: Painel | None) -> None:
         return
     st.caption(f"Conta fictícia, sem dinheiro real: {_reais(CAPITAL_ACOES, 0)} seguem o último Composto registrado no "
                f"paper-v3 e {_reais(CAPITAL_OPCOES, 0)} (opções) ficam no CDI até o teste delas passar. A Conservadora é a "
-               "linha de controle, com o mesmo capital. Custos incluídos; IR zero enquanto as vendas do mês ficam abaixo "
+               "linha de controle, com o mesmo capital, e a carteira do DeepSeek compra só as ações da Composite que "
+               "ele marca de verde (parecer abaixo). Custos incluídos; IR zero enquanto as vendas do mês ficam abaixo "
                "de R$ 20 mil. Duas semanas de retorno são ruído.")
     if not painel.com_cdi:
         st.warning("Série do CDI indisponível agora: o caixa e a linha do CDI aparecem sem rendimento.")

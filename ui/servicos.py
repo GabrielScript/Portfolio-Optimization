@@ -75,6 +75,19 @@ ARQUIVO_JUROS = ARQUIVO_CURVAS.with_name("juros-diarios.parquet")
 ARQUIVO_SIMULADOR = Path(__file__).resolve().parents[1] / "simulador" / "ordens.csv"
 # the derived results of the US test (scripts/us_avaliar.py)
 PASTA_EUA = Path(__file__).resolve().parents[1] / "docs" / "dados"
+# the DeepSeek portfolio's opinions (scripts/carteira_deepseek.py, DECISOES 240), one JSON per opinion
+PASTA_PARECERES_DEEPSEEK = Path(__file__).resolve().parents[1] / "deepseek" / "pareceres"
+
+
+def carregar_parecer_deepseek(pasta: Path = PASTA_PARECERES_DEEPSEEK) -> dict | None:
+    """The newest DeepSeek opinion on the Composite; None before the first one or when the file cannot be read."""
+    arquivos = sorted(pasta.glob("*.json")) if pasta.exists() else []
+    if not arquivos:
+        return None
+    try:
+        return json.loads(arquivos[-1].read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
 
 
 def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, pd.Series] | None:

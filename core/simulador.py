@@ -18,7 +18,7 @@ from core.risco import LIMITES
 INICIO = pd.Timestamp("2026-11-03")
 CAPITAL_ACOES = 9_000.0
 CAPITAL_OPCOES = 1_000.0            # in the CDI until the options test passes, never mixed with the stocks
-CARTEIRAS = ("Composto", "Conservadora")
+CARTEIRAS = ("Composto", "Conservadora", "DeepSeek")     # DeepSeek: the Composite's names it judges favorable (DECISOES 240)
 REFERENCIAS = ("BOVA11", "IVVB11")
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
 CUSTO_BPS = 10.0                   # the plan's reserve, and the cost of a name outside the liquidity snapshot
@@ -67,19 +67,26 @@ def _trilha(ordens: pd.DataFrame, precos: pd.DataFrame, fator: pd.Series, capita
 
 def _pendentes(registro: pd.DataFrame, feitas: pd.DataFrame, pregoes: pd.DatetimeIndex,
                inicio: pd.Timestamp) -> list[tuple[pd.Timestamp, pd.Series]]:
-    """(trade date, weights) of each record not traded yet whose close is in the files, oldest first."""
+    """(trade date, weights) of each record not traded yet whose close is in the files, oldest first. A record trades
+    at the first session on or after its date (the DeepSeek one is dated the day after its opinion, DECISOES 240); a
+    portfolio whose first record comes after ``inicio`` starts then."""
     def pesos(data: pd.Timestamp) -> pd.Series:
         return registro[registro["data"] == data].set_index("ticker")["peso"]
 
     devidos = []
     if feitas.empty:
         anteriores = registro.loc[registro["data"] <= inicio, "data"]
-        if inicio not in pregoes or anteriores.empty:
-            return []
-        devidos.append((inicio, pesos(anteriores.max())))
+        if not anteriores.empty:
+            if inicio not in pregoes:
+                return []
+            devidos.append((inicio, pesos(anteriores.max())))
     ultima = inicio if feitas.empty else feitas["data"].max()
     novas = registro.loc[registro["data"] > ultima, "data"].drop_duplicates().sort_values()
-    return devidos + [(data, pesos(data)) for data in novas if data in pregoes]
+    for data in novas:
+        sessoes = pregoes[pregoes >= data]
+        if len(sessoes):
+            devidos.append((sessoes[0], pesos(data)))
+    return devidos
 
 
 def _rebalancear(feitas: pd.DataFrame, carteira: str, data: pd.Timestamp, pesos: pd.Series, precos: pd.DataFrame,

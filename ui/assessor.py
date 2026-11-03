@@ -16,6 +16,7 @@ from core.assessor import Evidencia, Resultado
 ROTULO_DA_POSTURA = {"favoravel": "🟢 favorável", "neutra": "🟡 neutra", "desfavoravel": "🔴 desfavorável",
                      "evidencia_insuficiente": "⚪ evidência insuficiente"}
 CHAVE_DO_PARECER = "parecer_do_assessor"
+NAO_CONFIRMADAS = "Notícias e posts não confirmados pelas fontes oficiais (não contam para a postura)"
 _MARKDOWN = set("\\`*_{}[]()<>#+-.!|~$:")
 
 
@@ -53,7 +54,8 @@ def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[], Res
     st.caption("O DeepSeek V4.1 Flash lê as ações do plano, o Banco Central, os fatos da CVM e as manchetes, pode "
                "buscar notícias, posts e páginas, e dá um parecer imparcial para o investidor extremamente arrojado "
                "(aceita volatilidade e quedas fortes, rejeita perda permanente de capital). Cada afirmação cita uma "
-               "evidência; o app confere a citação e os números e descarta o que não confere. Antes da postura, três "
+               "evidência; o app confere a citação e os números e descarta o que não confere. Notícias, posts e páginas "
+               "comuns só contam se a CVM, o Banco Central, a B3 ou a ANBIMA confirmarem. Antes da postura, três "
                "razões macro do Banco Central contra a tese.")
     if st.button("Gerar parecer", key="gerar_parecer", icon=":material/psychology:"):
         with st.spinner("O assessor está lendo as evidências (até alguns minutos)…"):
@@ -95,6 +97,12 @@ def _mostrar(resultado: Resultado, universo: list[str]) -> None:
                                   ("Riscos", "riscos")):
                 if acoes[ticker][campo]:
                     st.markdown(f"**{titulo}**\n" + "\n".join(_fonte(a, evidencias) for a in acoes[ticker][campo]))
+            if acoes[ticker].get("nao_confirmadas"):
+                st.markdown(f"**{NAO_CONFIRMADAS}**\n" + "\n".join(_fonte(a, evidencias)
+                                                                    for a in acoes[ticker]["nao_confirmadas"]))
+    if parecer.get("nao_confirmadas"):
+        st.markdown(f"**Cenário macro: {NAO_CONFIRMADAS.lower()}**\n" + "\n".join(
+            _fonte(a, evidencias) for a in parecer["nao_confirmadas"]))
     if parecer["cenario_macro"]:
         st.markdown("**Cenário macro**\n" + "\n".join(_fonte(a, evidencias) for a in parecer["cenario_macro"]))
     if parecer["limitacoes"]:

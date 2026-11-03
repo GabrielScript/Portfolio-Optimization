@@ -31,10 +31,7 @@ from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objet
                          limites_por_setor, taxa_anual_para_aritmetica)
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.execucao import Custos  # noqa: E402
-from core import assessor, bcb, precos_do_app  # noqa: E402
-from core.indicadores import tabela_por_acao  # noqa: E402
-from core.macro import resumo_focus  # noqa: E402
-from core.sentimento import semaforo  # noqa: E402
+from core import assessor, precos_do_app  # noqa: E402
 from core.market_data import serie_rf_diaria  # noqa: E402
 from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
 from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
@@ -45,7 +42,7 @@ from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limi
 from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_minimo, custo_com_liquidez,  # noqa: E402
                               pesos_finais, plano_com_nucleo, plano_de_rebalanceio, posicoes_da_tabela)
 from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
-from ui import alepha, painel, secoes, servicos  # noqa: E402
+from ui import alepha, painel, parecer, secoes, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -262,6 +259,7 @@ def main() -> None:
         secao_dinheiro_real(entradas, get_ticker_info())
         st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
+    ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
     st.markdown("---")
     if MOSTRAR_ACOES_EUA:
         ui_eua.secao(servicos.carregar_eua())
@@ -341,21 +339,7 @@ def secao_assessor() -> None:
 def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assessor.Resultado:
     hoje = date.today()
     data, alvo = registrado
-    _, fatos, fundamentos = servicos.carregar_painel()
-    tickers = tuple(dict.fromkeys((*get_all_tickers(), BENCHMARK_ACOES)))
-    precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
-    acoes = tabela_por_acao(precos, get_ticker_info(), fundamentos, BENCHMARK_ACOES)
-    focus_anual = servicos.carregar_focus(hoje)
-    macro = assessor.macro_do_painel(hoje, servicos.carregar_selic(hoje), servicos.carregar_indicadores_bcb(hoje),
-                                     None if focus_anual is None else resumo_focus(focus_anual, hoje.year))
-    desde = precos.index[-min(alepha.SESSOES_DO_SEMAFORO, len(precos.index))].date()
-    luzes = None if fatos is None else semaforo(fatos, alvo.index, desde)
-    pacote = assessor.montar_pacote(plano=alvo, registrada=data, acoes=acoes, percentuais=painel.PERCENTUAIS,
-                                    macro=macro, fatos=fatos, luzes=luzes, manchetes=servicos.carregar_manchetes()[0])
-    fontes = assessor.Fontes(hoje=hoje, acoes=acoes, percentuais=painel.PERCENTUAIS, fatos=fatos,
-                             serie_bcb=bcb.baixar_serie, chave_deepseek=chave,
-                             chave_firecrawl=servicos.chave_da_api("firecrawl", "FIRECRAWL_API_KEY"),
-                             chave_scrapecreators=servicos.chave_da_api("scrapecreators", "SCRAPECREATORS_API_KEY"))
+    pacote, fontes = parecer.pacote_e_fontes(alvo, data, chave, hoje)
     texto = assessor.mensagem_de_sistema(pacote)
     return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave)
 

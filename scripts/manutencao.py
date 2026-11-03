@@ -59,6 +59,8 @@ ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite 
 PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
+PASTA_DEEPSEEK = Path("deepseek")                         # the DeepSeek portfolio's record and opinions (DECISOES 240)
+ARQUIVO_DEEPSEEK = PASTA_DEEPSEEK / "carteira.csv"
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
@@ -405,6 +407,8 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
     from core.rebalanceio import custo_com_liquidez
     registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
                  "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
+    if (raiz / ARQUIVO_DEEPSEEK).exists():
+        registros["DeepSeek"] = pd.read_csv(raiz / ARQUIVO_DEEPSEEK, parse_dates=["data"])
     papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
     precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], simulador.INICIO.date(), hoje,
                                            raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
@@ -414,8 +418,10 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
                                     custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
 
 
-def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], pd.DataFrame]) -> str:
-    """Appends to the ledger what ``devidas`` returns for it and commits it (also rows a failed commit left behind)."""
+def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], pd.DataFrame],
+                        alertar: Callable[[pd.DataFrame], object] | None = None) -> str:
+    """Appends to the ledger what ``devidas`` returns for it and commits it (also rows a failed commit left behind);
+    ``alertar`` then gets the new orders (the email of DECISOES 240). A failed email is noted, the commit stays."""
     from core import simulador
     arquivo = raiz / ARQUIVO_SIMULADOR
     novas = devidas(simulador.ler_ordens(arquivo))
@@ -425,14 +431,32 @@ def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], 
         return "simulador: em dia"
     fim = f"{simulador.ler_ordens(arquivo)['data'].max():%d/%m/%Y}"
     commitar(git, [ARQUIVO_SIMULADOR.as_posix()], f"data: simulador até {fim} (manutenção)")
-    return f"simulador: até {fim}"
+    nota = f"simulador: até {fim}"
+    if alertar is None or novas.empty:
+        return nota
+    try:
+        alertar(novas)
+    except Exception as erro:           # noqa: BLE001 - the ledger is committed; the run notes the email's failure
+        return f"{nota}; e-mail falhou: {type(erro).__name__}: {erro}"[:300]
+    return f"{nota}; e-mail enviado"
+
+
+def atualizar_deepseek(raiz: Path, git: Git, gerar: Callable[[], str]) -> str:
+    """Runs the DeepSeek portfolio's opinion when due (``gerar``: ``scripts/carteira_deepseek.py``, DECISOES 240) and
+    commits its folder when it wrote files."""
+    nota = gerar()
+    if pendentes(git, [PASTA_DEEPSEEK.as_posix()]):
+        commitar(git, [PASTA_DEEPSEEK.as_posix()], "data: parecer do DeepSeek (manutenção)")
+    return nota
 
 
 def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_leitura: Callable[[], str],
              tentativas: Path = PASTA_ESTADO / "tentativas", pasta_do_log: Path | None = None,
              manchetes: LojaDeManchetes | None = None, ler_leitura_v3: Callable[[], str] | None = None,
              gerar_curvas: Callable[[], object] | None = None,
-             simular: Callable[[pd.DataFrame], pd.DataFrame] | None = None) -> Resultado:
+             simular: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
+             alertar: Callable[[pd.DataFrame], object] | None = None,
+             parecer_deepseek: Callable[[], str] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
@@ -457,8 +481,10 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
               ("pregões recentes", lambda: atualizar_recentes(raiz, git)),
               ("ativos", lambda: atualizar_ativos(raiz, git)),          # before the panel, which reads the list
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
+    if parecer_deepseek is not None:            # before the simulator, which trades its record
+        passos.append(("deepseek", lambda: atualizar_deepseek(raiz, git, parecer_deepseek)))
     if simular is not None:
-        passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular)))
+        passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
     if gerar_curvas is not None:
         passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
@@ -555,6 +581,25 @@ def anotar(pasta: Path, agora: datetime, resultado: Resultado) -> None:
         escritor.writerow([agora.isoformat(timespec="seconds"), resultado.desfecho, resultado.nota])
 
 
+def alertar_por_email(novas: pd.DataFrame) -> None:
+    """The simulator's new orders to the user's Gmail (``core.alerta_email``); an error when the .env lacks them."""
+    from core import alerta_email
+    credenciais = alerta_email.credenciais()
+    if credenciais is None:
+        raise RuntimeError("faltam GMAIL_USER e GMAIL_PASSWORD_APP no .env do ai-hedge-fund")
+    alerta_email.enviar(*alerta_email.mensagem_das_ordens(novas), credenciais)
+
+
+def rodar_parecer_deepseek() -> str:
+    """``scripts/carteira_deepseek.py`` in a child process (its output is the step's note); a failure raises."""
+    saida = subprocess.run([sys.executable, "-X", "utf8", str(RAIZ / "scripts" / "carteira_deepseek.py")], cwd=RAIZ,
+                           capture_output=True, text=True, encoding="utf-8", timeout=1800, creationflags=_SEM_JANELA)
+    linhas = (saida.stdout or "").strip().splitlines()
+    if saida.returncode != 0:
+        raise RuntimeError((linhas[-1] if linhas else (saida.stderr or "").strip()[-200:]) or "falhou")
+    return linhas[-1] if linhas else "DeepSeek: sem saída"
+
+
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
@@ -563,7 +608,8 @@ def main() -> int:
                                     lambda: _gerar_manchetes(PASTA_DO_LOG)),
                          ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"),
                          gerar_curvas=lambda: rodar_curvas(RAIZ),
-                         simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens))
+                         simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens),
+                         alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

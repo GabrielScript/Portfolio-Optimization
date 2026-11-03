@@ -606,6 +606,42 @@ def test_the_simulator_step_appends_the_orders_due_commits_them_and_then_is_up_t
     assert vistas[0]["ticker"].tolist() == ["PETR4"]             # the next run sees the ledger it wrote
 
 
+def test_the_simulator_step_emails_the_new_orders_and_a_failed_email_keeps_the_commit(app):
+    # DECISOES 240: every buy or sell of the fictitious account goes to the user's email
+    from scripts.manutencao import atualizar_simulador, git_em
+    git = git_em(app)
+    alertas = []
+    assert atualizar_simulador(app, git, lambda _ordens: _ordens_do_dia("2026-11-03"),
+                               alertar=alertas.append) == "simulador: até 03/11/2026; e-mail enviado"
+    assert alertas[0]["ticker"].tolist() == ["PETR4"]
+    assert atualizar_simulador(app, git, lambda _ordens: pd.DataFrame(), alertar=alertas.append) == "simulador: em dia"
+    assert len(alertas) == 1
+
+    def falha(_novas):
+        raise OSError("sem rede")
+    nota = atualizar_simulador(app, git, lambda _ordens: _ordens_do_dia("2026-11-04"), alertar=falha)
+    assert nota == "simulador: até 04/11/2026; e-mail falhou: OSError: sem rede"
+    assert git("log", "-1", "--format=%s") == "data: simulador até 04/11/2026 (manutenção)"
+
+
+def test_the_deepseek_step_commits_its_folder_when_the_opinion_wrote_files(app):
+    from scripts.manutencao import PASTA_DEEPSEEK, atualizar_deepseek, git_em
+    git = git_em(app)
+
+    def gerar() -> str:
+        (app / PASTA_DEEPSEEK / "pareceres").mkdir(parents=True)
+        (app / PASTA_DEEPSEEK / "carteira.csv").write_text("data,ticker,peso\n2026-11-04,PETR4,1.0\n", encoding="utf-8")
+        (app / PASTA_DEEPSEEK / "pareceres" / "2026-11-03.json").write_text("{}", encoding="utf-8")
+        return "DeepSeek: 1 de 15 favoráveis"
+    assert atualizar_deepseek(app, git, gerar) == "DeepSeek: 1 de 15 favoráveis"
+    assert git("log", "-1", "--format=%s") == "data: parecer do DeepSeek (manutenção)"
+    assert sorted(git("show", "--name-only", "--format=", "HEAD").splitlines()) == [
+        "deepseek/carteira.csv", "deepseek/pareceres/2026-11-03.json"]
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_deepseek(app, git, lambda: "DeepSeek: em dia") == "DeepSeek: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
 def test_the_simulator_step_with_nothing_due_commits_nothing(app):
     from scripts.manutencao import atualizar_simulador, git_em
     git = git_em(app)

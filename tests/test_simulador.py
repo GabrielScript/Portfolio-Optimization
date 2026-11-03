@@ -58,6 +58,25 @@ def test_a_trade_already_in_the_ledger_is_not_repeated():
     assert sim.ordens_devidas(primeira, registros, precos, SEM_CDI, sem_custo).empty
 
 
+def test_the_deepseek_portfolio_is_the_third_one_and_trades_at_the_first_session_on_or_after_its_record():
+    # DECISOES 240: the opinion is formed after a close, so its record is dated the next calendar day and trades at the
+    # first session from then on (a Saturday record trades on Monday)
+    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek")
+    precos = tabela_de_precos([10.0, 10.0, 10.0, 10.0, 10.0])          # Tue 03/11 to Mon 09/11
+    registros = {"DeepSeek": registro("2026-11-07", {"AAAA3": 0.2, "BBBB3": 0.2})}
+    novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
+    assert set(novas["data"]) == {pd.Timestamp("2026-11-09")} and set(novas["ticker"]) == {"AAAA3", "BBBB3"}
+    assert sim.ordens_devidas(novas, registros, precos, SEM_CDI, sem_custo).empty
+
+
+def test_a_record_with_only_zero_weights_sells_everything_into_cash():
+    precos = tabela_de_precos([10.0, 10.0, 10.0])
+    registros = {"DeepSeek": pd.concat([registro("2026-11-04", {"AAAA3": 0.2}), registro("2026-11-05", {"AAAA3": 0.0})])}
+    novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
+    compra, venda = novas.groupby("data")["ordem"].sum()
+    assert compra > 0 and venda == -compra
+
+
 def test_each_portfolio_has_its_own_orders():
     precos = tabela_de_precos([10.0])
     registros = {"Composto": registro("2026-10-27"), "Conservadora": registro("2026-10-27", OUTROS)}

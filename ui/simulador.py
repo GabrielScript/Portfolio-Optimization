@@ -38,7 +38,7 @@ def tabela_do_parecer(registro: dict) -> pd.DataFrame:
     linhas = [(ticker, SINAIS.get(acoes[ticker]["postura"], SEM_PARECER) if ticker in acoes else SEM_PARECER,
                acoes[ticker]["confianca"] if ticker in acoes else None) for ticker in registro["universo"]]
     linhas.sort(key=lambda linha: ORDEM_DOS_SINAIS[linha[1][0]])
-    return pd.DataFrame(linhas, columns=["Ticker", "Sinal", "Confiança"])
+    return pd.DataFrame(linhas, columns=["Ticker", "Parecer do DeepSeek", "Confiança"])
 
 
 def parecer_do_deepseek(registro: dict | None) -> None:

@@ -38,7 +38,7 @@ def test_the_screen_table_shows_each_composite_name_with_its_light_favorable_fir
         {"ticker": "PETR4", "postura": "favoravel", "confianca": 0.7}]}}
     tabela = tabela_do_parecer(registro)
     assert tabela["Ticker"].tolist() == ["PETR4", "ITSA4", "VALE3"]
-    assert tabela["Sinal"].tolist() == ["🟢 compra", "🟡 fora (sem parecer)", "🔴 fora"]
+    assert tabela["Parecer do DeepSeek"].tolist() == ["🟢 compra", "🟡 fora (sem parecer)", "🔴 fora"]
     assert tabela["Confiança"].iloc[[0, 2]].tolist() == [0.7, 0.4] and pd.isna(tabela["Confiança"].iloc[1])
 
 

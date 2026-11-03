@@ -1,5 +1,5 @@
 """
-alepha.py - Screen blocks of the Aleph Neumann plan: the Conservadora registered in paper-v2 as the real-money plan
+alepha.py - Screen blocks of the Aleph Neumann plan: the Composite registered in paper-v3 as the real-money plan
 (the user's decision of 2026-10-23, DECISOES 117), from the current positions (``core.rebalanceio``).
 
 Advice boundary (prediction-market-risk-review): backtest numbers appear as measured past, with the live proof still
@@ -41,6 +41,18 @@ COLUNAS_ORDENS = {
 }
 
 
+def aviso_composite(data: date) -> str:
+    """The real-money plan since the user's decision of 2026-11-03 (DECISOES 242), with its measured past and the
+    gate it has not passed."""
+    return (f"Aleph Neumann: a Composite (a regra da Conservadora, 15 ações em pesos iguais e até 4 por setor, ordenada "
+            f"por baixa volatilidade, dividendos, momentum, valor e crescimento do lucro), registrada no paper-v3 em "
+            f"{data:%d/%m/%Y}. No backtest sem viés de sobrevivência (2010–2026, 3 fases), 17% a 19,5% ao ano contra "
+            "5% a 6% do BOVA11 e 15% a 16% da Conservadora, com queda máxima de −42%. Ela ainda não passou no teste "
+            "estatístico pré-registrado (DSR de até 0,89, abaixo de 0,95): a vantagem sobre a Conservadora pode ser "
+            "sorte do período. Escolha sua, de investidor arrojado, em 03/11/2026. A prova ao vivo é o paper-v3. Só "
+            "dinheiro de 5 anos ou mais; a carteira muda a cada 63 pregões, quando o paper-v3 registra a nova.")
+
+
 def aviso_conservadora(data: date) -> str:
     return (f"Aleph Neumann: a Conservadora (15 ações de baixa volatilidade, dividendos e momentum, pesos iguais, até 4 "
             f"por setor), registrada no paper-v2 em {data:%d/%m/%Y}. No backtest sem viés de sobrevivência (2010–2026, "
@@ -71,7 +83,7 @@ def semaforo_do_plano(fatos: pd.DataFrame | None, tickers: pd.Index, registrada:
                  column_config={"Link": st.column_config.LinkColumn("Link", display_text="abrir")},
                  alt="Sinal vermelho, amarelo ou verde de cada ação do plano, pelos fatos relevantes da CVM")
     for alerta in alertas_antes_da_troca(luzes, registrada, proxima_troca(calendario, registrada)):
-        st.warning(f"{alerta} (data estimada; quem decide é o paper-v2). O plano mantém os pesos até lá.")
+        st.warning(f"{alerta} (data estimada; quem decide é o paper-v3). O plano mantém os pesos até lá.")
     st.caption(f"Informativo: não muda os pesos nem as ordens. Fatos relevantes e comunicados ao mercado dos últimos "
                f"{SESSOES_DO_SEMAFORO} pregões, cada um com a nota do Jev (pontua os fatos novos a cada 2 horas): "
                "vermelho = o tom mais provável é ruim para o acionista e a chance de efeito forte no preço é de 50% "
@@ -85,7 +97,7 @@ def aviso_capital_pequeno(patrimonio: float, minimo: float, um_de_cada: float, n
     """The small-capital plan (DECISOES 124): what it does and how far it is from the tested portfolio."""
     texto = (f"Capital pequeno: com R$ {patrimonio:,.2f} (abaixo dos R$ {minimo:,.2f} que os {nomes} nomes com "
              f"{quantidade_minima} ações e pesos perto de iguais pedem), o plano mantém o {nucleo} que você já tem e "
-             "usa o dinheiro novo para comprar as ações da Conservadora uma a uma no fracionário, primeiro as mais "
+             "usa o dinheiro novo para comprar as ações do plano uma a uma no fracionário, primeiro as mais "
              f"abaixo do peso igual, cada ação com até {peso_maximo:.0%} de tudo o que você tem ({nucleo} incluído). "
              f"A cada aporte o plano completa os nomes que faltam: 1 ação de cada um dos {nomes} custa hoje cerca de "
              f"R$ {um_de_cada:,.2f}. No fracionário o spread costuma ser maior que no lote padrão: o custo mostrado é "

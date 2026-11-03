@@ -391,7 +391,7 @@ def _satelite_sintetico() -> tuple[date, pd.Series]:
 def _servicos_sinteticos(monkeypatch) -> None:
     """Every loader of ``ui.servicos`` on synthetic data: registrations, sectors, prices, CDI, Selic and quotes."""
     monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
-    monkeypatch.setattr(servicos, "carregar_conservadora_registrada", _conservadora_sintetica)
+    monkeypatch.setattr(servicos, "carregar_plano_registrado", _conservadora_sintetica)
     monkeypatch.setattr(servicos, "setores_do_lago", _setores_sinteticos)
     monkeypatch.setattr(servicos, "carregar_liquidez", lambda: None)
     monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
@@ -528,7 +528,7 @@ def _conservadora_sintetica() -> tuple[date, pd.Series]:
     return date(2026, 10, 19), pd.Series(0.2, index=tickers)
 
 
-def _setores_sinteticos(tickers: tuple[str, ...]) -> dict[str, str]:
+def _setores_sinteticos(tickers: tuple[str, ...], _pasta=None) -> dict[str, str]:
     return {ticker: f"Setor {posicao}" for posicao, ticker in enumerate(tickers)}
 
 
@@ -558,6 +558,18 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     ordens = _ordens_alepha(app_alepha)
     assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
     assert set(ordens["Ordem"]) == {"compra"}
+    # the user's decision of 2026-11-03 (DECISOES 242): the real-money plan is the Composite registered in paper-v3
+    assert any(m.value == "### Plano de compra: Aleph Neumann (Composite, dinheiro real)" for m in app_alepha.markdown)
+    assert any("Composite" in aviso.value and "paper-v3" in aviso.value for aviso in app_alepha.info)
+
+
+def test_the_registered_plan_is_the_composites_last_record(tmp_path):
+    from ui.servicos import carregar_plano_registrado
+    arquivo = tmp_path / "composto.csv"
+    arquivo.write_text("data,ticker,peso,preco\n2026-07-27,VALE3,1.0,60\n2026-10-27,PETR4,0.5,52.79\n"
+                       "2026-10-27,ITSA4,0.5,13.33\n", encoding="utf-8")
+    data, alvo = carregar_plano_registrado(arquivo)
+    assert data == date(2026, 10, 27) and alvo.to_dict() == {"PETR4.SA": 0.5, "ITSA4.SA": 0.5}
 
 
 
@@ -839,7 +851,8 @@ def _app_do_assessor(monkeypatch, chave: str | None) -> tuple[AppTest, list]:
     monkeypatch.delenv("DEEPSEEK_API_KEY", raising=False)
     pedidos = []
 
-    def pedir_parecer(pacote, universo, ferramentas, chave, agora, post=None):
+    def pedir_parecer(pacote, universo, ferramentas, chave, agora, post=None, carteira=None):
+        assert carteira == assessor.CARTEIRA_COMPOSTA          # the plan the screen judges is the Composite (DECISOES 242)
         pedidos.append((pacote, universo, chave))
         selic = next(e for e in pacote if e.texto.startswith("Selic meta"))
         contra = [{"afirmacao": "Selic de 13,75%", "evidencia": selic.id, "citacao": "13,75%"}] * 3

@@ -61,6 +61,8 @@ class ParametrosOtimizacao:
 ARQUIVO_PAPER = Path(__file__).resolve().parents[1] / "paper" / "carteiras.csv"
 ARQUIVO_PAPER_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "carteiras.csv"
 PASTA_MARCOS_V2 = Path(__file__).resolve().parents[1] / "paper-v2" / "marcos"
+ARQUIVO_PAPER_V3 = Path(__file__).resolve().parents[1] / "paper-v3" / "composto.csv"
+PASTA_MARCOS_V3 = Path(__file__).resolve().parents[1] / "paper-v3" / "marcos"
 ARQUIVO_LIQUIDEZ = Path(__file__).resolve().parents[1] / "lago" / "liquidez.parquet"
 # the market panel (scripts/painel_do_app.py, refreshed by the daily upkeep) and the lake's log, local only
 ARQUIVOS_DO_PAINEL = tuple(Path(__file__).resolve().parents[1] / "lago" / nome for nome in (
@@ -98,6 +100,12 @@ def carregar_satelite_registrado(arquivo: Path = ARQUIVO_PAPER) -> tuple[date, p
 
 def carregar_conservadora_registrada(arquivo: Path = ARQUIVO_PAPER_V2) -> tuple[date, pd.Series] | None:
     """The last Conservadora registered in paper-v2 (``paper-v2/carteiras.csv``): date and weights with ".SA"."""
+    return _ultimo_registro(arquivo)
+
+
+def carregar_plano_registrado(arquivo: Path = ARQUIVO_PAPER_V3) -> tuple[date, pd.Series] | None:
+    """The real-money plan: the last Composite registered in paper-v3 (``paper-v3/composto.csv``), date and weights
+    with ".SA" (the user's decision of 2026-11-03, DECISOES 242; the Conservadora of paper-v2 before)."""
     return _ultimo_registro(arquivo)
 
 
@@ -349,7 +357,7 @@ def gerar_parecer(texto_do_pacote: str, universo: tuple[str, ...], dia: date, _p
                                       assessor.Uso(), [])
         contador[dia] = contador.get(dia, 0) + 1
     return assessor.pedir_parecer(list(_pacote), list(universo), assessor.Ferramentas(_fontes, {}), _chave,
-                                  datetime.now(timezone.utc))
+                                  datetime.now(timezone.utc), carteira=assessor.CARTEIRA_COMPOSTA)
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

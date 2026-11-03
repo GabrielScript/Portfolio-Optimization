@@ -3,7 +3,8 @@ app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Aleph Neum
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-The plan the screen opens is Aleph Neumann's: the Conservadora registered in paper-v2, from the current positions
+The plan the screen opens is Aleph Neumann's: the Composite registered in paper-v3 (DECISOES 242; the Conservadora of
+paper-v2 before), from the current positions
 (the user's decisions of 2026-10-23, DECISOES 117). BOVA11 + satellite and the study stay as options.
 
 Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
@@ -94,13 +95,13 @@ AVISO_REGRAS_DE_RISCO = (
     "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
     "só valem com as posições registradas no paper trading; até lá, são aviso."
 )
-# Purchase plan: the default is Aleph Neumann's, the Conservadora registered in paper-v2 (the only one that passed the
-# final proof after IR, DECISOES 82; the user's choice on 2026-10-23, DECISOES 117). BOVA11 + paper-v1's satellite
+# Purchase plan: the default is Aleph Neumann's, the Composite registered in paper-v3 (the user's choice on 2026-11-03,
+# DECISOES 242; before, the Conservadora of paper-v2, DECISOES 82 and 117). BOVA11 + paper-v1's satellite
 # (DECISOES 69) and the sidebar's optimized portfolio (the study) stay as options.
 MODO_CONSERVADORA, MODO_DINHEIRO_REAL, MODO_ESTUDO = "conservadora", "dinheiro_real", "estudo"
 ROTULOS_MODO = {MODO_CONSERVADORA: "Aleph Neumann", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
 AJUDA_MODO = (
-    "Aleph Neumann: a Conservadora registrada no paper-v2, 100% em ações, a partir das suas posições. BOVA11 + "
+    "Aleph Neumann: a Composite registrada no paper-v3, 100% em ações, a partir das suas posições. BOVA11 + "
     "satélite: BOVA11 com ~70% e o satélite Kelly do paper-v1 com ~30%. Estudo: o plano da carteira otimizada pela "
     "barra lateral, só ações, para comparar."
 )
@@ -144,7 +145,7 @@ class CarteiraCalculada:
 def ler_sidebar() -> Entradas:
     with st.sidebar:
         st.markdown("## Aleph Neumann")
-        st.caption("O plano de dinheiro real: a Conservadora registrada no paper-v2 (15 ações, pesos iguais). Estes "
+        st.caption("O plano de dinheiro real: a Composite registrada no paper-v3 (15 ações, pesos iguais). Estes "
                    "três campos mudam o plano.")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
@@ -156,7 +157,7 @@ def ler_sidebar() -> Entradas:
 
         st.markdown("## Estudo")
         st.caption("Carteira de hoje e walk-forward, mais abaixo na página: estes seletores mudam o estudo e não "
-                   "mudam o plano do Aleph Neumann (a Conservadora tem regras fixas, testadas antes). Cada mudança "
+                   "mudam o plano do Aleph Neumann (a Composite tem regras fixas, registradas antes). Cada mudança "
                    "recalcula o estudo: com todos os ativos, leva alguns minutos.")
         objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
                                 key="objetivo")
@@ -328,9 +329,9 @@ def secao_mercado() -> None:
 
 def secao_assessor() -> None:
     """The DeepSeek adviser on the registered Aleph Neumann plan (information only, DECISOES 136)."""
-    registrado = servicos.carregar_conservadora_registrada()
+    registrado = servicos.carregar_plano_registrado()
     chave = servicos.chave_da_api("deepseek", "DEEPSEEK_API_KEY")
-    indisponivel = ("sem carteira registrada no paper-v2" if registrado is None else
+    indisponivel = ("sem carteira registrada no paper-v3" if registrado is None else
                     "falta a chave do DeepSeek nos segredos do app ([deepseek] api_key)" if chave is None else None)
     universo = [] if registrado is None else list(registrado[1].index)
     ui_assessor.secao(indisponivel, universo, lambda: _parecer_do_plano(registrado, chave))
@@ -340,7 +341,7 @@ def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assesso
     hoje = date.today()
     data, alvo = registrado
     pacote, fontes = parecer.pacote_e_fontes(alvo, data, chave, hoje)
-    texto = assessor.mensagem_de_sistema(pacote)
+    texto = assessor.mensagem_de_sistema(pacote, assessor.CARTEIRA_COMPOSTA)
     return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave)
 
 
@@ -494,13 +495,13 @@ def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataF
 
 
 def secao_conservadora(entradas: Entradas) -> None:
-    st.markdown("### Plano de compra: Aleph Neumann (Conservadora, dinheiro real)")
-    registrado = servicos.carregar_conservadora_registrada()
+    st.markdown("### Plano de compra: Aleph Neumann (Composite, dinheiro real)")
+    registrado = servicos.carregar_plano_registrado()
     if registrado is None:
-        st.error("Sem carteira registrada no paper-v2 (paper-v2/carteiras.csv): o plano do Aleph Neumann usa a de lá.")
+        st.error("Sem carteira registrada no paper-v3 (paper-v3/composto.csv): o plano do Aleph Neumann usa a de lá.")
         return
     data, alvo = registrado
-    st.info(alepha.aviso_conservadora(data))
+    st.info(alepha.aviso_composite(data))
     posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}
     mes = alepha.mes_fiscal()
     tickers = tuple(dict.fromkeys((*alvo.index, *posicoes)))
@@ -516,7 +517,7 @@ def secao_conservadora(entradas: Entradas) -> None:
         st.error(f"Plano indisponível, sem cotação de {', '.join(sem_cotacao)}. Confira o ticker ou atualize as "
                  "cotações.")
         return
-    setores = servicos.setores_do_lago(tuple(alvo.index))
+    setores = servicos.setores_do_lago(tuple(alvo.index), servicos.PASTA_MARCOS_V3)
     foto = servicos.carregar_liquidez()
     precos = cotacoes["preco"]
     patrimonio = sum(posicao.quantidade * float(precos[ticker]) for ticker, posicao in posicoes.items())

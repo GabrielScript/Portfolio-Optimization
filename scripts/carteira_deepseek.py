@@ -45,13 +45,26 @@ def registro_do_parecer(pesos: pd.Series, quando: date) -> pd.DataFrame:
                          "peso": pesos.to_numpy(dtype=float)}, columns=COLUNAS)
 
 
-def parecer_devido(composto: pd.DataFrame, feitos: pd.DataFrame, hoje: date) -> bool:
-    """True with no opinion yet, after a Composite record newer than the last opinion, or 28 days after it."""
+def parecer_devido(composto: pd.DataFrame, feitos: pd.DataFrame, hoje: date,
+                   base_julgada: pd.Timestamp | None = None) -> bool:
+    """True with no opinion yet, 28 days after the last one, or when the Composite's last record is not the one the
+    last opinion judged (``base_julgada``; without it, a record dated after the opinion's day). A record paper-v3
+    writes after the opinion but dates before it is caught by ``base_julgada`` (code review, 2026-11-03)."""
     if feitos.empty:
         return True
     ultima = pd.Timestamp(feitos["data"].max()) - pd.Timedelta(days=1)      # the day of the last opinion
-    return pd.Timestamp(composto["data"].max()) > ultima or pd.Timestamp(hoje) >= ultima + pd.Timedelta(
-        days=DIAS_ENTRE_PARECERES)
+    if pd.Timestamp(hoje) >= ultima + pd.Timedelta(days=DIAS_ENTRE_PARECERES):
+        return True
+    base = pd.Timestamp(composto["data"].max())
+    return base != base_julgada if base_julgada is not None else base > ultima
+
+
+def ultima_base_julgada(pasta: Path = PASTA_PARECERES) -> pd.Timestamp | None:
+    """The Composite record the newest saved opinion judged; None before the first one."""
+    arquivos = sorted(pasta.glob("*.json")) if pasta.exists() else []
+    if not arquivos:
+        return None
+    return pd.Timestamp(json.loads(arquivos[-1].read_text(encoding="utf-8"))["base_do_composto"])
 
 
 def ler_registro(arquivo: Path = ARQUIVO) -> pd.DataFrame:
@@ -86,7 +99,7 @@ def executar(forcar: bool = False) -> int:
     from core.segredos import segredo
     from ui import parecer as entradas
     composto, feitos, hoje = pd.read_csv(ARQUIVO_COMPOSTO, parse_dates=["data"]), ler_registro(), date.today()
-    if not forcar and not parecer_devido(composto, feitos, hoje):
+    if not forcar and not parecer_devido(composto, feitos, hoje, ultima_base_julgada()):
         print(f"DeepSeek: em dia (último parecer em {feitos['data'].max() - pd.Timedelta(days=1):%d/%m/%Y})")
         return 0
     chave = segredo("DEEPSEEK_API_KEY")

@@ -51,3 +51,18 @@ def test_an_opinion_is_due_first_after_a_new_composite_record_and_then_every_28_
     assert cd.parecer_devido(composto, feito, date(2026, 12, 1))                 # 28 days after 03/11
     novo = pd.concat([composto, pd.DataFrame({"data": [pd.Timestamp("2026-11-10")], "ticker": ["ITSA4"]})])
     assert cd.parecer_devido(novo, feito, date(2026, 11, 11))                    # the Composite rebalanced
+
+
+def test_a_composite_record_written_after_the_opinion_but_dated_before_it_is_still_judged():
+    # code review of 2026-11-03: the opinion of 03/11 judged the record of 27/10; paper-v3 then writes one dated 02/11
+    composto = pd.DataFrame({"data": pd.to_datetime(["2026-10-27", "2026-11-02"]), "ticker": ["PETR4", "VALE3"]})
+    feito = cd.registro_do_parecer(pd.Series({"PETR4": 1.0}), date(2026, 11, 3))
+    assert cd.parecer_devido(composto, feito, date(2026, 11, 4), base_julgada=pd.Timestamp("2026-10-27"))
+    assert not cd.parecer_devido(composto, feito, date(2026, 11, 4), base_julgada=pd.Timestamp("2026-11-02"))
+
+
+def test_the_judged_base_is_read_from_the_newest_opinion_file(tmp_path):
+    assert cd.ultima_base_julgada(tmp_path) is None
+    (tmp_path / "2026-11-03.json").write_text('{"base_do_composto": "2026-10-27"}', encoding="utf-8")
+    (tmp_path / "2026-12-01.json").write_text('{"base_do_composto": "2026-11-28"}', encoding="utf-8")
+    assert cd.ultima_base_julgada(tmp_path) == pd.Timestamp("2026-11-28")

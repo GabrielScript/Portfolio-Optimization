@@ -7,7 +7,6 @@ Portuguese, like the app. The password is only ever sent to the SMTP login.
 
 from __future__ import annotations
 
-import os
 import smtplib
 import ssl
 from dataclasses import dataclass
@@ -16,7 +15,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from core.segredos import ARQUIVO_ENV, ler_env
+from core.segredos import ARQUIVO_ENV, segredo
 
 SERVIDOR, PORTA = "smtp.gmail.com", 587
 PRAZO_S = 30
@@ -32,15 +31,12 @@ class Credenciais:
 
 
 def credenciais(arquivo: Path = ARQUIVO_ENV) -> Credenciais | None:
-    """The Gmail sender, app password and recipient; None without a user or a password."""
-    valores = ler_env(arquivo)
-
-    def valor(nome: str) -> str | None:           # the .env first, like ``core.segredos.segredo``
-        return valores.get(nome) or os.environ.get(nome) or None
-    usuario, senha = valor("GMAIL_USER"), valor("GMAIL_PASSWORD_APP")
+    """The Gmail sender, app password and recipient (``core.segredos.segredo``: the .env first); None without a user
+    or a password."""
+    usuario, senha = segredo("GMAIL_USER", arquivo), segredo("GMAIL_PASSWORD_APP", arquivo)
     if not usuario or not senha:
         return None
-    return Credenciais(usuario, senha, valor("ALERTA_EMAIL_PARA") or usuario)
+    return Credenciais(usuario, senha, segredo("ALERTA_EMAIL_PARA", arquivo) or usuario)
 
 
 def _reais(valor: float) -> str:

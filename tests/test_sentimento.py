@@ -69,6 +69,10 @@ def test_material_filings_of_the_apps_stocks_are_listed_by_ticker_newest_first()
     assert fatos["ticker"].tolist() == ["VALE3", "PETR4"]                 # material only, app stocks only
     assert fatos.iloc[1][["categoria", "assunto", "link"]].tolist() == ["Fato Relevante", "Produção 3T26",
                                                                        "https://www.rad.cvm.gov.br/l1"]
+    # a sponsored BDR's foreign issuer (core.fatos_bdr_etf.codigos_dos_bdrs) joins by its CVM code; a stock's code wins
+    com_bdr = fatos_recentes(ipe, setores, ["PETR4.SA", "VALE3.SA"], desde=date(2026, 10, 1),
+                             extras={1: "ROXO34", 9512: "PETR34"})
+    assert com_bdr["ticker"].tolist() == ["ROXO34", "VALE3", "PETR4"]
 
 
 def test_headlines_are_the_relevant_scored_items_newest_first_with_their_main_topic():

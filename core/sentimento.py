@@ -10,7 +10,7 @@ The Jev questions have no ticker: per-stock coverage comes from the CVM filings,
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
@@ -125,14 +125,19 @@ def tom_diario(itens: pd.DataFrame, notas: pd.DataFrame) -> pd.DataFrame:
 CATEGORIAS_MATERIAIS = ("Fato Relevante", "Comunicado ao Mercado")     # b3lake.jevscore.MATERIAL_CATEGORIES
 
 
-def fatos_recentes(ipe: pd.DataFrame, setores: pd.DataFrame, tickers: Iterable[str], desde) -> pd.DataFrame:
+def fatos_recentes(ipe: pd.DataFrame, setores: pd.DataFrame, tickers: Iterable[str], desde,
+                   extras: Mapping[int, str] | None = None) -> pd.DataFrame:
     """The material CVM filings (``CATEGORIAS_MATERIAIS``) delivered on or after ``desde`` by the issuers of
     ``tickers`` (app format, issuer = first 4 letters), newest first: ``ticker``, ``empresa``, ``categoria``,
-    ``assunto``, ``data`` and ``link`` (the filing on the CVM's site). ``setores``: the lake's issuer-CVM table."""
+    ``assunto``, ``data`` and ``link`` (the filing on the CVM's site). ``setores``: the lake's issuer-CVM table.
+    ``extras``: more CVM code -> ticker pairs (the sponsored BDRs, ``core.fatos_bdr_etf``); a stock's code wins."""
     por_emissor = {ticker.removesuffix(".SA")[:4]: ticker.removesuffix(".SA") for ticker in tickers}
     # a renamed company keeps one CVM code under two prefixes (ELET and AXIA): the app lists one of them
     do_app = setores.dropna(subset=["code_cvm"]).assign(ticker=lambda quadro: quadro["issuer"].map(por_emissor))
     ticker_do_codigo = do_app.dropna(subset=["ticker"]).drop_duplicates("code_cvm").set_index("code_cvm")["ticker"]
+    if extras:
+        mais = pd.Series(dict(extras), dtype="object")
+        ticker_do_codigo = pd.concat([ticker_do_codigo, mais[~mais.index.isin(ticker_do_codigo.index)]])
     materiais = ipe[ipe["categoria"].isin(CATEGORIAS_MATERIAIS) & (ipe["data_entrega"] >= desde)]
     ticker = materiais["codigo_cvm"].map(ticker_do_codigo)
     fatos = pd.DataFrame({"ticker": ticker, "empresa": materiais["nome_companhia"],

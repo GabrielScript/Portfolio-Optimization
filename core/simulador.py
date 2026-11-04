@@ -25,12 +25,13 @@ REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
 CUSTO_BPS = 10.0                   # the plan's reserve, and the cost of a name outside the liquidity snapshot
 COLUNAS = ["data", "carteira", "ticker", "ordem", "preco", "custo"]
-LINHA_CAIXA = "Caixa (CDI)"
-LINHA_OPCOES = "Reserva de opções (CDI)"
+JURO = "Selic"                     # the cash and the reference rate (the user, 2026-11-04: the Selic only, no CDI)
+LINHA_CAIXA = f"Caixa ({JURO})"
+LINHA_OPCOES = f"Reserva de opções ({JURO})"
 
 
-def _fator_do_cdi(cdi: pd.Series, dias: pd.DatetimeIndex) -> pd.Series:
-    """Accumulated CDI per session. The last session's CDI is not out yet: it repeats the last known rate."""
+def _fator_do_juro(cdi: pd.Series, dias: pd.DatetimeIndex) -> pd.Series:
+    """The accumulated rate (the daily Selic) per session. The last session's rate may not be out yet: it repeats the last known one."""
     return (1.0 + cdi.reindex(dias).ffill().fillna(0.0)).cumprod()
 
 
@@ -46,7 +47,7 @@ class Trilha:
 
 
 def _trilha(ordens: pd.DataFrame, precos: pd.DataFrame, fator: pd.Series, capital: float) -> Trilha:
-    """Each stretch is valued as quantity x recorded close x index(t) / index(rebalance), plus cash at the CDI. At the
+    """Each stretch is valued as quantity x recorded close x index(t) / index(rebalance), plus cash at the Selic. At the
     next rebalance the gap between that value and quantity x close (the dividends held in the index) becomes cash."""
     datas = list(ordens["data"].drop_duplicates().sort_values())
     quantidades = pd.Series(dtype=float)
@@ -98,7 +99,7 @@ def _rebalancear(feitas: pd.DataFrame, carteira: str, data: pd.Timestamp, pesos:
     posicoes: dict[str, Posicao] = {}
     patrimonio = capital
     if not feitas.empty:
-        trilha = _trilha(feitas, ate, _fator_do_cdi(cdi, ate.index), capital)
+        trilha = _trilha(feitas, ate, _fator_do_juro(cdi, ate.index), capital)
         patrimonio = float(trilha.valores.iloc[-1])
         posicoes = {ticker: Posicao(int(quantidade), float(cotacoes[ticker]))
                     for ticker, quantidade in trilha.quantidades.items()}
@@ -124,16 +125,16 @@ def ordens_devidas(ordens: pd.DataFrame, registros: Mapping[str, pd.DataFrame], 
 
 def curvas(ordens: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series, capital: float = CAPITAL_ACOES,
            opcoes: float = CAPITAL_OPCOES) -> pd.DataFrame:
-    """R$ per session from the first buy: each portfolio with its options sleeve at the CDI, then ``REFERENCIAS`` and
-    the CDI as the whole capital on that day, with no costs."""
+    """R$ per session from the first buy: each portfolio with its options sleeve at the Selic, then ``REFERENCIAS`` and
+    the Selic as the whole capital on that day, with no costs."""
     janela = precos.loc[ordens["data"].min():].ffill()
-    fator = _fator_do_cdi(cdi, janela.index)
+    fator = _fator_do_juro(cdi, janela.index)
     no_cdi = fator / fator.iloc[0]
     colunas = {carteira: _trilha(ordens[ordens["carteira"] == carteira], janela, fator, capital).valores + opcoes * no_cdi
                for carteira in CARTEIRAS if carteira in set(ordens["carteira"])}
     total = capital + opcoes
     colunas |= {nome: total * janela[nome] / janela[nome].iloc[0] for nome in REFERENCIAS}
-    return pd.DataFrame(colunas | {"CDI": total * no_cdi})
+    return pd.DataFrame(colunas | {JURO: total * no_cdi})
 
 
 def quedas(curvas_rs: pd.DataFrame) -> pd.DataFrame:
@@ -161,7 +162,7 @@ def posicoes(ordens: pd.DataFrame, carteira: str, precos: pd.DataFrame, cdi: pd.
     """The stocks of the portfolio's last rebalance at the last close, its cash and its options sleeve."""
     feitas = ordens[ordens["carteira"] == carteira]
     janela = precos.loc[feitas["data"].min():].ffill()
-    fator = _fator_do_cdi(cdi, janela.index)
+    fator = _fator_do_juro(cdi, janela.index)
     trilha = _trilha(feitas, janela, fator, capital)
     movimento = (janela.iloc[-1] / janela.loc[trilha.data]).reindex(trilha.quantidades.index)
     acoes = pd.DataFrame({"Qtd.": trilha.quantidades, "Fechamento na troca (R$)": trilha.fechamentos,
@@ -181,7 +182,7 @@ class Painel:
 
     curvas: pd.DataFrame                    # ``curvas``
     posicoes: dict[str, pd.DataFrame]       # ``posicoes`` of each portfolio
-    com_cdi: bool                           # False: the CDI series failed and cash shows no interest
+    com_cdi: bool                           # False: the Selic series failed and cash shows no interest
 
 
 def painel(ordens: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series) -> Painel:

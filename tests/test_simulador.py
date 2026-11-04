@@ -188,9 +188,9 @@ def test_the_benchmarks_start_at_the_whole_capital_on_the_first_buy_with_no_cost
     ordens = linhas((INICIO, "Composto", {"AAAA3": (900, 10.0, 9.0)}))
     cdi = pd.Series(0.01, index=precos.index)
     curvas = sim.curvas(ordens, precos, cdi)
-    assert list(curvas.columns) == ["Composto", "BOVA11", "CDI"]
-    assert curvas.iloc[0][["BOVA11", "CDI"]].tolist() == pytest.approx([10_000.0] * 2)
-    assert curvas.iloc[-1][["BOVA11", "CDI"]].tolist() == pytest.approx([11_000.0, 10_100.0])
+    assert list(curvas.columns) == ["Composto", "BOVA11", "Selic"]
+    assert curvas.iloc[0][["BOVA11", "Selic"]].tolist() == pytest.approx([10_000.0] * 2)
+    assert curvas.iloc[-1][["BOVA11", "Selic"]].tolist() == pytest.approx([11_000.0, 10_100.0])
 
 
 def test_the_control_line_comes_after_the_composite():
@@ -272,7 +272,7 @@ def test_the_panel_holds_the_curves_and_each_portfolios_positions():
     precos = com_referencias(tabela_de_precos([10.0, 11.0]))
     ordens = linhas((INICIO, "Composto", {"AAAA3": (900, 10.0, 0.0)}), (INICIO, "Conservadora", {"BBBB3": (900, 10.0, 0.0)}))
     painel = sim.painel(ordens, precos, pd.Series(0.01, index=precos.index))
-    assert list(painel.curvas.columns) == ["Composto", "Conservadora", "BOVA11", "CDI"]
+    assert list(painel.curvas.columns) == ["Composto", "Conservadora", "BOVA11", "Selic"]
     assert set(painel.posicoes) == {"Composto", "Conservadora"}
     assert painel.posicoes["Conservadora"].index[0] == "BBBB3"
     assert painel.com_cdi
@@ -343,11 +343,11 @@ def test_each_simulator_table_has_its_filters_and_filters_by_portfolio():
     assert tela.dataframe[0].value.index.tolist() == ["Composto"]
 
 
-def test_the_screen_warns_when_the_cdi_is_missing():
+def test_the_screen_warns_when_the_selic_is_missing():
     from streamlit.testing.v1 import AppTest
     tela = AppTest.from_function(_tela_sem_cdi, default_timeout=TIMEOUT_S).run()
     assert not tela.exception
-    assert "CDI" in tela.warning[0].value
+    assert "Selic" in tela.warning[0].value
 
 
 def test_the_loader_has_nothing_before_the_first_buy(tmp_path):

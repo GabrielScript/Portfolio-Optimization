@@ -416,7 +416,7 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
                                            raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
     foto = pd.read_parquet(raiz / ARQUIVO_LIQUIDEZ) if (raiz / ARQUIVO_LIQUIDEZ).exists() else None
     return simulador.ordens_devidas(ordens, registros, precos.rename(columns=lambda papel: papel.removesuffix(".SA")),
-                                    cdi_lago.daily_cdi(hoje.year - simulador.INICIO.year + 1, hoje),
+                                    cdi_lago.daily_selic(hoje.year - simulador.INICIO.year + 1, hoje),   # the Selic (user, 2026-11-04)
                                     custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
 
 

@@ -198,7 +198,16 @@ def carregar_simulador(dia: date, versao_dados: int, arquivo: Path = ARQUIVO_SIM
     papeis = [*ordens["ticker"].unique(), *simulador.REFERENCIAS]
     precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], ordens["data"].min().date(), dia)
     return simulador.painel(ordens, precos.rename(columns=lambda papel: papel.removesuffix(".SA")),
-                            carregar_cdi(dia.year - simulador.INICIO.year + 1, dia))
+                            carregar_selic_diaria(dia.year - simulador.INICIO.year + 1, dia))
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def carregar_selic_diaria(anos: int, dia: date) -> pd.Series:
+    """The daily Selic from the BCB (``cdi_lago.daily_selic``): the simulator's cash rate; empty when it fails."""
+    try:
+        return cdi_lago.daily_selic(anos, dia)
+    except bcb.ErroBcb:
+        return pd.Series(dtype=float)
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

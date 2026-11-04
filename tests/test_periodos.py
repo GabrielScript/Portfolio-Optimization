@@ -77,7 +77,7 @@ def test_year_measures_return_excess_drawdown_calmar_worst_month_and_beta():
     curvas, cdi = _ano()
     medidas = medidas_por_ano(curvas, cdi).loc[(2024, "X")]
     assert medidas["Retorno"] == pytest.approx(98.01 / 100 - 1)
-    assert medidas["Excesso sobre o CDI"] == pytest.approx(98.01 / 100 - 1 - (1.001 ** 4 - 1))
+    assert medidas["Excesso sobre a Selic"] == pytest.approx(98.01 / 100 - 1 - (1.001 ** 4 - 1))
     assert medidas["Queda máx."] == pytest.approx(98.01 / 110 - 1)
     assert medidas["Calmar"] == pytest.approx((98.01 / 100 - 1) / abs(98.01 / 110 - 1))
     assert medidas["Pior mês"] == pytest.approx(min(99.0 / 100 - 1, 98.01 / 99.0 - 1))

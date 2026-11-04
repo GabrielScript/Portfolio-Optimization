@@ -86,3 +86,16 @@ def test_a_lake_file_with_other_columns_falls_back_to_the_bcb(tmp_path):
     pd.DataFrame({"date": pd.to_datetime(["2026-10-19"]).date, "rate": 0.05}).to_parquet(path)
     cdi = daily_cdi(1, TODAY, path, fetch_tail=no_network, download_all=live)
     assert cdi.to_dict() == {pd.Timestamp("2026-10-19"): 0.0005}
+
+
+def test_the_daily_selic_is_bcb_series_11_in_decimal_per_day():
+    # the user, 2026-11-04: the Selic only on the screen, no CDI; the simulator's cash earns the daily Selic
+    from core.cdi_lago import SERIE_SELIC_DIARIA, daily_selic
+    pedidos = []
+
+    def baixar(serie, inicio, hoje):
+        pedidos.append(serie)
+        return pd.Series([0.0508, 0.0508], index=pd.to_datetime(["2026-11-03", "2026-11-04"]))
+    selic = daily_selic(1, TODAY, baixar=baixar)
+    assert SERIE_SELIC_DIARIA == 11 and pedidos == [11]
+    assert selic.tolist() == pytest.approx([0.000508] * 2) and selic.name == "selic_diaria"

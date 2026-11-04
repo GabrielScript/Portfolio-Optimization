@@ -33,6 +33,17 @@ def _bcb_tail(start: date, today: date) -> pd.Series:
     return bcb.baixar_serie(bcb.SERIE_CDI, start, today) / 100.0
 
 
+SERIE_SELIC_DIARIA = 11    # Selic, % per day (BCB SGS 11): the screen's risk-free rate since 2026-11-04
+
+
+def daily_selic(years: int, today: date,
+                baixar: Callable[[int, date, date], pd.Series] = bcb.baixar_serie) -> pd.Series:
+    """The daily Selic in decimal per day over ``years`` up to ``today``, from the BCB (raises ``bcb.ErroBcb``). The
+    user wants the Selic only on the screen (2026-11-04): the simulator's cash earns it."""
+    selic = baixar(SERIE_SELIC_DIARIA, _window_start(years, today), today) / 100.0
+    return selic.rename("selic_diaria")
+
+
 def daily_cdi(years: int, today: date, path: Path | None = None,
               fetch_tail: Callable[[date, date], pd.Series] = _bcb_tail,
               download_all: Callable[[int, date], pd.Series] = market_data.baixar_cdi_diario) -> pd.Series:

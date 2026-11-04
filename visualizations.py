@@ -232,7 +232,8 @@ def grafico_evolucao_precos(precos: pd.DataFrame, tickers_selecionados: list) ->
     )
     return fig
 
-def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str] = None) -> go.Figure:
+def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str] = None,
+                           titulo: str = 'Curva de Capital — Walk-Forward fora da amostra, líquido de custos') -> go.Figure:
     """
     Curvas de capital em base 100, na janela comum a todas. Todas as curvas
     vêm do mesmo walk-forward (mesmas datas, mesmos custos), então a
@@ -258,7 +259,7 @@ def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str]
     fig.add_hline(y=100, line_dash="solid", line_color="#444", line_width=1)
 
     fig.update_layout(
-        title=dict(text='Curva de Capital — Walk-Forward fora da amostra, líquido de custos',
+        title=dict(text=titulo,
                    font=dict(size=18, color=CORES['texto'])),
         xaxis_title='',
         yaxis_title='Capital Indexado (Base 100)',

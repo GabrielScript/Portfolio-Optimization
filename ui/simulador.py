@@ -53,7 +53,7 @@ def parecer_do_deepseek(registro: dict | None) -> None:
     st.caption(f"Parecer de {pd.Timestamp(registro['quando']):%d/%m/%Y %H:%M} sobre {sobre} de "
                f"{pd.Timestamp(registro['base_do_composto']):%d/%m/%Y} ({registro['modelo']}, esforço "
                f"{registro['esforco']}): a carteira compra só as verdes, em pesos iguais (até 20% por ação), e o resto "
-               "fica no CDI. A carteira Controle compra a lista inteira em pesos iguais, sem o DeepSeek: a diferença "
+               "fica na Selic. A carteira Controle compra a lista inteira em pesos iguais, sem o DeepSeek: a diferença "
                "entre as duas é o que o filtro do modelo acrescenta ou custa. Notícias e posts só contaram quando a CVM, o Banco Central, a B3 ou a ANBIMA confirmaram. "
                "Opinião de um modelo de linguagem, sem teste de que acerte: só o tempo mede.")
     st.dataframe(filtrar(tabela_do_parecer(registro), "parecer_deepseek"), width="stretch", hide_index=True,
@@ -69,9 +69,9 @@ def secao(painel: Painel | None) -> None:
                 "(Composite, Conservadora, DeepSeek e Controle).")
         return
     st.caption(f"Conta fictícia: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira desde {INICIO:%d/%m/%Y}, com "
-               "custos. BOVA11 e CDI são só referência.")
+               "custos. BOVA11 e Selic são só referência.")
     if not painel.com_cdi:
-        st.warning("Série do CDI indisponível agora: o caixa e a linha do CDI aparecem sem rendimento.")
+        st.warning("Série da Selic indisponível agora: o caixa e a linha da Selic aparecem sem rendimento.")
     curvas = painel.curvas
     retornos = retornos_recentes(curvas)
     principal = retornos.loc[CARTEIRA_PRINCIPAL]

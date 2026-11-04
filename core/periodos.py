@@ -14,6 +14,8 @@ from core.metrics import cagr, comparar_benchmark, cvar_historico, drawdown, sha
 from core.volatilidade import volatilidades
 
 
+EXCESSO_DO_JURO = "Excesso sobre a Selic"     # the risk-free rate is the Selic on the screen (the user, 2026-11-04)
+
 def desde_inicio_comum(precos: pd.DataFrame) -> pd.DataFrame:
     """``precos`` (dates x securities) from the first session where every column has a price, each column divided by
     its price on that session (all start at 1); a missing day later keeps the last price."""
@@ -116,7 +118,7 @@ def _medidas_do_ano(valores: pd.Series, cdi: pd.Series, referencia: pd.Series) -
     beta = float(alinhado.cov().iloc[0, 1] / alinhado.iloc[:, 1].var()) if len(alinhado) > 1 else float("nan")
     del meses
     return {"Retorno": retorno,
-            "Excesso sobre o CDI": retorno - float((1 + cdi.reindex(diarios.index).fillna(0.0)).prod() - 1),
+            EXCESSO_DO_JURO: retorno - float((1 + cdi.reindex(diarios.index).fillna(0.0)).prod() - 1),
             "Vol": vol,
             "Sharpe": float(excesso.mean() * DIAS_POR_ANO / vol) if vol > 0 else float("nan"),
             "Sortino": float(excesso.mean() * DIAS_POR_ANO / queda) if queda > 0 else float("nan"),

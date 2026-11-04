@@ -82,7 +82,7 @@ def app_padrao(monkeypatch) -> AppTest:
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
-    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE).run()
+    at.pills(key="setores").set_value(SETORES_DO_TESTE).run()
     return at
 
 
@@ -105,33 +105,38 @@ def app_alepha(app_padrao) -> AppTest:
     return app_padrao
 
 
-def _ordens_alepha(at: AppTest) -> pd.DataFrame:
-    tabelas = [df.value for df in at.dataframe if "Ordem" in df.value.columns]
-    assert len(tabelas) == 1
-    return tabelas[0].set_index("Ticker")
-
-
-def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservadora(app_alepha):
-    # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default; named Alepha, no longer
-    # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
+def test_the_page_explains_aleph_quant_instead_of_a_buy_plan(app_alepha):
     assert not app_alepha.exception
     # renamed "Aleph Quant" by the user on 2026-11-04 (was "Aleph Neumann", DECISOES 240 and 250)
     assert any("Aleph Quant" in t.value for t in app_alepha.title)
     # the native theme replaced the injected CSS (the user's design request of 2026-11-04)
     assert not any("<style" in m.value for m in app_alepha.markdown)
-    textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
-    assert not any("Fundo Alepha" in texto or "Alepha Quant" in texto for texto in textos)
-    _, alvo = _conservadora_sintetica()
-    ordens = _ordens_alepha(app_alepha)
-    assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
-    assert set(ordens["Ordem"]) == {"compra"}
-    # the user's decision of 2026-11-03 (DECISOES 242): the real-money plan is the Composite registered in paper-v3
-    assert any(m.value == "### Plano de compra: Aleph Quant (Composite, dinheiro real)" for m in app_alepha.markdown)
-    # the user's UI list of 2026-11-03: the long notices (CVM, the Composite's record, the fixed risk rules) are gone
-    textos += [i.value for i in app_alepha.info]
-    assert not any(marca in texto for texto in textos for marca in (
-        "não é um fundo de investimento", "registrada no paper-v3 em", "Regras de risco fixas"))
+    # the user's UI list of 2026-11-04: the buy plan, the held positions and the month's tax are gone (they were empty
+    # on every visit); what Aleph Quant is takes their place
+    titulos = [m.value for m in app_alepha.markdown]
+    assert "## O que é o Aleph Quant" in titulos
+    assert not [t for t in titulos if t.startswith("### Plano de compra")]
+    assert not [e for e in app_alepha.expander if "Minhas posições" in e.label or "IR do mês" in e.label]
+    assert not [df for df in app_alepha.dataframe if "Ordem" in df.value.columns]
+    sobre = next(m.value for m in app_alepha.markdown if "ferramenta de decisão" in m.value)
+    assert all(palavra in sobre for palavra in ("Composite", "Conservadora", "ETFs", "BDRs", "B3", "dinheiro real"))
 
+
+def test_no_screen_text_speaks_of_the_lake_paper_v3_decisoes_or_the_cdi(monkeypatch):
+    # the user, 2026-11-04: clear words for any investor; the Selic is the only rate on the screen
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
+    dias = pd.date_range("2015-01-01", "2026-10-30", freq="D")
+    monkeypatch.setattr(servicos, "carregar_juros", lambda: pd.DataFrame({"CDI": 0.0004, "Selic": 0.00041}, index=dias))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    textos = [*(m.value for m in at.markdown), *(c.value for c in at.caption), *(i.value for i in at.info),
+              *(w.value for w in at.warning), *(str(df.value.columns.tolist()) for df in at.dataframe),
+              *(str(f) for f in _figuras(at)), *(e.label for e in at.expander)]
+    proibidas = re.compile(r"lago|paper-v3|DECISOES|CDI", re.IGNORECASE)
+    achados = sorted({m.group(0) for texto in textos for m in [proibidas.search(texto)] if m})
+    assert achados == []
 
 def test_the_registered_plan_is_the_composites_last_record(tmp_path):
     from ui.servicos import carregar_plano_registrado
@@ -161,65 +166,6 @@ def test_no_screen_text_call_has_two_bare_dollar_signs():
                 achados.append(f"{arquivo.name}:{no.lineno}")
     assert achados == []
 
-def test_from_the_held_positions_the_plan_sells_a_name_outside_the_registration_at_its_average_cost(monkeypatch):
-    from ui import alepha
-    fora = get_tickers_by_setor([SETORES_DO_TESTE[1]])[1].removesuffix(".SA")
-    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
-        {"ticker": [fora], "quantidade": [50], "preco_medio": [0.01]}))
-    _servicos_sinteticos(monkeypatch)
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    assert not at.exception
-    venda = _ordens_alepha(at).loc[fora]
-    assert (venda["Ordem"], venda["Qtd."]) == ("venda", 50)
-    assert venda["Ganho realizado (R$)"] == pytest.approx(venda["Valor (R$)"] - venda["Custo (R$)"] - 50 * 0.01)
-
-
-def test_below_the_minimum_capital_the_plan_warns_that_it_is_far_from_the_tested_portfolio(app_alepha):
-    # 5 names at 20% with quotes near R$ 10: 2 shares each need about R$ 100 per 20%, so R$ 100 in all is not enough
-    app_alepha.sidebar.number_input(key="orcamento").set_value(100.0).run()
-    assert not app_alepha.exception
-    assert len([w for w in app_alepha.warning if "longe da carteira testada" in w.value]) == 1
-
-
-def test_small_capital_keeps_the_held_bova11_and_buys_stocks_with_the_new_cash(monkeypatch):
-    # the user's decision of 2026-10-23 (DECISOES 124): start now with little money; 1 BOVA11 held + R$ 100
-    from ui import alepha
-    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
-        {"ticker": ["BOVA11"], "quantidade": [1], "preco_medio": [10.0]}))
-    _servicos_sinteticos(monkeypatch)
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    at.sidebar.number_input(key="orcamento").set_value(100.0).run()
-    assert not at.exception
-    ordens = _ordens_alepha(at)
-    assert ordens.loc["BOVA11", "Ordem"] == "manter"
-    assert (ordens.drop(index="BOVA11")["Ordem"] == "compra").any()
-    assert any("Capital pequeno" in i.value for i in at.info)
-
-
-def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(monkeypatch):
-    # the zone's redo can leave the cash negative with no buy to shrink (ValueError): only its columns go missing
-    from core import rebalanceio
-    _, alvo = _conservadora_sintetica()
-    _servicos_sinteticos(monkeypatch)
-    monkeypatch.setattr(servicos, "carregar_liquidez", lambda: pd.DataFrame({
-        "security": [t.removesuffix(".SA") for t in alvo.index], "month": pd.Timestamp("2026-09-01"),
-        "meio_spread": 0.001, "vol_diaria": 0.02, "volume_mediano": 1e8}))
-    real = rebalanceio.plano_de_rebalanceio
-
-    def zona_falha(*args, zona=None, **kwargs):
-        if zona is not None:
-            raise ValueError("o caixa e as vendas não pagam os custos (faltam R$ 1.00)")
-        return real(*args, **kwargs)
-    monkeypatch.setattr(rebalanceio, "plano_de_rebalanceio", zona_falha)
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    assert not at.exception
-    assert not [e for e in at.error if e.value.startswith("Plano indisponível")]
-    assert set(_ordens_alepha(at).index) == {t.removesuffix(".SA") for t in alvo.index}
-
-
 def test_the_sidebar_keeps_only_the_amount_and_the_frontiers_universe_and_caps(monkeypatch):
     # the user's UI list of 2026-11-03: no plan selector, no study block (objective, lambda, Kelly satellite, vol cap,
     # windows, cost, shrinkage, bagging); the universe is every asset with the B3-listed US ones; the frontier's cap
@@ -228,12 +174,15 @@ def test_the_sidebar_keeps_only_the_amount_and_the_frontiers_universe_and_caps(m
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    assert at.sidebar.checkbox(key="todos").value is True and at.sidebar.checkbox(key="eua").value is True
+    # the user, 2026-11-04: every stock by default, so the "all assets" switch is gone; no amount without the plan
+    assert at.sidebar.checkbox(key="eua").value is True
+    assert not {w.key for w in at.sidebar.checkbox} & {"todos"} and not at.sidebar.number_input
     chaves = {w.key for w in [*at.sidebar.slider, *at.sidebar.checkbox, *at.sidebar.selectbox,
                               *at.sidebar.segmented_control]}
     assert not {"modo_plano", "objetivo", "fracao_satelite", "vol_maxima", "janela", "anos_teste", "custo_bps",
                 "reamostrar", "n_ativos_max"} & chaves
-    assert at.sidebar.slider(key="peso_maximo").max == 25 and at.sidebar.slider(key="teto_setor").max == 30
+    assert at.sidebar.slider(key="peso_maximo").max == 25 and at.sidebar.slider(key="teto_setor").max == 50
+    assert at.sidebar.slider(key="teto_setor").value == 30
     assert not [m for m in at.sidebar.markdown if m.value == "## Estudo"]
 
 
@@ -254,12 +203,11 @@ def test_the_composite_sits_where_it_is_next_to_the_efficient_frontier(app_padra
 
 def test_an_infeasible_frontier_explains_what_to_widen_and_the_plan_still_shows(app_padrao):
     # one small sector plus the Composite's names, each capped at 5%, cannot add up to 100%
-    app_padrao.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO])
+    app_padrao.pills(key="setores").set_value([SETOR_PEQUENO])
     app_padrao.sidebar.checkbox(key="eua").uncheck()
     app_padrao.sidebar.slider(key="peso_maximo").set_value(5).run()
     assert not app_padrao.exception
     assert len([e.value for e in app_padrao.error if e.value.startswith("Fronteira inviável")]) == 1
-    assert _ordens_alepha(app_padrao) is not None                  # the real plan still shows
 
 
 def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
@@ -289,7 +237,7 @@ def _curvas_sinteticas() -> pd.DataFrame:
 def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with_the_composite_and_crypto(monkeypatch):
     # A2 (2026-10-23) made live (user's request of 2026-10-30, DECISOES 188): the registered Conservadora and the
     # composite rerun to the last close, by period and by calendar year, next to BOVA11, BITH11 and QBTC11, with the
-    # risk measures of an aggressive investor; the rebalance phase can be picked
+    # risk measures of an aggressive investor; one rebalance phase and the Selic beside them (the user, 2026-11-04)
     _servicos_sinteticos(monkeypatch)
     monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
     monkeypatch.setattr(servicos, "carregar_juros", lambda: None)             # no file: the table without them
@@ -300,11 +248,13 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     # curves, right below the real plan and above the simulator
     titulos = [m.value for m in at.markdown]
     assert titulos.index(SECAO_SEM_VIES) < titulos.index("## Simulador")
-    assert any(all(nome in figura for nome in ("Conservadora", "Composto", "BOVA11")) for figura in _figuras(at))
+    assert any(all(nome in figura for nome in ("Conservadora", "Composto", "BOVA11", "Selic")) for figura in _figuras(at))
+    assert not [s for s in at.segmented_control if s.key == "fase_das_curvas"]          # no phase picker
     periodos = [df.value for df in at.dataframe if "Período" in df.value.columns]
     assert len(periodos) == 1
     assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
-    assert {"Retorno a.a. Conservadora", "Retorno a.a. Composto", "Retorno a.a. BOVA11"} <= set(periodos[0].columns)
+    assert {"Retorno a.a. Conservadora", "Retorno a.a. Composto", "Retorno a.a. BOVA11", "Retorno a.a. Selic"} <= set(
+        periodos[0].columns)
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)]
     assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 29/10)"
     assert ["Conservadora", "Composto", "BOVA11", "BITH11", "QBTC11"] == list(anos[0].columns[1:6])
@@ -313,18 +263,14 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     assert len(resumo) == 1 and list(resumo[0]["Estratégia"]) == ["Conservadora", "Composto", "BOVA11", "BITH11",
                                                                    "QBTC11"]
     assert {"Alfa a.a. (BOVA11)", "Queda máx.", "Calmar", "CVaR 95% diário"} <= set(resumo[0].columns)
-    antes = periodos[0]["Retorno a.a. Conservadora"].iloc[0]
-    at.segmented_control(key="fase_das_curvas").set_value(42).run()
-    depois = [df.value for df in at.dataframe if "Período" in df.value.columns][0]["Retorno a.a. Conservadora"].iloc[0]
-    assert depois != antes
     at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
     assert not at.exception
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
     assert (anos[["Conservadora", "BOVA11"]].dropna() <= 0).all().all()
 
 
-def test_the_year_table_has_the_cdi_and_the_selic_next_to_the_returns_and_only_there(monkeypatch):
-    # the user's request of 2026-11-01: compare each year's return with the CDI and the Selic, from the published rates
+def test_the_year_table_has_the_selic_next_to_the_returns_and_only_there(monkeypatch):
+    # the user's request of 2026-11-01, then 2026-11-04: each year's return next to the Selic only (no CDI)
     _servicos_sinteticos(monkeypatch)
     monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
     dias = pd.date_range("2015-01-01", "2026-10-30", freq="D")
@@ -333,7 +279,7 @@ def test_the_year_table_has_the_cdi_and_the_selic_next_to_the_returns_and_only_t
     at.run()
     assert not at.exception
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
-    assert list(anos.columns[1:6]) == ["Conservadora", "Composto", "BOVA11", "CDI", "Selic"]
+    assert list(anos.columns[1:5]) == ["Conservadora", "Composto", "BOVA11", "Selic"] and "CDI" not in anos.columns
     assert anos.set_index("Ano").loc["2020", "Selic"] == pytest.approx(1.00041 ** 366 - 1)
     at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
     assert not at.exception                                     # a rate has no drawdown to show
@@ -398,20 +344,6 @@ def test_the_market_panel_lists_bdrs_and_etfs_and_filters_by_type_without_a_type
     assert all(ticker.endswith(("32", "33", "34", "35")) for ticker in so_bdrs)
     at.multiselect(key="filtro_acoes_Tipo").set_value(["ETF"]).run()
     assert "XINA11" in set(_tabela_de_acoes(at)["Ticker"]) and "TSMC34" not in set(_tabela_de_acoes(at)["Ticker"])
-
-
-def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch):
-    # review finding 2: the core kept in small-capital mode is BOVA11, not every ETF of the screen (IVVB11, SMAL11...)
-    from ui import alepha
-    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
-        {"ticker": ["BOVA11", "IVVB11"], "quantidade": [1, 1], "preco_medio": [10.0, 10.0]}))
-    _servicos_sinteticos(monkeypatch)
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    at.sidebar.number_input(key="orcamento").set_value(50.0).run()
-    assert not at.exception
-    ordens = _ordens_alepha(at)
-    assert (ordens.loc["BOVA11", "Ordem"], ordens.loc["IVVB11", "Ordem"]) == ("manter", "venda")
 
 
 def _app_online(monkeypatch, tmp_path, token: str | None) -> AppTest:
@@ -557,9 +489,6 @@ def test_every_table_has_its_filters(monkeypatch):
     for modulo in (alepha, painel, simulador, ui_assessor):
         monkeypatch.setattr(modulo, "filtrar", gravar)
     _, alvo = _conservadora_sintetica()
-    fora = get_tickers_by_setor([SETORES_DO_TESTE[1]])[1].removesuffix(".SA")
-    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
-        {"ticker": [fora], "quantidade": [50], "preco_medio": [10.0]}))           # one sale next to the buys
     hoje = date.today()
     fatos = pd.DataFrame({"ticker": [alvo.index[0].removesuffix(".SA"), "VALE3", "PETR4"],
                           "empresa": ["X", "VALE", "PETROBRAS"],
@@ -591,5 +520,5 @@ def test_every_table_has_its_filters(monkeypatch):
     assert mostradas and not sem_filtro, sem_filtro      # every table shown, with or without a category column
     assert len(at.get("popover")) >= len(mostradas)
     chaves = {m.key for m in at.multiselect}
-    assert {"filtro_ordens_Ordem", "filtro_fatos_categoria", "filtro_manchetes_fonte",
+    assert {"filtro_fatos_categoria", "filtro_manchetes_fonte",
             "filtro_parecer_deepseek_Parecer do DeepSeek", "filtro_acoes_Tipo", "filtro_acoes_Setor"} <= chaves

@@ -364,14 +364,19 @@ def test_the_market_panel_shows_news_the_dollar_and_every_stock_without_the_elec
     assert {f"Projeção Focus para o fim de {ano}", f"Projeção Focus para o fim de {ano + 1}"} <= set(rotulos)
     assert not [m for m in at.metric if m.label == "Selic meta"]
     assert not [df for df in at.dataframe if "Pesquisa" in df.value.columns]          # no Focus table, no dates
-    acoes = [df.value for df in at.dataframe if {"Retorno 12m", "Tipo"} <= set(df.value.columns)]
+    acoes = [df.value for df in at.dataframe if {"Retorno 12m", "Setor"} <= set(df.value.columns)]
     assert len(acoes) == 1 and len(acoes[0]) >= 100
     assert any("nada aqui muda o plano" in c.value for c in at.caption)
     assert not [c for c in at.caption if "DECISOES 112" in c.value or "Log desde" in c.value]
 
 
-def test_the_market_panel_lists_bdrs_and_etfs_with_a_type_column_and_filters_by_type(monkeypatch):
-    # the user's request of 2026-10-27: every BDR and ETF of the B3 in the table, next to the stocks
+def _tabela_de_acoes(at: AppTest) -> pd.DataFrame:
+    return [df.value for df in at.dataframe if {"P/L", "Retorno 12m"} <= set(df.value.columns)][0]
+
+
+def test_the_market_panel_lists_bdrs_and_etfs_and_filters_by_type_without_a_type_column(monkeypatch):
+    # the user's request of 2026-10-27 (every BDR and ETF of the B3 next to the stocks); the UI list of 2026-11-03
+    # took the "Tipo" column off and put a filter per category column in a "Filtros" button
     _servicos_sinteticos(monkeypatch)
     nomes = pd.DataFrame({"security": ["TSMC34", "XINA11"], "name": ["TAIWANSMFAC", "XPETFCHINA"],
                           "asset_type": ["bdr", "fund_etf"], "sector": [None, None]})
@@ -379,13 +384,18 @@ def test_the_market_panel_lists_bdrs_and_etfs_with_a_type_column_and_filters_by_
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    tabela = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)][0].set_index("Ticker")
-    assert (tabela.loc["TSMC34", ["Tipo", "Empresa", "Setor"]].tolist(), tabela.loc["XINA11", "Tipo"],
-            tabela.loc["PETR4", "Tipo"]) == (["BDR", "TAIWANSMFAC", "BDR"], "ETF", "Ação")
+    tabela = _tabela_de_acoes(at).set_index("Ticker")
+    assert "Tipo" not in tabela.columns
+    assert tabela.loc["TSMC34", ["Empresa", "Setor"]].tolist() == ["TAIWANSMFAC", "BDR"]
+    assert {"XINA11", "PETR4"} <= set(tabela.index)
     assert any("BDRs: retorno só de preço" in c.value for c in at.caption)
-    at.segmented_control(key="tipos_da_tabela").set_value(["BDR"]).run()
-    tabela = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)][0]
-    assert set(tabela["Tipo"]) == {"BDR"}
+    at.multiselect(key="filtro_acoes_Tipo").set_value(["BDR"]).run()
+    assert not at.exception
+    so_bdrs = set(_tabela_de_acoes(at)["Ticker"])
+    assert "TSMC34" in so_bdrs and not {"XINA11", "PETR4"} & so_bdrs
+    assert all(ticker.endswith(("32", "33", "34", "35")) for ticker in so_bdrs)
+    at.multiselect(key="filtro_acoes_Tipo").set_value(["ETF"]).run()
+    assert "XINA11" in set(_tabela_de_acoes(at)["Ticker"]) and "TSMC34" not in set(_tabela_de_acoes(at)["Ticker"])
 
 
 def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch):

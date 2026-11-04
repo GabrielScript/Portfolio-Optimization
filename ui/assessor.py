@@ -12,6 +12,7 @@ import pandas as pd
 import streamlit as st
 
 from core.assessor import Evidencia, Resultado
+from ui.filtros import filtrar
 
 ROTULO_DA_POSTURA = {"favoravel": "🟢 favorável", "neutra": "🟡 neutra", "desfavoravel": "🔴 desfavorável",
                      "evidencia_insuficiente": "⚪ evidência insuficiente"}
@@ -84,7 +85,7 @@ def _mostrar(resultado: Resultado, universo: list[str]) -> None:
                            "Tese": [_afirmacoes(acoes[t]["tese"]) for t in ordem],
                            "Contra a tese (Banco Central)": [_afirmacoes(acoes[t]["contra_tese_macro"]) for t in ordem],
                            "Riscos": [_afirmacoes(acoes[t]["riscos"]) for t in ordem]})
-    st.dataframe(tabela, width="stretch", hide_index=True,
+    st.dataframe(filtrar(tabela, "assessor"), width="stretch", hide_index=True,
                  column_config={"Confiança": st.column_config.ProgressColumn(min_value=0.0, max_value=1.0,
                                                                              format="percent")},
                  alt="Parecer do assessor: postura, confiança, tese, contra-tese e riscos de cada ação do plano")

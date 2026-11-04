@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
+from ui.filtros import filtrar
 
 CARTEIRA_PRINCIPAL = "Composto"
 PERCENTUAL = st.column_config.NumberColumn(format="percent")
@@ -52,7 +53,7 @@ def parecer_do_deepseek(registro: dict | None) -> None:
                f"{registro['esforco']}): a carteira compra só as verdes, em pesos iguais (até 20% por ação), e o resto "
                "fica no CDI. Notícias e posts só contaram quando a CVM, o Banco Central, a B3 ou a ANBIMA confirmaram. "
                "Opinião de um modelo de linguagem, sem teste de que acerte: só o tempo mede.")
-    st.dataframe(tabela_do_parecer(registro), width="stretch", hide_index=True,
+    st.dataframe(filtrar(tabela_do_parecer(registro), "parecer_deepseek"), width="stretch", hide_index=True,
                  column_config={"Confiança": st.column_config.ProgressColumn(min_value=0.0, max_value=1.0,
                                                                              format="percent")},
                  alt="Sinal do DeepSeek para cada ação da Composite: verde compra, amarelo e vermelho ficam de fora")

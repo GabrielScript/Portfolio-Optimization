@@ -18,13 +18,13 @@ import streamlit as st
 from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
 from core.sentimento import ROTULOS_DOS_TOPICOS, TOPICOS_DO_PAINEL, ultimo_fato
+from ui.filtros import filtrar
 
 AVISO = "Informação, não recomendação: nada aqui muda o plano nem as regras de risco."
 AJUDA_DO_TOM = ("Média do tom das notícias relevantes do dia, de −1 a +1: acima de 0, mais notícias boas que ruins para "
                 "a bolsa; abaixo de 0, mais ruins que boas.")
 DOLAR_DO_FOCUS = "Câmbio"          # the Focus line the panel keeps (the adviser's pack still reads all of them)
 PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m")
-TIPOS_DA_TABELA = ("Ação", "BDR", "ETF")
 
 
 def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame | None,
@@ -58,7 +58,7 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
     temas = dias[list(TOPICOS_DO_PAINEL)].tail(7).mean().rename(ROTULOS_DOS_TOPICOS)
     st.bar_chart(temas.rename("Peso médio nos últimos 7 dias"), horizontal=True, x_label="Peso médio do tema")
     if manchetes is not None and not manchetes.empty:
-        st.dataframe(manchetes, width="stretch", hide_index=True, height=320,
+        st.dataframe(filtrar(manchetes, "manchetes"), width="stretch", hide_index=True, height=320,
                      column_config={"quando": st.column_config.DatetimeColumn("Quando", format="DD/MM HH:mm"),
                                     "fonte": "Fonte", "titulo": "Manchete", "tema": "Tema",
                                     "tom": st.column_config.NumberColumn("Tom", format="%+.2f"),
@@ -98,10 +98,7 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
     tabela.insert(1, "Tipo", [info.get(f"{ticker}.SA", {}).get("tipo", "") for ticker in tabela["Ticker"]])
     if fatos is not None and not fatos.empty:
         tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
-    tipos = [tipo for tipo in TIPOS_DA_TABELA if tipo in set(tabela["Tipo"])]
-    escolhidos = st.segmented_control("Tipo", tipos, selection_mode="multi", default=tipos, key="tipos_da_tabela")
-    if escolhidos:
-        tabela = tabela[tabela["Tipo"].isin(escolhidos)]
+    tabela = filtrar(tabela, "acoes", so_para_filtro=["Tipo"])     # the type is a filter, not a column (2026-11-03)
     st.caption(f"{len(tabela)} papéis na tabela.")
     st.dataframe(tabela, width="stretch", hide_index=True, height=420,
                  column_config={"Preço (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
@@ -124,7 +121,7 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
                "B3; saltos de preço deles não passam pela revisão do lago.")
     if fatos is not None and not fatos.empty:
         with st.expander(f"Fatos relevantes e comunicados ao mercado dos últimos 90 dias ({len(fatos)})"):
-            st.dataframe(fatos, width="stretch", hide_index=True, height=360,
+            st.dataframe(filtrar(fatos, "fatos"), width="stretch", hide_index=True, height=360,
                          column_config={"ticker": "Ticker", "empresa": "Empresa", "categoria": "Categoria",
                                         "assunto": "Assunto", "data": st.column_config.DateColumn(
                                             "Entregue em", format="DD/MM/YYYY"),

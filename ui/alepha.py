@@ -15,6 +15,7 @@ from core.impostos import ISENCAO_DE_VENDAS
 from core.periodos import juro_por_ano, medidas_por_ano, medidas_por_periodo, resumo_do_periodo, rotulo_do_ano
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from visualizations import grafico_curvas_capital
+from ui.filtros import filtrar
 
 TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
 
@@ -98,7 +99,7 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
         tabela["Ganho esperado (R$)"] = zona.ordens["ganho_esperado"].reindex(ordens.index).to_numpy()
         tabela["Zona"] = ["pularia" if situacao == SITUACAO_PULAR else ""
                           for situacao in zona.ordens["situacao"].reindex(ordens.index).fillna("")]
-    st.dataframe(tabela, width="stretch", hide_index=True, column_config=COLUNAS_ORDENS,
+    st.dataframe(filtrar(tabela, "ordens"), width="stretch", hide_index=True, column_config=COLUNAS_ORDENS,
                  alt="Plano do Aleph Neumann: ordens de compra e venda a partir das posições atuais")
     vendas = ordens["delta"] < 0
     c1, c2, c3, c4 = st.columns(4)

@@ -66,3 +66,46 @@ def test_the_judged_base_is_read_from_the_newest_opinion_file(tmp_path):
     (tmp_path / "2026-11-03.json").write_text('{"base_do_composto": "2026-10-27"}', encoding="utf-8")
     (tmp_path / "2026-12-01.json").write_text('{"base_do_composto": "2026-11-28"}', encoding="utf-8")
     assert cd.ultima_base_julgada(tmp_path) == pd.Timestamp("2026-11-28")
+
+
+# the user's idea of 2026-11-04 (DECISOES 251): the adviser judges the names of both rule portfolios, each once, and a
+# control holds the same list in equal weights, so the screen shows what the model's filter adds
+
+
+def _registro(data: str, pesos: dict[str, float]) -> pd.DataFrame:
+    return pd.DataFrame({"data": pd.Timestamp(data), "ticker": list(pesos), "peso": list(pesos.values())})
+
+
+def test_the_universe_is_both_portfolios_last_names_each_once_composite_first():
+    composto = pd.concat([_registro("2026-07-01", {"OLDD3": 0.5}),
+                          _registro("2026-10-27", {"PETR4": 0.5, "ITSA4": 0.5, "ZERO3": 0.0})])
+    conservadora = _registro("2026-10-27", {"VALE3": 0.5, "PETR4": 0.5})
+    assert cd.universo_unido(composto, conservadora) == ["PETR4", "ITSA4", "VALE3"]
+
+
+def test_the_control_holds_the_whole_list_in_equal_weights():
+    assert cd.pesos_do_controle(["PETR4", "ITSA4", "VALE3", "BBSE3"]).to_dict() == {
+        "PETR4": 0.25, "ITSA4": 0.25, "VALE3": 0.25, "BBSE3": 0.25}
+
+
+def test_a_new_record_replaces_one_not_traded_yet_with_the_same_or_a_later_date(tmp_path):
+    arquivo = tmp_path / "carteira.csv"
+    cd.acrescentar(arquivo, _registro("2026-11-04", {"PETR4": 1.0}))
+    cd.acrescentar(arquivo, _registro("2026-11-05", {"PETR4": 0.5, "ITSA4": 0.5}))   # the opinion of 04/11
+    cd.acrescentar(arquivo, _registro("2026-11-05", {"VALE3": 1.0}))                 # redone on 04/11: replaces it
+    lido = cd.ler_registro(arquivo)
+    assert lido.groupby("data")["ticker"].apply(list).to_dict() == {
+        pd.Timestamp("2026-11-04"): ["PETR4"], pd.Timestamp("2026-11-05"): ["VALE3"]}
+
+
+def test_an_opinion_is_due_when_the_conservadora_changed_or_an_old_opinion_never_judged_it(tmp_path):
+    (tmp_path / "2026-11-04.json").write_text('{"base_do_composto": "2026-10-27"}', encoding="utf-8")
+    assert cd.ultima_base_julgada(tmp_path, "base_da_conservadora") is None             # before the union: due
+    (tmp_path / "2026-11-05.json").write_text('{"base_do_composto": "2026-10-27", "base_da_conservadora": "2026-10-27"}',
+                                              encoding="utf-8")
+    assert cd.ultima_base_julgada(tmp_path, "base_da_conservadora") == pd.Timestamp("2026-10-27")
+
+
+def test_the_simulator_follows_the_control_beside_the_three_portfolios():
+    from core import simulador
+    assert simulador.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle")

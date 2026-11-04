@@ -61,7 +61,7 @@ def test_a_trade_already_in_the_ledger_is_not_repeated():
 def test_the_deepseek_portfolio_is_the_third_one_and_trades_at_the_first_session_on_or_after_its_record():
     # DECISOES 240: the opinion is formed after a close, so its record is dated the next calendar day and trades at the
     # first session from then on (a Saturday record trades on Monday)
-    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek")
+    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle")
     precos = tabela_de_precos([10.0, 10.0, 10.0, 10.0, 10.0])          # Tue 03/11 to Mon 09/11
     registros = {"DeepSeek": registro("2026-11-07", {"AAAA3": 0.2, "BBBB3": 0.2})}
     novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)

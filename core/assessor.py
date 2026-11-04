@@ -636,6 +636,12 @@ CARTEIRA_COMPOSTA = ("the Composite portfolio, the app's best-measured strategy:
                      "names, equal weights, at most 4 per sector) ordered by a composite of low volatility, dividends, "
                      "momentum, value and profit growth, rebalanced every 63 sessions. The investor will hold only the stocks "
                      "you judge favorable (\"favoravel\"), so judge each one on its own merits")
+CARTEIRAS_UNIDAS = ("the names of the app's two rule-based portfolios, each listed once: the Composite (the Conservative "
+                    "Formula's rule ordered by a composite of low volatility, dividends, momentum, value and profit "
+                    "growth) and the Conservadora (the Conservative Formula: low volatility, dividends and momentum); "
+                    "both hold 15 names in equal weights, at most 4 per sector, rebalanced every 63 sessions. The "
+                    "investor will hold only the stocks you judge favorable (\"favoravel\"), in equal weights, so judge "
+                    "each one on its own merits, whichever portfolio it comes from")
 
 
 def mensagem_de_sistema(pacote: list[Evidencia], carteira: str = CARTEIRA_CONSERVADORA) -> str:

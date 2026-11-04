@@ -19,8 +19,9 @@ from core.segredos import ARQUIVO_ENV, segredo
 
 SERVIDOR, PORTA = "smtp.gmail.com", 587
 PRAZO_S = 30
-RODAPE = ("Simulador do Aleph Quant (conta fictícia de R$ 10.000): Composite, Conservadora e a carteira do "
-          "DeepSeek. Informação, não é recomendação de investimento.")
+RODAPE = ("Simulador do Aleph Quant (conta fictícia de R$ 10.000 por carteira): Composite, Conservadora, a carteira do "
+          "DeepSeek (as ações das duas que ele julga favoráveis) e o Controle (a mesma lista em pesos iguais, sem o "
+          "modelo). Informação, não é recomendação de investimento.")
 
 
 @dataclass(frozen=True)

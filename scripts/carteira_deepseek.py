@@ -1,10 +1,13 @@
 """
-The simulator's DeepSeek portfolio (DECISOES 240, the user's idea of 2026-11-03): the DeepSeek adviser judges the
-Composite's names for the extremely aggressive investor, with the evidence rules of ``core.assessor`` (every claim
+The simulator's DeepSeek portfolio (DECISOES 240, the user's idea of 2026-11-03; since 2026-11-04, DECISOES 251): the
+DeepSeek adviser judges the names of both rule portfolios, the Composite's and the Conservadora's, each once, for the
+extremely aggressive investor, with the evidence rules of ``core.assessor`` (every claim
 quotes evidence; news and posts count only when CVM, BCB, B3 or ANBIMA confirm them). The favorable names
 ("favoravel") share the portfolio equally (the app's 20% cap per stock still applies in the simulator); the rest get
 zero. The record is dated the day after the opinion, so it trades at the next session's close, never at a close the
-model may have seen. An opinion is due after each new Composite record and every 28 days.
+model may have seen. An opinion is due after a new Composite or Conservadora record and every 28 days. A control
+portfolio (``deepseek/controle.csv``) holds the same list in equal weights from the same date, so the simulator shows
+what the model's filter adds or costs.
 
 Forward only: a language model cannot be backtested (its training data holds the past's prices and news).
 
@@ -25,11 +28,28 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 RAIZ = Path(__file__).resolve().parent.parent
 ARQUIVO_COMPOSTO = RAIZ / "paper-v3" / "composto.csv"
+ARQUIVO_CONSERVADORA = RAIZ / "paper-v3" / "conservadora.csv"
 ARQUIVO = RAIZ / "deepseek" / "carteira.csv"      # its own folder: paper-v3/ stays as its guards expect
+ARQUIVO_CONTROLE = RAIZ / "deepseek" / "controle.csv"
 PASTA_PARECERES = RAIZ / "deepseek" / "pareceres"
 DIAS_ENTRE_PARECERES = 28
 FAVORAVEL = "favoravel"
 COLUNAS = ["data", "ticker", "peso"]
+
+
+def _ultimos_nomes(registro: pd.DataFrame) -> list[str]:
+    ultimo = registro[registro["data"] == registro["data"].max()]
+    return list(ultimo.loc[ultimo["peso"] > 0, "ticker"])
+
+
+def universo_unido(composto: pd.DataFrame, conservadora: pd.DataFrame) -> list[str]:
+    """The held names of both portfolios' last records, each once: the Composite's first, in record order."""
+    return list(dict.fromkeys([*_ultimos_nomes(composto), *_ultimos_nomes(conservadora)]))
+
+
+def pesos_do_controle(universo: list[str]) -> pd.Series:
+    """The control: the whole list in equal weights, no model."""
+    return pd.Series(1.0 / len(universo), index=universo, dtype=float)
 
 
 def pesos_dos_verdes(parecer: dict, universo: list[str]) -> pd.Series:
@@ -59,12 +79,23 @@ def parecer_devido(composto: pd.DataFrame, feitos: pd.DataFrame, hoje: date,
     return base != base_julgada if base_julgada is not None else base > ultima
 
 
-def ultima_base_julgada(pasta: Path = PASTA_PARECERES) -> pd.Timestamp | None:
-    """The Composite record the newest saved opinion judged; None before the first one."""
+def ultima_base_julgada(pasta: Path = PASTA_PARECERES, campo: str = "base_do_composto") -> pd.Timestamp | None:
+    """The record (``campo``: the Composite's or "base_da_conservadora") the newest saved opinion judged; None before
+    the first one, or when that opinion did not judge it (the ones before the union)."""
     arquivos = sorted(pasta.glob("*.json")) if pasta.exists() else []
     if not arquivos:
         return None
-    return pd.Timestamp(json.loads(arquivos[-1].read_text(encoding="utf-8"))["base_do_composto"])
+    base = json.loads(arquivos[-1].read_text(encoding="utf-8")).get(campo)
+    return None if base is None else pd.Timestamp(base)
+
+
+def acrescentar(arquivo: Path, novo: pd.DataFrame) -> None:
+    """Appends ``novo``, first dropping rows dated on or after it: a record not traded yet (an opinion redone the same
+    day, or the switch to the union on 04/11) is replaced, never stacked on the same date."""
+    antigo = ler_registro(arquivo)
+    tabela = pd.concat([antigo[antigo["data"] < novo["data"].min()], novo], ignore_index=True)
+    arquivo.parent.mkdir(parents=True, exist_ok=True)
+    tabela.to_csv(arquivo, index=False, lineterminator="\n", date_format="%Y-%m-%d")
 
 
 def ler_registro(arquivo: Path = ARQUIVO) -> pd.DataFrame:
@@ -73,7 +104,8 @@ def ler_registro(arquivo: Path = ARQUIVO) -> pd.DataFrame:
     return pd.read_csv(arquivo, parse_dates=["data"])
 
 
-def _salvar(resultado, universo: list[str], base: pd.Timestamp, agora: datetime, modelo: str) -> Path:
+def _salvar(resultado, universo: list[str], base: pd.Timestamp, base_conservadora: pd.Timestamp, agora: datetime,
+            modelo: str) -> Path:
     from core import assessor
     parecer = resultado.validacao.parecer
     citadas = {afirmacao["evidencia"] for acao in parecer["acoes"]
@@ -81,6 +113,7 @@ def _salvar(resultado, universo: list[str], base: pd.Timestamp, agora: datetime,
     citadas |= {acao_conf for acao in parecer["acoes"] for campo in ("tese", "riscos")
                 for afirmacao in acao[campo] if (acao_conf := (afirmacao.get("confirmacao") or {}).get("evidencia"))}
     registro = {"quando": agora.isoformat(timespec="seconds"), "base_do_composto": f"{base:%Y-%m-%d}",
+                "base_da_conservadora": f"{base_conservadora:%Y-%m-%d}",
                 "modelo": modelo, "esforco": assessor.ESFORCO, "universo": universo, "parecer": parecer,
                 "cores": {acao["ticker"]: assessor.cor_da_postura(acao["postura"]) for acao in parecer["acoes"]},
                 "descartes": resultado.validacao.descartes, "chamadas": resultado.chamadas,
@@ -99,7 +132,11 @@ def executar(forcar: bool = False) -> int:
     from core.segredos import segredo
     from ui import parecer as entradas
     composto, feitos, hoje = pd.read_csv(ARQUIVO_COMPOSTO, parse_dates=["data"]), ler_registro(), date.today()
-    if not forcar and not parecer_devido(composto, feitos, hoje, ultima_base_julgada()):
+    conservadora = pd.read_csv(ARQUIVO_CONSERVADORA, parse_dates=["data"])
+    base_conservadora = conservadora["data"].max()
+    devido = (parecer_devido(composto, feitos, hoje, ultima_base_julgada())
+              or ultima_base_julgada(campo="base_da_conservadora") != base_conservadora)
+    if not forcar and not devido:
         print(f"DeepSeek: em dia (último parecer em {feitos['data'].max() - pd.Timedelta(days=1):%d/%m/%Y})")
         return 0
     chave = segredo("DEEPSEEK_API_KEY")
@@ -107,15 +144,14 @@ def executar(forcar: bool = False) -> int:
         print("DeepSeek: falta DEEPSEEK_API_KEY no ambiente ou no .env do ai-hedge-fund")
         return 1
     base = composto["data"].max()
-    ultimo = composto[composto["data"] == base]
-    universo = list(ultimo["ticker"])
-    alvo = pd.Series(ultimo["peso"].to_numpy(), index=[f"{ticker}.SA" for ticker in universo])
+    universo = universo_unido(composto, conservadora)
+    alvo = pd.Series(1.0 / len(universo), index=[f"{ticker}.SA" for ticker in universo])
     pacote, fontes = entradas.pacote_e_fontes(alvo, base.date(), chave, hoje)
     for nome, variavel in (("chave_firecrawl", "FIRECRAWL_API_KEY"), ("chave_scrapecreators", "SCRAPECREATORS_API_KEY")):
         setattr(fontes, nome, segredo(variavel) or getattr(fontes, nome))       # the .env first, like the DeepSeek key
     agora = datetime.now(timezone.utc)
     resultado = assessor.pedir_parecer(pacote, universo, assessor.Ferramentas(fontes, {}), chave, agora,
-                                       carteira=assessor.CARTEIRA_COMPOSTA)
+                                       carteira=assessor.CARTEIRAS_UNIDAS)
     if resultado.validacao is None:
         print(f"DeepSeek: parecer indisponível ({resultado.erro}); nada registrado")
         return 1

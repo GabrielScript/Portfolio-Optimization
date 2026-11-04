@@ -61,6 +61,7 @@ ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 PASTA_DEEPSEEK = Path("deepseek")                         # the DeepSeek portfolio's record and opinions (DECISOES 240)
 ARQUIVO_DEEPSEEK = PASTA_DEEPSEEK / "carteira.csv"
+ARQUIVO_CONTROLE = PASTA_DEEPSEEK / "controle.csv"    # the DeepSeek list in equal weights (DECISOES 251)
 ARQUIVO_LIQUIDEZ = Path("lago/liquidez.parquet")
 ARQUIVO_ATIVOS = Path("lago/ativos.parquet")           # the market panel's tickers: name, type, B3 sector
 ARQUIVO_RECENTES = Path("lago/precos_recentes.parquet")   # the sessions after the committed calendar (deployed app)
@@ -407,8 +408,9 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
     from core.rebalanceio import custo_com_liquidez
     registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
                  "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
-    if (raiz / ARQUIVO_DEEPSEEK).exists():
-        registros["DeepSeek"] = pd.read_csv(raiz / ARQUIVO_DEEPSEEK, parse_dates=["data"])
+    for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE)):
+        if (raiz / arquivo).exists():
+            registros[carteira] = pd.read_csv(raiz / arquivo, parse_dates=["data"])
     papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
     precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], simulador.INICIO.date(), hoje,
                                            raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)

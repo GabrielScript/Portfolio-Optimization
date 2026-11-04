@@ -18,7 +18,9 @@ from core.risco import LIMITES
 INICIO = pd.Timestamp("2026-11-03")
 CAPITAL_ACOES = 10_000.0          # the whole account in stocks (user, 2026-11-03, DECISOES 243)
 CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in stocks (2026-11-03)
-CARTEIRAS = ("Composto", "Conservadora", "DeepSeek")     # DeepSeek: the Composite's names it judges favorable (DECISOES 240)
+# DeepSeek: the names of both rule portfolios it judges favorable; Controle: the same list in equal weights, no model
+# (DECISOES 240 and 251)
+CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle")
 REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11 dropped, user 2026-11-03)
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
 CUSTO_BPS = 10.0                   # the plan's reserve, and the cost of a name outside the liquidity snapshot

@@ -34,7 +34,7 @@ ORDEM_DOS_SINAIS = {"🟢": 0, "🟡": 1, "🔴": 2}
 
 
 def tabela_do_parecer(registro: dict) -> pd.DataFrame:
-    """Each Composite name of the DeepSeek opinion (``deepseek/pareceres/*.json``) with its light, green first."""
+    """Each name the DeepSeek opinion judged (both rule portfolios' since 2026-11-04) (``deepseek/pareceres/*.json``) with its light, green first."""
     acoes = {acao["ticker"]: acao for acao in registro["parecer"]["acoes"]}
     linhas = [(ticker, SINAIS.get(acoes[ticker]["postura"], SEM_PARECER) if ticker in acoes else SEM_PARECER,
                acoes[ticker]["confianca"] if ticker in acoes else None) for ticker in registro["universo"]]
@@ -43,27 +43,30 @@ def tabela_do_parecer(registro: dict) -> pd.DataFrame:
 
 
 def parecer_do_deepseek(registro: dict | None) -> None:
-    """The DeepSeek portfolio's last opinion: which Composite names it holds (green) and which it leaves out."""
+    """The DeepSeek portfolio's last opinion: which names it holds (green) and which it leaves out."""
     st.markdown("**Carteira do DeepSeek: último parecer**")
     if registro is None:
-        st.caption("O DeepSeek ainda não deu parecer sobre a Composite.")
+        st.caption("O DeepSeek ainda não deu parecer sobre as ações da Composite e da Conservadora.")
         return
-    st.caption(f"Parecer de {pd.Timestamp(registro['quando']):%d/%m/%Y %H:%M} sobre a Composite de "
+    sobre = (f"as {len(registro['universo'])} ações da Composite e da Conservadora (cada uma uma vez)"
+             if "base_da_conservadora" in registro else "a Composite")
+    st.caption(f"Parecer de {pd.Timestamp(registro['quando']):%d/%m/%Y %H:%M} sobre {sobre} de "
                f"{pd.Timestamp(registro['base_do_composto']):%d/%m/%Y} ({registro['modelo']}, esforço "
                f"{registro['esforco']}): a carteira compra só as verdes, em pesos iguais (até 20% por ação), e o resto "
-               "fica no CDI. Notícias e posts só contaram quando a CVM, o Banco Central, a B3 ou a ANBIMA confirmaram. "
+               "fica no CDI. A carteira Controle compra a lista inteira em pesos iguais, sem o DeepSeek: a diferença "
+               "entre as duas é o que o filtro do modelo acrescenta ou custa. Notícias e posts só contaram quando a CVM, o Banco Central, a B3 ou a ANBIMA confirmaram. "
                "Opinião de um modelo de linguagem, sem teste de que acerte: só o tempo mede.")
     st.dataframe(filtrar(tabela_do_parecer(registro), "parecer_deepseek"), width="stretch", hide_index=True,
                  column_config={"Confiança": st.column_config.ProgressColumn(min_value=0.0, max_value=1.0,
                                                                              format="percent")},
-                 alt="Sinal do DeepSeek para cada ação da Composite: verde compra, amarelo e vermelho ficam de fora")
+                 alt="Sinal do DeepSeek para cada ação julgada: verde compra, amarelo e vermelho ficam de fora")
 
 
 def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
         st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
-                "(Composite, Conservadora e DeepSeek).")
+                "(Composite, Conservadora, DeepSeek e Controle).")
         return
     st.caption(f"Conta fictícia: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira desde {INICIO:%d/%m/%Y}, com "
                "custos. BOVA11 e CDI são só referência.")

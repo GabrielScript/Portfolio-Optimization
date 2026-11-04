@@ -70,3 +70,9 @@ def test_the_shipped_logo_and_icon_are_vector_files_with_the_gold_gradient():
     for arquivo in (arquivo_da_logo(), arquivo_do_icone()):
         texto = arquivo.read_text(encoding="utf-8")
         assert arquivo.suffix == ".svg" and 'url(#gold)' in texto and "<image" not in texto   # no embedded bitmap
+
+
+def test_the_icon_is_square_so_the_tab_and_the_collapsed_sidebar_show_it_full_size():
+    import re
+    caixa = re.search(r'viewBox="([^"]+)"', arquivo_do_icone().read_text(encoding="utf-8")).group(1).split()
+    assert float(caixa[2]) == float(caixa[3])

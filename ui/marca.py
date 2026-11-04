@@ -21,5 +21,5 @@ def arquivo_da_logo(pasta: Path = PASTA_DA_MARCA) -> Path | None:
 
 def arquivo_do_icone(pasta: Path = PASTA_DA_MARCA) -> Path | None:
     """The compact mark (``icone.*``) if there is one, else the logo itself."""
-    icone = next((pasta / f"icone{Path(n).suffix}" for n in NOMES_DA_LOGO if (pasta / f"icone{Path(n).suffix}").is_file()), None)
-    return icone or arquivo_da_logo(pasta)
+    icones = (pasta / nome.replace("logo", "icone") for nome in NOMES_DA_LOGO)
+    return next((icone for icone in icones if icone.is_file()), None) or arquivo_da_logo(pasta)

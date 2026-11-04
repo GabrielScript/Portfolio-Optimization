@@ -155,16 +155,22 @@ def executar(forcar: bool = False) -> int:
     if resultado.validacao is None:
         print(f"DeepSeek: parecer indisponível ({resultado.erro}); nada registrado")
         return 1
-    arquivo = _salvar(resultado, universo, base, agora, assessor.MODELO)
-    pesos = pesos_dos_verdes(resultado.validacao.parecer, universo)
-    novo = registro_do_parecer(pesos, agora.astimezone().date())
-    ARQUIVO.parent.mkdir(parents=True, exist_ok=True)
-    novo.to_csv(ARQUIVO, mode="a", header=not ARQUIVO.exists(), index=False, lineterminator="\n",
-                date_format="%Y-%m-%d")
+    arquivo, pesos = registrar(resultado, universo, base, base_conservadora, agora, assessor.MODELO)
     verdes = [ticker for ticker, peso in pesos.items() if peso > 0]
     print(f"DeepSeek: {len(verdes)} de {len(universo)} favoráveis ({', '.join(verdes) or 'nenhuma: tudo no CDI'}); "
-          f"custo ~US$ {resultado.uso.custo_usd:.4f}; parecer em {arquivo.relative_to(RAIZ).as_posix()}")
+          f"custo ~US$ {resultado.uso.custo_usd:.4f}; parecer em {arquivo.name}")
     return 0
+
+
+def registrar(resultado, universo: list[str], base: pd.Timestamp, base_conservadora: pd.Timestamp, agora: datetime,
+              modelo: str) -> tuple[Path, pd.Series]:
+    """Saves the opinion, then the DeepSeek record and the control's, both dated the day after it."""
+    arquivo = _salvar(resultado, universo, base, base_conservadora, agora, modelo)
+    pesos = pesos_dos_verdes(resultado.validacao.parecer, universo)
+    dia = agora.astimezone().date()
+    acrescentar(ARQUIVO, registro_do_parecer(pesos, dia))
+    acrescentar(ARQUIVO_CONTROLE, registro_do_parecer(pesos_do_controle(universo), dia))
+    return arquivo, pesos
 
 
 if __name__ == "__main__":

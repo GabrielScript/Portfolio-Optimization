@@ -1,6 +1,7 @@
 """The simulator's DeepSeek portfolio (``scripts/carteira_deepseek.py``, DECISOES 240): the Composite's names the adviser
 judges favorable, equal weights, recorded for the day after the opinion."""
 
+import json
 from datetime import date
 
 import pandas as pd
@@ -109,3 +110,24 @@ def test_an_opinion_is_due_when_the_conservadora_changed_or_an_old_opinion_never
 def test_the_simulator_follows_the_control_beside_the_three_portfolios():
     from core import simulador
     assert simulador.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle")
+
+
+def test_an_opinion_is_saved_with_both_bases_and_writes_the_portfolio_and_the_control(tmp_path, monkeypatch):
+    # 04/11: the run crashed after a paid opinion because this step was not covered; now it is
+    from types import SimpleNamespace
+    from datetime import datetime, timezone
+    monkeypatch.setattr(cd, "PASTA_PARECERES", tmp_path / "pareceres")
+    monkeypatch.setattr(cd, "ARQUIVO", tmp_path / "carteira.csv")
+    monkeypatch.setattr(cd, "ARQUIVO_CONTROLE", tmp_path / "controle.csv")
+    acoes = [{"ticker": t, "postura": p, "confianca": 0.6, "tese": [], "contra_tese_macro": [], "riscos": [],
+              "nao_confirmadas": []} for t, p in (("PETR4", "favoravel"), ("VALE3", "neutra"), ("ITSA4", "favoravel"))]
+    resultado = SimpleNamespace(validacao=SimpleNamespace(parecer={"acoes": acoes}, descartes=[]), chamadas={},
+                                uso=SimpleNamespace(requisicoes=1, entrada=10, saida=5, custo_usd=0.01), evidencias={})
+    agora = datetime(2026, 11, 4, 20, 0, tzinfo=timezone.utc)
+    arquivo, pesos = cd.registrar(resultado, ["PETR4", "VALE3", "ITSA4"], pd.Timestamp("2026-10-27"),
+                                  pd.Timestamp("2026-10-28"), agora, "deepseek-flash")
+    salvo = json.loads(arquivo.read_text(encoding="utf-8"))
+    assert (salvo["base_do_composto"], salvo["base_da_conservadora"]) == ("2026-10-27", "2026-10-28")
+    assert pesos.to_dict() == {"PETR4": 0.5, "VALE3": 0.0, "ITSA4": 0.5}
+    assert cd.ler_registro(cd.ARQUIVO)["peso"].tolist() == [0.5, 0.0, 0.5]
+    assert cd.ler_registro(cd.ARQUIVO_CONTROLE)["peso"].round(4).tolist() == [0.3333] * 3

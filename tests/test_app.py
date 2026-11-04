@@ -539,3 +539,55 @@ def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
     app_padrao.sidebar.checkbox(key="eua").uncheck().run()
     assert not app_padrao.exception
     assert _ativos_da_fronteira(app_padrao) == com_eua - 32
+
+
+def test_every_table_with_a_category_column_has_its_filters(monkeypatch):
+    # the user's UI list of 2026-11-03: a "Filtros" button above each table, one multiselect per category column
+    from ui import alepha, filtros, painel, simulador
+    from ui import assessor as ui_assessor
+    filtradas = []
+
+    def gravar(tabela, chave, so_para_filtro=()):
+        saida = filtros.filtrar(tabela, chave, so_para_filtro)
+        filtradas.append(tuple(saida.columns))
+        return saida
+
+    for modulo in (alepha, painel, simulador, ui_assessor):
+        monkeypatch.setattr(modulo, "filtrar", gravar)
+    _, alvo = _conservadora_sintetica()
+    fora = get_tickers_by_setor([SETORES_DO_TESTE[1]])[1].removesuffix(".SA")
+    monkeypatch.setattr(alepha, "editor_de_posicoes", lambda: pd.DataFrame(
+        {"ticker": [fora], "quantidade": [50], "preco_medio": [10.0]}))           # one sale next to the buys
+    hoje = date.today()
+    fatos = pd.DataFrame({"ticker": [alvo.index[0].removesuffix(".SA"), "VALE3", "PETR4"],
+                          "empresa": ["X", "VALE", "PETROBRAS"],
+                          "categoria": ["Fato Relevante", "Comunicado ao Mercado", "Fato Relevante"],
+                          "assunto": ["a", "b", "c"], "data": [hoje] * 3,
+                          "link": [f"https://www.rad.cvm.gov.br/{n}" for n in "abc"]})
+    manchetes = pd.DataFrame({"quando": pd.to_datetime(["2026-11-03 09:00", "2026-11-03 10:00", "2026-11-03 11:00"]),
+                              "fonte": ["valor", "infomoney", "valor"], "titulo": ["a", "b", "c"],
+                              "tema": ["Juros e inflação", "Empresas", "Empresas"], "tom": [0.1, -0.2, 0.3],
+                              "link": ["https://valor.com.br/a", "https://infomoney.com.br/b", "https://valor.com.br/c"]})
+    registro = {"quando": "2026-11-03T20:37:00+00:00", "base_do_composto": "2026-10-27", "modelo": "deepseek-flash",
+                "esforco": "max", "universo": ["PETR4", "VALE3", "ITSA4", "BBSE3"],
+                "parecer": {"acoes": [{"ticker": "PETR4", "postura": "favoravel", "confianca": 0.7},
+                                      {"ticker": "BBSE3", "postura": "favoravel", "confianca": 0.6},
+                                      {"ticker": "VALE3", "postura": "neutra", "confianca": 0.5}]}}
+    from core.sentimento import TOPICOS_DO_PAINEL
+    diario = pd.DataFrame({"dia": ["2026-11-02", "2026-11-03"], "itens": [40, 50], "relevantes": [10, 12],
+                           "tom": [0.1, -0.2], "eleicao": [0.3, 0.2], **dict.fromkeys(TOPICOS_DO_PAINEL, 0.1)})
+    at, _ = _app_do_assessor(monkeypatch, "chave-de-teste")
+    monkeypatch.setattr(servicos, "carregar_painel", lambda: (diario, fatos, None))
+    monkeypatch.setattr(servicos, "carregar_manchetes", lambda: (manchetes, None))
+    monkeypatch.setattr(servicos, "carregar_parecer_deepseek", lambda: registro)
+    monkeypatch.setattr(servicos, "carregar_curvas_conservadora", _curvas_sinteticas)
+    at.run()
+    at.button(key="gerar_parecer").click().run()
+    assert not at.exception
+    mostradas = [df.value for df in at.dataframe]
+    com_categoria = [tuple(df.columns) for df in mostradas if filtros.colunas_de_categoria(df)]
+    sem_filtro = [colunas[:3] for colunas in com_categoria if colunas not in filtradas]
+    assert com_categoria and not sem_filtro, sem_filtro
+    chaves = {m.key for m in at.multiselect}
+    assert {"filtro_ordens_Ordem", "filtro_fatos_categoria", "filtro_manchetes_fonte",
+            "filtro_parecer_deepseek_Parecer do DeepSeek", "filtro_acoes_Tipo", "filtro_acoes_Setor"} <= chaves

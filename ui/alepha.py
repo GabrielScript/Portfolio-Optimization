@@ -199,7 +199,8 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     resumo = resumo.assign(Desde=[f"{data:%d/%m/%Y}" for data in resumo["Desde"]]).rename_axis(
         "Estratégia").reset_index()
     numericas = [coluna for coluna in resumo.columns if coluna not in ("Estratégia", "Desde", "Anos acima do BOVA11")]
-    st.dataframe(resumo.astype({coluna: float for coluna in numericas}), width="stretch", hide_index=True,
+    st.dataframe(filtrar(resumo.astype({coluna: float for coluna in numericas}), "resumo"), width="stretch",
+                 hide_index=True,
                  column_config={coluna: st.column_config.NumberColumn(
                      format="%.2f" if coluna in SEM_PORCENTO else "percent") for coluna in numericas},
                  alt="Retorno, risco e alfa de cada estratégia no período")

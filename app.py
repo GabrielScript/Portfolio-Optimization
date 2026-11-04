@@ -3,21 +3,20 @@ app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Aleph Neum
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
-The plan the screen opens is Aleph Neumann's: the Composite registered in paper-v3 (DECISOES 242; the Conservadora of
-paper-v2 before), from the current positions
-(the user's decisions of 2026-10-23, DECISOES 117). BOVA11 + satellite and the study stay as options.
-
-Fluxo: sidebar -> preços das ações -> momentos (Ledoit-Wolf +
-Jorion) -> otimização -> walk-forward de todas as estratégias. O Growth Score
-(core/growth.py) fica fora da tela até ser validado fora da amostra.
+The page (the user's UI list of 2026-11-03): the real-money plan, the Composite registered in paper-v3 (DECISOES 242),
+from the current positions; the survivorship-free backtest of the Composite and the Conservadora; the simulator and the
+DeepSeek portfolio; the market panel; the DeepSeek adviser; and the Composite next to the Markowitz efficient frontier.
+The study screens (the sidebar's optimized portfolio, the biased walk-forward, BOVA11 + satellite) left the page; their
+code stays in ``core`` for the scripts and the tests.
 """
 
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 from datetime import date
 
+import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -27,119 +26,43 @@ from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_t
                     get_tickers_by_setor, get_tickers_liquidos)
 from ativos_eua import AVISO_EUA, get_ticker_info_eua, get_tickers_eua  # noqa: E402
 from ativos_tela import info_curada, info_da_tela  # noqa: E402
-from core.backtest import ResultadoBacktest, estrategia_equiponderada, walk_forward  # noqa: E402
-from core.config import (DIAS_UTEIS_ANO, ConfigBacktest, ConfigOtimizacao, Objetivo,  # noqa: E402
-                         limites_por_setor, taxa_anual_para_aritmetica)
+from core.config import Objetivo, limites_por_setor, taxa_anual_para_aritmetica  # noqa: E402
 from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core.execucao import Custos  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
-from core.market_data import serie_rf_diaria  # noqa: E402
-from core.metrics import contribuicao_risco, drawdown, metricas_rolantes  # noqa: E402
-from core.optimization import (ErroInviavel, ErroOtimizacao, ResultadoOtimizacao,  # noqa: E402
-                               combinar_nucleo_satelite, fronteira_eficiente, metricas_carteira, otimizar,
-                               preparar_covariancia, projetar_pesos)
-from core.ordens import (RegrasCompra, RegrasDinheiroReal, acoes_que_cabem, limites_do_plano,  # noqa: E402
-                         plano_de_compra, plano_dinheiro_real, redistribuir_sem_cotacao)
+from core.optimization import ErroOtimizacao, metricas_carteira, preparar_covariancia  # noqa: E402
 from core.rebalanceio import (RegrasRebalanceio, ZonaSemNegociacao, capital_minimo, custo_com_liquidez,  # noqa: E402
                               pesos_finais, plano_com_nucleo, plano_de_rebalanceio, posicoes_da_tabela)
-from core.risco import LIMITES, Violacao, checar_carteira, validar_config  # noqa: E402
+from core.risco import LIMITES, Violacao, checar_carteira  # noqa: E402
 from ui import alepha, painel, parecer, secoes, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
-from visualizations import (grafico_barras_alocacao, grafico_composicao_pizza,  # noqa: E402
-                            grafico_contribuicao_risco, grafico_curvas_capital, grafico_drawdown,
-                            grafico_fronteira_eficiente, grafico_matriz_correlacao,
-                            grafico_metricas_rolling, grafico_pesos_historicos)
+from visualizations import grafico_fronteira_eficiente  # noqa: E402
 
-# Referências da tela: as do assets.py e o IVVB11 (S&P 500 em reais, no lago desde 29/04/2014). Tupla local: o assets.py
-# está no caminho do satélite do paper e não muda (DECISOES 68).
-REFERENCIAS_DA_TELA = (*BENCHMARKS, "IVVB11.SA")
-
-# Padrão da carteira do estudo pela regra B do S1-P.b (docs/universo-dinamico-2026-10-18.txt): núcleo Mín. Vol +
-# satélite Kelly λ=2 com 30%. Nenhum objetivo é "recomendado": com dinheiro real vale o plano BOVA11 + satélite do
-# paper (DECISOES 69); pela regra A (opção 3), o Kelly sozinho fica como opção.
-NUCLEO_SATELITE = "nucleo_satelite"
-ROTULOS_OBJETIVO = {
-    NUCLEO_SATELITE: "Núcleo Mín. Vol + satélite Kelly (padrão do estudo, só ações)",
-    Objetivo.KELLY.value: "Crescimento máximo (Kelly)",
-    Objetivo.MAX_SHARPE.value: "Máximo Sharpe (exato)",
-    Objetivo.MIN_VOL.value: "Mínima variância",
-    Objetivo.HRP.value: "HRP (hierárquico, projetado nos tetos)",
-    Objetivo.MAX_RETORNO.value: "Máximo retorno c/ teto de vol (legado, concentra no erro)",
-}
-
-# Desligada: na avaliação pré-registrada de 2026-10-13 (scripts/avaliar_reamostragem.py),
-# o Sharpe ficou abaixo do Kelly simples em 5 e 10 anos, e o drawdown não melhorou.
-REAMOSTRAGEM_PADRAO = False
-AJUDA_REAMOSTRAGEM = (
-    "Média de 100 carteiras Kelly calculadas em reamostras do histórico (bootstrap em blocos de 21 "
-    "pregões), projetada nos limites. Espalha o peso entre mais ativos. Na avaliação pré-registrada "
-    "(walk-forward de 5 e 10 anos), o Sharpe ficou ABAIXO do Kelly simples e o drawdown não melhorou: "
-    "opção de estudo, não padrão. Lenta: ~1 min a mais no walk-forward de 5 anos com a lista líquida, "
-    "~15 min com todos os ativos."
-)
-AJUDA_TETO_SETOR = (
-    "Soma máxima dos pesos das ações de um mesmo setor. Regra fixa de 30%: a tela só aperta. Vale para o estudo: "
-    "a carteira de hoje (o HRP é projetado nos tetos), o plano dela e o walk-forward. O plano do dinheiro real usa "
-    "as regras fixas (20% por ação, 30% por setor)."
-)
-AJUDA_SATELITE = (
-    "Parte das ações no satélite Kelly; o resto fica no núcleo de Mínima Variância. Regra fixa: no máximo 50%. "
-    "O padrão de 30% é a mistura aprovada no teste pré-registrado sem viés de sobrevivência (S1-P.b)."
-)
-AVISO_REGRAS_DE_RISCO = (
-    "Regras de risco fixas: sem alavancagem, até 20% por ação e por emissor, 30% por setor e 40% a.a. de "
-    "volatilidade ex-ante; carteira fora delas não vira plano. Com dinheiro real, o núcleo fica no BOVA11 até o "
-    "critério de pronto (alfa líquido contra o BOVA11 com PSR ≥ 0,95 e 6 a 12 meses de paper trading). O stop do "
-    "satélite (razão satélite/BOVA11 cair 25% desde o pico) e a pausa de um pregão depois de perda diária de 5% "
-    "só valem com as posições registradas no paper trading; até lá, são aviso."
-)
-# Purchase plan: the default is Aleph Neumann's, the Composite registered in paper-v3 (the user's choice on 2026-11-03,
-# DECISOES 242; before, the Conservadora of paper-v2, DECISOES 82 and 117). BOVA11 + paper-v1's satellite
-# (DECISOES 69) and the sidebar's optimized portfolio (the study) stay as options.
-MODO_CONSERVADORA, MODO_DINHEIRO_REAL, MODO_ESTUDO = "conservadora", "dinheiro_real", "estudo"
-ROTULOS_MODO = {MODO_CONSERVADORA: "Aleph Neumann", MODO_DINHEIRO_REAL: "BOVA11 + satélite", MODO_ESTUDO: "Estudo"}
-AJUDA_MODO = (
-    "Aleph Neumann: a Composite registrada no paper-v3, 100% em ações, a partir das suas posições. BOVA11 + "
-    "satélite: BOVA11 com ~70% e o satélite Kelly do paper-v1 com ~30%. Estudo: o plano da carteira otimizada pela "
-    "barra lateral, só ações, para comparar."
-)
-# The final proof's costs (scripts/avaliar_execucao.py) and the screen's ETFs, which have no R$ 20 thousand
-# exemption.
+# The screen's ETFs (the references and IVVB11), which have no R$ 20 thousand exemption on sales.
+ETFS_DA_TELA = frozenset((*BENCHMARKS, "IVVB11.SA"))
+# The final proof's costs (scripts/avaliar_execucao.py); a name outside the lake's liquidity snapshot pays CUSTO_BPS.
 CUSTOS_DA_B3 = Custos(emolumentos=0.0003, impacto=1.0)
-ETFS_DA_TELA = frozenset(REFERENCIAS_DA_TELA)
+CUSTO_BPS = 10.0                 # fixed since the user's UI list of 2026-11-03: the default, no longer a control
 NUCLEO_DO_PEQUENO_CAPITAL = frozenset({BENCHMARK_ACOES})     # the ETF kept below the minimum capital (DECISOES 124)
-# Plano de compra: cada ação comprada tem pelo menos 2 unidades (escolha do usuário, mercado fracionário).
-QUANTIDADE_MINIMA_POR_ACAO = 2
+QUANTIDADE_MINIMA_POR_ACAO = 2   # each stock bought has at least 2 shares (the user's choice, odd-lot market)
 # The US stocks screen (ui/eua.py, scraped US data) is on standby since the user's decision of 2026-11-03
 # (DECISOES 240): B3 only. Code and data stay; the B3-listed BDRs and ETFs of ativos_eua.py stay in the sidebar.
 MOSTRAR_ACOES_EUA = False
-PREGOES_PARA_FECHAMENTO = 10     # janela de onde sai o último fechamento quando o Yahoo não tem o negócio do dia
+PREGOES_PARA_FECHAMENTO = 10     # the window the last close comes from when the day has no trade yet
+# The frontier (information only): 5 years of lake prices, Jorion-shrunk mu and Ledoit-Wolf covariance (the old
+# study's defaults); its cap per asset goes up to 25% (user, 2026-11-04). The plan and the simulator keep LIMITES.
+ANOS_DA_FRONTEIRA = 5
+TETO_POR_ATIVO_DA_FRONTEIRA = 25
 
 
 @dataclass(frozen=True)
 class Entradas:
-    params: servicos.ParametrosOtimizacao
-    tickers_acoes: tuple[str, ...]
-    anos: int                  # janela de estimação: carteira de hoje e treino rolante do walk-forward
-    anos_teste: int
     orcamento: float
-    shrink_mu: bool
-    custo_bps: float
-    reamostrar: bool
-    modo_plano: str = MODO_CONSERVADORA
-
-
-@dataclass(frozen=True)
-class CarteiraCalculada:
-    """Pesos e os momentos que os geraram: fronteira, ponto 1/N e contribuição de risco usam os mesmos."""
-
-    resultado: ResultadoOtimizacao
-    mu: pd.Series
-    cov: pd.DataFrame
-    intensidade_shrinkage: float
-    frequencia: pd.Series | None = None       # só na reamostrada
+    tickers: tuple[str, ...]     # the frontier's universe
+    peso_maximo: float
+    teto_setor: float
 
 
 def ler_sidebar() -> Entradas:
@@ -147,57 +70,18 @@ def ler_sidebar() -> Entradas:
         st.markdown("## Aleph Neumann")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
-        modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,
-                                          default=MODO_CONSERVADORA, key="modo_plano", help=AJUDA_MODO)
-        custo = st.slider("Custo de transação (bps por lado)", 0, 50, 10, key="custo_bps",
-                          help="Reserva do plano e custo do papel sem a foto de liquidez do lago; no estudo, o custo "
-                               "do walk-forward.")
-
-        st.markdown("## Estudo")
-        st.caption("Carteira de hoje e walk-forward, mais abaixo na página: estes seletores mudam o estudo e não "
-                   "mudam o plano do Aleph Neumann (a Composite tem regras fixas, registradas antes). Cada mudança "
-                   "recalcula o estudo: com todos os ativos, leva alguns minutos.")
-        objetivo = st.selectbox("Objetivo", list(ROTULOS_OBJETIVO), format_func=ROTULOS_OBJETIVO.get,
-                                key="objetivo")
-        com_kelly = objetivo in (Objetivo.KELLY.value, NUCLEO_SATELITE)
-        aversao = st.slider("Aversão a risco λ (1 = Kelly pleno)", 0.5, 5.0, 2.0, 0.5,
-                            disabled=not com_kelly,
-                            help="λ=1 aproxima a carteira de maior crescimento geométrico. Como μ tem "
-                                 "erro de estimação, λ≈2 é mais robusto. Sem caixa no conjunto "
-                                 "viável, λ=2 NÃO equivale a 'meio Kelly'.")
-        fracao_satelite = st.slider("Satélite Kelly (% das ações)", 0, round(LIMITES.fracao_maxima_satelite * 100),
-                                    round(LIMITES.fracao_padrao_satelite * 100), 5, key="fracao_satelite",
-                                    disabled=objetivo != NUCLEO_SATELITE, help=AJUDA_SATELITE) / 100
-        teto_vol = round(LIMITES.vol_maxima * 100)
-        vol_max = st.slider("Teto de volatilidade (% a.a.)", 15, teto_vol, teto_vol, 5, key="vol_maxima") / 100
-
-        st.markdown("### Universo")
+        st.markdown("### Fronteira eficiente")
         setores = st.multiselect("Setores (vazio = todos os ativos ou a lista líquida)", SETORES, key="setores")
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=True, key="todos",
                             disabled=bool(setores), help="Desmarcado: só a lista líquida (mais rápido). Com setores "
                                                          "escolhidos, valem os setores.")
-        eua = st.checkbox(f"Incluir EUA ({len(get_tickers_eua())}: 30 BDRs + IVVB11 + NASD11)", value=False,
-                          key="eua", help=AVISO_EUA)
-
-        with st.expander("Avançado"):
-            n_max = st.slider("Máximo de ativos", 3, 30, 10, key="n_ativos_max",
-                              help="Na mistura núcleo + satélite, vale para cada parte: a carteira pode ter até o "
-                                   "dobro de ativos.")
-            teto_acao = round(LIMITES.peso_maximo_acao * 100)
-            peso_max = st.slider("Peso máximo por ativo (%)", 5, teto_acao, teto_acao, key="peso_maximo") / 100
-            teto_setor = st.slider("Teto por setor (%)", 20, round(LIMITES.teto_setor * 100),
-                                   round(LIMITES.teto_setor * 100), 5, key="teto_setor", help=AJUDA_TETO_SETOR) / 100
-            anos = st.slider("Janela de estimação (anos)", 3, 10, 5, key="janela",
-                             help="Histórico que estima μ e Σ: na carteira de hoje e em cada rebalanceamento "
-                                  "do walk-forward (treino rolante).")
-            anos_teste = st.slider("Teste fora da amostra (anos)", 1, 10, 3, key="anos_teste",
-                                   help="O walk-forward baixa janela + teste anos de preços: ações com "
-                                        "histórico mais curto ficam fora dele (não da carteira de hoje).")
-            shrink = st.checkbox("Shrinkage de μ (Jorion)", value=True)
-            reamostrar = st.checkbox("Reamostragem de μ (bagging, B=100)", value=REAMOSTRAGEM_PADRAO,
-                                     key="reamostrar", disabled=objetivo != Objetivo.KELLY.value,
-                                     help=AJUDA_REAMOSTRAGEM)
-
+        eua = st.checkbox(f"Incluir os EUA listados na B3 ({len(get_tickers_eua())}: 30 BDRs + IVVB11 + NASD11)",
+                          value=True, key="eua", help=AVISO_EUA)
+        peso_max = st.slider("Peso máximo por ativo (%)", 5, TETO_POR_ATIVO_DA_FRONTEIRA, 20,
+                             key="peso_maximo") / 100
+        teto_setor = st.slider("Teto por setor (%)", 20, round(LIMITES.teto_setor * 100),
+                               round(LIMITES.teto_setor * 100), 5, key="teto_setor",
+                               help="Soma máxima dos pesos das ações de um mesmo setor na fronteira.") / 100
     if setores:
         acoes = get_tickers_by_setor(setores)
     elif todos:
@@ -206,35 +90,12 @@ def ler_sidebar() -> Entradas:
         acoes = get_tickers_liquidos()
     if eua:
         acoes = [*acoes, *get_tickers_eua()]
-    info = _info_com_eua()
-    # o teto de vol vale para todo objetivo (regra fixa); na mistura, o objetivo do satélite é o Kelly
-    params = servicos.ParametrosOtimizacao(
-        objetivo=Objetivo.KELLY.value if objetivo == NUCLEO_SATELITE else objetivo, peso_maximo=peso_max,
-        n_ativos_max=n_max, vol_maxima=vol_max, aversao_risco=aversao, teto_setor=teto_setor,
-        setores=tuple(sorted((t, info[t]["setor"]) for t in acoes)),
-        fracao_satelite=fracao_satelite if objetivo == NUCLEO_SATELITE else None,
-    )
-    # O checkbox desabilitado guarda o último valor: a reamostragem só vale para o Kelly.
-    return Entradas(params, tuple(acoes), anos, anos_teste, orcamento, shrink, float(custo),
-                    reamostrar and objetivo == Objetivo.KELLY.value, modo_plano or MODO_CONSERVADORA)
+    return Entradas(orcamento, tuple(acoes), peso_max, teto_setor)
 
 
 def _info_com_eua() -> dict:
     """Nome e setor das 181 e da perna dos EUA (``ativos_eua.py``, fora do caminho do paper)."""
     return {**get_ticker_info(), **get_ticker_info_eua()}
-
-
-def validar(entradas: Entradas) -> str | None:
-    p = entradas.params
-    if p.n_ativos_max * p.peso_maximo < 1.0:
-        return (f"Inviável: {p.n_ativos_max} ativos × {p.peso_maximo:.0%} = "
-                f"{p.n_ativos_max * p.peso_maximo:.0%} < 100%. Aumente um dos dois.")
-    if len(entradas.tickers_acoes) < 3:
-        return "Selecione setores com pelo menos 3 ativos."
-    violacoes = validar_config(p.para_config(0.0))
-    if violacoes:
-        return "Configuração fora das regras de risco fixas: " + _descrever(violacoes)
-    return None
 
 
 def _descrever(violacoes: list[Violacao]) -> str:
@@ -245,18 +106,14 @@ def _descrever(violacoes: list[Violacao]) -> str:
 def main() -> None:
     st.markdown(secoes.CSS, unsafe_allow_html=True)
     st.markdown('<h1 class="main-title">Aleph Neumann</h1>'
-                '<p class="subtitle">Alocação quantitativa em ações da B3 · Conservadora no lago sem viés de sobrevivência · '
-                'Walk-forward com custos e IR · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
-    st.caption(alepha.AVISO_CVM)
+                '<p class="subtitle">Alocação quantitativa em ações, BDRs e ETFs da B3 · Composite no lago sem viés '
+                'de sobrevivência · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
     entradas = ler_sidebar()
-    if entradas.modo_plano == MODO_CONSERVADORA:    # the real-money plans use only the amount and the cost: first
-        secao_conservadora(entradas)
-        alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
-        alepha.bova11_e_cripto(servicos.carregar_etfs_de_cripto(date.today()))
-        st.markdown("---")
-    elif entradas.modo_plano == MODO_DINHEIRO_REAL:
-        secao_dinheiro_real(entradas, get_ticker_info())
-        st.markdown("---")
+    registrado = servicos.carregar_plano_registrado()
+    secao_conservadora(entradas, registrado)
+    st.markdown("---")
+    alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
+    st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
     ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
     st.markdown("---")
@@ -267,52 +124,12 @@ def main() -> None:
     st.markdown("---")
     secao_assessor()
     st.markdown("---")
-    erro = validar(entradas)
-    if erro:
-        st.error(erro)
-        return
-
-    hoje = date.today()
-    universo = entradas.tickers_acoes
-    anos_walk_forward = entradas.anos + entradas.anos_teste
-    versao_dados = precos_do_app.versao_dos_dados()
-    with st.spinner("Carregando preços, CDI e Selic..."):
-        dados = servicos.carregar_precos(universo + (BENCHMARK_ACOES,), entradas.anos, hoje, versao_dados)
-        # com os EUA, o IVVB11 é ativo e referência: uma coluna só
-        precos_walk_forward = servicos.carregar_precos(tuple(dict.fromkeys(universo + REFERENCIAS_DA_TELA)),
-                                                       anos_walk_forward, hoje, versao_dados).precos
-        cdi = servicos.carregar_cdi(anos_walk_forward, hoje)
-        selic = servicos.carregar_selic(hoje)
-    aviso = secoes.aviso_descartados(dados.descartados_sem_dados, dados.descartados_cobertura)
-    if aviso:
-        st.warning(aviso)
-    if cdi.empty:
-        st.warning("CDI histórico indisponível: Sharpe/Sortino usam a Selic atual constante.")
-
-    precos = dados.precos
-    colunas = [t for t in universo if t in precos.columns]
-    retornos = retornos_simples(precos[colunas])
-    rf_aritmetica = taxa_anual_para_aritmetica(selic.valor)
-
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Amostra comum", f"{retornos.index[0]:%m/%Y} a {retornos.index[-1]:%m/%Y}",
-              f"{len(retornos)} pregões")
-    c2.metric("Ativos válidos", len(colunas))
-    c3.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off")
-    st.caption(f"Preços: lago de dados da B3 (COTAHIST e eventos da B3/CVM, retorno total), até {precos.index[-1]:%d/%m/%Y}.")
-    if set(universo) & set(get_tickers_eua()):
-        st.caption(AVISO_EUA)
-
-    carteira_hoje(entradas, precos, retornos, rf_aritmetica)
-    secao_backtest(entradas, precos_walk_forward, colunas, cdi, selic.valor)
-    st.markdown("---")
-    st.markdown(secoes.LIMITACOES)
-    secoes.tabela_sem_vies()
+    secao_fronteira(entradas, registrado)
 
 
 def secao_mercado() -> None:
-    """The market panel (information only, DECISOES 124): election timing, news, macro and every stock, BDR and ETF
-    of the app's daily prices (``ativos_tela``)."""
+    """The market panel (information only, DECISOES 124): news, the dollar and every stock, BDR and ETF of the
+    app's daily prices (``ativos_tela``)."""
     hoje = date.today()
     diario, fatos, fundamentos = servicos.carregar_painel()
     curados = info_curada(get_ticker_info(), get_ticker_info_eua())
@@ -322,7 +139,7 @@ def secao_mercado() -> None:
         precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
         painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
-                             servicos.carregar_selic(hoje), precos, info, BENCHMARK_ACOES)
+                             precos, info, BENCHMARK_ACOES)
 
 
 def secao_assessor() -> None:
@@ -343,169 +160,17 @@ def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assesso
     return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave)
 
 
-def carteira_hoje(entradas: Entradas, precos: pd.DataFrame, retornos: pd.DataFrame,
-                  rf_aritmetica: float) -> None:
-    st.markdown("## Carteira de hoje")
-    if entradas.modo_plano != MODO_ESTUDO:
-        st.caption("Estudo, só ações: a carteira otimizada pela barra lateral, para comparar. O dinheiro real segue o "
-                   "plano acima.")
-    acoes = list(retornos.columns)
-    # a trava do orçamento só vale para o plano da carteira otimizada: no dinheiro real, o satélite é o registrado
-    compraveis = acoes_compraveis(entradas, precos[acoes]) if entradas.modo_plano == MODO_ESTUDO else acoes
-    momentos = estimar_momentos(retornos, shrink_mu=entradas.shrink_mu)
-    mu, cov = momentos.mu[compraveis], momentos.cov.loc[compraveis, compraveis]
-    info = _info_com_eua()
-
-    cfg = entradas.params.para_config(rf_aritmetica)
-    try:
-        if entradas.reamostrar:
-            carteira = _carteira_reamostrada(entradas, retornos[list(mu.index)], rf_aritmetica)
-        else:
-            resultado = (_nucleo_satelite(mu, cov, cfg, entradas.params.fracao_satelite)
-                         if entradas.params.fracao_satelite is not None else otimizar(mu, cov, cfg))
-            if resultado.objetivo is Objetivo.HRP:
-                resultado = _hrp_nos_tetos(resultado, mu, cov, cfg)
-            carteira = CarteiraCalculada(resultado, mu, cov, momentos.intensidade_shrinkage)
-        fronteira = fronteira_eficiente(carteira.mu, carteira.cov, cfg)
-    except ErroInviavel as erro:
-        st.error(f"Carteira inviável: {erro} Inclua mais setores ou mais ativos: o teto por setor é de no máximo "
-                 f"{LIMITES.teto_setor:.0%} e o peso máximo, de {LIMITES.peso_maximo_acao:.0%} (regras fixas).")
-        st.stop()
-    except ErroOtimizacao as erro:
-        st.error(f"Otimização falhou: {erro}")
-        st.stop()
-    resultado, mu, cov = carteira.resultado, carteira.mu, carteira.cov
-    violacoes = checar_carteira(resultado.pesos, dict(entradas.params.setores), cov)
-    if violacoes:
-        st.error("Carteira recusada pelas regras de risco fixas, sem plano de compra: " + _descrever(violacoes))
-        return
-    if resultado.tem_aviso:
-        st.warning(resultado.mensagem)
-    else:
-        st.caption(resultado.mensagem)
-
-    secoes.cards_otimizacao(resultado, entradas.orcamento, carteira.intensidade_shrinkage)
-    pesos = resultado.pesos[resultado.pesos > 0]
-    n = len(mu)
-    ponto_1n = {"retorno": float(mu.mean()), "volatilidade": float((cov.values.sum() / n**2) ** 0.5)}
-    col1, col2 = st.columns([1.2, 1])
-    col1.plotly_chart(grafico_fronteira_eficiente(
-        fronteira, {"retorno": resultado.retorno_esperado, "volatilidade": resultado.volatilidade},
-        resultado.objetivo.value, rf_aritmetica, benchmark_1n=ponto_1n), width="stretch")
-    if carteira.frequencia is not None:
-        col1.caption("A carteira reamostrada fica dentro da fronteira estimada, por construção.")
-    col2.plotly_chart(grafico_composicao_pizza(pesos.to_dict(), entradas.orcamento), width="stretch")
-    st.plotly_chart(grafico_barras_alocacao(pesos.to_dict(), entradas.orcamento, info), width="stretch")
-    if entradas.modo_plano == MODO_ESTUDO:
-        secao_plano_de_compra(entradas, pesos, precos, info)
-    st.info(AVISO_REGRAS_DE_RISCO)
-
-    col_rc, col_corr = st.columns(2)
-    col_rc.plotly_chart(grafico_contribuicao_risco(contribuicao_risco(pesos, cov), pesos.to_dict()),
-                        width="stretch")
-    if len(pesos) > 1:
-        col_corr.plotly_chart(grafico_matriz_correlacao(cov.loc[pesos.index, pesos.index]), width="stretch")
-    if carteira.frequencia is not None:
-        with st.expander("Estabilidade nas reamostras"):
-            secoes.tabela_estabilidade(resultado.pesos, carteira.frequencia)
-
-
-def _nucleo_satelite(mu: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao,
-                     fracao_satelite: float) -> ResultadoOtimizacao:
-    """Núcleo Mín. Vol + satélite (o objetivo do ``cfg``) nos mesmos μ e Σ; a mistura de viáveis é viável."""
-    nucleo = otimizar(mu, cov, replace(cfg, objetivo=Objetivo.MIN_VOL))
-    satelite = otimizar(mu, cov, cfg)
-    pesos = combinar_nucleo_satelite(nucleo.pesos, satelite.pesos, fracao_satelite).reindex(mu.index)
-    retorno, vol, sharpe = metricas_carteira(pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov),
-                                             cfg.taxa_livre_risco)
-    status = next((s for s in ("fallback", "impreciso") if s in (nucleo.status, satelite.status)), "otimo")
-    mensagem = (f"Núcleo Mín. Vol {1 - fracao_satelite:.0%} + satélite Kelly λ={cfg.aversao_risco:g} "
-                f"{fracao_satelite:.0%}. Núcleo: {nucleo.mensagem} Satélite: {satelite.mensagem}")
-    return ResultadoOtimizacao(pesos=pesos, retorno_esperado=retorno, volatilidade=vol, sharpe=sharpe,
-                               objetivo=cfg.objetivo, status=status, mensagem=mensagem)
-
-
-def _hrp_nos_tetos(resultado: ResultadoOtimizacao, mu: pd.Series, cov: pd.DataFrame,
-                   cfg: ConfigOtimizacao) -> ResultadoOtimizacao:
-    """O HRP da tela vira ordem: projetado nos tetos por ação, setor, vol e nº de ativos (o das comparações, não)."""
-    projetados = projetar_pesos(resultado.pesos, cov, cfg)
-    retorno, vol, sharpe = metricas_carteira(projetados.pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov),
-                                             cfg.taxa_livre_risco)
-    mensagem = f"HRP projetado nos tetos das regras de risco. {projetados.mensagem}".strip()
-    return replace(resultado, pesos=projetados.pesos, retorno_esperado=retorno, volatilidade=vol, sharpe=sharpe,
-                   status=projetados.status, mensagem=mensagem)
-
-
-def acoes_compraveis(entradas: Entradas, precos: pd.DataFrame) -> list[str]:
-    """
-    Tira do universo, antes de otimizar, as ações cuja quantidade mínima passa do teto por ação
-    (último fechamento). Sem isso, o otimizador daria peso a ações que o plano de compra não
-    consegue comprar, e esse peso viraria caixa.
-    """
-    peso_maximo = entradas.params.peso_maximo
-    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, peso_maximo, QUANTIDADE_MINIMA_POR_ACAO)
-    compraveis = acoes_que_cabem(precos.ffill().iloc[-1], regras)
-    teto = peso_maximo * entradas.orcamento
-    necessarias = math.ceil(1.0 / peso_maximo - 1e-9)        # menos que isso não soma 100% com o teto
-    if len(compraveis) < necessarias:
-        st.error(f"Com R\\$ {entradas.orcamento:,.2f} e peso máximo de {peso_maximo:.0%}, cada ação vai até "
-                 f"R\\$ {teto:,.2f}: só {len(compraveis)} cabem com {QUANTIDADE_MINIMA_POR_ACAO} unidades, e a "
-                 f"carteira precisa de {necessarias}. Aumente o valor a investir ou o peso máximo.")
-        st.stop()
-    caras = [t.replace(".SA", "") for t in precos.columns if t not in compraveis]
-    if caras:
-        st.info(f"Fora da otimização ({len(caras)}): {QUANTIDADE_MINIMA_POR_ACAO} ações passam do teto de "
-                f"R$ {teto:,.2f} por ativo ({peso_maximo:.0%} do valor a investir): {', '.join(caras)}.")
-    return compraveis
-
-
-def secao_plano_de_compra(entradas: Entradas, pesos: pd.Series, precos: pd.DataFrame, info: dict) -> None:
-    st.markdown("### Plano de compra")
-    tickers = tuple(pesos.index)
-    janela = precos[list(tickers)].tail(PREGOES_PARA_FECHAMENTO)    # mesmos argumentos ao limpar e ao buscar
-    if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes"):
-        servicos.descartar_cotacoes(tickers, janela)
-    with st.spinner("Buscando as cotações do dia…"):
-        cotacoes = servicos.carregar_cotacoes(tickers, janela)
-    com_cotacao = cotacoes["preco"].reindex(pesos.index) > 0          # NaN e ticker ausente: False
-    if not com_cotacao.all():
-        nomes = ", ".join(t.replace(".SA", "") for t in pesos.index[~com_cotacao])
-        st.warning(f"Sem cotação: {nomes}. Fora do plano de compra; o valor dela vai para as outras ações.")
-    # O plano nunca corta um alvo abaixo do próprio peso (a carteira já passou pelas regras de risco).
-    teto = min(1.0, max(entradas.params.peso_maximo, float(pesos.max())))
-    # O valor das ações sem cotação vai para as outras, na proporção do otimizador, sem furar os tetos.
-    alvo = redistribuir_sem_cotacao(pesos, com_cotacao, teto, limites_do_plano(entradas.params.grupos, pesos))
-    regras = RegrasCompra(entradas.orcamento, entradas.custo_bps, teto, QUANTIDADE_MINIMA_POR_ACAO,
-                          limites_do_plano(entradas.params.grupos, alvo))
-    try:
-        plano = plano_de_compra(alvo, cotacoes["preco"], regras)
-    except ValueError as erro:
-        st.error(f"Plano de compra indisponível: {erro}")
-        return
-    # quantidades inteiras: os pesos efetivos passam de novo pelas regras (a vol ex-ante foi conferida no alvo)
-    violacoes = checar_carteira(plano.itens["peso_efetivo"], dict(entradas.params.setores))
-    if violacoes:
-        st.error("Plano de compra recusado pelas regras de risco fixas: " + _descrever(violacoes))
-        return
-    secoes.tabela_carteira(plano, cotacoes, info, date.today())
-    secoes.legenda_por_setor(plano, info)
-    secoes.resumo_plano(plano, regras)
-
-
-def secao_conservadora(entradas: Entradas) -> None:
+def secao_conservadora(entradas: Entradas, registrado: tuple[date, pd.Series] | None) -> None:
     st.markdown("### Plano de compra: Aleph Neumann (Composite, dinheiro real)")
-    registrado = servicos.carregar_plano_registrado()
     if registrado is None:
         st.error("Sem carteira registrada no paper-v3 (paper-v3/composto.csv): o plano do Aleph Neumann usa a de lá.")
         return
-    data, alvo = registrado
-    st.info(alepha.aviso_composite(data))
+    _, alvo = registrado
     posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}
     mes = alepha.mes_fiscal()
     tickers = tuple(dict.fromkeys((*alvo.index, *posicoes)))
     historico = servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos
     janela = historico.tail(PREGOES_PARA_FECHAMENTO)
-    alepha.semaforo_do_plano(servicos.carregar_painel()[1], alvo.index, data, historico.index)
     if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_alepha"):
         servicos.descartar_cotacoes(tickers, janela)
     with st.spinner("Buscando as cotações do dia…"):
@@ -520,12 +185,12 @@ def secao_conservadora(entradas: Entradas) -> None:
     precos = cotacoes["preco"]
     patrimonio = sum(posicao.quantidade * float(precos[ticker]) for ticker, posicao in posicoes.items())
     patrimonio += entradas.orcamento
-    minimo = capital_minimo(alvo, precos, QUANTIDADE_MINIMA_POR_ACAO, entradas.custo_bps)
+    minimo = capital_minimo(alvo, precos, QUANTIDADE_MINIMA_POR_ACAO, CUSTO_BPS)
     pequeno = patrimonio < minimo     # the user's decision of 2026-10-23 (DECISOES 124): start now, any amount
     quantidade_minima = 1 if pequeno else QUANTIDADE_MINIMA_POR_ACAO
-    regras = RegrasRebalanceio(LIMITES.peso_maximo_acao, entradas.custo_bps, quantidade_minima,
+    regras = RegrasRebalanceio(LIMITES.peso_maximo_acao, CUSTO_BPS, quantidade_minima,
                                limites_por_setor(setores, LIMITES.teto_setor))
-    custo = custo_com_liquidez(foto, CUSTOS_DA_B3, entradas.custo_bps)
+    custo = custo_com_liquidez(foto, CUSTOS_DA_B3, CUSTO_BPS)
     argumentos = (alvo, posicoes, precos, entradas.orcamento, regras, custo)
     try:
         plano = (plano_com_nucleo(*argumentos, nucleo=NUCLEO_DO_PEQUENO_CAPITAL, mes=mes, etfs=ETFS_DA_TELA)
@@ -548,131 +213,57 @@ def secao_conservadora(entradas: Entradas) -> None:
             patrimonio, minimo, float(precos.reindex(alvo.index).sum()), len(alvo),
             [ticker.removesuffix(".SA") for ticker in alvo.index if plano.ordens.at[ticker, "alvo"] == 0],
             QUANTIDADE_MINIMA_POR_ACAO, LIMITES.peso_maximo_acao, BENCHMARK_ACOES.removesuffix(".SA")))
-    alepha.tabela_rebalanceio(plano, zona, patrimonio, None if foto is None else f"{foto['month'].iloc[0]:%m/%Y}",
-                              entradas.custo_bps)
+    alepha.tabela_rebalanceio(plano, zona, patrimonio)
     if pequeno:
         st.warning(f"Com R\\$ {patrimonio:,.2f} a carteira fica longe da carteira testada ({len(alvo)} nomes com pesos "
                    f"iguais, R\\$ 10 mil na prova final): menos nomes e pesos desiguais, mais risco de cada empresa.")
 
 
-def secao_dinheiro_real(entradas: Entradas, info: dict) -> None:
-    st.markdown("### Plano de compra: BOVA11 + satélite (dinheiro real, a regra do paper-v1)")
-    registrado = servicos.carregar_satelite_registrado()
+def secao_fronteira(entradas: Entradas, registrado: tuple[date, pd.Series] | None) -> None:
+    """The Composite's own estimated point next to the Markowitz frontier of the sidebar's universe (the user's request
+    of 2026-11-03). The point is never moved onto the curve: the frontier treats estimated returns as certain, the
+    equal-weight Composite uses none, so it sits below."""
+    st.markdown("## Composite na fronteira eficiente")
     if registrado is None:
-        st.error("Sem carteira registrada no paper trading (paper/carteiras.csv): o plano do dinheiro real usa o "
-                 "satélite de lá.")
+        st.caption("Sem a Composite registrada no paper-v3.")
         return
-    data, satelite = registrado
-    st.warning(secoes.aviso_dinheiro_real(data))
-    tickers = tuple(dict.fromkeys((*satelite.index, BENCHMARK_ACOES)))     # depois do stop o satélite é o BOVA11
+    _, alvo = registrado
     hoje = date.today()
-    janela = servicos.carregar_precos(tickers, 1, hoje, precos_do_app.versao_dos_dados()).precos.tail(
-        PREGOES_PARA_FECHAMENTO)
-    if st.button("Atualizar cotações", icon=":material/refresh:", key="atualizar_cotacoes_real"):
-        servicos.descartar_cotacoes(tickers, janela)
-    with st.spinner("Buscando as cotações do dia…"):
-        cotacoes = servicos.carregar_cotacoes(tickers, janela)
-    if not cotacoes["preco"].get(BENCHMARK_ACOES, float("nan")) > 0:   # sem cotação no satélite: ele fica em caixa
-        st.error(f"Plano indisponível, sem cotação do {BENCHMARK_ACOES.removesuffix('.SA')}.")
+    universo = tuple(dict.fromkeys((*entradas.tickers, *alvo.index)))
+    with st.spinner("Calculando a fronteira eficiente…"):
+        precos = servicos.carregar_precos(universo, ANOS_DA_FRONTEIRA, hoje, precos_do_app.versao_dos_dados()).precos
+        rf = taxa_anual_para_aritmetica(servicos.carregar_selic(hoje).valor)
+    colunas = [ticker for ticker in universo if ticker in precos.columns]
+    nomes = [ticker for ticker in alvo.index if ticker in colunas]
+    info = _info_com_eua()
+    setores = {ticker: info[ticker]["setor"] for ticker in colunas if ticker in info}
+    setores |= servicos.setores_do_lago(tuple(t for t in nomes if t not in setores), servicos.PASTA_MARCOS_V3)
+    setores = {ticker: setores.get(ticker) or ticker.removesuffix(".SA") for ticker in colunas}
+    momentos = estimar_momentos(retornos_simples(precos[colunas]), shrink_mu=True)
+    mu, cov = momentos.mu[colunas], momentos.cov.loc[colunas, colunas]
+    params = servicos.ParametrosOtimizacao(Objetivo.MIN_VOL.value, entradas.peso_maximo, len(colunas), None, 2.0,
+                                           entradas.teto_setor, tuple(sorted(setores.items())))
+    try:
+        fronteira = servicos.calcular_fronteira(mu, cov, params, rf)
+    except (ErroOtimizacao, ValueError) as erro:
+        st.error(f"Fronteira inviável: {erro} Inclua mais setores ou ativos: o teto por setor é de no máximo "
+                 f"{LIMITES.teto_setor:.0%}.")
         return
-    setores = {ticker: info.get(ticker, {}).get("setor") for ticker in satelite.index}    # sem setor: em caixa
-    regras = RegrasDinheiroReal(total=entradas.orcamento, custo_bps=entradas.custo_bps,
-                                quantidade_minima=QUANTIDADE_MINIMA_POR_ACAO, nucleo=BENCHMARK_ACOES)
-    plano = plano_dinheiro_real(satelite, cotacoes["preco"], setores, regras)
-    secoes.tabela_dinheiro_real(plano, regras, cotacoes, info, hoje)
-
-
-def _carteira_reamostrada(entradas: Entradas, retornos: pd.DataFrame, rf_aritmetica: float) -> CarteiraCalculada:
-    """Reestima μ e Σ nas ações compráveis: são esses momentos que a tela mostra."""
-    with st.spinner("Reamostrando: 100 carteiras Kelly..."):
-        reamostrada = servicos.otimizar_reamostrado(retornos, entradas.params, rf_aritmetica, entradas.shrink_mu)
-    return CarteiraCalculada(reamostrada.resultado, reamostrada.mu, reamostrada.cov,
-                             reamostrada.intensidade_shrinkage, reamostrada.frequencia)
-
-
-def secao_backtest(entradas: Entradas, precos: pd.DataFrame, acoes_hoje: list[str], cdi: pd.Series,
-                   selic: float) -> None:
-    """``precos``: download de janela + teste anos, só do walk-forward; ``acoes_hoje``: universo da carteira de hoje."""
-    st.markdown("---")
-    st.markdown("## Walk-forward fora da amostra (líquido de custos)")
-    colunas = [t for t in entradas.tickers_acoes if t in precos.columns]
-    anos_historico = entradas.anos + entradas.anos_teste
-    if len(colunas) < 2:          # sem ações, o 1/N divide por zero; com uma só, não há carteira a comparar
-        st.info(f"Walk-forward indisponível: só {len(colunas)} ação(ões) com {anos_historico} anos de histórico. "
-                "Diminua a janela de estimação ou o teste fora da amostra.")
-        return
-    retornos = retornos_simples(precos[colunas])
-    rf_diaria = serie_rf_diaria(retornos.index, cdi, selic)
-    # Um cfg só, para as estratégias e o BOVA11: mesma janela de treino, mesmas datas, mesmos custos.
-    cfg_bt = ConfigBacktest(janela_treino=entradas.anos * DIAS_UTEIS_ANO, capital_inicial=entradas.orcamento,
-                            custo_bps=entradas.custo_bps, shrink_mu=entradas.shrink_mu)
-    espera = ("de 5 estratégias (a reamostrada leva minutos)" if entradas.reamostrar
-              else "de 4 estratégias")
-    with st.spinner(f"Rodando walk-forward {espera}..."):
-        try:
-            resultados = servicos.rodar_walk_forward(retornos, entradas.params, cfg_bt, cdi,
-                                                     taxa_anual_para_aritmetica(selic), entradas.reamostrar)
-        except ValueError as erro:
-            st.info(f"Walk-forward indisponível: {erro}")
-            return
-
-    # A ordem do dicionário define a principal: a reamostrada vem primeiro quando ligada.
-    nome_otimizada = next(iter(resultados))
-    otimizada = resultados[nome_otimizada]
-    st.caption(_legenda_walk_forward(entradas, otimizada, colunas, acoes_hoje))
-    referencias = _referencias_de_mercado(precos, retornos.index, cfg_bt)
-
-    if otimizada.falhas:
-        st.warning(f"{len(otimizada.falhas)} rebalanceamento(s) mantiveram a carteira por falha: "
-                   + "; ".join(otimizada.falhas[:3]))
-    secoes.tabela_comparativa(resultados, rf_diaria, referencias)
-    sem_historico = [_nome(t) for t in REFERENCIAS_DA_TELA if _nome(t) not in referencias]
-    if sem_historico:
-        st.caption(f"Sem histórico para os {anos_historico} anos do walk-forward: {', '.join(sem_historico)}.")
-    if _nome(BENCHMARK_ACOES) in referencias:          # o critério pré-registrado é o alfa contra o BOVA11
-        secoes.bloco_alfa(otimizada, referencias[_nome(BENCHMARK_ACOES)], rf_diaria)
-
-    curvas = {nome: bt.valores for nome, bt in {**resultados, **referencias}.items()}
-    datas = otimizada.valores.index
-    curvas["CDI"] = entradas.orcamento * (1 + rf_diaria.reindex(datas).fillna(0.0).iloc[1:]).cumprod()
-    curvas["CDI"] = pd.concat([pd.Series([entradas.orcamento], index=datas[:1]), curvas["CDI"]])
-    st.plotly_chart(grafico_curvas_capital(curvas, destaque=nome_otimizada), width="stretch")
-
-    serie_dd, _, _ = drawdown(otimizada.valores)
-    st.plotly_chart(grafico_drawdown(serie_dd), width="stretch")
-    col1, col2 = st.columns(2)
-    pesos_hist = otimizada.pesos_alvo.loc[:, otimizada.pesos_alvo.max() > 0.01]
-    col1.plotly_chart(grafico_pesos_historicos(pesos_hist), width="stretch")
-    rolantes = metricas_rolantes(otimizada.valores.pct_change().dropna(), rf_diaria)
-    if not rolantes.empty:
-        col2.plotly_chart(grafico_metricas_rolling(rolantes), width="stretch")
-
-
-def _nome(ticker: str) -> str:
-    return ticker.replace(".SA", "")
-
-
-def _referencias_de_mercado(precos: pd.DataFrame, datas: pd.DatetimeIndex,
-                            cfg_bt: ConfigBacktest) -> dict[str, ResultadoBacktest]:
-    """Walk-forward de cada referência com histórico na janela: mesmas datas, mesmo cfg (treino, custos)."""
-    referencias = {}
-    for ticker in REFERENCIAS_DA_TELA:
-        if ticker not in precos.columns:
-            continue
-        retornos = retornos_simples(precos[[ticker]]).reindex(datas).dropna()
-        if len(retornos) > cfg_bt.janela_treino + 1:
-            referencias[_nome(ticker)] = walk_forward(retornos, estrategia_equiponderada(), cfg_bt, _nome(ticker))
-    return referencias
-
-
-def _legenda_walk_forward(entradas: Entradas, otimizada: ResultadoBacktest, colunas_walk_forward: list[str],
-                          acoes_hoje: list[str]) -> str:
-    fora = [t.replace(".SA", "") for t in acoes_hoje if t not in colunas_walk_forward]
-    texto = (f"Treino: {entradas.anos} anos rolando, a mesma janela da carteira de hoje · teste: "
-             f"{entradas.anos_teste} ano(s), fora da amostra desde {otimizada.pesos_alvo.index[0]:%d/%m/%Y} · "
-             f"{len(colunas_walk_forward)} ações com {entradas.anos + entradas.anos_teste} anos de histórico "
-             f"(a carteira de hoje usa {len(acoes_hoje)})")
-    return texto + (f". Fora do walk-forward por histórico curto: {', '.join(fora)}." if fora else ".")
+    pesos = pd.Series(1.0 / len(nomes), index=nomes).reindex(mu.index, fill_value=0.0)
+    retorno, vol, _ = metricas_carteira(pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov), rf)
+    st.plotly_chart(grafico_fronteira_eficiente(fronteira, {"retorno": retorno, "volatilidade": vol},
+                                                "Composite (pesos iguais)", rf), width="stretch")
+    texto = (f"Fronteira com {len(colunas)} ativos e {ANOS_DA_FRONTEIRA} anos de preços do lago, até "
+             f"{precos.index[-1]:%d/%m/%Y}. A Composite fica onde as estimativas a colocam: a fronteira trata o "
+             "retorno do passado como certo e, na prática, rende menos do que promete.")
+    curva = fronteira.sort_values("volatilidade")
+    if not curva.empty and curva["volatilidade"].min() <= vol <= curva["volatilidade"].max():
+        teto = float(np.interp(vol, curva["volatilidade"], curva["retorno"]))
+        texto += (f" Com o mesmo risco ({vol:.1%} a.a.), a fronteira estima {teto:.1%} ao ano, contra {retorno:.1%} "
+                  "da Composite.")
+    st.caption(texto)
+    por_setor = pd.Series(1.0 / len(nomes), index=nomes).groupby(lambda ticker: setores[ticker]).sum()
+    st.bar_chart(por_setor.sort_values().rename("Peso na Composite"), horizontal=True, x_label="Peso na Composite")
 
 
 if __name__ == "__main__":

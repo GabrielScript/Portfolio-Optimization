@@ -223,6 +223,15 @@ def descartar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) 
     carregar_cotacoes.clear(tickers, precos_recentes)
 
 
+@st.cache_data(show_spinner=False, max_entries=4)
+def calcular_fronteira(mu: pd.Series, cov: pd.DataFrame, params: ParametrosOtimizacao,
+                       taxa_livre_risco: float) -> pd.DataFrame:
+    """The Markowitz frontier of the page's last section (``core.optimization.fronteira_eficiente``), cached: a rerun
+    of any widget does not solve the 30 points again."""
+    from core.optimization import fronteira_eficiente
+    return fronteira_eficiente(mu, cov, params.para_config(taxa_livre_risco))
+
+
 @st.cache_data(show_spinner=False, max_entries=8)
 def otimizar_reamostrado(retornos: pd.DataFrame, params: ParametrosOtimizacao, taxa_livre_risco: float,
                          shrink_mu: bool) -> reamostragem.ResultadoReamostragem:

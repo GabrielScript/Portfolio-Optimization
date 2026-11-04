@@ -8,20 +8,15 @@ to come; nothing is promised in R$. UI strings are Portuguese, like the rest of 
 
 from __future__ import annotations
 
-from datetime import date
-
 import pandas as pd
 import streamlit as st
 
 from core.impostos import ISENCAO_DE_VENDAS
-from core.periodos import (desde_inicio_comum, juro_por_ano, medidas_por_ano, medidas_por_periodo, resumo_do_periodo,
-                           rotulo_do_ano)
+from core.periodos import juro_por_ano, medidas_por_ano, medidas_por_periodo, resumo_do_periodo, rotulo_do_ano
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
-from core.sentimento import alertas_antes_da_troca, proxima_troca, semaforo
+from visualizations import grafico_curvas_capital
 
-AVISO_CVM = ("Aleph Neumann é o nome de uma ferramenta pessoal de estudo e decisão: não é um fundo de investimento "
-             "oferecido a terceiros nem recomendação de investimento (fundos: Resolução CVM 175/2022; análise de "
-             "valores mobiliários: Resolução CVM 20/2021).")
+TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
 
 COLUNAS_ORDENS = {
     "Cotação (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
@@ -41,55 +36,7 @@ COLUNAS_ORDENS = {
 }
 
 
-def aviso_composite(data: date) -> str:
-    """The real-money plan since the user's decision of 2026-11-03 (DECISOES 242), with its measured past and the
-    gate it has not passed."""
-    return (f"Aleph Neumann: a Composite (a regra da Conservadora, 15 ações em pesos iguais e até 4 por setor, ordenada "
-            f"por baixa volatilidade, dividendos, momentum, valor e crescimento do lucro), registrada no paper-v3 em "
-            f"{data:%d/%m/%Y}. No backtest sem viés de sobrevivência (2010–2026, 3 fases), 17% a 19,5% ao ano contra "
-            "5% a 6% do BOVA11 e 15% a 16% da Conservadora, com queda máxima de −42%. Ela ainda não passou no teste "
-            "estatístico pré-registrado (DSR de até 0,89, abaixo de 0,95): a vantagem sobre a Conservadora pode ser "
-            "sorte do período. Escolha sua, de investidor arrojado, em 03/11/2026. A prova ao vivo é o paper-v3. Só "
-            "dinheiro de 5 anos ou mais; a carteira muda a cada 63 pregões, quando o paper-v3 registra a nova.")
-
-
-def aviso_conservadora(data: date) -> str:
-    return (f"Aleph Neumann: a Conservadora (15 ações de baixa volatilidade, dividendos e momentum, pesos iguais, até 4 "
-            f"por setor), registrada no paper-v2 em {data:%d/%m/%Y}. No backtest sem viés de sobrevivência (2010–2026, "
-            "3 fases), 16% a 17% ao ano contra 7% do BOVA11, com volatilidade de 18% contra 23% e queda máxima de −40% "
-            "contra −50%; depois de custos e IR, com R$ 10 mil, P[> BOVA11] de 0,98 a 0,995. Passado não garante "
-            "futuro: a prova ao vivo é o paper-v2 (leitura em 126 pregões, ~27/04/2027; decisão em 252, ~25/10/2027). "
-            "Só dinheiro de 5 anos ou mais; a carteira muda a cada 63 pregões, quando o paper-v2 registra a nova.")
-
-
-SESSOES_DO_SEMAFORO = 21           # the light reads the material filings of the last 21 lake sessions (~1 month)
-EMOJI_DA_COR = {"vermelho": "🔴", "amarelo": "🟡", "verde": "🟢"}
-FATOS_VAZIOS = pd.DataFrame(columns=["ticker", "assunto", "data", "link"])
-
-
-def semaforo_do_plano(fatos: pd.DataFrame | None, tickers: pd.Index, registrada: date,
-                      calendario: pd.DatetimeIndex) -> None:
-    """A red/yellow/green light per stock of the plan from its Jev-scored CVM filings (``core.sentimento.semaforo``),
-    and a warning for each one that turned red after the registered portfolio. Information only (the user's goal of
-    2026-10-24, DECISOES 132): the weights and the orders never read it."""
-    desde = calendario[-min(SESSOES_DO_SEMAFORO, len(calendario))].date()
-    luzes = semaforo(FATOS_VAZIOS if fatos is None else fatos, tickers, desde)
-    st.markdown("#### Sinal de cada ação: fatos relevantes da CVM")
-    tabela = pd.DataFrame({"Ticker": [ticker.removesuffix(".SA") for ticker in luzes.index],
-                           "Sinal": [f"{EMOJI_DA_COR[cor]} {cor}" for cor in luzes["cor"]],
-                           "Fatos da CVM": luzes["motivo"].to_numpy(), "Notícias e redes": "—",
-                           "Link": luzes["link"].fillna("").to_numpy()})
-    st.dataframe(tabela, width="stretch", hide_index=True,
-                 column_config={"Link": st.column_config.LinkColumn("Link", display_text="abrir")},
-                 alt="Sinal vermelho, amarelo ou verde de cada ação do plano, pelos fatos relevantes da CVM")
-    for alerta in alertas_antes_da_troca(luzes, registrada, proxima_troca(calendario, registrada)):
-        st.warning(f"{alerta} (data estimada; quem decide é o paper-v3). O plano mantém os pesos até lá.")
-    st.caption(f"Informativo: não muda os pesos nem as ordens. Fatos relevantes e comunicados ao mercado dos últimos "
-               f"{SESSOES_DO_SEMAFORO} pregões, cada um com a nota do Jev (pontua os fatos novos a cada 2 horas): "
-               "vermelho = o tom mais provável é ruim para o acionista e a chance de efeito forte no preço é de 50% "
-               "ou mais; verde = o mesmo com tom bom; amarelo = nenhum fato forte (ou nenhum fato pontuado: os "
-               "anteriores a 23/10/2026 não têm nota). Vermelho vence verde. Notícias e redes: \"—\" até as notícias "
-               "trazerem o ticker (perguntas items-v2). O sinal ainda não foi testado como regra de venda.")
+SESSOES_DO_SEMAFORO = 21           # the DeepSeek pack reads the CVM filings of the last 21 lake sessions
 
 
 def aviso_capital_pequeno(patrimonio: float, minimo: float, um_de_cada: float, nomes: int, esperando: list[str],
@@ -135,9 +82,9 @@ def mes_fiscal() -> MesFiscal:
     return MesFiscal(float(vendas), float(resultado), float(prejuizo))
 
 
-def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio: float, mes_da_liquidez: str | None,
-                       custo_bps: float) -> None:
-    """The orders (buy, sell, keep), the totals and the notes on cost, IR and the zone."""
+def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio: float) -> None:
+    """The orders (buy, sell, keep), the totals and the warning on the R$ 20 thousand exemption; the notes on cost,
+    IR, lots and the zone left the screen (the user's UI list of 2026-11-03) and stay in the columns' help."""
     ordens = plano.ordens
     tabela = pd.DataFrame({
         "Ticker": [ticker.removesuffix(".SA") for ticker in ordens.index],
@@ -166,16 +113,6 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
         st.warning(f"As vendas de ações do mês somam R\\$ {plano.vendas_de_acoes_no_mes:,.2f}, acima de R\\$ 20 mil: o "
                    f"ganho do mês inteiro paga 15%. Adiar R\\$ {excesso:,.2f} de vendas para o mês seguinte mantém a "
                    "isenção (as compras que dependem delas esperam junto).")
-    fonte = (f"liquidez de {mes_da_liquidez} do lago (emolumentos de 0,030% + meio spread + impacto pela raiz do "
-             f"tamanho, o modelo da prova final); papel sem medida: {custo_bps:.0f} bps" if mes_da_liquidez else
-             f"{custo_bps:.0f} bps por lado (sem a foto de liquidez do lago)")
-    st.caption(f"Custo: {fonte}. IR: 15% do ganho líquido do mês; vendas de ações até R$ 20 mil no mês são isentas "
-               "(Lei 11.033/2004, art. 3º, I); ETF não tem isenção. Lote padrão = múltiplos de 100; o resto no "
-               "fracionário (ticker terminado em F). Confira o preço no book antes de enviar a ordem.")
-    if zona is not None:
-        st.caption("Zona sem negociação: só informativa. O teste pré-registrado de 23/10/2026 "
-                   "(docs/zona-2026-10-23.txt) não passou: pular os reajustes cortou o custo, mas o retorno caiu numa "
-                   "das 3 fases com R\\$ 10 mil e em todas com R\\$ 100 mil. O plano manda todas as ordens.")
 
 
 BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)
@@ -208,7 +145,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     risk summary. The rebalance phase (0, 21 or 42 sessions cut from the start) can be picked: timing alone moves a
     year by several points. ``juros``: the CDI and Selic of each published day (``scripts/juros_diarios.py``), columns
     of the year table when it shows returns."""
-    st.markdown("### Conservadora e Composto no backtest até o último pregão: por período e por ano")
+    st.markdown(TITULO_SEM_VIES)
     if quadro is None:
         st.caption("Sem as curvas do backtest (docs/dados/curvas-ao-vivo.parquet).")
         return
@@ -219,6 +156,9 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
                                           "diferentes. A diferença entre elas é só o acaso da data.")
     parte = fases[min(fases) if escolhida is None else int(escolhida)]
     cdi = parte["CDI"].fillna(0.0)
+    # the curves replace the biased walk-forward of the old study (the user's UI list of 2026-11-03)
+    st.plotly_chart(grafico_curvas_capital({nome: parte[nome].dropna() for nome in BRACOS}, destaque="Composto"),
+                    width="stretch")
     medidas = medidas_por_periodo(parte[list(BRACOS)])
     tabela = pd.DataFrame({
         "Período": medidas.index,
@@ -268,35 +208,6 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
         f"Backtest sem viés de sobrevivência no lago, antes de custos e IR, rodado de novo até "
         f"{parte.index[-1]:%d/%m/%Y} (descritivo: as configurações registradas, sem mudar regra; DECISOES 188). No "
         f"período inteiro, as 3 fases dão {min(inteiro['Conservadora']):.1%} a {max(inteiro['Conservadora']):.1%} ao "
-        f"ano na Conservadora e {min(inteiro['Composto']):.1%} a {max(inteiro['Composto']):.1%} no Composto. A "
-        "Conservadora é a estratégia adotada; o Composto (Conservadora + valor + crescimento do lucro, tentativa 51) "
-        "não passou no portão da fase 42 e só vale como candidato no paper-v3 (decisão ~10/2027). BITH11 e QBTC11 "
-        "(bitcoin, preço) são só comparação e não entram no plano. Sharpe e Sortino sobre o CDI do dia; alfa e beta "
-        "contra o BOVA11 (CAPM, t de Newey-West); CVaR 95%: perda média dos 5% piores dias. Passado não garante "
-        "futuro; a prova ao vivo é o paper-v2 (decisão em 252 pregões, ~25/10/2027).")
-
-
-def bova11_e_cripto(precos: pd.DataFrame | None) -> None:
-    """BOVA11 next to the B3's crypto ETFs since they all trade (the user's request of 2026-10-25, DECISOES 140):
-    comparison only, none of them is in the plan."""
-    st.markdown("### BOVA11 e os ETFs de cripto da B3")
-    if precos is None:
-        st.caption("Cotações dos ETFs indisponíveis agora (Yahoo).")
-        return
-    curvas = desde_inicio_comum(precos)
-    medidas = medidas_por_periodo(curvas, anos=()).iloc[0]
-    tabela = pd.DataFrame({"ETF": curvas.columns,
-                           "Retorno no período": (curvas.iloc[-1] - 1).to_numpy(),
-                           "Retorno a.a.": [float(medidas[(nome, "CAGR")]) for nome in curvas.columns],
-                           "Vol": [float(medidas[(nome, "Vol anual")]) for nome in curvas.columns],
-                           "Queda máx.": [float(medidas[(nome, "MDD")]) for nome in curvas.columns]})
-    c1, c2 = st.columns([2, 3])
-    c1.dataframe(tabela, width="stretch", hide_index=True,
-                 column_config={coluna: st.column_config.NumberColumn(format="percent")
-                                for coluna in tabela.columns[1:]},
-                 alt="Retorno, volatilidade e queda máxima do BOVA11 e de quatro ETFs de cripto da B3")
-    c2.line_chart(curvas, y_label="R$ 1 aplicado no início")
-    st.caption(f"Fechamentos do Yahoo de {curvas.index[0]:%d/%m/%Y} a {curvas.index[-1]:%d/%m/%Y}, desde o dia em que "
-               "os cinco já negociavam: HASH11 (índice de criptoativos da Nasdaq), BITH11 e QBTC11 (bitcoin), ETHE11 "
-               "(ether). Só comparação: nenhum entra no plano. ETF não tem a isenção de R$ 20 mil nas vendas. Passado "
-               "não garante futuro.")
+        f"ano na Conservadora e {min(inteiro['Composto']):.1%} a {max(inteiro['Composto']):.1%} na Composite, o "
+        "plano do dinheiro real desde 03/11/2026, que ainda não passou no teste estatístico pré-registrado. BITH11 e "
+        "QBTC11 (bitcoin) são só comparação. Passado não garante futuro; a prova ao vivo é o paper-v3.")

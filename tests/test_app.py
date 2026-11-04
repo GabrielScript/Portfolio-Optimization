@@ -1,7 +1,6 @@
 """App inteiro via AppTest, SEM rede: os carregadores de ``ui.servicos`` viram dados sintéticos."""
 
 import re
-from dataclasses import replace
 from datetime import date, datetime
 from pathlib import Path
 
@@ -11,17 +10,15 @@ import pytest
 import streamlit as st
 from streamlit.testing.v1 import AppTest
 
-from assets import BENCHMARK_ACOES, BENCHMARKS, get_tickers_by_setor
+from assets import get_tickers_by_setor
 from core import market_data
-from core.config import Objetivo
 from ui import servicos
 
 APP = Path(__file__).resolve().parent.parent / "app.py"
-# 35 ações em 4 setores: viável com os tetos fixos (20% por ação, 30% por setor), e a reamostragem roda em segundos.
+# 35 stocks in 4 sectors: the frontier is feasible with the 30% sector cap and solves in seconds.
 SETOR_PEQUENO = "Tecnologia da Informação"
 SETORES_DO_TESTE = [SETOR_PEQUENO, "Telecomunicações", "Petróleo, Gás e Biocombustíveis", "Materiais Básicos"]
 TIMEOUT_S = 300
-JANELA_ANOS, TESTE_ANOS = 3, 1           # os mínimos dos sliders: walk-forward curto e rápido
 CARREGAR_COTACOES_REAL = servicos.carregar_cotacoes      # guardada antes de a fixture trocá-la
 
 
@@ -59,328 +56,6 @@ def _painel_sem_rede(monkeypatch) -> None:
         tickers, 3, dia, versao).precos)
 
 
-@pytest.fixture
-def app(monkeypatch) -> AppTest:
-    monkeypatch.setattr(servicos, "carregar_satelite_registrado", _satelite_sintetico)
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_sinteticos)
-    monkeypatch.setattr(servicos, "carregar_cdi", _cdi_sintetico)
-    monkeypatch.setattr(servicos, "carregar_selic", lambda dia: market_data.TaxaSelic(0.1375, "sintética"))
-    monkeypatch.setattr(servicos, "carregar_cotacoes", _cotacoes_sinteticas)
-    _painel_sem_rede(monkeypatch)
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    at.sidebar.selectbox(key="objetivo").set_value(Objetivo.KELLY.value)   # os testes antigos são do Kelly
-    at.sidebar.segmented_control(key="modo_plano").set_value("estudo")    # e do plano da carteira otimizada
-    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
-    at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
-    at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
-    return at
-
-
-def _tabela_walk_forward(at: AppTest) -> pd.DataFrame:
-    tabelas = [df.value for df in at.dataframe if "Métrica" in df.value.columns]
-    assert len(tabelas) == 1
-    return tabelas[0]
-
-
-def test_reamostragem_vem_desligada_e_o_walk_forward_tem_4_estrategias(app):
-    assert not app.exception
-    assert app.sidebar.checkbox(key="reamostrar").value is False
-    colunas = list(_tabela_walk_forward(app).columns)
-    assert colunas[1].startswith("Otimizada")
-    assert len(colunas) == 1 + 4 + 4                      # Métrica + 4 estratégias + BOVA11, SMAL11, DIVO11, IVVB11
-    assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
-
-
-def test_walk_forward_treina_na_janela_da_carteira_de_hoje(app):
-    # O walk-forward baixa janela + teste anos; o 1º rebalanceamento vem depois de janela × 252 pregões
-    # (o 1º pregão do download não tem retorno).
-    datas = _datas_sinteticas(JANELA_ANOS + TESTE_ANOS, date.today())
-    legendas = [c.value for c in app.caption if c.value.startswith("Treino:")]
-    assert len(legendas) == 1
-    assert f"fora da amostra desde {datas[JANELA_ANOS * 252 + 1]:%d/%m/%Y}" in legendas[0]
-
-
-def test_bova11_no_walk_forward_comeca_junto_com_as_estrategias(app):
-    # Mesmo cfg das estratégias: compra na véspera do 1º rebalanceamento (pregão janela × 252 do download),
-    # paga 10 bps uma vez (o padrão da sidebar) e segura até o fim.
-    tickers = tuple(get_tickers_by_setor(SETORES_DO_TESTE)) + REFERENCIAS_DA_TELA   # o pedido do walk-forward
-    bova = _precos_sinteticos(tickers, JANELA_ANOS + TESTE_ANOS, date.today(), 0).precos[BENCHMARK_ACOES]
-    esperado = (1 - 10 / 10_000) * bova.iloc[-1] / bova.iloc[JANELA_ANOS * 252] - 1
-
-    tabela = _tabela_walk_forward(app).set_index("Métrica")
-
-    assert tabela.loc["Retorno total", "BOVA11"] == f"{esperado * 100:.2f}%"
-
-
-REFERENCIAS_DA_TELA = (*BENCHMARKS, "IVVB11.SA")        # as do app.py (o IVVB11 é só da tela)
-
-
-def _precos_sem_historico_longo_para_a_ultima(tickers: tuple[str, ...], anos: int, dia: date,
-                                              versao_dados: int) -> market_data.DadosPrecos:
-    """A última ação do universo não tem janela + teste anos de histórico: some só do download do walk-forward."""
-    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
-    if anos > JANELA_ANOS:
-        precos = precos.drop(columns=[t for t in tickers if t not in REFERENCIAS_DA_TELA][-1])
-    return market_data.DadosPrecos(precos)
-
-
-def test_legenda_do_walk_forward_lista_a_acao_sem_historico_para_ele(app, monkeypatch):
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_sem_historico_longo_para_a_ultima)
-    app.run()
-
-    assert not app.exception
-    curta = get_tickers_by_setor(SETORES_DO_TESTE)[-1].replace(".SA", "")
-    legenda = next(c.value for c in app.caption if c.value.startswith("Treino:"))
-    assert legenda.endswith(f"Fora do walk-forward por histórico curto: {curta}.")
-
-
-def _precos_sem_nenhuma_acao_no_historico_longo(tickers: tuple[str, ...], anos: int, dia: date,
-                                                versao_dados: int) -> market_data.DadosPrecos:
-    """Nenhuma ação tem janela + teste anos de histórico: o download do walk-forward só traz o BOVA11."""
-    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
-    return market_data.DadosPrecos(precos[[BENCHMARK_ACOES]] if anos > JANELA_ANOS else precos)
-
-
-def test_walk_forward_sem_acoes_com_historico_suficiente_avisa_em_vez_de_quebrar(app, monkeypatch):
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_sem_nenhuma_acao_no_historico_longo)
-    app.run()
-
-    assert not app.exception
-    assert len([i.value for i in app.info if i.value.startswith("Walk-forward indisponível")]) == 1
-
-
-def test_app_nao_mostra_nada_de_cripto(app):
-    rotulos = [w.label for w in app.sidebar.checkbox] + [w.label for w in app.sidebar.slider]
-    textos = rotulos + [m.value for m in app.markdown] + [c.value for c in app.caption]
-    assert not [t for t in textos if "cripto" in t.lower() or "btc" in t.lower()]
-
-
-def test_app_nao_mostra_nada_do_growth(app):
-    # A carteira de hoje é a mesma que o walk-forward testa: sem filtro nem tilt por fundamentos de hoje.
-    rotulos = [w.label for w in app.sidebar.checkbox] + [w.label for w in app.sidebar.slider]
-    textos = (rotulos + [m.value for m in app.markdown] + [c.value for c in app.caption]
-              + [i.value for i in app.info] + [e.label for e in app.expander])
-    assert not [t for t in textos if "growth" in t.lower()]
-    assert not {"Percentil mínimo", "Tilt (× vol)", "Receita 10 anos via CVM (lento)"} & set(rotulos)
-    assert not {"Growth Score", "Queima de caixa"} & set(_plano_de_compra(app).columns)
-
-
-def test_reamostragem_ligada_vira_a_principal_na_carteira_e_no_walk_forward(app):
-    app.sidebar.checkbox(key="reamostrar").check().run()
-
-    assert not app.exception
-    tabela = _tabela_walk_forward(app)
-    assert list(tabela.columns)[1].startswith("Reamostrada")
-    assert len(tabela.columns) == 1 + 5 + 4
-    assert {"PSR (Sharpe > 0)", "DSR (deflacionado)"} <= set(tabela["Métrica"])
-    estabilidade = [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
-    assert len(estabilidade) == 1
-    assert "% das reamostras em que aparece" in estabilidade[0].dataframe[0].value.columns
-
-
-def _plano_de_compra(at: AppTest) -> pd.DataFrame:
-    tabelas = [df.value for df in at.dataframe if "Qtd." in df.value.columns]
-    assert len(tabelas) == 1
-    return tabelas[0]
-
-
-def test_carteira_mostra_cotacao_e_quantidade_inteira_com_minimo_de_2_acoes(app):
-    assert not app.exception
-    plano = _plano_de_compra(app)
-    assert {"Cotação (R$)", "Qtd.", "Lote padrão", "Fracionário", "Peso efetivo"} <= set(plano.columns)
-    assert ((plano["Qtd."] == 0) | (plano["Qtd."] >= 2)).all()
-    assert (plano["Lote padrão"] + plano["Fracionário"] == plano["Qtd."]).all()
-    assert {"Investido", "Custo estimado", "Sobra em caixa"} <= {m.label for m in app.metric}
-
-
-def test_aceita_valor_a_investir_abaixo_de_mil_reais(app):
-    app.sidebar.number_input(key="orcamento").set_value(500.0).run()
-
-    assert not app.exception
-    assert app.sidebar.number_input(key="orcamento").value == 500.0
-    sobra = next(m for m in app.metric if m.label == "Sobra em caixa")
-    investido = next(m for m in app.metric if m.label == "Investido")
-    assert sobra.value.startswith("R$") and investido.value.startswith("R$")
-
-
-def _precos_com_a_ultima_acao_cara(tickers: tuple[str, ...], anos: int, dia: date,
-                                   versao_dados: int) -> market_data.DadosPrecos:
-    """A última ação do universo custa 1.000 vezes mais: 2 unidades passam de qualquer teto da sidebar."""
-    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
-    acoes = [t for t in tickers if t != BENCHMARK_ACOES]
-    precos[acoes[-1]] *= 1_000
-    return market_data.DadosPrecos(precos)
-
-
-def test_acao_cara_demais_para_o_teto_sai_antes_da_otimizacao_com_aviso(app, monkeypatch):
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_com_a_ultima_acao_cara)
-    # HRP dá peso a todas: sem o filtro, a ação cara entraria no plano (com 0 ações e o peso em caixa).
-    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.HRP.value).run()
-
-    assert not app.exception
-    cara = get_tickers_by_setor(SETORES_DO_TESTE)[-1].replace(".SA", "")
-    assert len([i.value for i in app.info if cara in i.value]) == 1
-    assert cara not in set(_plano_de_compra(app)["Ticker"])
-
-
-def _precos_todos_caros(tickers: tuple[str, ...], anos: int, dia: date, versao_dados: int) -> market_data.DadosPrecos:
-    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos * 1_000
-    return market_data.DadosPrecos(precos)
-
-
-def test_valor_pequeno_demais_para_o_teto_explica_o_que_aumentar(app, monkeypatch):
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_todos_caros)
-    app.run()
-
-    assert not app.exception
-    erros = [e.value for e in app.error]
-    assert len(erros) == 1 and "valor a investir" in erros[0]
-    assert not [df for df in app.dataframe if "Qtd." in df.value.columns]
-
-
-def test_acao_sem_cotacao_sai_do_plano_com_aviso_e_o_peso_dela_vai_para_as_outras_ate_o_teto(app, monkeypatch):
-    pedidos = []
-
-    def cotacoes_sem_a_primeira(tickers, precos_recentes):
-        pedidos.append(tickers)
-        cotacoes = _cotacoes_sinteticas(tickers, precos_recentes)
-        cotacoes.loc[tickers[0], "preco"] = float("nan")
-        return cotacoes
-
-    monkeypatch.setattr(servicos, "carregar_cotacoes", cotacoes_sem_a_primeira)
-    app.run()
-
-    assert not app.exception
-    assert not [e.value for e in app.error]
-    tickers = [t.replace(".SA", "") for t in pedidos[-1]]
-    avisos = [w.value for w in app.warning if "Sem cotação" in w.value]
-    assert len(avisos) == 1 and tickers[0] in avisos[0]
-    plano = _plano_de_compra(app)
-    assert set(plano["Ticker"]) == set(tickers[1:])
-    # o peso dela vai para as outras só até o teto por ação (20%); o que não couber fica em caixa
-    assert plano["Peso alvo"].max() <= 0.20 + 1e-9
-    assert plano["Peso alvo"].sum() <= 1.0 + 1e-9
-
-
-@pytest.fixture
-def yahoo_contador(app, monkeypatch) -> list[tuple[str, ...]]:
-    """Cache verdadeiro de ``carregar_cotacoes``; só o Yahoo é falso: a n-ésima busca devolve R$ 10 × n."""
-    buscas = []
-
-    def cotacoes_atuais(tickers, precos_diarios):
-        buscas.append(tuple(tickers))
-        # a bar of a session the lake does not have yet (trading now): the official close does not replace it
-        return pd.DataFrame({"preco": 10.0 * len(buscas), "horario": precos_diarios.index.max() + pd.Timedelta(days=1),
-                             "fonte": market_data.FONTE_INTRADIARIA}, index=list(tickers))
-
-    monkeypatch.setattr(market_data, "cotacoes_atuais", cotacoes_atuais)
-    monkeypatch.setattr(servicos, "carregar_cotacoes", CARREGAR_COTACOES_REAL)
-    CARREGAR_COTACOES_REAL.clear()
-    yield buscas
-    CARREGAR_COTACOES_REAL.clear()
-
-
-def test_atualizar_cotacoes_busca_de_novo_so_as_desta_carteira(app, yahoo_contador):
-    outra_carteira = (("OUTRA.SA",), pd.DataFrame({"OUTRA.SA": [5.0]}, index=[pd.Timestamp(date.today())]))
-    CARREGAR_COTACOES_REAL(*outra_carteira)              # 1ª busca (R$ 10): cotação de outro usuário
-
-    app.run()                                            # 2ª busca: R$ 20
-    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {20.0}
-    app.run()                                            # rerun: vem do cache
-    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {20.0}
-    app.button(key="atualizar_cotacoes").click().run()   # 3ª busca: R$ 30
-
-    assert not app.exception
-    assert set(_plano_de_compra(app)["Cotação (R$)"]) == {30.0}
-    CARREGAR_COTACOES_REAL(*outra_carteira)
-    assert yahoo_contador.count(("OUTRA.SA",)) == 1      # a entrada da outra carteira continua no cache
-
-
-def _precos_tecnologia_em_alta(tickers: tuple[str, ...], anos: int, dia: date,
-                               versao_dados: int) -> market_data.DadosPrecos:
-    """Tecnologia sobe ~0,2% ao dia a mais: sem teto por setor, o otimizador põe tudo nela."""
-    precos = _precos_sinteticos(tickers, anos, dia, versao_dados).precos
-    tecnologia = [t for t in get_tickers_by_setor([SETOR_PEQUENO]) if t in precos.columns]
-    precos[tecnologia] = precos[tecnologia].mul(np.exp(0.002 * np.arange(len(precos))), axis=0)
-    return market_data.DadosPrecos(precos)
-
-
-def _peso_por_setor(plano: pd.DataFrame, coluna: str) -> pd.Series:
-    return plano.groupby("Setor")[coluna].sum()
-
-
-def test_teto_por_setor_limita_o_peso_alvo_de_cada_setor(app, monkeypatch):
-    # a tela pode apertar a regra fixa de 30%: com 25%, nem a Tecnologia em alta passa disso
-    monkeypatch.setattr(servicos, "carregar_precos", _precos_tecnologia_em_alta)
-    app.sidebar.slider(key="teto_setor").set_value(25).run()
-
-    assert not app.exception
-    assert (_peso_por_setor(_plano_de_compra(app), "Peso alvo") <= 0.25 + 1e-6).all()
-
-
-def test_plano_mostra_o_peso_efetivo_de_cada_setor(app):
-    assert not app.exception
-    por_setor = _peso_por_setor(_plano_de_compra(app), "Peso efetivo")
-    maior = por_setor.idxmax()
-    legendas = [c.value for c in app.caption if c.value.startswith("Por setor")]
-    assert len(legendas) == 1 and f"{maior} {por_setor[maior]:.1%}" in legendas[0]
-
-
-def test_um_setor_so_com_teto_por_setor_explica_o_que_aumentar(app):
-    app.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO]).run()      # 30% num setor só não soma 100%
-
-    assert not app.exception
-    erros = [e.value for e in app.error]
-    assert len(erros) == 1 and "teto por setor" in erros[0]
-
-
-def test_reamostragem_so_vale_para_o_kelly(app):
-    app.sidebar.checkbox(key="reamostrar").check().run()
-    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.MIN_VOL.value).run()
-
-    assert not app.exception
-    assert app.sidebar.checkbox(key="reamostrar").disabled
-    assert list(_tabela_walk_forward(app).columns)[1].startswith("Otimizada")
-    assert not [e for e in app.expander if e.label == "Estabilidade nas reamostras"]
-
-
-def test_a_tela_diz_que_os_precos_sao_do_lago_e_ate_que_pregao(app):
-    ultimo = _datas_sinteticas(JANELA_ANOS, date.today())[-1]
-    fontes = [c.value for c in app.caption if c.value.startswith("Preços:")]
-    assert fontes == [f"Preços: lago de dados da B3 (COTAHIST e eventos da B3/CVM, retorno total), até {ultimo:%d/%m/%Y}."]
-
-
-def test_aviso_de_descartados_explica_os_dois_motivos(app, monkeypatch):
-    def precos_com_descartes(tickers, anos, dia, versao_dados):
-        dados = _precos_sinteticos(tickers, anos, dia, versao_dados)
-        return market_data.DadosPrecos(dados.precos, descartados_sem_dados=["SHOW3.SA"],
-                                       descartados_cobertura=["XPTO3.SA"])
-
-    monkeypatch.setattr(servicos, "carregar_precos", precos_com_descartes)
-    app.run()
-    avisos = [w.value for w in app.warning if "SHOW3" in w.value]
-    assert avisos == ["Fora da análise. Sem preços no lago (não negocia mais ou não é ação): SHOW3. "
-                      "Negociou em menos de 95% dos pregões da janela (dia sem negócio fica sem preço): XPTO3."]
-
-
-def test_walk_forward_compara_com_bova11_smal11_divo11_e_ivvb11(app):
-    # referências de mercado: Ibovespa, small caps, dividendos e S&P 500 em reais (o alfa segue contra o BOVA11)
-    assert list(_tabela_walk_forward(app).columns)[-4:] == ["BOVA11", "SMAL11", "DIVO11", "IVVB11"]
-
-
-def test_referencia_sem_historico_na_janela_aparece_na_legenda(app, monkeypatch):
-    # DIVO11 só existe desde 2012: num walk-forward de 20 anos ela não tem a janela inteira
-    def sem_divo11(tickers, anos, dia, versao_dados):
-        dados = _precos_sinteticos(tuple(t for t in tickers if t != "DIVO11.SA"), anos, dia, versao_dados)
-        return market_data.DadosPrecos(dados.precos, descartados_cobertura=["DIVO11.SA"] if "DIVO11.SA" in tickers else [])
-
-    monkeypatch.setattr(servicos, "carregar_precos", sem_divo11)
-    app.run()
-    legendas = [c.value for c in app.caption if c.value.startswith("Sem histórico")]
-    assert legendas == [f"Sem histórico para os {JANELA_ANOS + TESTE_ANOS} anos do walk-forward: DIVO11."]
-
-
 def _satelite_sintetico() -> tuple[date, pd.Series]:
     """Um registro do paper com papéis dos 4 setores do teste (Tecnologia com 2 papéis, 30%): soma 90%."""
     por_setor = [get_tickers_by_setor([setor]) for setor in SETORES_DO_TESTE]
@@ -407,116 +82,8 @@ def app_padrao(monkeypatch) -> AppTest:
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
-    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE)
-    at.sidebar.slider(key="janela").set_value(JANELA_ANOS)
-    at.sidebar.slider(key="anos_teste").set_value(TESTE_ANOS).run()
+    at.sidebar.multiselect(key="setores").set_value(SETORES_DO_TESTE).run()
     return at
-
-
-@pytest.fixture
-def app_bova_satelite(app_padrao) -> AppTest:
-    """The screen with the "BOVA11 + satélite" plan chosen (the default until v1.0, DECISOES 69)."""
-    app_padrao.sidebar.segmented_control(key="modo_plano").set_value("dinheiro_real").run()
-    return app_padrao
-
-
-def test_padrao_da_tela_e_o_nucleo_satelite_da_regra_b(app_padrao):
-    # S1-P.b (2026-10-18): a regra B aprovou núcleo Mín. Vol 70% + satélite Kelly λ=2 30%
-    assert not app_padrao.exception
-    assert app_padrao.sidebar.selectbox(key="objetivo").value == "nucleo_satelite"
-    assert app_padrao.sidebar.slider(key="fracao_satelite").value == 30
-    assert list(_tabela_walk_forward(app_padrao).columns)[1] == "Otimizada (núcleo Mín. Vol + satélite Kelly 30%)"
-
-
-def test_nenhum_objetivo_da_barra_lateral_se_diz_recomendado(app_padrao):
-    # DECISOES 69: a carteira da barra lateral é o estudo (100% ações); o padrão do dinheiro real é o plano BOVA11 +
-    # satélite do paper. A regra A (opção 3) segue: o Kelly sozinho não é o principal
-    opcoes = app_padrao.sidebar.selectbox(key="objetivo").options
-    assert [o for o in opcoes if "recomendado" in o] == []
-
-
-def test_sliders_nao_afrouxam_as_regras(app):
-    assert app.sidebar.slider(key="peso_maximo").max == 20
-    assert app.sidebar.slider(key="teto_setor").max == 30
-    assert app.sidebar.slider(key="vol_maxima").max == 40
-
-
-def test_mistura_da_tela_nao_passa_de_50_por_cento_de_satelite(app_padrao):
-    assert app_padrao.sidebar.slider(key="fracao_satelite").max == 50
-
-
-def test_carteira_com_violacao_nao_mostra_plano(app, monkeypatch):
-    from core import optimization
-    otimizar_real = optimization.otimizar
-
-    def concentrada_em_tres(mu, cov, cfg):
-        # 1/3 em cada uma das 3 primeiras (Tecnologia): passa de 20% por ação e de 30% no setor
-        pesos = pd.Series(0.0, index=mu.index)
-        pesos[mu.index[:3]] = 1 / 3
-        return replace(otimizar_real(mu, cov, cfg), pesos=pesos)
-
-    monkeypatch.setattr(optimization, "otimizar", concentrada_em_tres)
-    app.run()
-
-    assert not app.exception
-    assert len([e.value for e in app.error if "recusada pelas regras de risco" in e.value]) == 1
-    assert not [df for df in app.dataframe if "Qtd." in df.value.columns]
-
-
-def test_hrp_da_tela_respeita_teto_de_setor(app):
-    # o HRP espalha por número de papéis: Materiais Básicos (14 de 35) passaria de 30% sem a projeção
-    app.sidebar.selectbox(key="objetivo").set_value(Objetivo.HRP.value).run()
-
-    assert not app.exception
-    plano = _plano_de_compra(app)
-    assert (_peso_por_setor(plano, "Peso alvo") <= 0.30 + 1e-6).all()
-    assert (plano["Peso alvo"] <= 0.20 + 1e-6).all()
-
-
-def test_plano_bova11_satelite_usa_o_bova11_e_o_satelite_do_paper(app_bova_satelite):
-    # DECISOES 69: o plano da regra do paper-v1, não a carteira otimizada da barra lateral
-    assert not app_bova_satelite.exception
-    plano = _plano_de_compra(app_bova_satelite).set_index("Ticker")
-    _, satelite = _satelite_sintetico()
-    assert plano.index[0] == "BOVA11" and set(plano.index[1:]) <= {t.removesuffix(".SA") for t in satelite.index}
-    assert 0.6 <= plano.at["BOVA11", "Valor (R$)"] / 10_000 <= 0.75
-
-
-def test_titulo_do_plano_bova11_satelite_nao_se_confunde_com_o_padrao_do_estudo(app_bova_satelite):
-    # "padrão do estudo" é o objetivo da barra lateral (só ações); este plano é a regra do paper-v1
-    titulos = [m.value for m in app_bova_satelite.markdown if m.value.startswith("### Plano de compra")]
-    assert titulos == ["### Plano de compra: BOVA11 + satélite (dinheiro real, a regra do paper-v1)"]
-
-
-def test_bova11_satelite_com_100_reais_mostra_o_bova11_e_o_satelite_em_caixa(app_bova_satelite):
-    # R$ 100 (teto de R$ 20 por ação): no estudo a tela para ("Aumente o valor"); aqui, BOVA11 e caixa
-    app_bova_satelite.sidebar.number_input(key="orcamento").set_value(100.0).run()
-    assert not app_bova_satelite.exception and not [e for e in app_bova_satelite.error if "Aumente" in e.value]
-    assert _plano_de_compra(app_bova_satelite)["Ticker"].tolist() == ["BOVA11"]
-    assert len([i.value for i in app_bova_satelite.info if i.value.startswith("Satélite em caixa")]) == 1
-
-
-def test_limitacoes_dizem_que_o_vies_favorece_as_estrategias_e_mostram_o_teste_sem_vies(app_padrao):
-    # auditoria App-R4: o viés de sobrevivência favorece as estratégias CONTRA o BOVA11 (o índice não tem o viés)
-    textos = " ".join(m.value for m in app_padrao.markdown)
-    expanders = [e for e in app_padrao.expander if e.label.startswith("Teste sem viés de sobrevivência")]
-    assert "favorece as estratégias contra o BOVA11" in textos and "melhor evidência" not in textos
-    assert len(expanders) == 1 and "BOVA11" in expanders[0].dataframe[0].value["Estratégia"].tolist()
-
-
-def test_plano_do_dinheiro_real_aparece_mesmo_com_o_estudo_invalido(app_padrao):
-    # o plano padrão usa só o valor e o custo da barra lateral: um estudo inviável (3 × 20% < 100%) não o esconde
-    app_padrao.sidebar.slider(key="n_ativos_max").set_value(3).run()
-    assert not app_padrao.exception
-    assert [e for e in app_padrao.error if e.value.startswith("Inviável")]
-    _, alvo = _conservadora_sintetica()
-    assert set(_ordens_alepha(app_padrao).index) == {t.removesuffix(".SA") for t in alvo.index}
-
-
-def test_carteira_de_hoje_se_diz_estudo_quando_o_plano_e_o_do_dinheiro_real(app_padrao):
-    # o gráfico em R$ da carteira otimizada fica logo abaixo de um plano diferente para o mesmo valor
-    legendas = [c.value for c in app_padrao.caption if c.value.startswith("Estudo, só ações")]
-    assert len(legendas) == 1 and "plano acima" in legendas[0]
 
 
 # ---------------------------------------------------------------- Alepha: the Conservadora as the default plan
@@ -548,19 +115,20 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default; named Alepha, no longer
     # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
-    assert app_alepha.sidebar.segmented_control(key="modo_plano").value == "conservadora"
     # renamed "Aleph Neumann" by the user on 2026-11-03 (DECISOES 240)
     assert any(">Aleph Neumann<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
     textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
     assert not any("Fundo Alepha" in texto or "Alepha Quant" in texto for texto in textos)
-    assert any("não é um fundo de investimento" in c.value for c in app_alepha.caption)
     _, alvo = _conservadora_sintetica()
     ordens = _ordens_alepha(app_alepha)
     assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
     assert set(ordens["Ordem"]) == {"compra"}
     # the user's decision of 2026-11-03 (DECISOES 242): the real-money plan is the Composite registered in paper-v3
     assert any(m.value == "### Plano de compra: Aleph Neumann (Composite, dinheiro real)" for m in app_alepha.markdown)
-    assert any("Composite" in aviso.value and "paper-v3" in aviso.value for aviso in app_alepha.info)
+    # the user's UI list of 2026-11-03: the long notices (CVM, the Composite's record, the fixed risk rules) are gone
+    textos += [i.value for i in app_alepha.info]
+    assert not any(marca in texto for texto in textos for marca in (
+        "não é um fundo de investimento", "registrada no paper-v3 em", "Regras de risco fixas"))
 
 
 def test_the_registered_plan_is_the_composites_last_record(tmp_path):
@@ -650,16 +218,56 @@ def test_a_failure_of_the_information_only_zone_plan_still_shows_the_real_plan(m
     assert set(_ordens_alepha(at).index) == {t.removesuffix(".SA") for t in alvo.index}
 
 
-def test_all_assets_is_ticked_by_default_and_the_sidebar_says_what_each_group_changes(monkeypatch):
-    # the user's request of 2026-10-23: "Todos os ativos" checked by default; the study's selectors do not change
-    # the Alepha plan, and the sidebar says so
+def test_the_sidebar_keeps_only_the_amount_and_the_frontiers_universe_and_caps(monkeypatch):
+    # the user's UI list of 2026-11-03: no plan selector, no study block (objective, lambda, Kelly satellite, vol cap,
+    # windows, cost, shrinkage, bagging); the universe is every asset with the B3-listed US ones; the frontier's cap
+    # per asset goes up to 25% (user, 2026-11-04)
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    assert at.sidebar.checkbox(key="todos").value is True
-    textos = [m.value for m in at.sidebar.markdown] + [c.value for c in at.sidebar.caption]
-    assert any("não mudam o plano do Aleph Neumann" in texto for texto in textos)
+    assert at.sidebar.checkbox(key="todos").value is True and at.sidebar.checkbox(key="eua").value is True
+    chaves = {w.key for w in [*at.sidebar.slider, *at.sidebar.checkbox, *at.sidebar.selectbox,
+                              *at.sidebar.segmented_control]}
+    assert not {"modo_plano", "objetivo", "fracao_satelite", "vol_maxima", "janela", "anos_teste", "custo_bps",
+                "reamostrar", "n_ativos_max"} & chaves
+    assert at.sidebar.slider(key="peso_maximo").max == 25 and at.sidebar.slider(key="teto_setor").max == 30
+    assert not [m for m in at.sidebar.markdown if m.value == "## Estudo"]
+
+
+def _figuras(at: AppTest) -> list[str]:
+    return [str(grafico.proto) for grafico in at.get("plotly_chart")]
+
+
+def test_the_composite_sits_where_it_is_next_to_the_efficient_frontier(app_padrao):
+    # the user's request of 2026-11-03: the Composite and the Markowitz frontier replace "Carteira de hoje"; the point
+    # is the Composite's own estimate, never moved onto the curve
+    assert not app_padrao.exception
+    titulos = [m.value for m in app_padrao.markdown]
+    assert "## Composite na fronteira eficiente" in titulos
+    assert not {"## Carteira de hoje", "## Walk-forward fora da amostra (líquido de custos)"} & set(titulos)
+    assert any("Fronteira Eficiente" in figura and "Composite" in figura for figura in _figuras(app_padrao))
+    assert any("Composite" in c.value and "fronteira" in c.value for c in app_padrao.caption)
+
+
+def test_an_infeasible_frontier_explains_what_to_widen_and_the_plan_still_shows(app_padrao):
+    # one small sector plus the Composite's names, each capped at 5%, cannot add up to 100%
+    app_padrao.sidebar.multiselect(key="setores").set_value([SETOR_PEQUENO])
+    app_padrao.sidebar.checkbox(key="eua").uncheck()
+    app_padrao.sidebar.slider(key="peso_maximo").set_value(5).run()
+    assert not app_padrao.exception
+    assert len([e.value for e in app_padrao.error if e.value.startswith("Fronteira inviável")]) == 1
+    assert _ordens_alepha(app_padrao) is not None                  # the real plan still shows
+
+
+def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
+    titulos = [m.value for m in app_padrao.markdown]
+    assert "### BOVA11 e os ETFs de cripto da B3" not in titulos
+    assert "#### Sinal de cada ação: fatos relevantes da CVM" not in titulos
+    assert not [df for df in app_padrao.dataframe if "Fatos da CVM" in df.value.columns]
+
+
+SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
 
 
 def _curvas_sinteticas() -> pd.DataFrame:
@@ -686,6 +294,11 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
+    # the user's UI list of 2026-11-03: the survivorship-free backtest replaces the biased walk-forward, with its
+    # curves, right below the real plan and above the simulator
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index(SECAO_SEM_VIES) < titulos.index("## Simulador")
+    assert any(all(nome in figura for nome in ("Conservadora", "Composto", "BOVA11")) for figura in _figuras(at))
     periodos = [df.value for df in at.dataframe if "Período" in df.value.columns]
     assert len(periodos) == 1
     assert list(periodos[0]["Período"]) == ["Período inteiro", "Últimos 5 anos", "Últimos 3 anos"]
@@ -726,21 +339,35 @@ def test_the_year_table_has_the_cdi_and_the_selic_next_to_the_returns_and_only_t
     assert not {"CDI", "Selic"} & set(anos.columns)
 
 
-def test_the_market_panel_shows_election_timing_news_macro_and_every_stock(monkeypatch):
-    # the user's request of 2026-10-23: timing, news and sentiment on politics (elections) and the economy for all
-    # stocks, visible in the app; information only
+def test_the_market_panel_shows_news_the_dollar_and_every_stock_without_the_election(monkeypatch):
+    # the user's request of 2026-10-23 (news and macro for every stock), trimmed by the UI list of 2026-11-03: no
+    # election item, two news numbers, the dollar alone from the Focus survey, no source codes or dates
     _servicos_sinteticos(monkeypatch)
     focus = pd.DataFrame({"data": pd.to_datetime(["2026-09-18", "2026-10-16", "2026-10-16"]),
-                          "ano_referencia": [2026, 2026, 2027], "mediana": [15.0, 14.75, 12.25], "desvio": 0.1})
-    monkeypatch.setattr(servicos, "carregar_focus", lambda dia: {"Selic": focus})
+                          "ano_referencia": [2026, 2026, 2027], "mediana": [5.5, 5.4, 5.6], "desvio": 0.1})
+    monkeypatch.setattr(servicos, "carregar_focus", lambda dia: {"Selic": focus, "Câmbio": focus})
+    diario = pd.DataFrame({"dia": ["2026-11-02", "2026-11-03"], "itens": [40, 50], "relevantes": [10, 12],
+                           "tom": [0.1, -0.2], "eleicao": [0.3, 0.2],
+                           **{tema: 0.1 for tema in __import__("core.sentimento", fromlist=["x"]).TOPICOS_DO_PAINEL}})
+    monkeypatch.setattr(servicos, "carregar_painel", lambda: (diario, None, None))
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    assert any("Mercado agora" in m.value for m in at.markdown)
-    acoes = [df.value for df in at.dataframe if {"P/L", "Tipo"} <= set(df.value.columns)]
-    assert len(acoes) == 1 and len(acoes[0]) >= 100 and "Retorno 12m" in acoes[0].columns
-    assert any("Selic" in df.value.index for df in at.dataframe if "Pesquisa" in df.value.columns)
+    assert any(m.value == "## Mercado agora: notícias, macro e ações" for m in at.markdown)
+    assert not [i for i in at.info if "Eleição" in i.value]
+    rotulos = [m.label for m in at.metric]
+    assert {"Notícias relevantes para a bolsa", "Tom do mercado"} <= set(rotulos)
+    assert not {"Itens no dia", "Sobre a eleição", "IPCA 12 meses (%)"} & set(rotulos)
+    tom = next(m for m in at.metric if m.label == "Tom do mercado")
+    assert "notícias boas" in tom.help
+    ano = date.today().year
+    assert {f"Projeção Focus para o fim de {ano}", f"Projeção Focus para o fim de {ano + 1}"} <= set(rotulos)
+    assert not [m for m in at.metric if m.label == "Selic meta"]
+    assert not [df for df in at.dataframe if "Pesquisa" in df.value.columns]          # no Focus table, no dates
+    acoes = [df.value for df in at.dataframe if {"Retorno 12m", "Tipo"} <= set(df.value.columns)]
+    assert len(acoes) == 1 and len(acoes[0]) >= 100
     assert any("nada aqui muda o plano" in c.value for c in at.caption)
+    assert not [c for c in at.caption if "DECISOES 112" in c.value or "Log desde" in c.value]
 
 
 def test_the_market_panel_lists_bdrs_and_etfs_with_a_type_column_and_filters_by_type(monkeypatch):
@@ -775,34 +402,6 @@ def test_small_capital_keeps_only_bova11_and_sells_another_held_etf(monkeypatch)
     assert (ordens.loc["BOVA11", "Ordem"], ordens.loc["IVVB11", "Ordem"]) == ("manter", "venda")
 
 
-def test_the_plan_shows_a_light_per_stock_and_flags_one_that_turned_red_without_changing_the_orders(monkeypatch):
-    # the user's goal of 2026-10-24 (DECISOES 132): display only, next to each stock of the plan
-    from datetime import timedelta
-    _, alvo = _conservadora_sintetica()
-    vermelho = alvo.index[0].removesuffix(".SA")
-    dia = date.today() - timedelta(days=2)
-    fatos = pd.DataFrame({"ticker": [vermelho], "empresa": ["X"], "categoria": ["Fato Relevante"],
-                          "assunto": ["Multa"], "data": [dia], "link": ["https://www.rad.cvm.gov.br/a"],
-                          "tom_do_fato": ["bad"], "p_ruim": [0.9], "p_bom": [0.0], "p_forte": [0.8]})
-    _servicos_sinteticos(monkeypatch)
-    monkeypatch.setattr(servicos, "carregar_painel", lambda: (None, fatos, None))
-    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
-    at.run()
-    assert not at.exception
-    luzes = [df.value for df in at.dataframe if "Sinal" in df.value.columns]
-    assert len(luzes) == 1
-    luzes = luzes[0].set_index("Ticker")
-    assert set(luzes.index) == {t.removesuffix(".SA") for t in alvo.index}
-    assert luzes.loc[vermelho, "Sinal"] == "🔴 vermelho"
-    assert luzes.loc[vermelho, "Fatos da CVM"] == f"{dia:%d/%m} Multa"
-    assert set(luzes.drop(index=vermelho)["Sinal"]) == {"🟡 amarelo"}
-    assert set(luzes["Notícias e redes"]) == {"—"}
-    assert set(luzes.drop(index=vermelho)["Link"]) == {""}      # a blank cell, not Streamlit's grey "None"
-    assert len([w for w in at.warning if f"{vermelho} ficou vermelho em {dia:%d/%m}" in w.value]) == 1
-    assert any("não muda os pesos" in c.value for c in at.caption)
-    assert set(_ordens_alepha(at)["Ordem"]) == {"compra"}
-
-
 def _app_online(monkeypatch, tmp_path, token: str | None) -> AppTest:
     """The deployed app's view: no lake disk, the real headline loader, the private store's download stubbed (it
     answers only to the token "certo")."""
@@ -830,7 +429,7 @@ def test_online_the_market_panel_shows_the_headlines_from_the_private_store_with
     assert not at.exception
     tabelas = [df.value for df in at.dataframe if "titulo" in df.value.columns]
     assert len(tabelas) == 1 and tabelas[0]["titulo"].tolist() == ["Copom mantém Selic"]
-    assert any("publicadas em 26/10 às 10:05" in c.value for c in at.caption)
+    assert not [c for c in at.caption if "publicadas em" in c.value]      # the headline captions are gone
 
 
 def test_online_without_a_valid_token_the_panel_says_the_headlines_are_unavailable_and_still_renders(monkeypatch,
@@ -838,7 +437,7 @@ def test_online_without_a_valid_token_the_panel_says_the_headlines_are_unavailab
     at = _app_online(monkeypatch, tmp_path, "vencido")          # an expired token and no token read alike
     assert not at.exception
     assert not [df for df in at.dataframe if "titulo" in df.value.columns]
-    assert any("Manchetes indisponíveis na versão online agora" in c.value for c in at.caption)
+    assert any(c.value == "Manchetes indisponíveis agora." for c in at.caption)
 
 
 # ---------------------------------------------------------------- the DeepSeek adviser (DECISOES 136)
@@ -912,22 +511,21 @@ def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(mo
     assert servicos.gerar_parecer("pacote 9", ("PETR4.SA",), date(2026, 10, 27), (), None, "k").erro is None
 
 
-def _ativos_validos(at: AppTest) -> int:
-    return int(next(m.value for m in at.metric if m.label == "Ativos válidos"))
-
-
 def test_the_us_stocks_screen_is_on_standby_while_the_b3_listed_us_assets_stay(app_alepha):
-    # the user's decision of 2026-11-03 (DECISOES 240): B3 only; US stocks off the screen, code and data kept
+    # the user's decision of 2026-11-03 (DECISOES 240): B3 only; US stocks off the screen, code and data kept; the
+    # B3-listed BDRs and ETFs are in the frontier's universe by default (UI list of 2026-11-03)
     assert not app_alepha.exception
     assert not any(m.value == "## Ações americanas" for m in app_alepha.markdown)
-    assert app_alepha.sidebar.checkbox(key="eua").value is False
+    assert app_alepha.sidebar.checkbox(key="eua").value is True
 
 
-def test_eua_vem_desligado_e_ligado_soma_os_32_ativos_dos_eua_ao_universo(app):
-    sem_eua = _ativos_validos(app)
-    assert app.sidebar.checkbox(key="eua").value is False
+def _ativos_da_fronteira(at: AppTest) -> int:
+    legenda = next(c.value for c in at.caption if c.value.startswith("Fronteira com "))
+    return int(re.match(r"Fronteira com (\d+) ativos", legenda).group(1))
 
-    app.sidebar.checkbox(key="eua").check().run()
 
-    assert not app.exception
-    assert _ativos_validos(app) == sem_eua + 32
+def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
+    com_eua = _ativos_da_fronteira(app_padrao)
+    app_padrao.sidebar.checkbox(key="eua").uncheck().run()
+    assert not app_padrao.exception
+    assert _ativos_da_fronteira(app_padrao) == com_eua - 32

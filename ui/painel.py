@@ -17,25 +17,24 @@ import streamlit as st
 
 from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
-from core.sentimento import (P_DO_ESTUDO, RAZAO_DE_VOL_DO_ESTUDO, RODADAS_DO_ESTUDO, ROTULOS_DOS_TOPICOS,
-                             TOPICOS_DO_PAINEL, TURNOS_DE_2026, janela_eleitoral, ultimo_fato)
+from core.sentimento import ROTULOS_DOS_TOPICOS, TOPICOS_DO_PAINEL, ultimo_fato
 
-AVISO = ("Informação, não recomendação: nada aqui muda o plano do Aleph Neumann (a Conservadora registrada) nem as "
-         "regras de risco. O tom das notícias e os fatos relevantes ainda não foram testados como sinal: o teste "
-         "pré-registrado lê em ~outubro de 2027 (docs/preregistro-sentimento-2026-10-23.md).")
+AVISO = "Informação, não recomendação: nada aqui muda o plano nem as regras de risco."
+AJUDA_DO_TOM = ("Média do tom das notícias relevantes do dia, de −1 a +1: acima de 0, mais notícias boas que ruins para "
+                "a bolsa; abaixo de 0, mais ruins que boas.")
+DOLAR_DO_FOCUS = "Câmbio"          # the Focus line the panel keeps (the adviser's pack still reads all of them)
 PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m")
 TIPOS_DA_TABELA = ("Ação", "BDR", "ETF")
 
 
 def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame | None,
                   fundamentos: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None,
-                  focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None, selic,
+                  focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None,
                   precos: pd.DataFrame, info: dict, referencia: str) -> None:
-    st.markdown("## Mercado agora: eleição, notícias, macro e ações")
+    st.markdown("## Mercado agora: notícias, macro e ações")
     st.caption(AVISO)
-    _timing(hoje)
-    _noticias(diario, manchetes, publicadas_em)
-    _macro(hoje, focus_anual, indicadores_bcb, selic)
+    _noticias(diario, manchetes)
+    _macro(hoje, focus_anual, indicadores_bcb)
     _acoes(precos, info, fundamentos, fatos, referencia)
 
 
@@ -43,40 +42,19 @@ def _virgula(numero: float, casas: int) -> str:
     return f"{numero:.{casas}f}".replace(".", ",")
 
 
-def _timing(hoje: date) -> None:
-    janela = janela_eleitoral(hoje)
-    if janela is None:
-        return
-    turno = "1º turno" if janela.turno == TURNOS_DE_2026[0] else "2º turno"
-    quando = (f"faltam {janela.dias_ate} dia(s)" if janela.dias_ate > 0 else
-              "é hoje" if janela.dias_ate == 0 else f"foi há {-janela.dias_ate} dia(s)")
-    agora = " Estamos dentro dessa janela." if janela.dentro else ""
-    st.info(f":material/how_to_vote: Eleição: {turno} em {janela.turno:%d/%m/%Y} ({quando}). No estudo pré-registrado "
-            f"({RODADAS_DO_ESTUDO} votações de 2006 a 2022, docs/eleicao-2026-10-23.txt), a volatilidade do Ibovespa "
-            f"nos pregões 0 a +4 depois da votação ({janela.janela_inicio:%d/%m} a {janela.janela_fim:%d/%m} desta "
-            f"vez) foi {_virgula(RAZAO_DE_VOL_DO_ESTUDO, 2)} vez a de antes (p = {_virgula(P_DO_ESTUDO, 4)}), em todas "
-            f"as votações; a direção não foi testada.{agora} O plano do Aleph Neumann não muda por isso: quem comprar "
-            "ou vender nesses dias pode encontrar spread maior e preços mais nervosos.")
-
-
-def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None) -> None:
-    st.markdown("### Notícias e sentimento (política, eleição e economia)")
+def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> None:
+    st.markdown("### Notícias e sentimento")
     if diario is None or diario.empty:
         st.caption("Sem o painel de notícias (lago/sentimento_diario.parquet).")
         return
     dias = diario.set_index(pd.to_datetime(diario["dia"]))
     ultimo = dias.iloc[-1]
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Itens no dia", f"{int(ultimo['itens'])}", f"{dias.index[-1]:%d/%m/%Y}", delta_color="off",
-              delta_arrow="off", border=True)
-    c2.metric("Relevantes para a bolsa", f"{int(ultimo['relevantes'])}", border=True)
-    c3.metric("Tom do mercado", "—" if pd.isna(ultimo["tom"]) else f"{ultimo['tom']:+.2f}",
-              help="Média de P(positivo) − P(negativo) do Jev nos itens relevantes: −1 a +1.", border=True)
-    c4.metric("Sobre a eleição", "—" if pd.isna(ultimo["eleicao"]) else f"{ultimo['eleicao']:.0%}",
-              help="Fração dos itens relevantes que falam da eleição de 2026.", border=True)
+    c1, c2 = st.columns(2)
+    c1.metric("Notícias relevantes para a bolsa", f"{int(ultimo['relevantes'])}", border=True)
+    c2.metric("Tom do mercado", "—" if pd.isna(ultimo["tom"]) else f"{ultimo['tom']:+.2f}", help=AJUDA_DO_TOM,
+              border=True)
     if len(dias) > 1:
-        st.line_chart(dias[["tom", "eleicao"]].rename(columns={"tom": "Tom", "eleicao": "Eleição (fração)"}),
-                      y_label="Tom / fração")
+        st.line_chart(dias["tom"].rename("Tom do mercado"), y_label="Tom (−1 a +1)")
     temas = dias[list(TOPICOS_DO_PAINEL)].tail(7).mean().rename(ROTULOS_DOS_TOPICOS)
     st.bar_chart(temas.rename("Peso médio nos últimos 7 dias"), horizontal=True, x_label="Peso médio do tema")
     if manchetes is not None and not manchetes.empty:
@@ -86,31 +64,26 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None, publi
                                     "tom": st.column_config.NumberColumn("Tom", format="%+.2f"),
                                     "link": st.column_config.LinkColumn("Link", display_text="abrir")},
                      alt="Manchetes relevantes dos últimos 3 dias, com tema e tom do Jev")
-        if publicadas_em is not None:
-            st.caption(f"Manchetes publicadas em {publicadas_em:%d/%m às %H:%M} pela manutenção do Aleph Neumann (dias úteis, "
-                       "10:00, 16:00 e 22:30), lidas de um repositório privado: só título, link, tema e tom.")
     else:
-        st.caption("Manchetes indisponíveis na versão online agora: elas ficam num repositório privado (o texto é dos "
-                   "veículos) e a página as lê com um token; sem ele, ou com o GitHub fora do ar, ficam só os números.")
-    st.caption(f"Log desde 23/10/2026: 9 veículos por RSS a cada 2 h, buscas e redes (Reddit, Threads) duas vezes por "
-               f"dia; notas do Jev (TypeSafe) com perguntas fixas. Dados até {dias.index[-1]:%d/%m/%Y}.")
+        st.caption("Manchetes indisponíveis agora.")
 
 
-def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None, selic) -> None:
-    st.markdown("### Macroeconomia (Banco Central, ao vivo)")
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Selic meta", f"{selic.valor:.2%}", selic.fonte, delta_color="off", delta_arrow="off", border=True)
-    for coluna, (nome, (quando, valor)) in zip((c2, c3), (indicadores_bcb or {}).items()):
-        coluna.metric(nome, f"{valor:,.2f}", f"{quando:%d/%m/%Y}", delta_color="off", delta_arrow="off", border=True)
-    if focus_anual is None:
-        st.caption("Focus indisponível agora (API do BCB).")
+def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None) -> None:
+    """The dollar alone (the user's UI list of 2026-11-03): the last PTAX and the Focus median for this year and the
+    next, with no source codes or dates."""
+    st.markdown("### Dólar (Banco Central, ao vivo)")
+    ptax = next((valor for nome, (_, valor) in (indicadores_bcb or {}).items() if nome.startswith("Dólar")), None)
+    colunas = st.columns(3)
+    colunas[0].metric("Dólar PTAX hoje", "—" if ptax is None else f"R$ {_virgula(ptax, 2)}", border=True)
+    if focus_anual is None or DOLAR_DO_FOCUS not in focus_anual:
+        st.caption("Projeção do Focus indisponível agora (API do BCB).")
         return
-    resumo = resumo_focus(focus_anual, hoje.year)
-    st.dataframe(resumo, width="stretch",
-                 column_config={"Pesquisa": st.column_config.DateColumn(format="DD/MM/YYYY")},
-                 alt="Mediana do Focus para este ano e o próximo e a mudança em 4 semanas")
-    st.caption("Focus: mediana das projeções do mercado (Selic e PIB em % a.a., IPCA em %, câmbio em R\\$/US\\$ no fim do "
-               "ano). Os filtros macro foram testados no BOVA11 e não passaram (DECISOES 112): aqui é contexto.")
+    linha = resumo_focus({DOLAR_DO_FOCUS: focus_anual[DOLAR_DO_FOCUS]}, hoje.year).iloc[0]
+    for coluna, ano in zip(colunas[1:], (hoje.year, hoje.year + 1)):
+        valor = linha[str(ano)]
+        coluna.metric(f"Projeção Focus para o fim de {ano}", "—" if pd.isna(valor) else f"R$ {_virgula(valor, 2)}",
+                      help="Mediana das projeções dos economistas que o Banco Central consulta toda semana.",
+                      border=True)
 
 
 def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, fatos: pd.DataFrame | None,

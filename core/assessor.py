@@ -1,5 +1,5 @@
 """
-assessor.py - The DeepSeek adviser of the Aleph Neumann page (DECISOES 136, design in
+assessor.py - The DeepSeek adviser of the Aleph Quant page (DECISOES 136, design in
 docs/superpowers/specs/2026-10-25-assessor-deepseek-design.md): DeepSeek V4.1 Flash reads an evidence pack (the
 plan's stocks, their numbers, BCB macro data, CVM filings, headlines), may call tools that add evidence, and answers
 one JSON opinion per stock. Every factual claim cites one evidence id and quotes it; ``validar_parecer`` keeps only the
@@ -294,7 +294,7 @@ def montar_pacote(*, plano: pd.Series, registrada: date, acoes: pd.DataFrame, pe
     itens: list[tuple[str, str, str]] = [("bcb", quando, texto) for quando, texto in macro]
     tickers = sorted(ticker.removesuffix(".SA") for ticker in plano.index)
     registro = f"{registrada:%Y-%m-%d}"
-    itens += [("plano", registro, f"{ticker} está na carteira do Aleph Neumann registrada em {registrada:%d/%m/%Y}, "
+    itens += [("plano", registro, f"{ticker} está na carteira do Aleph Quant registrada em {registrada:%d/%m/%Y}, "
                                   f"peso alvo {_br(100 * float(plano[ticker + '.SA']), 1)}%") for ticker in tickers]
     for ticker in tickers:
         if ticker in acoes.index:
@@ -574,7 +574,7 @@ HORAS_DE_PICO_UTC = frozenset({1, 2, 3, 6, 7, 8, 9})     # 01-04 and 06-10 UTC, 
 PRECO_DA_FERRAMENTA_DEEPSEEK = 0.00075                     # per successful Search or Fetch call
 COBRANCA_DAS_FERRAMENTAS_DESDE = datetime(2026, 10, 31, 16, 0, tzinfo=timezone.utc)   # 01/11 00:00 in Beijing
 
-INSTRUCOES = """You are the Aleph Neumann adviser: an impartial, skeptical equity analyst inside a personal study tool for \
+INSTRUCOES = """You are the Aleph Quant adviser: an impartial, skeptical equity analyst inside a personal study tool for \
 Brazilian stocks (B3). You judge the stocks of <<CARTEIRA>>, for an \
 extremely aggressive investor ("extremamente arrojado"): one who seeks the highest possible return over five years \
 or more, accepts high volatility, deep drawdowns and concentrated, asymmetric bets when the potential return pays \
@@ -621,7 +621,7 @@ Judge every stock of the plan exactly once.
 
 EVIDENCE (id | class | date | text)
 """
-PEDIDO = ("Emita o parecer do Aleph Neumann para o investidor extremamente arrojado sobre as ações do plano: {tickers}. "
+PEDIDO = ("Emita o parecer do Aleph Quant para o investidor extremamente arrojado sobre as ações do plano: {tickers}. "
           "Hoje é {hoje}.")
 CORTADA = ("a resposta foi cortada no limite de tokens: seja mais curto, no máximo 3 afirmações por lista e frases "
            "curtas")
@@ -629,7 +629,7 @@ REPARO = ("Sua resposta não passou na checagem do app: {erros}. Reenvie o objet
           "só com afirmações que citam uma evidência.")
 
 
-CARTEIRA_CONSERVADORA = ("the Aleph Neumann plan, a rule-based Conservative Formula portfolio (low volatility, "
+CARTEIRA_CONSERVADORA = ("the Aleph Quant plan, a rule-based Conservative Formula portfolio (low volatility, "
                          "dividends and momentum; equal weights; at most 4 per sector; rebalanced every 63 sessions; "
                          "low-volatility by construction)")
 CARTEIRA_COMPOSTA = ("the Composite portfolio, the app's best-measured strategy: the Conservative Formula's rule (15 "

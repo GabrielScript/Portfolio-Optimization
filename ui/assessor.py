@@ -1,6 +1,6 @@
 """
 assessor.py - Screen block of the DeepSeek adviser (``core.assessor``, DECISOES 136): one button, one opinion on the
-Aleph Neumann plan's stocks, each claim shown with the evidence it quotes, plus what the check dropped and what it cost.
+Aleph Quant plan's stocks, each claim shown with the evidence it quotes, plus what the check dropped and what it cost.
 Information only: nothing here reaches the weights or the orders. UI strings are Portuguese, like the rest of the app.
 """
 
@@ -48,7 +48,7 @@ def _fonte(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str:
 
 def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[], Resultado]) -> None:
     """The adviser's block; ``indisponivel`` is the reason it cannot run here (no key, no registered plan)."""
-    st.markdown("### Assessor do Aleph Neumann (DeepSeek)")
+    st.markdown("### Assessor do Aleph Quant (DeepSeek)")
     if indisponivel:
         st.caption(f"Assessor indisponível nesta versão do app: {indisponivel}.")
         return
@@ -113,5 +113,5 @@ def _mostrar(resultado: Resultado, universo: list[str]) -> None:
         with st.expander(f"{len(descartes)} afirmação descartada pela checagem" if len(descartes) == 1 else
                          f"{len(descartes)} afirmações descartadas pela checagem"):
             st.markdown("\n".join(f"- {sem_markdown(motivo)}" for motivo in descartes))
-    st.caption("Informativo: não muda os pesos nem as ordens do Aleph Neumann, e não é recomendação de investimento. "
+    st.caption("Informativo: não muda os pesos nem as ordens do Aleph Quant, e não é recomendação de investimento. "
                "Opinião de um modelo de linguagem sobre evidências conferidas, sem teste de que acerte.")

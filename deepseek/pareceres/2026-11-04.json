@@ -74,7 +74,7 @@
       "citacao": "DY 12m 39,7%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E8",
       "citacao": "peso alvo 6,7%"
      }
@@ -131,7 +131,7 @@
       "citacao": "Queda máx. (3 anos) -21,8%; DY 12m 12,9%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E9",
       "citacao": "peso alvo 6,7%"
      }
@@ -302,7 +302,7 @@
       "citacao": "Queda máx. (3 anos) -24,9%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E12",
       "citacao": "peso alvo 6,7%"
      }
@@ -696,7 +696,7 @@
       "citacao": "Queda máx. (3 anos) -19,4%; DY 12m 5,3%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E19",
       "citacao": "peso alvo 6,7%"
      }
@@ -1000,13 +1000,13 @@
    "id": "E12",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "ITSA4 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "ITSA4 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E19": {
    "id": "E19",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "PSSA3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "PSSA3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E23": {
    "id": "E23",
@@ -1186,7 +1186,7 @@
    "id": "E8",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "ALLD3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "ALLD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E80": {
    "id": "E80",
@@ -1198,7 +1198,7 @@
    "id": "E9",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "BBSE3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "BBSE3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E91": {
    "id": "E91",

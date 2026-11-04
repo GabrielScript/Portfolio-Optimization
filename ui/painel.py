@@ -3,7 +3,7 @@ painel.py - Screen block "Mercado agora": the election timing, the news tone of 
 material filings, the Focus survey and a table of every stock (risk from the prices, valuation from the CVM
 statements). The user asked for it on 2026-10-23 (DECISOES 124).
 
-Advice boundary (prediction-market-risk-review): information only. Nothing here changes the Aleph Neumann plan or the
+Advice boundary (prediction-market-risk-review): information only. Nothing here changes the Aleph Quant plan or the
 risk rules; the news tone has not been tested as a signal (its pre-registered test reads in ~October 2027). UI strings
 are Portuguese, like the rest of the app.
 """

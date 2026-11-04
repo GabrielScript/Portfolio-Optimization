@@ -74,9 +74,9 @@
       "citacao": "DY 12m 29,4%"
      },
      {
-      "afirmacao": "ALLD3 está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "ALLD3 está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E8",
-      "citacao": "ALLD3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+      "citacao": "ALLD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
      }
     ],
     "contra_tese_macro": [
@@ -557,9 +557,9 @@
     "ticker": "MLAS3",
     "tese": [
      {
-      "afirmacao": "MLAS3 está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "MLAS3 está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E17",
-      "citacao": "MLAS3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+      "citacao": "MLAS3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
      }
     ],
     "contra_tese_macro": [
@@ -708,9 +708,9 @@
     "ticker": "SAUD3",
     "tese": [
      {
-      "afirmacao": "SAUD3 está na carteira do Aleph Neumann com peso alvo de 6,7%.",
+      "afirmacao": "SAUD3 está na carteira do Aleph Quant com peso alvo de 6,7%.",
       "evidencia": "E20",
-      "citacao": "SAUD3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+      "citacao": "SAUD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
      },
      {
       "afirmacao": "Há acordo de investimento entre Atlântica Hospitais e Rede DOr para construção do Hospital Biocor, em Nova Lima.",
@@ -960,13 +960,13 @@
    "id": "E17",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "MLAS3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "MLAS3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E20": {
    "id": "E20",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "SAUD3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "SAUD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E23": {
    "id": "E23",
@@ -1122,7 +1122,7 @@
    "id": "E8",
    "classe": "plano",
    "data": "2026-10-27",
-   "texto": "ALLD3 está na carteira do Aleph Neumann registrada em 27/10/2026, peso alvo 6,7%"
+   "texto": "ALLD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
   },
   "E80": {
    "id": "E80",

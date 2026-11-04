@@ -1,5 +1,5 @@
 """
-app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Aleph Neumann.
+app.py - Dashboard Streamlit (camada fina sobre o pacote ``core``): o Aleph Quant.
 Otimizador de carteiras de ações da B3 para o investidor arrojado.
 Autor: Gabriel Estrela Lopes
 
@@ -23,7 +23,7 @@ import streamlit as st
 from ui.marca import ICONE_PADRAO, arquivo_da_logo, arquivo_do_icone  # noqa: E402  (stdlib only: safe before set_page_config)
 
 LOGO, ICONE = arquivo_da_logo(), arquivo_do_icone()
-st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon=str(ICONE or ICONE_PADRAO),
+st.set_page_config(page_title="Aleph Quant · Alocação quantitativa B3", page_icon=str(ICONE or ICONE_PADRAO),
                    layout="wide")
 if LOGO is not None:
     st.logo(str(LOGO), icon_image=str(ICONE), size="large")
@@ -73,7 +73,7 @@ class Entradas:
 
 def ler_sidebar() -> Entradas:
     with st.sidebar:
-        st.markdown("## Aleph Neumann")
+        st.markdown("## Aleph Quant")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
         st.markdown("### Fronteira eficiente")
@@ -112,9 +112,13 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 def main() -> None:
     # native theme in .streamlit/config.toml (the user's design request of 2026-11-04); the gold title is the theme's
-    st.title(":yellow[Aleph Neumann]")
-    st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Composite no lago sem viés de sobrevivência · "
-               "Gabriel Estrela Lopes")
+    # the user's eagle above the name, both centered (the user, 2026-11-04)
+    with st.container(horizontal_alignment="center", gap=None):
+        if ICONE is not None:
+            st.image(str(ICONE), width=120, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
+        st.title(":yellow[Aleph Quant]", text_alignment="center")
+        st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Composite no lago sem viés de sobrevivência · "
+                   "Gabriel Estrela Lopes", text_alignment="center")
     entradas = ler_sidebar()
     registrado = servicos.carregar_plano_registrado()
     secao_conservadora(entradas, registrado)
@@ -150,7 +154,7 @@ def secao_mercado() -> None:
 
 
 def secao_assessor() -> None:
-    """The DeepSeek adviser on the registered Aleph Neumann plan (information only, DECISOES 136)."""
+    """The DeepSeek adviser on the registered Aleph Quant plan (information only, DECISOES 136)."""
     registrado = servicos.carregar_plano_registrado()
     chave = servicos.chave_da_api("deepseek", "DEEPSEEK_API_KEY")
     indisponivel = ("sem carteira registrada no paper-v3" if registrado is None else
@@ -168,9 +172,9 @@ def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assesso
 
 
 def secao_conservadora(entradas: Entradas, registrado: tuple[date, pd.Series] | None) -> None:
-    st.markdown("### Plano de compra: Aleph Neumann (Composite, dinheiro real)")
+    st.markdown("### Plano de compra: Aleph Quant (Composite, dinheiro real)")
     if registrado is None:
-        st.error("Sem carteira registrada no paper-v3 (paper-v3/composto.csv): o plano do Aleph Neumann usa a de lá.")
+        st.error("Sem carteira registrada no paper-v3 (paper-v3/composto.csv): o plano do Aleph Quant usa a de lá.")
         return
     _, alvo = registrado
     posicoes = {ticker + ".SA": posicao for ticker, posicao in posicoes_da_tabela(alepha.editor_de_posicoes()).items()}

@@ -202,7 +202,7 @@ def test_a_run_saves_the_due_readings_and_the_new_snapshot_commits_them_and_push
             "lago/liquidez.parquet"} <= set(publicados)
     assert "data/b3lake/manifest.json" not in publicados                  # only the upkeep's own paths
     titulos = [titulo for titulo, _ in resultado.avisos]
-    assert titulos == ["Aleph Neumann: leitura de 126 pregões", "Aleph Neumann: progresso de 04/2027"]
+    assert titulos == ["Aleph Quant: leitura de 126 pregões", "Aleph Quant: progresso de 04/2027"]
     assert "Critério principal" in resultado.avisos[0][1]
 
 
@@ -224,7 +224,7 @@ def test_a_run_saves_paper_v3s_due_reading_in_its_own_folder_commits_and_notifie
     assert resultado.desfecho == "ok"
     assert "paper-v3/leituras/leitura-126.txt" in publicados
     assert not any(caminho.startswith("paper-v3/leituras/progresso") for caminho in publicados)
-    aviso = dict(resultado.avisos)["Aleph Neumann: paper-v3, leitura de 126 pregões"]
+    aviso = dict(resultado.avisos)["Aleph Quant: paper-v3, leitura de 126 pregões"]
     assert aviso.startswith("Decision (pre-registered")
 
 
@@ -293,8 +293,8 @@ def test_a_reading_whose_commit_failed_is_committed_and_notified_by_the_next_run
     assert segunda.desfecho == "ok"
     assert {"paper-v2/leituras/leitura-126.txt", "paper-v2/leituras/progresso-2027-04.txt",
             "lago/liquidez.parquet"} <= set(publicados)
-    assert [titulo for titulo, _ in segunda.avisos] == ["Aleph Neumann: leitura de 126 pregões",
-                                                         "Aleph Neumann: progresso de 04/2027"]
+    assert [titulo for titulo, _ in segunda.avisos] == ["Aleph Quant: leitura de 126 pregões",
+                                                         "Aleph Quant: progresso de 04/2027"]
 
 
 def test_a_git_error_while_checking_the_checkout_is_a_failed_run_not_a_crash(app, tmp_path):
@@ -367,8 +367,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 def test_the_notification_gets_title_and_body_intact_with_accents_quotes_and_lines():
     from scripts.manutencao import avisar
     corpo = 'Critério principal: saída final da Conservadora >= a do "BOVA11"\nCritério secundário: vol <= a do BOVA11'
-    assert avisar(RAIZ, "Aleph Neumann: leitura de 126 pregões", corpo, mostrar=True) == (
-        f"Aleph Neumann: leitura de 126 pregões | {corpo}")
+    assert avisar(RAIZ, "Aleph Quant: leitura de 126 pregões", corpo, mostrar=True) == (
+        f"Aleph Quant: leitura de 126 pregões | {corpo}")
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows Task Scheduler")
@@ -386,9 +386,9 @@ def test_every_notification_is_sent_and_a_failed_one_is_recorded_in_the_outcome(
         if titulo == "quebra":
             raise subprocess.CalledProcessError(1, ["powershell.exe"])
         enviados.append((titulo, corpo))
-    feito = Resultado("ok", "leituras: leitura-126", [("Aleph Neumann: leitura de 126 pregões", "c"), ("quebra", "x")])
+    feito = Resultado("ok", "leituras: leitura-126", [("Aleph Quant: leitura de 126 pregões", "c"), ("quebra", "x")])
     resultado = notificar(feito, avisar)
-    assert enviados == [("Aleph Neumann: leitura de 126 pregões", "c")]
+    assert enviados == [("Aleph Quant: leitura de 126 pregões", "c")]
     assert (resultado.desfecho, resultado.nota.startswith("leituras: leitura-126; aviso: CalledProcessError")) == (
         "falhou", True)
     assert notificar(Resultado("ok", "nada", []), avisar) == Resultado("ok", "nada", [])

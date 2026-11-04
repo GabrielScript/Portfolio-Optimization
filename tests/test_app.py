@@ -115,8 +115,8 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     # the user's decisions of 2026-10-23 (DECISOES 117): the Conservadora sleeve by default; named Alepha, no longer
     # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
-    # renamed "Aleph Neumann" by the user on 2026-11-03 (DECISOES 240)
-    assert any("Aleph Neumann" in t.value for t in app_alepha.title)
+    # renamed "Aleph Quant" by the user on 2026-11-04 (was "Aleph Neumann", DECISOES 240 and 250)
+    assert any("Aleph Quant" in t.value for t in app_alepha.title)
     # the native theme replaced the injected CSS (the user's design request of 2026-11-04)
     assert not any("<style" in m.value for m in app_alepha.markdown)
     textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
@@ -126,7 +126,7 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     assert set(ordens.index) == {t.removesuffix(".SA") for t in alvo.index}
     assert set(ordens["Ordem"]) == {"compra"}
     # the user's decision of 2026-11-03 (DECISOES 242): the real-money plan is the Composite registered in paper-v3
-    assert any(m.value == "### Plano de compra: Aleph Neumann (Composite, dinheiro real)" for m in app_alepha.markdown)
+    assert any(m.value == "### Plano de compra: Aleph Quant (Composite, dinheiro real)" for m in app_alepha.markdown)
     # the user's UI list of 2026-11-03: the long notices (CVM, the Composite's record, the fixed risk rules) are gone
     textos += [i.value for i in app_alepha.info]
     assert not any(marca in texto for texto in textos for marca in (

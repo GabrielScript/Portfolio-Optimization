@@ -76,3 +76,13 @@ def test_the_icon_is_square_so_the_tab_and_the_collapsed_sidebar_show_it_full_si
     import re
     caixa = re.search(r'viewBox="([^"]+)"', arquivo_do_icone().read_text(encoding="utf-8")).group(1).split()
     assert float(caixa[2]) == float(caixa[3])
+
+
+def test_no_file_of_the_app_still_carries_the_old_name():
+    # the user renamed the app "Aleph Quant" on 2026-11-04 and asked that no "Neumann" stay; DECISOES.md is the
+    # history log and keeps the old entries as written
+    import subprocess
+    achados = subprocess.run(["git", "grep", "-l", "-i", "neumann", "--", ".", ":!DECISOES.md",
+                              ":!tests/test_tema.py", ":!tests/test_app.py"],
+                             capture_output=True, text=True, cwd=Path(__file__).resolve().parents[1]).stdout.split()
+    assert achados == []

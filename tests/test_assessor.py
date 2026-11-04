@@ -169,7 +169,7 @@ def test_the_pack_numbers_each_fact_in_a_fixed_order_with_brazilian_numbers_and_
     assert [e.classe for e in pacote] == ["bcb", "plano", "plano", "mercado", "mercado", "cvm", "cvm", "cvm", "cvm",
                                           "aviso"]
     textos = [e.texto for e in pacote]
-    assert textos[1] == "PETR4 está na carteira do Aleph Neumann registrada em 23/10/2026, peso alvo 50,0%"
+    assert textos[1] == "PETR4 está na carteira do Aleph Quant registrada em 23/10/2026, peso alvo 50,0%"
     assert textos[3] == ("PETR4 (Petrobras, Petróleo): Preço (R$) 30,13; Retorno 12m 5,1%; Vol anual 27,5%; "
                          "Beta 0,85; P/L 4,80; DY 12m 11,2%; Fechamento de 24/10/2026; Balanço de 30/06/2026")
     assert "Beta" not in textos[4] and "Retorno 12m -12,3%" in textos[4]

@@ -1,5 +1,5 @@
 """
-alepha.py - Screen blocks of the Aleph Neumann plan: the Composite registered in paper-v3 as the real-money plan
+alepha.py - Screen blocks of the Aleph Quant plan: the Composite registered in paper-v3 as the real-money plan
 (the user's decision of 2026-10-23, DECISOES 117), from the current positions (``core.rebalanceio``).
 
 Advice boundary (prediction-market-risk-review): backtest numbers appear as measured past, with the live proof still
@@ -101,7 +101,7 @@ def tabela_rebalanceio(plano: Rebalanceio, zona: Rebalanceio | None, patrimonio:
         tabela["Zona"] = ["pularia" if situacao == SITUACAO_PULAR else ""
                           for situacao in zona.ordens["situacao"].reindex(ordens.index).fillna("")]
     st.dataframe(filtrar(tabela, "ordens"), width="stretch", hide_index=True, column_config=COLUNAS_ORDENS,
-                 alt="Plano do Aleph Neumann: ordens de compra e venda a partir das posições atuais")
+                 alt="Plano do Aleph Quant: ordens de compra e venda a partir das posições atuais")
     vendas = ordens["delta"] < 0
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Patrimônio", f"R$ {patrimonio:,.2f}", border=True)

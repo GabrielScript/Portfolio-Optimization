@@ -19,7 +19,7 @@ from core.segredos import ARQUIVO_ENV, segredo
 
 SERVIDOR, PORTA = "smtp.gmail.com", 587
 PRAZO_S = 30
-RODAPE = ("Simulador do Aleph Neumann (conta fictícia de R$ 10.000): Composite, Conservadora e a carteira do "
+RODAPE = ("Simulador do Aleph Quant (conta fictícia de R$ 10.000): Composite, Conservadora e a carteira do "
           "DeepSeek. Informação, não é recomendação de investimento.")
 
 
@@ -48,7 +48,7 @@ def mensagem_das_ordens(ordens: pd.DataFrame) -> tuple[str, str]:
     feitas = ordens[ordens["ordem"] != 0]
     dias = sorted(pd.to_datetime(feitas["data"]).dt.date.unique())
     quando = ", ".join(f"{dia:%d/%m/%Y}" for dia in dias)
-    assunto = f"Aleph Neumann: {len(feitas)} ordem(ns) no simulador em {quando}"
+    assunto = f"Aleph Quant: {len(feitas)} ordem(ns) no simulador em {quando}"
     blocos = []
     for carteira, linhas in feitas.groupby("carteira", sort=False):
         itens = [f"  {'COMPRA' if linha.ordem > 0 else 'VENDA'} {abs(int(linha.ordem))} {linha.ticker} a "

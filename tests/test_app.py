@@ -541,7 +541,7 @@ def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
     assert _ativos_da_fronteira(app_padrao) == com_eua - 32
 
 
-def test_every_table_with_a_category_column_has_its_filters(monkeypatch):
+def test_every_table_has_its_filters(monkeypatch):
     # the user's UI list of 2026-11-03: a "Filtros" button above each table, one multiselect per category column
     from ui import alepha, filtros, painel, simulador
     from ui import assessor as ui_assessor
@@ -584,10 +584,10 @@ def test_every_table_with_a_category_column_has_its_filters(monkeypatch):
     at.run()
     at.button(key="gerar_parecer").click().run()
     assert not at.exception
-    mostradas = [df.value for df in at.dataframe]
-    com_categoria = [tuple(df.columns) for df in mostradas if filtros.colunas_de_categoria(df)]
-    sem_filtro = [colunas[:3] for colunas in com_categoria if colunas not in filtradas]
-    assert com_categoria and not sem_filtro, sem_filtro
+    mostradas = [tuple(df.value.columns) for df in at.dataframe]
+    sem_filtro = [colunas[:3] for colunas in mostradas if colunas not in filtradas]
+    assert mostradas and not sem_filtro, sem_filtro      # every table shown, with or without a category column
+    assert len(at.get("popover")) >= len(mostradas)
     chaves = {m.key for m in at.multiselect}
     assert {"filtro_ordens_Ordem", "filtro_fatos_categoria", "filtro_manchetes_fonte",
             "filtro_parecer_deepseek_Parecer do DeepSeek", "filtro_acoes_Tipo", "filtro_acoes_Setor"} <= chaves

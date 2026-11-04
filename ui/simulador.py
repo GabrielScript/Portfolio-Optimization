@@ -77,13 +77,15 @@ def secao(painel: Painel | None) -> None:
                       _sinal(principal["Desde o início"]))
     for coluna, periodo in zip(colunas[1:], ("Dia", "Semana", "Mês"), strict=True):
         coluna.metric(periodo, _sinal(principal[periodo]))
-    st.dataframe(retornos, width="stretch", column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
+    st.dataframe(filtrar(retornos.rename_axis("Carteira"), "retornos_simulador"), width="stretch",
+                 column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
                  alt="Retorno do dia, da semana, do mês e desde o início, e queda máxima de cada curva")
     grafico, queda = st.columns(2)
     grafico.line_chart(curvas, y_label="R$")
     queda.line_chart(quedas(curvas), y_label="Queda desde o pico")
     for carteira, tabela in painel.posicoes.items():
         st.markdown(f"**Posições: {carteira}**")
-        st.dataframe(tabela, width="stretch", column_config=COLUNAS_DAS_POSICOES,
+        st.dataframe(filtrar(tabela.rename_axis("Ativo"), f"posicoes_{carteira}"), width="stretch",
+                     column_config=COLUNAS_DAS_POSICOES,
                      alt=f"Ações, caixa e reserva de opções da carteira {carteira} no último fechamento")
     st.caption(f"Último fechamento: {pd.Timestamp(curvas.index[-1]):%d/%m/%Y}.")

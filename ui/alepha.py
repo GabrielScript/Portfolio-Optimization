@@ -168,7 +168,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
         **{f"{medida} {nome}": medidas[(nome, coluna)].astype(float).to_numpy()
            for medida, coluna in (("Retorno a.a.", "CAGR"), ("Vol", "Vol anual"), ("Queda máx.", "MDD"))
            for nome in BRACOS}})
-    st.dataframe(tabela, width="stretch", hide_index=True,
+    st.dataframe(filtrar(tabela, "periodos"), width="stretch", hide_index=True,
                  column_config={coluna: st.column_config.NumberColumn(format="percent")
                                 for coluna in tabela.columns[3:]},
                  alt="Conservadora, Composto e BOVA11 no período inteiro e nos últimos 5 e 3 anos")
@@ -183,7 +183,9 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
                             **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA[len(BRACOS):]}})
     formato = "%.2f" if medida in SEM_PORCENTO else "percent"
     c1, c2 = st.columns([3, 2])
-    c1.dataframe(por_ano, width="stretch", hide_index=True,
+    with c1:
+        filtrado = filtrar(por_ano, "por_ano")
+    c1.dataframe(filtrado, width="stretch", hide_index=True,
                  column_config={nome: st.column_config.NumberColumn(format=formato) for nome in por_ano.columns[1:]},
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
     c2.bar_chart(por_ano.set_index("Ano")[list(BRACOS)], stack=False, y_label=medida,

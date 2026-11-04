@@ -333,6 +333,16 @@ def test_the_screen_shows_the_account_value_returns_and_both_position_tables():
     assert not tela.warning
 
 
+def test_each_simulator_table_has_its_filters_and_filters_by_portfolio():
+    # the user's UI list of 2026-11-03: a "Filtros" button above each table
+    from streamlit.testing.v1 import AppTest
+    tela = AppTest.from_function(_tela_com_conta, default_timeout=TIMEOUT_S).run()
+    assert len(tela.get("popover")) == len(tela.dataframe) == 3
+    tela.multiselect(key="filtro_retornos_simulador_Carteira").set_value(["Composto"]).run()
+    assert not tela.exception
+    assert tela.dataframe[0].value.index.tolist() == ["Composto"]
+
+
 def test_the_screen_warns_when_the_cdi_is_missing():
     from streamlit.testing.v1 import AppTest
     tela = AppTest.from_function(_tela_sem_cdi, default_timeout=TIMEOUT_S).run()

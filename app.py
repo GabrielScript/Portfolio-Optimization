@@ -20,13 +20,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-from ui.marca import ICONE_PADRAO, arquivo_da_logo  # noqa: E402  (stdlib only: safe before set_page_config)
+from ui.marca import ICONE_PADRAO, arquivo_da_logo, arquivo_do_icone  # noqa: E402  (stdlib only: safe before set_page_config)
 
-LOGO = arquivo_da_logo()
-st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon=str(LOGO or ICONE_PADRAO),
+LOGO, ICONE = arquivo_da_logo(), arquivo_do_icone()
+st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon=str(ICONE or ICONE_PADRAO),
                    layout="wide")
 if LOGO is not None:
-    st.logo(str(LOGO), size="large")
+    st.logo(str(LOGO), icon_image=str(ICONE), size="large")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)

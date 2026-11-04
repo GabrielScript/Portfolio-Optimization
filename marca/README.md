@@ -1,5 +1,9 @@
 # Logo
 
-Put the app's logo here as `logo.svg`, `logo.png`, `logo.webp` or `logo.jpg` (the first one found wins). The app
-then shows it at the top of the sidebar (`st.logo`, size "large") and as the browser tab icon. A wide logo on a
-transparent background works best on the dark theme: about 240 x 60 px, or an SVG.
+The user's own eagle, traced to vector (2026-11-04).
+
+- `logo.svg`: symbol + name, wide, transparent background. Shown at the top of the sidebar (`st.logo`, size "large").
+- `icone.svg`: the eagle alone. Shown as the browser tab icon and when the sidebar is collapsed.
+
+To change them, replace the files (`.svg`, `.png`, `.webp` or `.jpg`; the first one found wins). An SVG on a
+transparent background works best on the dark theme.

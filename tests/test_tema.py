@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from ui.marca import arquivo_da_logo
+from ui.marca import arquivo_da_logo, arquivo_do_icone
 
 CONFIG = Path(__file__).resolve().parents[1] / ".streamlit" / "config.toml"
 
@@ -56,3 +56,17 @@ def test_the_logo_shows_only_once_the_user_adds_the_file(tmp_path):
     assert arquivo_da_logo(tmp_path) is None
     (tmp_path / "logo.png").write_bytes(b"\x89PNG")
     assert arquivo_da_logo(tmp_path) == tmp_path / "logo.png"
+
+
+def test_the_icon_is_the_compact_mark_when_there_is_one_else_the_logo(tmp_path):
+    # the full logo (symbol + name) is too wide for the tab and the collapsed sidebar: a separate icon file wins there
+    (tmp_path / "logo.svg").write_text("<svg/>")
+    assert arquivo_do_icone(tmp_path) == tmp_path / "logo.svg"
+    (tmp_path / "icone.svg").write_text("<svg/>")
+    assert arquivo_do_icone(tmp_path) == tmp_path / "icone.svg"
+
+
+def test_the_shipped_logo_and_icon_are_vector_files_with_the_gold_gradient():
+    for arquivo in (arquivo_da_logo(), arquivo_do_icone()):
+        texto = arquivo.read_text(encoding="utf-8")
+        assert arquivo.suffix == ".svg" and 'url(#gold)' in texto and "<image" not in texto   # no embedded bitmap

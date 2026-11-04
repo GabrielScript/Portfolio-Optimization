@@ -1,6 +1,7 @@
 {
- "quando": "2026-11-04T05:04:55+00:00",
+ "quando": "2026-11-04T20:06:53+00:00",
  "base_do_composto": "2026-10-27",
+ "base_da_conservadora": "2026-10-27",
  "modelo": "deepseek-flash",
  "esforco": "max",
  "universo": [
@@ -18,45 +19,36 @@
   "MILS3",
   "PSSA3",
   "ITSA4",
-  "CXSE3"
+  "CXSE3",
+  "BRAP4",
+  "BMGB4",
+  "INTB3",
+  "VALE3",
+  "ALOS3",
+  "CPLE3"
  ],
  "parecer": {
-  "resumo": "A carteira combina pagadores de dividendos, cíclicos baratos e nomes de baixa volatilidade; sob juros altos, prefiro companhias lucrativas, com dívida controlada e momento forte, e descarto as que não geram lucro ou carregam eventos societários que podem encerrar a tese. Petróleo, alto padrão e locação de equipamentos são as apostas mais alinhadas ao perfil arrojado; seguradoras e a holding financeira entram pela consistência. Multilaser e Allied ficam de fora por destruição de capital e ausência de lucro.",
+  "resumo": "O cenário macro combina juros altos, inflação persistente e crescimento fraco, o que exige seletividade. O parecer prioriza empresas com retorno sobre capital elevado, valuation baixo, dividendos sustentáveis e sinais de momentum, caso de JHSF, Petrobras, Mills e BB Seguridade. Ficam de fora, ou em posição neutra, nomes sem lucro, com alavancagem elevada ou com eventos societários sem termos conhecidos.",
   "cenario_macro": [
    {
-    "afirmacao": "A Selic meta está em 13,75% a.a., patamar restritivo para a renda variável.",
+    "afirmacao": "Selic meta em 13,75% a.a., em patamar restritivo para renda variável.",
     "evidencia": "E1",
     "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
    },
    {
-    "afirmacao": "O IPCA de 12 meses está em 4,58%.",
-    "evidencia": "E2",
-    "citacao": "IPCA 12 meses (%) em 01/09/2026: 4,58 (BCB SGS)"
-   },
-   {
-    "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, sem mudança em 4 semanas para 2026.",
+    "afirmacao": "Focus (mediana) projeta Selic de 13,50% em 2026 e 12,50% em 2027, indicando juros altos por mais tempo.",
     "evidencia": "E4",
     "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
    },
    {
-    "afirmacao": "O Focus projeta IPCA de 5,22% em 2026 e 4,76% em 2027, com revisão de alta de 0,20 em 4 semanas.",
+    "afirmacao": "Focus (mediana) projeta IPCA de 5,22% em 2026 e 4,76% em 2027, com mudança de 0,20 em 4 semanas para 2026.",
     "evidencia": "E5",
     "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
    },
    {
-    "afirmacao": "O Focus projeta PIB de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas.",
+    "afirmacao": "Focus (mediana) projeta PIB de 1,76% em 2026 e 1,20% em 2027, com mudança de -0,09 em 4 semanas para 2026.",
     "evidencia": "E6",
     "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
-   },
-   {
-    "afirmacao": "O Focus projeta câmbio de 5,34 em 2026 e 5,40 em 2027, com revisão de 0,14 em 4 semanas.",
-    "evidencia": "E7",
-    "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
-   },
-   {
-    "afirmacao": "O dólar PTAX está em R$ 5,49.",
-    "evidencia": "E3",
-    "citacao": "Dólar PTAX (R$) em 03/11/2026: 5,49 (BCB SGS)"
    }
   ],
   "acoes": [
@@ -64,167 +56,167 @@
     "ticker": "ALLD3",
     "tese": [
      {
-      "afirmacao": "ALLD3 negocia a P/VP de 0,32, com dívida líquida/EBITDA de 0,06.",
-      "evidencia": "E23",
-      "citacao": "P/VP 0,32; ROE 0,0%; Margem líquida 0,0%; Dív. liq./EBITDA 0,06"
+      "afirmacao": "Negocia a P/VP de 0,32 com DY 12m de 39,7%.",
+      "evidencia": "E29",
+      "citacao": "P/VP 0,32; ROE 0,0%; Margem líquida 0,0%; Dív. liq./EBITDA 0,06; DY 12m 39,7%"
      },
      {
-      "afirmacao": "O dividend yield de 12 meses é de 39,7%.",
-      "evidencia": "E23",
-      "citacao": "DY 12m 39,7%"
+      "afirmacao": "Dív. liq./EBITDA de 0,06, praticamente sem alavancagem.",
+      "evidencia": "E29",
+      "citacao": "P/VP 0,32; ROE 0,0%; Margem líquida 0,0%; Dív. liq./EBITDA 0,06; DY 12m 39,7%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
-      "evidencia": "E8",
-      "citacao": "peso alvo 6,7%"
+      "afirmacao": "Retorno 12m de -20,1% e queda máxima de -46,2% em 3 anos.",
+      "evidencia": "E29",
+      "citacao": "Retorno 12m -20,1%; Vol anual 48,7%; Beta 1,09; Queda máx. (3 anos) -46,2%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de oportunidade de manter ações de consumo cíclico segue elevado.",
+      "afirmacao": "Selic de 13,75% a.a. encarece o crédito e comprime o consumo.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "A projeção de IPCA de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, corrói a renda que sustenta o consumo.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, corrói a renda disponível.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O crescimento projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a demanda do varejo.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "ROE de 0,0% e margem líquida de 0,0% indicam ausência de lucro no período.",
-      "evidencia": "E23",
+      "afirmacao": "ROE e margem líquida em 0,0%, sem lucro no período.",
+      "evidencia": "E29",
       "citacao": "ROE 0,0%; Margem líquida 0,0%"
      },
      {
-      "afirmacao": "A queda máxima de 46,2% em 3 anos e a volatilidade anual de 48,7% mostram risco elevado.",
-      "evidencia": "E23",
-      "citacao": "Vol anual 48,7%; Beta 1,09; Queda máx. (3 anos) -46,2%"
+      "afirmacao": "Vol anual de 48,7% e beta de 1,09.",
+      "evidencia": "E29",
+      "citacao": "Vol anual 48,7%; Beta 1,09"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E91",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E124",
+      "citacao": "ALLD3 semáforo: amarelo (sem fato pontuado)"
      }
     ],
     "postura": "desfavoravel",
-    "confianca": 0.55,
+    "confianca": 0.5,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "ALOS3",
+    "tese": [
+     {
+      "afirmacao": "DY 12m de 12,0% e Dív. liq./EBITDA de -1,50, com caixa líquido.",
+      "evidencia": "E30",
+      "citacao": "Margem líquida 32,3%; Dív. liq./EBITDA -1,50; DY 12m 12,0%"
+     },
+     {
+      "afirmacao": "Margem líquida de 32,3%.",
+      "evidencia": "E30",
+      "citacao": "ROE 7,3%; Margem líquida 32,3%; Dív. liq./EBITDA -1,50"
+     },
+     {
+      "afirmacao": "P/L de 15,78 e ROE de 7,3%.",
+      "evidencia": "E30",
+      "citacao": "P/L 15,78; P/VP 1,15; ROE 7,3%"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. encarece o crédito e comprime o consumo e o investimento imobiliário.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, corrói a renda disponível.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "Fato relevante sobre o Kinea ALLOS Malls FII e venda de participações em shoppings, com tom unclear.",
+      "evidencia": "E56",
+      "citacao": "ALOS3 Fato Relevante em 23/10/2026: Atualizações sobre o Kinea ALLOS Malls FII e a venda de participações em Shoppings da ALLOS; tom Jev: unclear"
+     },
+     {
+      "afirmacao": "Beta de 1,35 e vol anual de 38,5%.",
+      "evidencia": "E30",
+      "citacao": "Vol anual 38,5%; Beta 1,35"
+     },
+     {
+      "afirmacao": "Queda máxima de -33,9% em 3 anos.",
+      "evidencia": "E30",
+      "citacao": "Beta 1,35; Queda máx. (3 anos) -33,9%"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.5,
     "nao_confirmadas": []
    },
    {
     "ticker": "BBSE3",
     "tese": [
      {
-      "afirmacao": "O retorno de 12 meses é de 43,6%, com volatilidade anual de 20,9% e beta de 0,38.",
-      "evidencia": "E24",
-      "citacao": "Retorno 12m 43,6%; Vol anual 20,9%; Beta 0,38"
+      "afirmacao": "Retorno 12m de 43,6% e DY 12m de 12,9%.",
+      "evidencia": "E31",
+      "citacao": "Retorno 12m 43,6%; Vol anual 20,9%; Beta 0,38; Queda máx. (3 anos) -21,8%; DY 12m 12,9%"
      },
      {
-      "afirmacao": "O dividend yield de 12 meses é de 12,9%, com queda máxima de 21,8% em 3 anos.",
-      "evidencia": "E24",
-      "citacao": "Queda máx. (3 anos) -21,8%; DY 12m 12,9%"
+      "afirmacao": "Vol anual de 20,9% e beta de 0,38.",
+      "evidencia": "E31",
+      "citacao": "Vol anual 20,9%; Beta 0,38"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
-      "evidencia": "E9",
-      "citacao": "peso alvo 6,7%"
-     }
-    ],
-    "contra_tese_macro": [
-     {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., a renda fixa segue competitiva e limita o apetite por ações.",
-      "evidencia": "E1",
-      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
-     },
-     {
-      "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, com mudança de 0,00 em 4 semanas, e a queda dos juros tende a reduzir o resultado financeiro de seguradoras.",
-      "evidencia": "E4",
-      "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
-     },
-     {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a expansão de crédito e seguros.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
-     }
-    ],
-    "riscos": [
-     {
-      "afirmacao": "O semáforo da CVM está amarelo, com 1 fato pontuado neutro.",
-      "evidencia": "E92",
-      "citacao": "BBSE3 semáforo: amarelo (neutro (1 fato pontuado))"
-     },
-     {
-      "afirmacao": "Houve renúncia de membro do Conselho de Administração e do CTPR em 23/10/2026.",
-      "evidencia": "E43",
-      "citacao": "BBSE3 Fato Relevante em 23/10/2026: Renúncia membro do Conselho de Administração e CTPR"
-     },
-     {
-      "afirmacao": "A queda máxima de 21,8% em 3 anos mostra que o histórico inclui correções relevantes.",
-      "evidencia": "E24",
+      "afirmacao": "Queda máxima de -21,8% em 3 anos.",
+      "evidencia": "E31",
       "citacao": "Queda máx. (3 anos) -21,8%"
      }
     ],
-    "postura": "favoravel",
-    "confianca": 0.68,
-    "nao_confirmadas": []
-   },
-   {
-    "ticker": "CXSE3",
-    "tese": [
-     {
-      "afirmacao": "O retorno de 12 meses é de 50,4%, com volatilidade anual de 23,2% e beta de 0,42.",
-      "evidencia": "E25",
-      "citacao": "Retorno 12m 50,4%; Vol anual 23,2%; Beta 0,42"
-     },
-     {
-      "afirmacao": "A queda máxima em 3 anos foi de 18,8%.",
-      "evidencia": "E25",
-      "citacao": "Queda máx. (3 anos) -18,8%"
-     },
-     {
-      "afirmacao": "O dividend yield de 12 meses é de 5,8%.",
-      "evidencia": "E25",
-      "citacao": "DY 12m 5,8%"
-     }
-    ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o retorno da renda fixa reduz o atrativo relativo da ação.",
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por seguros e serviços financeiros.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, com mudança de 0,00 em 4 semanas, e juros menores reduzem o ganho de float da seguradora.",
-      "evidencia": "E4",
-      "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, pressiona a originação de seguros.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "Há fato relevante de rescisão do contrato de distribuição no Banco Pan.",
-      "evidencia": "E49",
-      "citacao": "Rescisão do Contrato de Distribuição no Banco Pan"
+      "afirmacao": "Renúncia de membro do Conselho de Administração e do CTPR, com tom unclear.",
+      "evidencia": "E60",
+      "citacao": "BBSE3 Fato Relevante em 23/10/2026: Renúncia membro do Conselho de Administração e CTPR; tom Jev: unclear"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E93",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Beta de 0,38 limita a participação em ciclos de alta.",
+      "evidencia": "E31",
+      "citacao": "Vol anual 20,9%; Beta 0,38"
      },
      {
-      "afirmacao": "O dividend yield de 5,8% é baixo frente ao retorno de 50,4% já obtido em 12 meses.",
-      "evidencia": "E25",
-      "citacao": "Retorno 12m 50,4%; Vol anual 23,2%; Beta 0,42; Queda máx. (3 anos) -18,8%; DY 12m 5,8%"
+      "afirmacao": "Semáforo amarelo com um fato pontuado neutro.",
+      "evidencia": "E126",
+      "citacao": "BBSE3 semáforo: amarelo (neutro (1 fato pontuado))"
      }
     ],
     "postura": "favoravel",
@@ -232,108 +224,393 @@
     "nao_confirmadas": []
    },
    {
-    "ticker": "FIQE3",
+    "ticker": "BMGB4",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 8,77, com ROE de 18,4% e margem líquida de 17,2%.",
-      "evidencia": "E26",
-      "citacao": "P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%"
+      "afirmacao": "Retorno 12m de 49,2% e DY 12m de 9,8%.",
+      "evidencia": "E32",
+      "citacao": "Retorno 12m 49,2%; Vol anual 38,3%; Beta 0,92; Queda máx. (3 anos) -29,3%; DY 12m 9,8%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 36,9%, com dividend yield de 12,3%.",
-      "evidencia": "E26",
-      "citacao": "Retorno 12m 36,9%; Vol anual 42,7%; Beta 1,07; Queda máx. (3 anos) -44,0%; P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%; Dív. liq./EBITDA 0,55; DY 12m 12,3%"
+      "afirmacao": "Vol anual de 38,3% e beta de 0,92.",
+      "evidencia": "E32",
+      "citacao": "Vol anual 38,3%; Beta 0,92"
      },
      {
-      "afirmacao": "A CVM registra fato relevante de acordo comercial com a AST SpaceMobile em 23/10/2026, com tom bom.",
-      "evidencia": "E53",
-      "citacao": "FIQE3 Fato Relevante em 23/10/2026: Acordo Comercial com AST SpaceMobile; tom Jev: good"
+      "afirmacao": "Conclusão da cessão sem retenção de riscos e benefícios da carteira de Cartões INSS.",
+      "evidencia": "E69",
+      "citacao": "BMGB4 Comunicado ao Mercado em 27/08/2026: Conclusão da cessão sem retenção de riscos e benefícios Cartões INSS; tom Jev: sem nota"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de capital pressiona empresas de telecomunicações.",
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por serviços financeiros.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O IPCA projetado de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, eleva custos operacionais.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita o crescimento da base de assinantes.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "O fato relevante de oferta pública de aquisição de 02/10/2026 adiciona incerteza sobre preço e continuidade da listagem.",
-      "evidencia": "E55",
-      "citacao": "FIQE3 Fato Relevante em 02/10/2026: Oferta Pública de Aquisição"
+      "afirmacao": "Revisão de perspectiva de rating pela Moody's Local, sem detalhamento.",
+      "evidencia": "E66",
+      "citacao": "BMGB4 Comunicado ao Mercado em 14/10/2026: Revisão Perspectiva Rating Moodys Local; tom Jev: sem nota"
      },
      {
-      "afirmacao": "Há pedido de convocação de assembleia especial de acionistas titulares de ações em circulação.",
-      "evidencia": "E54",
-      "citacao": "Pedido de Convocação de Assembleia Especial"
+      "afirmacao": "Queda máxima de -29,3% em 3 anos.",
+      "evidencia": "E32",
+      "citacao": "Queda máx. (3 anos) -29,3%"
      },
      {
-      "afirmacao": "A volatilidade anual é de 42,7% e a queda máxima de 44,0% em 3 anos.",
-      "evidencia": "E26",
+      "afirmacao": "Semáforo amarelo com um fato pontuado neutro.",
+      "evidencia": "E127",
+      "citacao": "BMGB4 semáforo: amarelo (neutro (1 fato pontuado))"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.45,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "BRAP4",
+    "tese": [
+     {
+      "afirmacao": "P/VP de 0,95 e DY 12m de 10,9%.",
+      "evidencia": "E33",
+      "citacao": "P/L 13,08; P/VP 0,95; ROE 7,3%; Dív. liq./EBITDA -0,48; DY 12m 10,9%"
+     },
+     {
+      "afirmacao": "Dív. liq./EBITDA de -0,48, com caixa líquido.",
+      "evidencia": "E33",
+      "citacao": "P/L 13,08; P/VP 0,95; ROE 7,3%; Dív. liq./EBITDA -0,48; DY 12m 10,9%"
+     },
+     {
+      "afirmacao": "Retorno 12m de 13,2% e beta de 0,50.",
+      "evidencia": "E33",
+      "citacao": "Retorno 12m 13,2%; Vol anual 27,9%; Beta 0,50"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por serviços financeiros.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "P/L de 13,08 e ROE de 7,3%.",
+      "evidencia": "E33",
+      "citacao": "P/L 13,08; P/VP 0,95; ROE 7,3%"
+     },
+     {
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E128",
+      "citacao": "BRAP4 semáforo: amarelo (sem fato pontuado)"
+     },
+     {
+      "afirmacao": "Vol anual de 27,9% e queda máxima de -32,4% em 3 anos.",
+      "evidencia": "E33",
+      "citacao": "Vol anual 27,9%; Beta 0,50; Queda máx. (3 anos) -32,4%"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.5,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "CPLE3",
+    "tese": [
+     {
+      "afirmacao": "Mercado faturado da Copel DIS cresce 5,8% no 3T26 e 5,0% no acumulado do ano.",
+      "evidencia": "E71",
+      "citacao": "CPLE3 Comunicado ao Mercado em 21/10/2026: Comunicado ao Mercado 14/26 - Mercado Faturado da Copel DIS cresce 5,8% no 3T26. No acumulado do ano cresce 5,0%.; tom Jev: good"
+     },
+     {
+      "afirmacao": "ROE de 13,0% e DY 12m de 7,6%.",
+      "evidencia": "E34",
+      "citacao": "P/L 15,16; P/VP 1,97; ROE 13,0%; Margem líquida 11,2%; Dív. liq./EBITDA 2,81; DY 12m 7,6%"
+     },
+     {
+      "afirmacao": "Queda máxima de -20,3% em 3 anos.",
+      "evidencia": "E34",
+      "citacao": "Vol anual 29,0%; Beta 0,93; Queda máx. (3 anos) -20,3%"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. encarece a dívida regulada e reduz o valor presente dos fluxos.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos e tarifas.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda por energia.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "Dív. liq./EBITDA de 2,81.",
+      "evidencia": "E34",
+      "citacao": "Dív. liq./EBITDA 2,81"
+     },
+     {
+      "afirmacao": "P/L de 15,16 e P/VP de 1,97.",
+      "evidencia": "E34",
+      "citacao": "P/L 15,16; P/VP 1,97"
+     },
+     {
+      "afirmacao": "Semáforo amarelo com dois fatos pontuados neutros.",
+      "evidencia": "E129",
+      "citacao": "CPLE3 semáforo: amarelo (neutro (2 fatos pontuados))"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.55,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "CXSE3",
+    "tese": [
+     {
+      "afirmacao": "Retorno 12m de 50,4% com vol anual de 23,2%.",
+      "evidencia": "E35",
+      "citacao": "Retorno 12m 50,4%; Vol anual 23,2%; Beta 0,42; Queda máx. (3 anos) -18,8%; DY 12m 5,8%"
+     },
+     {
+      "afirmacao": "Beta de 0,42 e queda máxima de -18,8% em 3 anos.",
+      "evidencia": "E35",
+      "citacao": "Beta 0,42; Queda máx. (3 anos) -18,8%"
+     },
+     {
+      "afirmacao": "DY 12m de 5,8%.",
+      "evidencia": "E35",
+      "citacao": "DY 12m 5,8%"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por seguros e serviços financeiros.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "Rescisão do contrato de distribuição no Banco Pan.",
+      "evidencia": "E76",
+      "citacao": "CXSE3 Fato Relevante em 16/10/2026: Rescisão do Contrato de Distribuição no Banco Pan; tom Jev: sem nota"
+     },
+     {
+      "afirmacao": "Vol anual de 23,2%.",
+      "evidencia": "E35",
+      "citacao": "Vol anual 23,2%"
+     },
+     {
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E130",
+      "citacao": "CXSE3 semáforo: amarelo (sem fato pontuado)"
+     }
+    ],
+    "postura": "favoravel",
+    "confianca": 0.55,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "FIQE3",
+    "tese": [
+     {
+      "afirmacao": "P/L de 8,77 e ROE de 18,4%.",
+      "evidencia": "E36",
+      "citacao": "P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%; Dív. liq./EBITDA 0,55; DY 12m 12,3%"
+     },
+     {
+      "afirmacao": "DY 12m de 12,3% e Dív. liq./EBITDA de 0,55.",
+      "evidencia": "E36",
+      "citacao": "P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%; Dív. liq./EBITDA 0,55; DY 12m 12,3%"
+     },
+     {
+      "afirmacao": "Acordo comercial com a AST SpaceMobile, com semáforo verde.",
+      "evidencia": "E131",
+      "citacao": "FIQE3 semáforo: verde (23/10 Acordo Comercial com AST SpaceMobile)"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e adia investimentos.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "Fato relevante registra Oferta Pública de Aquisição, sem termos divulgados na evidência.",
+      "evidencia": "E1003",
+      "citacao": "FIQE3 Fato Relevante em 02/10/2026: Oferta Pública de Aquisição; tom Jev: sem nota"
+     },
+     {
+      "afirmacao": "Pedido de convocação de assembleia especial de acionistas titulares de ações em circulação.",
+      "evidencia": "E1002",
+      "citacao": "FIQE3 Fato Relevante em 16/10/2026: Pedido de Convocação de Assembleia Especial de  Acionistas Titulares de Ações em Circulação; tom Jev: sem nota"
+     },
+     {
+      "afirmacao": "Vol anual de 42,7% e queda máxima de -44,0% em 3 anos.",
+      "evidencia": "E36",
       "citacao": "Vol anual 42,7%; Beta 1,07; Queda máx. (3 anos) -44,0%"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.52,
+    "confianca": 0.5,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "INTB3",
+    "tese": [
+     {
+      "afirmacao": "Retorno 12m de 31,1% e DY 12m de 9,9%.",
+      "evidencia": "E37",
+      "citacao": "Retorno 12m 31,1%; Vol anual 53,2%; Beta 1,43; Queda máx. (3 anos) -53,8%; P/L 16,27; P/VP 1,40; ROE 8,6%; Margem líquida 6,3%; Dív. liq./EBITDA -0,90; DY 12m 9,9%"
+     },
+     {
+      "afirmacao": "Dív. liq./EBITDA de -0,90, com caixa líquido.",
+      "evidencia": "E37",
+      "citacao": "Dív. liq./EBITDA -0,90"
+     },
+     {
+      "afirmacao": "P/L de 16,27 e ROE de 8,6%.",
+      "evidencia": "E37",
+      "citacao": "P/L 16,27; P/VP 1,40; ROE 8,6%"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e adia investimentos.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "Vol anual de 53,2% e queda máxima de -53,8% em 3 anos.",
+      "evidencia": "E37",
+      "citacao": "Vol anual 53,2%; Beta 1,43; Queda máx. (3 anos) -53,8%"
+     },
+     {
+      "afirmacao": "Beta de 1,43.",
+      "evidencia": "E37",
+      "citacao": "Beta 1,43"
+     },
+     {
+      "afirmacao": "Margem líquida de 6,3%.",
+      "evidencia": "E37",
+      "citacao": "Margem líquida 6,3%"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.5,
     "nao_confirmadas": []
    },
    {
     "ticker": "ITSA4",
     "tese": [
      {
-      "afirmacao": "O dividend yield de 12 meses é de 9,0%, com retorno de 22,2% em 12 meses.",
-      "evidencia": "E27",
+      "afirmacao": "Retorno 12m de 22,2% e DY 12m de 9,0%.",
+      "evidencia": "E38",
       "citacao": "Retorno 12m 22,2%; Vol anual 30,8%; Beta 1,09; Queda máx. (3 anos) -24,9%; DY 12m 9,0%"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 24,9%.",
-      "evidencia": "E27",
-      "citacao": "Queda máx. (3 anos) -24,9%"
+      "afirmacao": "Vol anual de 30,8% e beta de 1,09.",
+      "evidencia": "E38",
+      "citacao": "Vol anual 30,8%; Beta 1,09"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
-      "evidencia": "E12",
-      "citacao": "peso alvo 6,7%"
+      "afirmacao": "Queda máxima de -24,9% em 3 anos.",
+      "evidencia": "E38",
+      "citacao": "Queda máx. (3 anos) -24,9%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., a inadimplência tende a pressionar o crédito bancário.",
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por serviços financeiros.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, com mudança de 0,00 em 4 semanas, e a queda de juros comprime o spread da holding.",
-      "evidencia": "E4",
-      "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a demanda por crédito.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A volatilidade anual é de 30,8% e o beta é de 1,09.",
-      "evidencia": "E27",
-      "citacao": "Vol anual 30,8%; Beta 1,09"
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E133",
+      "citacao": "ITSA4 semáforo: amarelo (sem fato pontuado)"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E95",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Beta de 1,09 e vol anual de 30,8%.",
+      "evidencia": "E38",
+      "citacao": "Vol anual 30,8%; Beta 1,09"
      }
     ],
     "postura": "favoravel",
@@ -344,224 +621,219 @@
     "ticker": "JHSF3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 3,65, com ROE de 28,4% e margem líquida de 52,6%.",
-      "evidencia": "E28",
-      "citacao": "P/L 3,65; P/VP 1,04; ROE 28,4%; Margem líquida 52,6%"
+      "afirmacao": "P/L de 3,65 e ROE de 28,4%.",
+      "evidencia": "E39",
+      "citacao": "P/L 3,65; P/VP 1,04; ROE 28,4%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 57,2%, com dividend yield de 7,8%.",
-      "evidencia": "E28",
-      "citacao": "Retorno 12m 57,2%; Vol anual 49,2%; Beta 1,36; Queda máx. (3 anos) -39,9%; P/L 3,65; P/VP 1,04; ROE 28,4%; Margem líquida 52,6%; Dív. liq./EBITDA 0,75; DY 12m 7,8%"
+      "afirmacao": "Margem líquida de 52,6% e DY 12m de 7,8%.",
+      "evidencia": "E39",
+      "citacao": "Margem líquida 52,6%; Dív. liq./EBITDA 0,75; DY 12m 7,8%"
      },
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 0,75.",
-      "evidencia": "E28",
-      "citacao": "Dív. liq./EBITDA 0,75"
+      "afirmacao": "Retorno 12m de 57,2% e Dív. liq./EBITDA de 0,75.",
+      "evidencia": "E39",
+      "citacao": "Retorno 12m 57,2%; Vol anual 49,2%; Beta 1,36; Queda máx. (3 anos) -39,9%; P/L 3,65; P/VP 1,04; ROE 28,4%; Margem líquida 52,6%; Dív. liq./EBITDA 0,75"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o financiamento imobiliário de alto padrão fica mais caro.",
+      "afirmacao": "Selic de 13,75% a.a. encarece o crédito e comprime o consumo e o investimento imobiliário.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, reduz a demanda por empreendimentos.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
-     },
-     {
-      "afirmacao": "O IPCA projetado de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, eleva custos de construção.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, corrói a renda disponível.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A volatilidade anual é de 49,2% e o beta de 1,36.",
-      "evidencia": "E28",
+      "afirmacao": "Vol anual de 49,2% e beta de 1,36.",
+      "evidencia": "E39",
       "citacao": "Vol anual 49,2%; Beta 1,36"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 39,9%.",
-      "evidencia": "E28",
+      "afirmacao": "Queda máxima de -39,9% em 3 anos.",
+      "evidencia": "E39",
       "citacao": "Queda máx. (3 anos) -39,9%"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E96",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E134",
+      "citacao": "JHSF3 semáforo: amarelo (sem fato pontuado)"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.65,
+    "confianca": 0.7,
     "nao_confirmadas": []
    },
    {
     "ticker": "LEVE3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 6,64, com ROE de 72,3% e margem líquida de 13,0%.",
-      "evidencia": "E29",
-      "citacao": "P/L 6,64; P/VP 4,80; ROE 72,3%; Margem líquida 13,0%"
+      "afirmacao": "P/L de 6,64 e ROE de 72,3%.",
+      "evidencia": "E40",
+      "citacao": "P/L 6,64; P/VP 4,80; ROE 72,3%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 14,0%, com dividend yield de 8,1%.",
-      "evidencia": "E29",
-      "citacao": "Retorno 12m 14,0%; Vol anual 30,0%; Beta 0,77; Queda máx. (3 anos) -24,0%; P/L 6,64; P/VP 4,80; ROE 72,3%; Margem líquida 13,0%; Dív. liq./EBITDA 1,03; DY 12m 8,1%"
+      "afirmacao": "DY 12m de 8,1% e Dív. liq./EBITDA de 1,03.",
+      "evidencia": "E40",
+      "citacao": "Dív. liq./EBITDA 1,03; DY 12m 8,1%"
      },
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 1,03.",
-      "evidencia": "E29",
-      "citacao": "Dív. liq./EBITDA 1,03"
+      "afirmacao": "Queda máxima de -24,0% em 3 anos.",
+      "evidencia": "E40",
+      "citacao": "Queda máx. (3 anos) -24,0%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de capital do setor industrial permanece alto.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e adia investimentos.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O Focus projeta câmbio de 5,34 em 2026 e 5,40 em 2027, com revisão de 0,14 em 4 semanas, alterando custos de insumos importados.",
-      "evidencia": "E7",
-      "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a produção industrial.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "O P/VP é de 4,80.",
-      "evidencia": "E29",
+      "afirmacao": "P/VP de 4,80.",
+      "evidencia": "E40",
       "citacao": "P/VP 4,80"
      },
      {
-      "afirmacao": "A volatilidade anual é de 30,0%, com queda máxima de 24,0% em 3 anos.",
-      "evidencia": "E29",
-      "citacao": "Vol anual 30,0%; Beta 0,77; Queda máx. (3 anos) -24,0%"
+      "afirmacao": "Retorno 12m de 14,0%.",
+      "evidencia": "E40",
+      "citacao": "Retorno 12m 14,0%"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E97",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Beta de 0,77 e vol anual de 30,0%.",
+      "evidencia": "E40",
+      "citacao": "Vol anual 30,0%; Beta 0,77"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.58,
+    "confianca": 0.55,
     "nao_confirmadas": []
    },
    {
     "ticker": "LOGG3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/VP de 0,62 com P/L de 5,82.",
-      "evidencia": "E30",
+      "afirmacao": "P/L de 5,82 e P/VP de 0,62.",
+      "evidencia": "E41",
       "citacao": "P/L 5,82; P/VP 0,62"
      },
      {
-      "afirmacao": "O dividend yield de 12 meses é de 27,7% e a margem líquida de 141,7%.",
-      "evidencia": "E30",
-      "citacao": "ROE 10,6%; Margem líquida 141,7%; Dív. liq./EBITDA 2,81; DY 12m 27,7%"
+      "afirmacao": "DY 12m de 27,7%.",
+      "evidencia": "E41",
+      "citacao": "DY 12m 27,7%"
      },
      {
-      "afirmacao": "Houve conclusão de venda de ativo em 23/09/2026.",
-      "evidencia": "E65",
-      "citacao": "LOGG3 Comunicado ao Mercado em 23/09/2026: Conclusão de venda de ativo"
+      "afirmacao": "Margem líquida de 141,7%.",
+      "evidencia": "E41",
+      "citacao": "Margem líquida 141,7%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de financiamento de galpões logísticos sobe.",
+      "afirmacao": "Selic de 13,75% a.a. encarece o crédito e comprime o investimento imobiliário.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, com mudança de 0,00 em 4 semanas, mantendo o crédito imobiliário caro por mais tempo.",
-      "evidencia": "E4",
-      "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, corrói a renda disponível.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, reduz a demanda por área logística.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 2,81.",
-      "evidencia": "E30",
+      "afirmacao": "Dív. liq./EBITDA de 2,81.",
+      "evidencia": "E41",
       "citacao": "Dív. liq./EBITDA 2,81"
      },
      {
-      "afirmacao": "A margem líquida de 141,7% sugere ganho não recorrente, e o dividend yield de 27,7% pode não se repetir.",
-      "evidencia": "E30",
-      "citacao": "ROE 10,6%; Margem líquida 141,7%; Dív. liq./EBITDA 2,81; DY 12m 27,7%"
+      "afirmacao": "Vol anual de 44,6% e beta de 1,27.",
+      "evidencia": "E41",
+      "citacao": "Vol anual 44,6%; Beta 1,27"
      },
      {
-      "afirmacao": "A volatilidade anual é de 44,6%, com queda máxima de 36,7% em 3 anos.",
-      "evidencia": "E30",
-      "citacao": "Vol anual 44,6%; Beta 1,27; Queda máx. (3 anos) -36,7%"
+      "afirmacao": "Queda máxima de -36,7% em 3 anos.",
+      "evidencia": "E41",
+      "citacao": "Queda máx. (3 anos) -36,7%"
      }
     ],
-    "postura": "neutra",
-    "confianca": 0.45,
+    "postura": "favoravel",
+    "confianca": 0.5,
     "nao_confirmadas": []
    },
    {
     "ticker": "MILS3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 8,07, com ROE de 23,8% e margem líquida de 23,5%.",
-      "evidencia": "E31",
-      "citacao": "P/L 8,07; P/VP 1,92; ROE 23,8%; Margem líquida 23,5%"
+      "afirmacao": "P/L de 8,07 e ROE de 23,8%.",
+      "evidencia": "E42",
+      "citacao": "P/L 8,07; P/VP 1,92; ROE 23,8%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 33,2%, com volatilidade anual de 26,5% e beta de 0,43.",
-      "evidencia": "E31",
-      "citacao": "Retorno 12m 33,2%; Vol anual 26,5%; Beta 0,43"
-     },
-     {
-      "afirmacao": "A Mills comunicou elevação de rating para o patamar 'brAA'.",
-      "evidencia": "E70",
-      "citacao": "elevação de rating para 'brAA'"
+      "afirmacao": "Retorno 12m de 33,2% e DY 12m de 6,2%.",
+      "evidencia": "E42",
+      "citacao": "Retorno 12m 33,2%; Vol anual 26,5%; Beta 0,43; Queda máx. (3 anos) -38,4%; P/L 8,07; P/VP 1,92; ROE 23,8%; Margem líquida 23,5%; Dív. liq./EBITDA 1,20; DY 12m 6,2%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o investimento em máquinas e equipamentos fica mais caro.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e adia investimentos.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a demanda por locação de equipamentos.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
-     },
-     {
-      "afirmacao": "O IPCA projetado de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, pressiona custos operacionais.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 38,4%.",
-      "evidencia": "E31",
+      "afirmacao": "Queda máxima de -38,4% em 3 anos.",
+      "evidencia": "E42",
       "citacao": "Queda máx. (3 anos) -38,4%"
      },
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 1,20.",
-      "evidencia": "E31",
+      "afirmacao": "Dív. liq./EBITDA de 1,20.",
+      "evidencia": "E42",
       "citacao": "Dív. liq./EBITDA 1,20"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E99",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Beta de 0,43 e vol anual de 26,5%.",
+      "evidencia": "E42",
+      "citacao": "Vol anual 26,5%; Beta 0,43"
      }
     ],
     "postura": "favoravel",
@@ -572,53 +844,53 @@
     "ticker": "MLAS3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/VP de 0,47, com dívida líquida/EBITDA de -1,19.",
-      "evidencia": "E32",
-      "citacao": "P/VP 0,47; ROE 0,0%; Margem líquida 0,0%; Dív. liq./EBITDA -1,19"
-     },
-     {
-      "afirmacao": "O retorno de 12 meses é de 88,7%.",
-      "evidencia": "E32",
+      "afirmacao": "Retorno 12m de 88,7%.",
+      "evidencia": "E43",
       "citacao": "Retorno 12m 88,7%"
      },
      {
-      "afirmacao": "O dividend yield de 12 meses é de 3,6%.",
-      "evidencia": "E32",
+      "afirmacao": "P/VP de 0,47 e Dív. liq./EBITDA de -1,19, com caixa líquido.",
+      "evidencia": "E43",
+      "citacao": "P/VP 0,47; ROE 0,0%; Margem líquida 0,0%; Dív. liq./EBITDA -1,19; DY 12m 3,6%"
+     },
+     {
+      "afirmacao": "DY 12m de 3,6%.",
+      "evidencia": "E43",
       "citacao": "DY 12m 3,6%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o consumo de bens duráveis e eletrônicos fica pressionado.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e adia investimentos.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a demanda por eletrônicos.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
-     },
-     {
-      "afirmacao": "O IPCA projetado de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, reduz o poder de compra do consumidor.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
+      "evidencia": "E6",
+      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "O ROE é de 0,0% e a margem líquida de 0,0%.",
-      "evidencia": "E32",
+      "afirmacao": "ROE e margem líquida em 0,0%.",
+      "evidencia": "E43",
       "citacao": "ROE 0,0%; Margem líquida 0,0%"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 65,8%, com volatilidade anual de 62,9%.",
-      "evidencia": "E32",
-      "citacao": "Vol anual 62,9%; Beta 1,36; Queda máx. (3 anos) -65,8%"
+      "afirmacao": "Provisão para perdas com recebíveis do Grupo Casas Bahia.",
+      "evidencia": "E1014",
+      "citacao": "MLAS3 Comunicado ao Mercado em 18/08/2026: Provisão para perdas com recebíveis do Grupo Casas Bahia; tom Jev: sem nota"
      },
      {
-      "afirmacao": "A empresa registrou provisão para perdas com recebíveis do Grupo Casas Bahia em 18/08/2026.",
-      "evidencia": "E71",
-      "citacao": "MLAS3 Comunicado ao Mercado em 18/08/2026: Provisão para perdas com recebíveis do Grupo Casas Bahia"
+      "afirmacao": "Vol anual de 62,9% e queda máxima de -65,8% em 3 anos.",
+      "evidencia": "E43",
+      "citacao": "Vol anual 62,9%; Beta 1,36; Queda máx. (3 anos) -65,8%"
      }
     ],
     "postura": "desfavoravel",
@@ -629,110 +901,110 @@
     "ticker": "PETR4",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 5,01, com ROE de 27,7% e margem líquida de 24,3%.",
-      "evidencia": "E33",
-      "citacao": "P/L 5,01; P/VP 1,39; ROE 27,7%; Margem líquida 24,3%"
+      "afirmacao": "P/L de 5,01 e ROE de 27,7%.",
+      "evidencia": "E44",
+      "citacao": "P/L 5,01; P/VP 1,39; ROE 27,7%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 83,3%, com dividend yield de 8,2%.",
-      "evidencia": "E33",
+      "afirmacao": "Retorno 12m de 83,3% e DY 12m de 8,2%.",
+      "evidencia": "E44",
       "citacao": "Retorno 12m 83,3%; Vol anual 30,1%; Beta 0,51; Queda máx. (3 anos) -22,4%; P/L 5,01; P/VP 1,39; ROE 27,7%; Margem líquida 24,3%; Dív. liq./EBITDA 1,14; DY 12m 8,2%"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 22,4%, com beta de 0,51.",
-      "evidencia": "E33",
-      "citacao": "Vol anual 30,1%; Beta 0,51; Queda máx. (3 anos) -22,4%"
+      "afirmacao": "Dív. liq./EBITDA de 1,14.",
+      "evidencia": "E44",
+      "citacao": "Dív. liq./EBITDA 1,14"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de capital e a competição com a renda fixa limitam a valorização.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e reduz o apetite global por risco.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "Um dólar PTAX de R$ 5,49, se recuar, reduz a receita em reais da produção de petróleo.",
-      "evidencia": "E3",
-      "citacao": "Dólar PTAX (R$) em 03/11/2026: 5,49 (BCB SGS)"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, sustenta juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, sinaliza demanda doméstica fraca.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+      "afirmacao": "Câmbio projetado em 5,34 para 2026 e 5,40 para 2027, com revisão de 0,14 em 4 semanas, adiciona incerteza.",
+      "evidencia": "E7",
+      "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A volatilidade anual é de 30,1%.",
-      "evidencia": "E33",
-      "citacao": "Vol anual 30,1%"
+      "afirmacao": "Vol anual de 30,1% e beta de 0,51.",
+      "evidencia": "E44",
+      "citacao": "Vol anual 30,1%; Beta 0,51"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E101",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Queda máxima de -22,4% em 3 anos.",
+      "evidencia": "E44",
+      "citacao": "Queda máx. (3 anos) -22,4%"
      },
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 1,14.",
-      "evidencia": "E33",
-      "citacao": "Dív. liq./EBITDA 1,14"
+      "afirmacao": "Semáforo amarelo sem fato pontuado.",
+      "evidencia": "E139",
+      "citacao": "PETR4 semáforo: amarelo (sem fato pontuado)"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.7,
+    "confianca": 0.65,
     "nao_confirmadas": []
    },
    {
     "ticker": "PSSA3",
     "tese": [
      {
-      "afirmacao": "O beta é de 0,61 e a volatilidade anual de 27,5%.",
-      "evidencia": "E34",
+      "afirmacao": "Vol anual de 27,5% e beta de 0,61.",
+      "evidencia": "E45",
       "citacao": "Vol anual 27,5%; Beta 0,61"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 19,4%, com dividend yield de 5,3%.",
-      "evidencia": "E34",
-      "citacao": "Queda máx. (3 anos) -19,4%; DY 12m 5,3%"
+      "afirmacao": "DY 12m de 5,3%.",
+      "evidencia": "E45",
+      "citacao": "DY 12m 5,3%"
      },
      {
-      "afirmacao": "A ação está na carteira do Aleph Quant com peso alvo de 6,7%.",
-      "evidencia": "E19",
-      "citacao": "peso alvo 6,7%"
+      "afirmacao": "Queda máxima de -19,4% em 3 anos.",
+      "evidencia": "E45",
+      "citacao": "Queda máx. (3 anos) -19,4%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., a renda fixa compete diretamente com a ação de seguradora.",
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por seguros e serviços financeiros.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O Focus projeta Selic de 13,50% em 2026 e 12,50% em 2027, com mudança de 0,00 em 4 semanas, e juros menores reduzem o resultado financeiro.",
-      "evidencia": "E4",
-      "citacao": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, mantém juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita a expansão dos prêmios.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a atividade e a demanda por crédito.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "O retorno de 12 meses é de -1,8%.",
-      "evidencia": "E34",
+      "afirmacao": "Retorno 12m de -1,8%.",
+      "evidencia": "E45",
       "citacao": "Retorno 12m -1,8%"
      },
      {
-      "afirmacao": "Há fato relevante de pedido de cancelamento de registro de companhia aberta da controlada Porto Serviço.",
-      "evidencia": "E74",
-      "citacao": "Pedido de Cancelamento de registro de Companhia Aberta - Porto Serviço"
+      "afirmacao": "Pedido de cancelamento de registro de companhia aberta da Porto Serviço.",
+      "evidencia": "E1009",
+      "citacao": "PSSA3 Fato Relevante em 02/10/2026: Pedido de Cancelamento de registro de Companhia Aberta - Porto Serviço; tom Jev: sem nota"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E102",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Modificação de projeções divulgadas, sem detalhamento.",
+      "evidencia": "E1013",
+      "citacao": "PSSA3 Fato Relevante em 07/08/2026: Modificação de Projeções Divulgadas; tom Jev: sem nota"
      }
     ],
     "postura": "neutra",
@@ -743,227 +1015,300 @@
     "ticker": "SAUD3",
     "tese": [
      {
-      "afirmacao": "A dívida líquida/EBITDA é de -5,69, indicando caixa líquido.",
-      "evidencia": "E35",
+      "afirmacao": "Dív. liq./EBITDA de -5,69, com caixa líquido.",
+      "evidencia": "E46",
       "citacao": "Dív. liq./EBITDA -5,69"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 12,5%, com queda máxima de 21,2% em 3 anos.",
-      "evidencia": "E35",
-      "citacao": "Retorno 12m 12,5%; Vol anual 41,1%; Beta 0,85; Queda máx. (3 anos) -21,2%"
+      "afirmacao": "ROE de 10,6% e DY 12m de 5,6%.",
+      "evidencia": "E46",
+      "citacao": "ROE 10,6%; Margem líquida 9,8%; Dív. liq./EBITDA -5,69; DY 12m 5,6%"
      },
      {
-      "afirmacao": "O dividend yield de 12 meses é de 5,6%.",
-      "evidencia": "E35",
-      "citacao": "DY 12m 5,6%"
+      "afirmacao": "Retorno 12m de 12,5%.",
+      "evidencia": "E46",
+      "citacao": "Retorno 12m 12,5%"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o financiamento de expansão hospitalar fica mais caro.",
+      "afirmacao": "Selic de 13,75% a.a. pressiona a qualidade de crédito e a demanda por serviços de saúde.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O IPCA projetado de 5,22% em 2026 e 4,76% em 2027, com revisão de 0,20 em 4 semanas, pressiona custos de saúde.",
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, pressiona custos.",
       "evidencia": "E5",
       "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, restringe a demanda por planos e serviços.",
+      "afirmacao": "PIB projetado em 1,76% para 2026 e 1,20% para 2027, com revisão de -0,09, limita a demanda doméstica.",
       "evidencia": "E6",
       "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "O P/L é de 18,65, com ROE de 10,6%.",
-      "evidencia": "E35",
-      "citacao": "P/L 18,65; P/VP 1,99; ROE 10,6%"
+      "afirmacao": "P/L de 18,65 e P/VP de 1,99.",
+      "evidencia": "E46",
+      "citacao": "P/L 18,65; P/VP 1,99"
      },
      {
-      "afirmacao": "A empresa comunicou cancelamento de autorização de funcionamento perante a ANS em 09/09/2026.",
-      "evidencia": "E80",
-      "citacao": "SAUD3 Comunicado ao Mercado em 09/09/2026: Cancelamento de Autorização de Funcionamento perante a ANS"
+      "afirmacao": "Cancelamento de autorização de funcionamento perante a ANS.",
+      "evidencia": "E108",
+      "citacao": "SAUD3 Comunicado ao Mercado em 09/09/2026: Cancelamento de Autorização de Funcionamento perante a ANS; tom Jev: sem nota"
      },
      {
-      "afirmacao": "A volatilidade anual é de 41,1%.",
-      "evidencia": "E35",
+      "afirmacao": "Vol anual de 41,1%.",
+      "evidencia": "E46",
       "citacao": "Vol anual 41,1%"
      }
     ],
     "postura": "neutra",
-    "confianca": 0.42,
+    "confianca": 0.45,
     "nao_confirmadas": []
    },
    {
     "ticker": "UGPA3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 11,88, com ROE de 19,3%.",
-      "evidencia": "E36",
-      "citacao": "P/L 11,88; P/VP 2,29; ROE 19,3%"
+      "afirmacao": "Retorno 12m de 58,6% e ROE de 19,3%.",
+      "evidencia": "E47",
+      "citacao": "Retorno 12m 58,6%; Vol anual 31,3%; Beta 0,72; Queda máx. (3 anos) -48,9%; P/L 11,88; P/VP 2,29; ROE 19,3%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 58,6%, com dividend yield de 7,8%.",
-      "evidencia": "E36",
-      "citacao": "Retorno 12m 58,6%; Vol anual 31,3%; Beta 0,72; Queda máx. (3 anos) -48,9%; P/L 11,88; P/VP 2,29; ROE 19,3%; Margem líquida 2,3%; Dív. liq./EBITDA 1,12; DY 12m 7,8%"
+      "afirmacao": "P/L de 11,88 e DY 12m de 7,8%.",
+      "evidencia": "E47",
+      "citacao": "P/L 11,88; P/VP 2,29; ROE 19,3%; Margem líquida 2,3%; Dív. liq./EBITDA 1,12; DY 12m 7,8%"
      },
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 1,12.",
-      "evidencia": "E36",
+      "afirmacao": "Dív. liq./EBITDA de 1,12.",
+      "evidencia": "E47",
       "citacao": "Dív. liq./EBITDA 1,12"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de capital limita o múltiplo de empresas de distribuição.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e reduz o apetite global por risco.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, reduz o volume de combustíveis vendidos.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, sustenta juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O Focus projeta câmbio de 5,34 em 2026 e 5,40 em 2027, com revisão de 0,14 em 4 semanas, afetando preços de derivados.",
+      "afirmacao": "Câmbio projetado em 5,34 para 2026 e 5,40 para 2027, com revisão de 0,14 em 4 semanas, adiciona incerteza.",
       "evidencia": "E7",
       "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 48,9%.",
-      "evidencia": "E36",
-      "citacao": "Queda máx. (3 anos) -48,9%"
-     },
-     {
-      "afirmacao": "A margem líquida é de 2,3%.",
-      "evidencia": "E36",
+      "afirmacao": "Margem líquida de 2,3%.",
+      "evidencia": "E47",
       "citacao": "Margem líquida 2,3%"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, com 1 fato pontuado neutro.",
-      "evidencia": "E104",
-      "citacao": "UGPA3 semáforo: amarelo (neutro (1 fato pontuado))"
+      "afirmacao": "Queda máxima de -48,9% em 3 anos.",
+      "evidencia": "E47",
+      "citacao": "Queda máx. (3 anos) -48,9%"
+     },
+     {
+      "afirmacao": "Vol anual de 31,3% e beta de 0,72.",
+      "evidencia": "E47",
+      "citacao": "Vol anual 31,3%; Beta 0,72"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.58,
+    "confianca": 0.6,
+    "nao_confirmadas": []
+   },
+   {
+    "ticker": "VALE3",
+    "tese": [
+     {
+      "afirmacao": "DY 12m de 7,3% e Dív. liq./EBITDA de 1,31.",
+      "evidencia": "E48",
+      "citacao": "Dív. liq./EBITDA 1,31; DY 12m 7,3%"
+     },
+     {
+      "afirmacao": "Pedido de registro do Programa de Panda Bonds na China, com tom good.",
+      "evidencia": "E115",
+      "citacao": "VALE3 Comunicado ao Mercado em 20/10/2026: Vale apresenta pedido de registro do Programa de Panda Bonds na China; tom Jev: good"
+     },
+     {
+      "afirmacao": "Beta de 0,37 e queda máxima de -31,7% em 3 anos.",
+      "evidencia": "E48",
+      "citacao": "Vol anual 27,8%; Beta 0,37; Queda máx. (3 anos) -31,7%"
+     }
+    ],
+    "contra_tese_macro": [
+     {
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e reduz o apetite global por risco.",
+      "evidencia": "E1",
+      "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
+     },
+     {
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, sustenta juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
+     },
+     {
+      "afirmacao": "Câmbio projetado em 5,34 para 2026 e 5,40 para 2027, com revisão de 0,14 em 4 semanas, adiciona incerteza.",
+      "evidencia": "E7",
+      "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
+     }
+    ],
+    "riscos": [
+     {
+      "afirmacao": "P/L de 27,46 e ROE de 5,3%.",
+      "evidencia": "E48",
+      "citacao": "P/L 27,46; P/VP 1,45; ROE 5,3%"
+     },
+     {
+      "afirmacao": "Retorno 12m de 4,9%.",
+      "evidencia": "E48",
+      "citacao": "Retorno 12m 4,9%"
+     },
+     {
+      "afirmacao": "Margem líquida de 4,8%.",
+      "evidencia": "E48",
+      "citacao": "Margem líquida 4,8%"
+     }
+    ],
+    "postura": "neutra",
+    "confianca": 0.45,
     "nao_confirmadas": []
    },
    {
     "ticker": "VBBR3",
     "tese": [
      {
-      "afirmacao": "A ação negocia a P/L de 8,79, com ROE de 21,5%.",
-      "evidencia": "E37",
+      "afirmacao": "P/L de 8,79 e ROE de 21,5%.",
+      "evidencia": "E49",
       "citacao": "P/L 8,79; P/VP 1,89; ROE 21,5%"
      },
      {
-      "afirmacao": "O retorno de 12 meses é de 36,7%, com dividend yield de 5,6%.",
-      "evidencia": "E37",
+      "afirmacao": "Retorno 12m de 36,7% e DY 12m de 5,6%.",
+      "evidencia": "E49",
       "citacao": "Retorno 12m 36,7%; Vol anual 30,6%; Beta 0,78; Queda máx. (3 anos) -37,5%; P/L 8,79; P/VP 1,89; ROE 21,5%; Margem líquida 2,5%; Dív. liq./EBITDA 1,62; DY 12m 5,6%"
      },
      {
-      "afirmacao": "O beta é de 0,78, com volatilidade anual de 30,6%.",
-      "evidencia": "E37",
-      "citacao": "Vol anual 30,6%; Beta 0,78"
+      "afirmacao": "Dív. liq./EBITDA de 1,62.",
+      "evidencia": "E49",
+      "citacao": "Dív. liq./EBITDA 1,62"
      }
     ],
     "contra_tese_macro": [
      {
-      "afirmacao": "Com a Selic meta em 13,75% a.a., o custo de capital pressiona o setor de distribuição.",
+      "afirmacao": "Selic de 13,75% a.a. eleva o custo de capital e reduz o apetite global por risco.",
       "evidencia": "E1",
       "citacao": "Selic meta: 13,75% a.a. (BCB SGS 432)"
      },
      {
-      "afirmacao": "O PIB projetado de 1,76% em 2026 e 1,20% em 2027, com revisão de -0,09 em 4 semanas, limita o consumo de combustíveis.",
-      "evidencia": "E6",
-      "citacao": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
+      "afirmacao": "IPCA projetado em 5,22% para 2026 e 4,76% para 2027, com revisão de 0,20 em 4 semanas, sustenta juros altos.",
+      "evidencia": "E5",
+      "citacao": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
      },
      {
-      "afirmacao": "O Focus projeta câmbio de 5,34 em 2026 e 5,40 em 2027, com revisão de 0,14 em 4 semanas, alterando a paridade de importação.",
+      "afirmacao": "Câmbio projetado em 5,34 para 2026 e 5,40 para 2027, com revisão de 0,14 em 4 semanas, adiciona incerteza.",
       "evidencia": "E7",
       "citacao": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
      }
     ],
     "riscos": [
      {
-      "afirmacao": "A dívida líquida/EBITDA é de 1,62.",
-      "evidencia": "E37",
-      "citacao": "Dív. liq./EBITDA 1,62"
+      "afirmacao": "Margem líquida de 2,5%.",
+      "evidencia": "E49",
+      "citacao": "Margem líquida 2,5%"
      },
      {
-      "afirmacao": "A queda máxima em 3 anos foi de 37,5%.",
-      "evidencia": "E37",
+      "afirmacao": "Queda máxima de -37,5% em 3 anos.",
+      "evidencia": "E49",
       "citacao": "Queda máx. (3 anos) -37,5%"
      },
      {
-      "afirmacao": "O semáforo da CVM está amarelo, sem fato pontuado.",
-      "evidencia": "E105",
-      "citacao": "semáforo: amarelo (sem fato pontuado)"
+      "afirmacao": "Vol anual de 30,6% e beta de 0,78.",
+      "evidencia": "E49",
+      "citacao": "Vol anual 30,6%; Beta 0,78"
      }
     ],
     "postura": "favoravel",
-    "confianca": 0.52,
+    "confianca": 0.6,
     "nao_confirmadas": []
    }
   ],
   "ranking": [
-   "PETR4",
    "JHSF3",
+   "PETR4",
    "MILS3",
    "BBSE3",
-   "CXSE3",
    "UGPA3",
-   "LEVE3",
+   "VBBR3",
+   "CXSE3",
    "ITSA4",
    "FIQE3",
-   "VBBR3",
-   "PSSA3",
+   "LEVE3",
    "LOGG3",
+   "ALOS3",
+   "CPLE3",
+   "BMGB4",
+   "BRAP4",
+   "INTB3",
+   "VALE3",
    "SAUD3",
-   "MLAS3",
-   "ALLD3"
+   "PSSA3",
+   "ALLD3",
+   "MLAS3"
   ],
   "limitacoes": [
-   "O parecer usa apenas as métricas de mercado e os comunicados resumidos fornecidos, sem análise das demonstrações financeiras completas nem dos termos das ofertas públicas citadas.",
-   "Não há preço-alvo, projeção de retorno nem sugestão de tamanho de posição; a decisão final e o risco são do investidor.",
-   "Métricas de dividend yield e margem podem refletir eventos não recorrentes, sobretudo onde o lucro contábil é nulo ou a margem supera a receita."
+   "A análise se restringe às evidências fornecidas e às consultas realizadas, sem acesso a demonstrativos completos ou guidance das companhias.",
+   "As métricas de mercado e os balanços têm datas de fechamento distintas, o que limita comparações entre empresas.",
+   "Eventos societários relevantes, como ofertas públicas e cancelamentos de registro, não têm termos detalhados na evidência disponível."
   ],
   "nao_confirmadas": []
  },
  "cores": {
   "ALLD3": "vermelho",
+  "ALOS3": "amarelo",
   "BBSE3": "verde",
+  "BMGB4": "amarelo",
+  "BRAP4": "amarelo",
+  "CPLE3": "amarelo",
   "CXSE3": "verde",
   "FIQE3": "verde",
+  "INTB3": "amarelo",
   "ITSA4": "verde",
   "JHSF3": "verde",
   "LEVE3": "verde",
-  "LOGG3": "amarelo",
+  "LOGG3": "verde",
   "MILS3": "verde",
   "MLAS3": "vermelho",
   "PETR4": "verde",
   "PSSA3": "amarelo",
   "SAUD3": "amarelo",
   "UGPA3": "verde",
+  "VALE3": "amarelo",
   "VBBR3": "verde"
  },
- "descartes": [],
+ "descartes": [
+  "MILS3 tese: a citação não está na evidência E98: «MILS3 Comunicado ao Mercado em 11/08/2026: Mills comunica elevação de rating par»"
+ ],
  "chamadas": [
   "fatos_relevantes",
   "fatos_relevantes",
-  "buscar_web",
-  "buscar_web"
+  "fatos_relevantes",
+  "metricas_da_acao",
+  "metricas_da_acao",
+  "metricas_da_acao"
  ],
  "uso": {
-  "requisicoes": 3,
-  "entrada": 55896,
-  "saida": 49410,
-  "custo_usd": 0.033133
+  "requisicoes": 2,
+  "entrada": 50904,
+  "saida": 63900,
+  "custo_usd": 0.03875
  },
  "evidencias_citadas": {
   "E1": {
@@ -972,155 +1317,233 @@
    "data": "2026-11-04",
    "texto": "Selic meta: 13,75% a.a. (BCB SGS 432)"
   },
-  "E101": {
-   "id": "E101",
+  "E1002": {
+   "id": "E1002",
+   "classe": "cvm",
+   "data": "2026-10-16",
+   "texto": "FIQE3 Fato Relevante em 16/10/2026: Pedido de Convocação de Assembleia Especial de  Acionistas Titulares de Ações em Circulação; tom Jev: sem nota"
+  },
+  "E1003": {
+   "id": "E1003",
+   "classe": "cvm",
+   "data": "2026-10-02",
+   "texto": "FIQE3 Fato Relevante em 02/10/2026: Oferta Pública de Aquisição; tom Jev: sem nota"
+  },
+  "E1009": {
+   "id": "E1009",
+   "classe": "cvm",
+   "data": "2026-10-02",
+   "texto": "PSSA3 Fato Relevante em 02/10/2026: Pedido de Cancelamento de registro de Companhia Aberta - Porto Serviço; tom Jev: sem nota"
+  },
+  "E1013": {
+   "id": "E1013",
+   "classe": "cvm",
+   "data": "2026-08-07",
+   "texto": "PSSA3 Fato Relevante em 07/08/2026: Modificação de Projeções Divulgadas; tom Jev: sem nota"
+  },
+  "E1014": {
+   "id": "E1014",
+   "classe": "cvm",
+   "data": "2026-08-18",
+   "texto": "MLAS3 Comunicado ao Mercado em 18/08/2026: Provisão para perdas com recebíveis do Grupo Casas Bahia; tom Jev: sem nota"
+  },
+  "E108": {
+   "id": "E108",
+   "classe": "cvm",
+   "data": "2026-09-09",
+   "texto": "SAUD3 Comunicado ao Mercado em 09/09/2026: Cancelamento de Autorização de Funcionamento perante a ANS; tom Jev: sem nota"
+  },
+  "E115": {
+   "id": "E115",
+   "classe": "cvm",
+   "data": "2026-10-20",
+   "texto": "VALE3 Comunicado ao Mercado em 20/10/2026: Vale apresenta pedido de registro do Programa de Panda Bonds na China; tom Jev: good"
+  },
+  "E124": {
+   "id": "E124",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "ALLD3 semáforo: amarelo (sem fato pontuado)"
+  },
+  "E126": {
+   "id": "E126",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "BBSE3 semáforo: amarelo (neutro (1 fato pontuado))"
+  },
+  "E127": {
+   "id": "E127",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "BMGB4 semáforo: amarelo (neutro (1 fato pontuado))"
+  },
+  "E128": {
+   "id": "E128",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "BRAP4 semáforo: amarelo (sem fato pontuado)"
+  },
+  "E129": {
+   "id": "E129",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "CPLE3 semáforo: amarelo (neutro (2 fatos pontuados))"
+  },
+  "E130": {
+   "id": "E130",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "CXSE3 semáforo: amarelo (sem fato pontuado)"
+  },
+  "E131": {
+   "id": "E131",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "FIQE3 semáforo: verde (23/10 Acordo Comercial com AST SpaceMobile)"
+  },
+  "E133": {
+   "id": "E133",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "ITSA4 semáforo: amarelo (sem fato pontuado)"
+  },
+  "E134": {
+   "id": "E134",
+   "classe": "cvm",
+   "data": "2026-10-27",
+   "texto": "JHSF3 semáforo: amarelo (sem fato pontuado)"
+  },
+  "E139": {
+   "id": "E139",
    "classe": "cvm",
    "data": "2026-10-27",
    "texto": "PETR4 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E102": {
-   "id": "E102",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "PSSA3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E104": {
-   "id": "E104",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "UGPA3 semáforo: amarelo (neutro (1 fato pontuado))"
-  },
-  "E105": {
-   "id": "E105",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "VBBR3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E12": {
-   "id": "E12",
-   "classe": "plano",
-   "data": "2026-10-27",
-   "texto": "ITSA4 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
-  },
-  "E19": {
-   "id": "E19",
-   "classe": "plano",
-   "data": "2026-10-27",
-   "texto": "PSSA3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
-  },
-  "E23": {
-   "id": "E23",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "ALLD3 (Allied, Consumo Cíclico): Preço (R$) 5,19; Retorno 12m -20,1%; Vol anual 48,7%; Beta 1,09; Queda máx. (3 anos) -46,2%; P/VP 0,32; ROE 0,0%; Margem líquida 0,0%; Dív. líq./EBITDA 0,06; DY 12m 39,7%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E24": {
-   "id": "E24",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "BBSE3 (BB Seguridade, Financeiro): Preço (R$) 40,79; Retorno 12m 43,6%; Vol anual 20,9%; Beta 0,38; Queda máx. (3 anos) -21,8%; DY 12m 12,9%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E25": {
-   "id": "E25",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "CXSE3 (Caixa Seguridade, Financeiro): Preço (R$) 20,77; Retorno 12m 50,4%; Vol anual 23,2%; Beta 0,42; Queda máx. (3 anos) -18,8%; DY 12m 5,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E26": {
-   "id": "E26",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "FIQE3 (Unifique, Telecomunicações): Preço (R$) 5,20; Retorno 12m 36,9%; Vol anual 42,7%; Beta 1,07; Queda máx. (3 anos) -44,0%; P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%; Dív. líq./EBITDA 0,55; DY 12m 12,3%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E27": {
-   "id": "E27",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "ITSA4 (Itaúsa, Financeiro): Preço (R$) 12,42; Retorno 12m 22,2%; Vol anual 30,8%; Beta 1,09; Queda máx. (3 anos) -24,9%; DY 12m 9,0%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E28": {
-   "id": "E28",
-   "classe": "mercado",
-   "data": "2026-11-03",
-   "texto": "JHSF3 (JHSF, Consumo Cíclico): Preço (R$) 9,11; Retorno 12m 57,2%; Vol anual 49,2%; Beta 1,36; Queda máx. (3 anos) -39,9%; P/L 3,65; P/VP 1,04; ROE 28,4%; Margem líquida 52,6%; Dív. líq./EBITDA 0,75; DY 12m 7,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E29": {
    "id": "E29",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "LEVE3 (Mahle Metal Leve, Bens Industriais): Preço (R$) 30,05; Retorno 12m 14,0%; Vol anual 30,0%; Beta 0,77; Queda máx. (3 anos) -24,0%; P/L 6,64; P/VP 4,80; ROE 72,3%; Margem líquida 13,0%; Dív. líq./EBITDA 1,03; DY 12m 8,1%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
-  },
-  "E3": {
-   "id": "E3",
-   "classe": "bcb",
-   "data": "2026-11-03",
-   "texto": "Dólar PTAX (R$) em 03/11/2026: 5,49 (BCB SGS)"
+   "texto": "ALLD3 (Allied, Consumo Cíclico): Preço (R$) 5,19; Retorno 12m -20,1%; Vol anual 48,7%; Beta 1,09; Queda máx. (3 anos) -46,2%; P/VP 0,32; ROE 0,0%; Margem líquida 0,0%; Dív. líq./EBITDA 0,06; DY 12m 39,7%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E30": {
    "id": "E30",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "LOGG3 (LOG CP, Consumo Cíclico): Preço (R$) 20,13; Retorno 12m 11,4%; Vol anual 44,6%; Beta 1,27; Queda máx. (3 anos) -36,7%; P/L 5,82; P/VP 0,62; ROE 10,6%; Margem líquida 141,7%; Dív. líq./EBITDA 2,81; DY 12m 27,7%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "ALOS3 (Allos, Financeiro): Preço (R$) 23,52; Retorno 12m 7,3%; Vol anual 38,5%; Beta 1,35; Queda máx. (3 anos) -33,9%; P/L 15,78; P/VP 1,15; ROE 7,3%; Margem líquida 32,3%; Dív. líq./EBITDA -1,50; DY 12m 12,0%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E31": {
    "id": "E31",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "MILS3 (Mills, Bens Industriais): Preço (R$) 15,85; Retorno 12m 33,2%; Vol anual 26,5%; Beta 0,43; Queda máx. (3 anos) -38,4%; P/L 8,07; P/VP 1,92; ROE 23,8%; Margem líquida 23,5%; Dív. líq./EBITDA 1,20; DY 12m 6,2%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "BBSE3 (BB Seguridade, Financeiro): Preço (R$) 40,79; Retorno 12m 43,6%; Vol anual 20,9%; Beta 0,38; Queda máx. (3 anos) -21,8%; DY 12m 12,9%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E32": {
    "id": "E32",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "MLAS3 (MULTILASER, Tecnologia da Informação): Preço (R$) 1,84; Retorno 12m 88,7%; Vol anual 62,9%; Beta 1,36; Queda máx. (3 anos) -65,8%; P/VP 0,47; ROE 0,0%; Margem líquida 0,0%; Dív. líq./EBITDA -1,19; DY 12m 3,6%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "BMGB4 (Banco BMG, Financeiro): Preço (R$) 5,32; Retorno 12m 49,2%; Vol anual 38,3%; Beta 0,92; Queda máx. (3 anos) -29,3%; DY 12m 9,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E33": {
    "id": "E33",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "PETR4 (Petrobras, Petróleo, Gás e Biocombustíveis): Preço (R$) 50,71; Retorno 12m 83,3%; Vol anual 30,1%; Beta 0,51; Queda máx. (3 anos) -22,4%; P/L 5,01; P/VP 1,39; ROE 27,7%; Margem líquida 24,3%; Dív. líq./EBITDA 1,14; DY 12m 8,2%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "BRAP4 (Bradespar, Financeiro): Preço (R$) 18,07; Retorno 12m 13,2%; Vol anual 27,9%; Beta 0,50; Queda máx. (3 anos) -32,4%; P/L 13,08; P/VP 0,95; ROE 7,3%; Dív. líq./EBITDA -0,48; DY 12m 10,9%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E34": {
    "id": "E34",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "PSSA3 (Porto Seguro, Financeiro): Preço (R$) 44,33; Retorno 12m -1,8%; Vol anual 27,5%; Beta 0,61; Queda máx. (3 anos) -19,4%; DY 12m 5,3%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "CPLE3 (Copel, Utilidade Pública): Preço (R$) 14,11; Retorno 12m 17,7%; Vol anual 29,0%; Beta 0,93; Queda máx. (3 anos) -20,3%; P/L 15,16; P/VP 1,97; ROE 13,0%; Margem líquida 11,2%; Dív. líq./EBITDA 2,81; DY 12m 7,6%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E35": {
    "id": "E35",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "SAUD3 (BRADSAUDE, Saúde): Preço (R$) 13,93; Retorno 12m 12,5%; Vol anual 41,1%; Beta 0,85; Queda máx. (3 anos) -21,2%; P/L 18,65; P/VP 1,99; ROE 10,6%; Margem líquida 9,8%; Dív. líq./EBITDA -5,69; DY 12m 5,6%; Fechamento de 03/11/2026; Balanço de 30/09/2026"
+   "texto": "CXSE3 (Caixa Seguridade, Financeiro): Preço (R$) 20,77; Retorno 12m 50,4%; Vol anual 23,2%; Beta 0,42; Queda máx. (3 anos) -18,8%; DY 12m 5,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E36": {
    "id": "E36",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "UGPA3 (Ultrapar, Petróleo, Gás e Biocombustíveis): Preço (R$) 31,07; Retorno 12m 58,6%; Vol anual 31,3%; Beta 0,72; Queda máx. (3 anos) -48,9%; P/L 11,88; P/VP 2,29; ROE 19,3%; Margem líquida 2,3%; Dív. líq./EBITDA 1,12; DY 12m 7,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "FIQE3 (Unifique, Telecomunicações): Preço (R$) 5,20; Retorno 12m 36,9%; Vol anual 42,7%; Beta 1,07; Queda máx. (3 anos) -44,0%; P/L 8,77; P/VP 1,61; ROE 18,4%; Margem líquida 17,2%; Dív. líq./EBITDA 0,55; DY 12m 12,3%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E37": {
    "id": "E37",
    "classe": "mercado",
    "data": "2026-11-03",
-   "texto": "VBBR3 (Vibra Energia, Petróleo, Gás e Biocombustíveis): Preço (R$) 29,12; Retorno 12m 36,7%; Vol anual 30,6%; Beta 0,78; Queda máx. (3 anos) -37,5%; P/L 8,79; P/VP 1,89; ROE 21,5%; Margem líquida 2,5%; Dív. líq./EBITDA 1,62; DY 12m 5,6%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+   "texto": "INTB3 (Intelbras, Tecnologia da Informação): Preço (R$) 14,35; Retorno 12m 31,1%; Vol anual 53,2%; Beta 1,43; Queda máx. (3 anos) -53,8%; P/L 16,27; P/VP 1,40; ROE 8,6%; Margem líquida 6,3%; Dív. líq./EBITDA -0,90; DY 12m 9,9%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
-  "E4": {
-   "id": "E4",
-   "classe": "bcb",
-   "data": "2026-10-30",
-   "texto": "Focus (mediana) Selic: 2026 13,50; 2027 12,50; Mudança em 4 semanas (2026) 0,00"
+  "E38": {
+   "id": "E38",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "ITSA4 (Itaúsa, Financeiro): Preço (R$) 12,42; Retorno 12m 22,2%; Vol anual 30,8%; Beta 1,09; Queda máx. (3 anos) -24,9%; DY 12m 9,0%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E39": {
+   "id": "E39",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "JHSF3 (JHSF, Consumo Cíclico): Preço (R$) 9,11; Retorno 12m 57,2%; Vol anual 49,2%; Beta 1,36; Queda máx. (3 anos) -39,9%; P/L 3,65; P/VP 1,04; ROE 28,4%; Margem líquida 52,6%; Dív. líq./EBITDA 0,75; DY 12m 7,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E40": {
+   "id": "E40",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "LEVE3 (Mahle Metal Leve, Bens Industriais): Preço (R$) 30,05; Retorno 12m 14,0%; Vol anual 30,0%; Beta 0,77; Queda máx. (3 anos) -24,0%; P/L 6,64; P/VP 4,80; ROE 72,3%; Margem líquida 13,0%; Dív. líq./EBITDA 1,03; DY 12m 8,1%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E41": {
+   "id": "E41",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "LOGG3 (LOG CP, Consumo Cíclico): Preço (R$) 20,13; Retorno 12m 11,4%; Vol anual 44,6%; Beta 1,27; Queda máx. (3 anos) -36,7%; P/L 5,82; P/VP 0,62; ROE 10,6%; Margem líquida 141,7%; Dív. líq./EBITDA 2,81; DY 12m 27,7%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E42": {
+   "id": "E42",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "MILS3 (Mills, Bens Industriais): Preço (R$) 15,85; Retorno 12m 33,2%; Vol anual 26,5%; Beta 0,43; Queda máx. (3 anos) -38,4%; P/L 8,07; P/VP 1,92; ROE 23,8%; Margem líquida 23,5%; Dív. líq./EBITDA 1,20; DY 12m 6,2%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E43": {
    "id": "E43",
-   "classe": "cvm",
-   "data": "2026-10-23",
-   "texto": "BBSE3 Fato Relevante em 23/10/2026: Renúncia membro do Conselho de Administração e CTPR; tom Jev: unclear"
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "MLAS3 (MULTILASER, Tecnologia da Informação): Preço (R$) 1,84; Retorno 12m 88,7%; Vol anual 62,9%; Beta 1,36; Queda máx. (3 anos) -65,8%; P/VP 0,47; ROE 0,0%; Margem líquida 0,0%; Dív. líq./EBITDA -1,19; DY 12m 3,6%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E44": {
+   "id": "E44",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "PETR4 (Petrobras, Petróleo, Gás e Biocombustíveis): Preço (R$) 50,71; Retorno 12m 83,3%; Vol anual 30,1%; Beta 0,51; Queda máx. (3 anos) -22,4%; P/L 5,01; P/VP 1,39; ROE 27,7%; Margem líquida 24,3%; Dív. líq./EBITDA 1,14; DY 12m 8,2%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E45": {
+   "id": "E45",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "PSSA3 (Porto Seguro, Financeiro): Preço (R$) 44,33; Retorno 12m -1,8%; Vol anual 27,5%; Beta 0,61; Queda máx. (3 anos) -19,4%; DY 12m 5,3%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E46": {
+   "id": "E46",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "SAUD3 (BRADSAUDE, Saúde): Preço (R$) 13,93; Retorno 12m 12,5%; Vol anual 41,1%; Beta 0,85; Queda máx. (3 anos) -21,2%; P/L 18,65; P/VP 1,99; ROE 10,6%; Margem líquida 9,8%; Dív. líq./EBITDA -5,69; DY 12m 5,6%; Fechamento de 03/11/2026; Balanço de 30/09/2026"
+  },
+  "E47": {
+   "id": "E47",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "UGPA3 (Ultrapar, Petróleo, Gás e Biocombustíveis): Preço (R$) 31,07; Retorno 12m 58,6%; Vol anual 31,3%; Beta 0,72; Queda máx. (3 anos) -48,9%; P/L 11,88; P/VP 2,29; ROE 19,3%; Margem líquida 2,3%; Dív. líq./EBITDA 1,12; DY 12m 7,8%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
+  },
+  "E48": {
+   "id": "E48",
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "VALE3 (Vale, Materiais Básicos): Preço (R$) 60,25; Retorno 12m 4,9%; Vol anual 27,8%; Beta 0,37; Queda máx. (3 anos) -31,7%; P/L 27,46; P/VP 1,45; ROE 5,3%; Margem líquida 4,8%; Dív. líq./EBITDA 1,31; DY 12m 7,3%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E49": {
    "id": "E49",
-   "classe": "cvm",
-   "data": "2026-10-16",
-   "texto": "CXSE3 Fato Relevante em 16/10/2026: Rescisão do Contrato de Distribuição no Banco Pan; tom Jev: sem nota"
+   "classe": "mercado",
+   "data": "2026-11-03",
+   "texto": "VBBR3 (Vibra Energia, Petróleo, Gás e Biocombustíveis): Preço (R$) 29,12; Retorno 12m 36,7%; Vol anual 30,6%; Beta 0,78; Queda máx. (3 anos) -37,5%; P/L 8,79; P/VP 1,89; ROE 21,5%; Margem líquida 2,5%; Dív. líq./EBITDA 1,62; DY 12m 5,6%; Fechamento de 03/11/2026; Balanço de 30/06/2026"
   },
   "E5": {
    "id": "E5",
@@ -1128,23 +1551,11 @@
    "data": "2026-10-30",
    "texto": "Focus (mediana) IPCA: 2026 5,22; 2027 4,76; Mudança em 4 semanas (2026) 0,20"
   },
-  "E53": {
-   "id": "E53",
+  "E56": {
+   "id": "E56",
    "classe": "cvm",
    "data": "2026-10-23",
-   "texto": "FIQE3 Fato Relevante em 23/10/2026: Acordo Comercial com AST SpaceMobile; tom Jev: good"
-  },
-  "E54": {
-   "id": "E54",
-   "classe": "cvm",
-   "data": "2026-10-16",
-   "texto": "FIQE3 Fato Relevante em 16/10/2026: Pedido de Convocação de Assembleia Especial de  Acionistas Titulares de Ações em Circulação; tom Jev: sem nota"
-  },
-  "E55": {
-   "id": "E55",
-   "classe": "cvm",
-   "data": "2026-10-02",
-   "texto": "FIQE3 Fato Relevante em 02/10/2026: Oferta Pública de Aquisição; tom Jev: sem nota"
+   "texto": "ALOS3 Fato Relevante em 23/10/2026: Atualizações sobre o Kinea ALLOS Malls FII e a venda de participações em Shoppings da ALLOS; tom Jev: unclear"
   },
   "E6": {
    "id": "E6",
@@ -1152,11 +1563,23 @@
    "data": "2026-10-30",
    "texto": "Focus (mediana) PIB Total: 2026 1,76; 2027 1,20; Mudança em 4 semanas (2026) -0,09"
   },
-  "E65": {
-   "id": "E65",
+  "E60": {
+   "id": "E60",
    "classe": "cvm",
-   "data": "2026-09-23",
-   "texto": "LOGG3 Comunicado ao Mercado em 23/09/2026: Conclusão de venda de ativo; tom Jev: sem nota"
+   "data": "2026-10-23",
+   "texto": "BBSE3 Fato Relevante em 23/10/2026: Renúncia membro do Conselho de Administração e CTPR; tom Jev: unclear"
+  },
+  "E66": {
+   "id": "E66",
+   "classe": "cvm",
+   "data": "2026-10-14",
+   "texto": "BMGB4 Comunicado ao Mercado em 14/10/2026: Revisão Perspectiva Rating Moodys Local; tom Jev: sem nota"
+  },
+  "E69": {
+   "id": "E69",
+   "classe": "cvm",
+   "data": "2026-08-27",
+   "texto": "BMGB4 Comunicado ao Mercado em 27/08/2026: Conclusão da cessão sem retenção de riscos e benefícios Cartões INSS; tom Jev: sem nota"
   },
   "E7": {
    "id": "E7",
@@ -1164,83 +1587,17 @@
    "data": "2026-10-30",
    "texto": "Focus (mediana) Câmbio: 2026 5,34; 2027 5,40; Mudança em 4 semanas (2026) 0,14"
   },
-  "E70": {
-   "id": "E70",
-   "classe": "cvm",
-   "data": "2026-08-11",
-   "texto": "MILS3 Comunicado ao Mercado em 11/08/2026: Mills comunica elevação de rating para 'brAA'  pela S&ampP Global; tom Jev: sem nota"
-  },
   "E71": {
    "id": "E71",
    "classe": "cvm",
-   "data": "2026-08-18",
-   "texto": "MLAS3 Comunicado ao Mercado em 18/08/2026: Provisão para perdas com recebíveis do Grupo Casas Bahia; tom Jev: sem nota"
+   "data": "2026-10-21",
+   "texto": "CPLE3 Comunicado ao Mercado em 21/10/2026: Comunicado ao Mercado 14/26 - Mercado Faturado da Copel DIS cresce 5,8% no 3T26. No acumulado do ano cresce 5,0%.; tom Jev: good"
   },
-  "E74": {
-   "id": "E74",
+  "E76": {
+   "id": "E76",
    "classe": "cvm",
-   "data": "2026-10-02",
-   "texto": "PSSA3 Fato Relevante em 02/10/2026: Pedido de Cancelamento de registro de Companhia Aberta - Porto Serviço; tom Jev: sem nota"
-  },
-  "E8": {
-   "id": "E8",
-   "classe": "plano",
-   "data": "2026-10-27",
-   "texto": "ALLD3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
-  },
-  "E80": {
-   "id": "E80",
-   "classe": "cvm",
-   "data": "2026-09-09",
-   "texto": "SAUD3 Comunicado ao Mercado em 09/09/2026: Cancelamento de Autorização de Funcionamento perante a ANS; tom Jev: sem nota"
-  },
-  "E9": {
-   "id": "E9",
-   "classe": "plano",
-   "data": "2026-10-27",
-   "texto": "BBSE3 está na carteira do Aleph Quant registrada em 27/10/2026, peso alvo 6,7%"
-  },
-  "E91": {
-   "id": "E91",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "ALLD3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E92": {
-   "id": "E92",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "BBSE3 semáforo: amarelo (neutro (1 fato pontuado))"
-  },
-  "E93": {
-   "id": "E93",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "CXSE3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E95": {
-   "id": "E95",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "ITSA4 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E96": {
-   "id": "E96",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "JHSF3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E97": {
-   "id": "E97",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "LEVE3 semáforo: amarelo (sem fato pontuado)"
-  },
-  "E99": {
-   "id": "E99",
-   "classe": "cvm",
-   "data": "2026-10-27",
-   "texto": "MILS3 semáforo: amarelo (sem fato pontuado)"
+   "data": "2026-10-16",
+   "texto": "CXSE3 Fato Relevante em 16/10/2026: Rescisão do Contrato de Distribuição no Banco Pan; tom Jev: sem nota"
   }
  }
 }

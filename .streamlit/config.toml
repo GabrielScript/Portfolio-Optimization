@@ -1,0 +1,50 @@
+# Aleph Neumann's native theme (the user's design request of 2026-11-04): premium black, stylized gold and royal
+# blue. tests/test_tema.py holds it to WCAG 2.1 AA. Streamlit writes primary-button text in white, so the actions
+# take the royal blue (5.5:1 with white) and the gold leads text accents, links, table headers and charts.
+
+[theme]
+base = "dark"
+backgroundColor = "#0B0B0E"
+secondaryBackgroundColor = "#17171D"
+textColor = "#EDE6D6"
+primaryColor = "#3A5FD9"
+linkColor = "#D4AF37"
+linkUnderline = false
+borderColor = "#2A2A33"
+showWidgetBorder = true
+showSidebarBorder = true
+baseRadius = "medium"
+buttonRadius = "medium"
+codeBackgroundColor = "#121217"
+codeTextColor = "#E6C866"
+
+font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+headingFont = "'Playfair Display':https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"
+codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
+baseFontSize = 15
+headingFontWeights = [700, 600, 600, 600, 600, 600]
+metricValueFontWeight = 600          # Streamlit 1.66
+paddingTop = "3rem"                  # Streamlit 1.66: less empty band above the title (default about 6rem)
+
+dataframeHeaderBackgroundColor = "#1C1C23"
+dataframeHeaderTextColor = "#D4AF37"
+dataframeBorderColor = "#2A2A33"
+
+yellowColor = "#D4AF37"
+yellowTextColor = "#D4AF37"
+blueColor = "#7B96F0"
+greenColor = "#4CC38A"
+redColor = "#E8735F"
+orangeColor = "#E39B4B"
+violetColor = "#A98BEB"
+grayColor = "#9A9488"
+
+# gold, light royal blue, warm gray, green, coral, violet, teal: every one at least 3:1 on the black
+chartCategoricalColors = ["#D4AF37", "#7B96F0", "#B8B2A6", "#4CC38A", "#E8735F", "#A98BEB", "#4FC1D6"]
+chartSequentialColors = ["#1A1712", "#2E2614", "#433517", "#5A4519", "#72561C", "#8B681F", "#A47B24", "#BC8F2B", "#D4AF37", "#E8CF7A"]
+
+[theme.sidebar]
+backgroundColor = "#0D1020"
+secondaryBackgroundColor = "#161A2E"
+textColor = "#EDE6D6"
+borderColor = "#262B45"

@@ -116,7 +116,9 @@ def test_the_screen_is_alepha_and_its_default_plan_buys_the_registered_conservad
     # "Fundo Alepha" (user, 2026-10-24; DECISOES 126)
     assert not app_alepha.exception
     # renamed "Aleph Neumann" by the user on 2026-11-03 (DECISOES 240)
-    assert any(">Aleph Neumann<" in m.value for m in app_alepha.markdown if "main-title" in m.value)
+    assert any("Aleph Neumann" in t.value for t in app_alepha.title)
+    # the native theme replaced the injected CSS (the user's design request of 2026-11-04)
+    assert not any("<style" in m.value for m in app_alepha.markdown)
     textos = [m.value for m in app_alepha.markdown] + [c.value for c in app_alepha.caption]
     assert not any("Fundo Alepha" in texto or "Alepha Quant" in texto for texto in textos)
     _, alvo = _conservadora_sintetica()

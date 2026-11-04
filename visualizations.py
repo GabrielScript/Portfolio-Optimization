@@ -8,18 +8,20 @@ import pandas as pd
 import numpy as np
 from typing import Dict, Optional
 
-# Paleta de cores adaptada para contraste institucional
+# The app theme's palette (.streamlit/config.toml, the user's design request of 2026-11-04): premium black, gold and
+# royal blue; every line color keeps at least 3:1 against the background (tests/test_tema.py).
 CORES = {
-    'fundo': '#0E1117',
-    'card': '#1E2130',
-    'texto': '#FAFAFA',
-    'grid': '#2D3250',
-    'conservador': '#00D4AA',
-    'moderado': '#FFB74D',
-    'agressivo': '#FF5252',
-    'azul': '#667EEA',
-    'roxo': '#764BA2',
-    'alerta': '#FF3366'
+    'fundo': '#0B0B0E',
+    'card': '#17171D',
+    'texto': '#EDE6D6',
+    'grid': '#2A2A33',
+    'dourado': '#D4AF37',
+    'conservador': '#4CC38A',
+    'moderado': '#E39B4B',
+    'agressivo': '#E8735F',
+    'azul': '#7B96F0',
+    'roxo': '#A98BEB',
+    'alerta': '#E8735F'
 }
 
 def grafico_fronteira_eficiente(fronteira: pd.DataFrame, carteira_otima: dict,
@@ -236,8 +238,7 @@ def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str]
     vêm do mesmo walk-forward (mesmas datas, mesmos custos), então a
     comparação é justa.
     """
-    paleta = [CORES['azul'], CORES['moderado'], CORES['conservador'], CORES['roxo'],
-              CORES['alerta'], '#AAAAAA']
+    paleta = [CORES['azul'], '#B8B2A6', CORES['conservador'], CORES['roxo'], CORES['alerta'], CORES['moderado']]
     estilos = ['solid', 'dot', 'dash', 'dashdot', 'longdash', 'dot']
     fig = go.Figure()
     datas_comuns = None
@@ -249,7 +250,7 @@ def grafico_curvas_capital(curvas: Dict[str, pd.Series], destaque: Optional[str]
         principal = nome == destaque
         fig.add_trace(go.Scatter(
             x=base100.index, y=base100.values, mode='lines', name=nome,
-            line=dict(color=paleta[i % len(paleta)], width=2.8 if principal else 1.5,
+            line=dict(color=CORES['dourado'] if principal else paleta[i % len(paleta)], width=2.8 if principal else 1.5,
                       dash='solid' if principal else estilos[i % len(estilos)]),
             hovertemplate=f'{nome}: ' + '%{y:.1f}<extra></extra>'
         ))

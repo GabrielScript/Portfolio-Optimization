@@ -1,8 +1,7 @@
 """
 secoes.py - Blocos de renderização do dashboard.
 
-Segurança (code-reviewer / XSS): o único ponto com ``unsafe_allow_html`` é
-``card``. Todo texto dinâmico passa por ``html.escape``.
+No HTML is injected since 2026-11-04: the cards are native ``st.metric`` in the app's theme.
 
 Fronteira de aconselhamento (prediction-market-risk-review): a saída é
 informativa. Retornos esperados aparecem como estimativa de modelo com faixa
@@ -11,7 +10,6 @@ de incerteza, nunca como valor prometido em R$.
 
 from __future__ import annotations
 
-import html
 from datetime import date
 
 import numpy as np
@@ -26,29 +24,11 @@ from core.metrics import (MomentosSharpe, ResumoDesempenho, comparar_benchmark, 
 from core.optimization import ResultadoOtimizacao
 from core.ordens import MotivoFora, PlanoCompra, PlanoDinheiroReal, RegrasCompra, RegrasDinheiroReal
 
-CSS = """
-<style>
-.stApp { background: linear-gradient(135deg, #0E1117 0%, #1a1f2e 100%); }
-.metric-card { background: linear-gradient(145deg, #1E2130, #2D3250); border-radius: 16px;
-  padding: 20px; border: 1px solid rgba(102,126,234,.2); text-align: center; }
-.metric-value { font-size: 1.9rem; font-weight: 700; color: #8FA2FF; }
-.metric-value.pos { color: #00D4AA; } .metric-value.neg { color: #FF5252; }
-.metric-label { font-size: .8rem; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
-.metric-sub { font-size: .75rem; color: #777; margin-top: 4px; }
-.main-title { font-size: 2.4rem; font-weight: 800; text-align: center; color: #8FA2FF; margin-bottom: .2rem; }
-.subtitle { text-align: center; color: #888; font-size: 1rem; margin-bottom: 1.5rem; }
-</style>
-"""
-
-
 def card(valor: str, rotulo: str, sub: str = "", tom: str = "") -> None:
-    classe = {"pos": "metric-value pos", "neg": "metric-value neg"}.get(tom, "metric-value")
-    sub_html = f'<div class="metric-sub">{html.escape(sub)}</div>' if sub else ""
-    st.markdown(
-        f'<div class="metric-card"><div class="{classe}">{html.escape(valor)}</div>'
-        f'<div class="metric-label">{html.escape(rotulo)}</div>{sub_html}</div>',
-        unsafe_allow_html=True,
-    )
+    """A bordered metric in the native theme (the injected CSS cards left on 2026-11-04); ``tom`` "pos"/"neg"
+    colors the note green or red."""
+    st.metric(rotulo, valor, sub or None, delta_color={"pos": "normal", "neg": "inverse"}.get(tom, "off"),
+              delta_arrow="off", border=True)
 
 
 def _fmt(valor: float, pct: bool = True, casas: int = 2) -> str:

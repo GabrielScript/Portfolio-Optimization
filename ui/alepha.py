@@ -189,7 +189,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
                  column_config={nome: st.column_config.NumberColumn(format=formato) for nome in por_ano.columns[1:]},
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
     c2.bar_chart(por_ano.set_index("Ano")[list(BRACOS)], stack=False, y_label=medida,
-                 color=["#2e7d32", "#1565c0", "#9e9e9e"])
+                 color=["#7B96F0", "#D4AF37", "#B8B2A6"])       # Conservadora, Composite (gold), BOVA11: the theme's
     if taxas:
         st.caption("CDI e Selic: taxas diárias do Banco Central acumuladas nas mesmas datas de cada linha, antes de IR, "
                    "como as estratégias nesta tabela, que também estão antes de custos.")

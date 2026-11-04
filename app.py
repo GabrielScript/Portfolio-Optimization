@@ -20,7 +20,13 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon="🚀", layout="wide")
+from ui.marca import ICONE_PADRAO, arquivo_da_logo  # noqa: E402  (stdlib only: safe before set_page_config)
+
+LOGO = arquivo_da_logo()
+st.set_page_config(page_title="Aleph Neumann · Alocação quantitativa B3", page_icon=str(LOGO or ICONE_PADRAO),
+                   layout="wide")
+if LOGO is not None:
+    st.logo(str(LOGO), size="large")
 
 from assets import (BENCHMARK_ACOES, BENCHMARKS, SETORES, get_all_tickers, get_ticker_info,  # noqa: E402
                     get_tickers_by_setor, get_tickers_liquidos)
@@ -71,7 +77,8 @@ def ler_sidebar() -> Entradas:
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
         st.markdown("### Fronteira eficiente")
-        setores = st.multiselect("Setores (vazio = todos os ativos ou a lista líquida)", SETORES, key="setores")
+        setores = st.multiselect("Setores (vazio = todos os ativos ou a lista líquida)", SETORES, key="setores",
+                                 placeholder="Escolha setores")
         todos = st.checkbox(f"Todos os ativos ({len(get_all_tickers())})", value=True, key="todos",
                             disabled=bool(setores), help="Desmarcado: só a lista líquida (mais rápido). Com setores "
                                                          "escolhidos, valem os setores.")
@@ -104,10 +111,10 @@ def _descrever(violacoes: list[Violacao]) -> str:
 
 
 def main() -> None:
-    st.markdown(secoes.CSS, unsafe_allow_html=True)
-    st.markdown('<h1 class="main-title">Aleph Neumann</h1>'
-                '<p class="subtitle">Alocação quantitativa em ações, BDRs e ETFs da B3 · Composite no lago sem viés '
-                'de sobrevivência · Gabriel Estrela Lopes</p>', unsafe_allow_html=True)
+    # native theme in .streamlit/config.toml (the user's design request of 2026-11-04); the gold title is the theme's
+    st.title(":yellow[Aleph Neumann]")
+    st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Composite no lago sem viés de sobrevivência · "
+               "Gabriel Estrela Lopes")
     entradas = ler_sidebar()
     registrado = servicos.carregar_plano_registrado()
     secao_conservadora(entradas, registrado)

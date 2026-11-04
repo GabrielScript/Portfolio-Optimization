@@ -55,12 +55,13 @@ def ler_fechamentos(tickers: list[str], inicio: date, fim: date, base: Path = AR
 
 
 def com_fechamento_oficial(cotacoes: pd.DataFrame, fechamentos: pd.DataFrame) -> pd.DataFrame:
-    """``cotacoes`` (``market_data.cotacoes_atuais``) with each 1-minute bar replaced by the ticker's last close in
-    ``fechamentos`` (dates x tickers) when that close is from the bar's session or later. Yahoo's 1-minute bars stop
-    before B3's closing auction (16:55-17:00), so once the lake has a session's close, that is its official price; a
-    bar of a session the lake does not have yet (trading now, or closed but not yet in the upkeep's file) is kept."""
+    """``cotacoes`` (``core.cotacao_b3.cotacoes_b3``, or ``market_data.cotacoes_atuais``) with each intraday quote
+    replaced by the ticker's last close in ``fechamentos`` (dates x tickers) when that close is from the quote's
+    session or later: once the lake has a session's COTAHIST close, that is its official price, the same for every
+    screen; a quote of a session the lake does not have yet (trading now, or closed but not yet in the upkeep's file)
+    is kept."""
     corrigidas = cotacoes.astype({"horario": "object"})     # Yahoo's times are tz-aware, the lake's dates naive
-    for ticker in corrigidas.index[corrigidas["fonte"] == market_data.FONTE_INTRADIARIA]:
+    for ticker in corrigidas.index[corrigidas["fonte"] != market_data.FONTE_FECHAMENTO]:
         validos = fechamentos[ticker].dropna() if ticker in fechamentos.columns else pd.Series(dtype=float)
         if not validos.empty and validos.index[-1] >= _pregao(corrigidas.at[ticker, "horario"]):
             corrigidas.loc[ticker] = [float(validos.iloc[-1]), validos.index[-1], market_data.FONTE_FECHAMENTO]

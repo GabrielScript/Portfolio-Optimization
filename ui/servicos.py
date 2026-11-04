@@ -21,8 +21,8 @@ import pandas as pd
 import streamlit as st
 
 import ativos_tela
-from core import (assessor, bcb, cdi_lago, focus, lago, manchetes_online, market_data, precos_do_app, reamostragem,
-                  sentimento, simulador)
+from core import (assessor, bcb, cdi_lago, cotacao_b3, focus, lago, manchetes_online, market_data, precos_do_app,
+                  reamostragem, sentimento, simulador)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -208,10 +208,10 @@ def carregar_selic(dia: date) -> market_data.TaxaSelic:
 
 @st.cache_data(ttl=5 * 60, show_spinner=False, max_entries=16)
 def carregar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> pd.DataFrame:
-    """Último negócio do dia (Yahoo, ~15 min de atraso); sem ele, ou quando o lago já tem o fechamento daquele pregão
-    (a barra de 1 min para antes do leilão de fechamento), o último fechamento de ``precos_recentes``."""
-    return precos_do_app.com_fechamento_oficial(market_data.cotacoes_atuais(list(tickers), precos_recentes),
-                                                precos_recentes)
+    """The session's last trade from B3's own quote service (``core.cotacao_b3``, ~15 min late; Yahoo is no source
+    since 2026-11-04); without it, or once the lake has that session's COTAHIST close, the last close of
+    ``precos_recentes``."""
+    return precos_do_app.com_fechamento_oficial(cotacao_b3.cotacoes_b3(tickers, precos_recentes), precos_recentes)
 
 
 def descartar_cotacoes(tickers: tuple[str, ...], precos_recentes: pd.DataFrame) -> None:
@@ -271,25 +271,6 @@ def rodar_walk_forward(retornos: pd.DataFrame, params: ParametrosOtimizacao, cfg
     })
     return {nome: walk_forward(retornos, estrategia, cfg_bt, nome)
             for nome, estrategia in estrategias.items()}
-
-
-ETFS_DE_CRIPTO = ("HASH11", "BITH11", "ETHE11", "QBTC11")   # the 4 most traded on the B3 (63 sessions to 23/10/2026)
-
-
-@st.cache_data(ttl=6 * 3600, show_spinner=False)
-def carregar_etfs_de_cripto(dia: date) -> pd.DataFrame | None:
-    """Daily closes of BOVA11 and ``ETFS_DE_CRIPTO`` since 2021 from Yahoo (the lake has no crypto ETF; they pay no
-    income, so the close is the total return); None when Yahoo fails."""
-    import yfinance as yf
-
-    tickers = [f"{papel}.SA" for papel in ("BOVA11", *ETFS_DE_CRIPTO)]
-    try:
-        tabela = yf.download(tickers, start="2021-01-01", end=dia + timedelta(days=1), auto_adjust=True,
-                             progress=False)["Close"]
-    except Exception:       # noqa: BLE001 - network, rate limit or a Yahoo format change: the block says so
-        return None
-    tabela = tabela.reindex(columns=tickers).rename(columns=lambda papel: papel.removesuffix(".SA"))
-    return None if tabela.dropna().empty else tabela
 
 
 @st.cache_data(ttl=3600, show_spinner=False)

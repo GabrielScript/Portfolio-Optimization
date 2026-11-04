@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from core.config import ConfigBacktest, Objetivo, limites_por_setor
 from ui.servicos import ParametrosOtimizacao, carregar_satelite_registrado, rodar_walk_forward
@@ -76,17 +77,24 @@ def test_the_conservadoras_sectors_come_from_the_lakes_sectors_of_the_latest_pap
     assert setores_do_lago(("ITSA4.SA", "PETR4.SA"), tmp_path) == {"ITSA4.SA": "Financeiro"}
 
 
-def test_the_plan_s_quotes_take_the_lake_s_official_close_over_a_bar_of_the_same_session(monkeypatch):
-    # the live app on 24/10/2026 priced PETR4 at Yahoo's 16:54 bar (58.83), not B3's close of 23/10 (58.68)
-    from core import market_data
+def test_the_plan_s_quotes_come_from_b3_and_the_lake_s_official_close_wins_for_a_closed_session(monkeypatch):
+    # the user's UI list of 2026-11-03: quotes consistent and up to date, no Yahoo; B3's service is ~15 min late and
+    # its last print of a closed session equals the COTAHIST close the lake holds
+    import json
+    from core import cotacao_b3, market_data
     from ui import servicos
 
-    barra = pd.Timestamp("2026-10-23 16:54", tz="America/Sao_Paulo")
-    monkeypatch.setattr(market_data, "baixar_ultimos_negocios",
-                        lambda tickers: pd.DataFrame({"preco": [58.83], "horario": [barra]}, index=["PETR4.SA"]))
-    janela = pd.DataFrame({"PETR4.SA": [57.83, 58.68]}, index=pd.to_datetime(["2026-10-22", "2026-10-23"]))
+    def b3(papel):
+        sessao = {"PETR4": ("2026-10-23", "18:05:00", 58.70), "VALE3": ("2026-10-26", "11:30:00", 61.0)}[papel]
+        return json.dumps({"BizSts": {"cd": "OK"}, "TradgFlr": {"date": sessao[0], "scty": {"lstQtn": [
+            {"closPric": sessao[2], "dtTm": sessao[1]}]}}})
+
+    monkeypatch.setattr(cotacao_b3, "_baixar", b3)
+    monkeypatch.setattr(market_data, "baixar_ultimos_negocios", lambda tickers: pytest.fail("Yahoo is no source"))
+    janela = pd.DataFrame({"PETR4.SA": [57.83, 58.68], "VALE3.SA": [60.0, 60.5]},
+                          index=pd.to_datetime(["2026-10-22", "2026-10-23"]))
     servicos.carregar_cotacoes.clear()
-    cotacoes = servicos.carregar_cotacoes(("PETR4.SA",), janela)
+    cotacoes = servicos.carregar_cotacoes(("PETR4.SA", "VALE3.SA"), janela)
     servicos.carregar_cotacoes.clear()
-    assert cotacoes.loc["PETR4.SA", "preco"] == 58.68
-    assert cotacoes.loc["PETR4.SA", "fonte"] == market_data.FONTE_FECHAMENTO
+    assert cotacoes.loc["PETR4.SA", ["preco", "fonte"]].tolist() == [58.68, market_data.FONTE_FECHAMENTO]
+    assert cotacoes.loc["VALE3.SA", ["preco", "fonte"]].tolist() == [61.0, cotacao_b3.FONTE_B3]

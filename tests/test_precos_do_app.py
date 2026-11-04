@@ -134,3 +134,18 @@ def test_a_ticker_without_a_close_in_the_lake_keeps_its_bar():
 
     assert corrigidas.loc["NOVO3.SA", "preco"] == pytest.approx(10.0)
     assert corrigidas.loc["NOVO3.SA", "fonte"] == FONTE_INTRADIARIA
+
+
+def test_a_b3_quote_gives_way_to_the_lakes_close_of_its_session_and_a_newer_one_is_kept():
+    # the plan's quotes come from B3's own service since 2026-11-04 (core.cotacao_b3): naive Brasília times
+    from core.cotacao_b3 import FONTE_B3
+    from core.market_data import FONTE_FECHAMENTO
+    from core.precos_do_app import com_fechamento_oficial
+    cotacoes = _cotacoes(**{"PETR4.SA": (50.70, pd.Timestamp("2026-11-03 18:05"), FONTE_B3),
+                            "VALE3.SA": (61.00, pd.Timestamp("2026-11-04 11:30"), FONTE_B3)})
+    fechamentos = _quadro(["2026-10-31", "2026-11-03"], **{"PETR4.SA": [52.71, 50.71], "VALE3.SA": [60.0, 60.5]})
+
+    corrigidas = com_fechamento_oficial(cotacoes, fechamentos)
+
+    assert corrigidas.loc["PETR4.SA", ["preco", "fonte"]].tolist() == [pytest.approx(50.71), FONTE_FECHAMENTO]
+    assert corrigidas.loc["VALE3.SA", ["preco", "fonte"]].tolist() == [pytest.approx(61.00), FONTE_B3]

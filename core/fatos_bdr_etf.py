@@ -5,26 +5,22 @@ official sources only:
 - Sponsored BDRs: their foreign issuers file with the CVM like the B3 companies (``ipe.parquet``, CVM codes 80000 and
   up). A BDR maps by the lake's issuer->CVM code table when that code files there, else by its B3 name being the start
   of exactly one foreign issuer's CVM name. Unsponsored BDRs (Apple, Amazon...) file nothing with the CVM.
-- ETFs: the CVM's fund eventual documents (dados.cvm.gov.br, ``FI/DOC/EVENTUAL``, type "FATO RELEV"); a ticker maps
-  to the one fund CNPJ whose CVM name starts with the fund's full name in the B3 instruments register (BVBG.028,
-  ``CrpnNm``).
+- ETFs (and the other B3-listed funds the panel lists as ETFs): Fundos.NET, B3's system where listed funds deliver
+  their CVM filings, category "Fato Relevante", matched by the B3 trading name (``nomePregao``) the app already has.
+  The CVM's open fund eventual-documents dataset was tried first and has no index ETF (2026-11-04).
 """
 
 from __future__ import annotations
 
 import unicodedata
-import xml.etree.ElementTree as ET
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from datetime import date
-from pathlib import Path
 
 import pandas as pd
 
-from core.sentimento import link_seguro
-
 CODIGO_ESTRANGEIRO = 80_000          # the CVM's codes of foreign issuers start here
 MINIMO_DO_NOME = 4                   # a shorter B3 name is no match
-TIPO_FATO_DE_FUNDO = "FATO RELEV"
+LINK_DO_FNET = "https://fnet.bmfbovespa.com.br/fnet/publico/exibirDocumento?id={id}"
 COLUNAS = ["ticker", "empresa", "categoria", "assunto", "data", "link"]
 
 
@@ -60,45 +56,16 @@ def codigos_dos_bdrs(bdrs: pd.DataFrame, setores: pd.DataFrame, ipe: pd.DataFram
     return codigos
 
 
-def nomes_completos_do_cadastro(arquivo: Path, tickers: Iterable[str]) -> dict[str, str]:
-    """Ticker -> full name (``CrpnNm``) of ``tickers`` in a B3 instruments register (BVBG.028 XML), read as a
-    stream: the file has hundreds of megabytes."""
-    procurados, nomes = set(tickers), {}
-    nome = None
-    for _, elemento in ET.iterparse(arquivo, events=("end",)):
-        etiqueta = elemento.tag.rsplit("}", 1)[-1]
-        if etiqueta == "CrpnNm":
-            nome = (elemento.text or "").strip()
-        elif etiqueta == "TckrSymb":
-            ticker = (elemento.text or "").strip()
-            if ticker in procurados and nome:
-                nomes.setdefault(ticker, nome)
-        elif etiqueta == "Instrm":
-            nome = None
-            elemento.clear()
-    return nomes
-
-
-def cnpjs_dos_etfs(nomes: Mapping[str, str], eventuais: pd.DataFrame) -> dict[str, str]:
-    """Fund CNPJ -> ETF ticker: the single CNPJ of ``eventuais`` whose normalized CVM name starts with the ETF's
-    normalized full name."""
-    da_cvm = (eventuais.drop_duplicates("CNPJ_FUNDO_CLASSE").set_index("CNPJ_FUNDO_CLASSE")["DENOM_SOCIAL"]
-              .map(normalizar).to_dict())
-    cnpjs: dict[str, str] = {}
-    for ticker, nome in nomes.items():
-        cnpj = _unico_que_comeca(normalizar(nome), da_cvm)
-        if cnpj is not None:
-            cnpjs.setdefault(str(cnpj), ticker)
-    return cnpjs
-
-
-def fatos_dos_fundos(eventuais: pd.DataFrame, cnpjs: Mapping[str, str], desde: date) -> pd.DataFrame:
-    """The ETFs' "FATO RELEV" documents received on or after ``desde``, in ``core.sentimento.fatos_recentes``'s
-    columns (the CVM gives no subject: "Fato relevante do fundo"), newest first."""
-    recebido = pd.to_datetime(eventuais["DT_RECEB"], errors="coerce")
-    dentro = eventuais[(eventuais["TP_DOC"] == TIPO_FATO_DE_FUNDO) & (recebido >= pd.Timestamp(desde))
-                       & eventuais["CNPJ_FUNDO_CLASSE"].isin(list(cnpjs))]
-    fatos = pd.DataFrame({"ticker": dentro["CNPJ_FUNDO_CLASSE"].map(cnpjs), "empresa": dentro["DENOM_SOCIAL"],
-                          "categoria": "Fato Relevante", "assunto": "Fato relevante do fundo",
-                          "data": recebido[dentro.index], "link": dentro["LINK_ARQ"].map(link_seguro)}, columns=COLUNAS)
+def fatos_do_fnet(registros: pd.DataFrame, etfs: pd.DataFrame, desde: date) -> pd.DataFrame:
+    """The listed funds' material facts (``registros``: Fundos.NET's "Fato Relevante" search rows) of the ETFs in
+    ``etfs`` (``security``, ``name``: the B3 trading name), delivered on or after ``desde`` and not cancelled, in
+    ``core.sentimento.fatos_recentes``'s columns (Fundos.NET gives no subject), newest first."""
+    por_nome = dict(zip(etfs["name"].str.strip(), etfs["security"]))
+    entrega = pd.to_datetime(registros["dataEntrega"], format="%d/%m/%Y %H:%M", errors="coerce")
+    ticker = registros["nomePregao"].fillna("").str.strip().map(por_nome)
+    dentro = registros[ticker.notna() & (entrega >= pd.Timestamp(desde)) & (registros["situacaoDocumento"] != "C")]
+    fatos = pd.DataFrame({"ticker": ticker[dentro.index], "empresa": dentro["descricaoFundo"],
+                          "categoria": dentro["categoriaDocumento"], "assunto": "Fato relevante do fundo",
+                          "data": entrega[dentro.index],
+                          "link": [LINK_DO_FNET.format(id=int(numero)) for numero in dentro["id"]]}, columns=COLUNAS)
     return fatos.sort_values(["data", "ticker"], ascending=[False, True], kind="stable").reset_index(drop=True)

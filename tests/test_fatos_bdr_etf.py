@@ -4,8 +4,7 @@ from datetime import date
 
 import pandas as pd
 
-from core.fatos_bdr_etf import (cnpjs_dos_etfs, codigos_dos_bdrs, fatos_dos_fundos, nomes_completos_do_cadastro,
-                                normalizar)
+from core.fatos_bdr_etf import codigos_dos_bdrs, fatos_do_fnet, normalizar
 
 IPE = pd.DataFrame({"codigo_cvm": [80209, 80217, 80187, 21334], "nome_companhia": [
     "NU HOLDINGS LTD.", "INTER & CO, INC.", "AURA MINERALS INC", "NUTRIPLANT INDÚSTRIA S.A."]})
@@ -29,40 +28,22 @@ def test_a_b3_name_that_starts_two_foreign_names_maps_to_none():
     assert codigos_dos_bdrs(bdrs, pd.DataFrame(columns=["issuer", "code_cvm"]), ipe) == {}
 
 
-XML = """<?xml version="1.0" encoding="UTF-8"?>
-<Doc><Instrm><InstrmInf><EqtyInf><CrpnNm>ISHARES IBOVESPA FUNDO DE ÍNDICE      </CrpnNm><TckrSymb>BOVA11</TckrSymb>
-</EqtyInf></InstrmInf></Instrm><Instrm><InstrmInf><EqtyInf><CrpnNm>PETROLEO BRASILEIRO S.A. PETROBRAS</CrpnNm>
-<TckrSymb>PETR4</TckrSymb></EqtyInf></InstrmInf></Instrm></Doc>"""
+FNET = pd.DataFrame({
+    "id": [1, 2, 3, 4], "nomePregao": ["INVESTO BDOM ", "ISHARES BOVACI", "FII RIONEGRO", "INVESTO BDOM"],
+    "descricaoFundo": ["INVESTO BRAZIL DOMESTIC ETF CLASSE DE ÍNDICE", "ISHARES IBOVESPA FUNDO DE ÍNDICE",
+                       "RIO NEGRO FII", "INVESTO BRAZIL DOMESTIC ETF CLASSE DE ÍNDICE"],
+    "categoriaDocumento": "Fato Relevante", "dataEntrega": ["20/10/2026 18:30", "01/06/2026 09:00",
+                                                             "21/10/2026 10:00", "22/10/2026 10:00"],
+    "situacaoDocumento": ["A", "A", "A", "C"]})
 
 
-def test_the_b3_register_gives_each_asked_tickers_full_name(tmp_path):
-    arquivo = tmp_path / "BVBG.028.xml"
-    arquivo.write_text(XML, encoding="utf-8")
-    assert nomes_completos_do_cadastro(arquivo, {"BOVA11", "XINA11"}) == {"BOVA11": "ISHARES IBOVESPA FUNDO DE ÍNDICE"}
-
-
-EVENTUAIS = pd.DataFrame({
-    "CNPJ_FUNDO_CLASSE": ["10.406.511/0001-61", "10.406.511/0001-61", "11.111.111/0001-11", "22.222.222/0001-22"],
-    "DENOM_SOCIAL": ["ISHARES IBOVESPA FUNDO DE ÍNDICE - RESPONSABILIDADE LIMITADA"] * 2
-                    + ["OUTRO FUNDO", "ISHARES IBOVESPA FUNDO DE ÍNDICE II"],
-    "DT_RECEB": ["2026-10-20", "2026-06-01", "2026-10-21", "2026-10-22"],
-    "TP_DOC": ["FATO RELEV", "FATO RELEV", "FATO RELEV", "AGO"],
-    "LINK_ARQ": ["https://web.cvm.gov.br/a.pdf", "https://web.cvm.gov.br/b.pdf", "https://x/c.pdf",
-                 "javascript:alert(1)"]})
-
-
-def test_an_etf_maps_to_the_one_cnpj_whose_cvm_name_starts_with_its_full_name():
-    # two CNPJs start with "ISHARES IBOVESPA FUNDO DE INDICE": the one with that exact name (plus the CVM 175 suffix)
-    # wins only when it is the single CNPJ whose name starts with it; here the "II" fund also starts with it
-    ambiguo = cnpjs_dos_etfs({"BOVA11": "ISHARES IBOVESPA FUNDO DE ÍNDICE"}, EVENTUAIS)
-    assert ambiguo == {}
-    so_um = cnpjs_dos_etfs({"BOVA11": "ISHARES IBOVESPA FUNDO DE ÍNDICE"}, EVENTUAIS.iloc[:3])
-    assert so_um == {"10.406.511/0001-61": "BOVA11"}
-
-
-def test_the_fund_facts_are_the_recent_material_ones_in_the_panels_format():
-    fatos = fatos_dos_fundos(EVENTUAIS, {"10.406.511/0001-61": "BOVA11"}, date(2026, 8, 1))
+def test_the_listed_funds_facts_come_from_fundos_net_by_their_b3_trading_name():
+    # Fundos.NET (B3's system for the funds' CVM filings) names each fund by its B3 trading name, the register's short
+    # name the app already has; a cancelled filing and one older than the window are left out
+    etfs = pd.DataFrame({"security": ["BDOM11", "BOVA11"], "name": ["INVESTO BDOM", "ISHARES BOVACI"]})
+    fatos = fatos_do_fnet(FNET, etfs, date(2026, 8, 6))
     assert list(fatos.columns) == ["ticker", "empresa", "categoria", "assunto", "data", "link"]
-    assert fatos["ticker"].tolist() == ["BOVA11"] and fatos["categoria"].tolist() == ["Fato Relevante"]
-    assert fatos["data"].tolist() == [pd.Timestamp("2026-10-20")] and fatos["link"].tolist() == [
-        "https://web.cvm.gov.br/a.pdf"]
+    assert fatos["ticker"].tolist() == ["BDOM11"]
+    assert fatos.iloc[0][["categoria", "data", "link"]].tolist() == [
+        "Fato Relevante", pd.Timestamp("2026-10-20 18:30"),
+        "https://fnet.bmfbovespa.com.br/fnet/publico/exibirDocumento?id=1"]

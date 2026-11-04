@@ -27,9 +27,9 @@ DESTINO_DIARIO = RAIZ / "lago" / "sentimento_diario.parquet"
 DESTINO_FATOS = RAIZ / "lago" / "fatos_relevantes.parquet"
 DESTINO_FUNDAMENTOS = RAIZ / "lago" / "fundamentos.parquet"
 DIAS_DE_FATOS = 90
-PASTA_DO_CADASTRO = Path("D:/b3-datalake/raw/b3_pesquisa/IN")   # B3 instruments registers (BVBG.028), monthly
-CACHE = RAIZ / "data" / "fatos_bdr_etf"                         # downloads and the register's names (not in git)
-URL_EVENTUAIS = "https://dados.cvm.gov.br/dados/FI/DOC/EVENTUAL/DADOS/eventual_fi_{ano}.csv"
+URL_DO_FNET = "https://fnet.bmfbovespa.com.br/fnet/publico/pesquisarGerenciadorDocumentosDados"
+CATEGORIA_FATO_RELEVANTE = 1          # Fundos.NET's document category "Fato Relevante"
+POR_PAGINA = 200
 INICIO_DO_LOG = date(2026, 10, 23)          # the log's first run (DECISOES 123)
 
 
@@ -49,9 +49,7 @@ def gerar(pasta: Path, exports: Path, tickers: list[str], hoje: date, nomes: pd.
     bdrs = None if nomes is None else nomes[nomes["asset_type"] == "bdr"]
     extras = {} if bdrs is None else codigos_dos_bdrs(bdrs, setores, ipe)
     fatos = fatos_recentes(ipe, setores, tickers, hoje - timedelta(days=DIAS_DE_FATOS), extras=extras)
-    if fatos_de_etfs is not None and not fatos_de_etfs.empty:
-        fatos = pd.concat([fatos, fatos_de_etfs], ignore_index=True).sort_values(
-            ["data", "ticker"], ascending=[False, True], kind="stable").reset_index(drop=True)
+    fatos = juntar_fatos(fatos, fatos_de_etfs)
     fatos = com_notas_dos_fatos(fatos, ler_notas_dos_fatos(pasta, INICIO_DO_LOG))
     fundamentos = pd.read_parquet(exports / "fundamentals.parquet",
                                   columns=["issuer", "account", "dt_refer", "value", "available_from", "sector"])
@@ -64,6 +62,17 @@ def gerar(pasta: Path, exports: Path, tickers: list[str], hoje: date, nomes: pd.
     return diario, fatos, tabela
 
 
+def juntar_fatos(empresas: pd.DataFrame, fundos: pd.DataFrame | None) -> pd.DataFrame:
+    """The companies' and the funds' facts in one table, newest first; the text columns read as text on both sides
+    (the IPE's may be categorical)."""
+    if fundos is None or fundos.empty:
+        return empresas
+    texto = {coluna: "object" for coluna in ("ticker", "empresa", "categoria", "assunto", "link")}
+    fundos = fundos.assign(data=pd.to_datetime(fundos["data"]).dt.date)        # the IPE's dates are dates
+    juntos = pd.concat([empresas.astype(texto), fundos.astype(texto)], ignore_index=True)
+    return juntos.sort_values(["data", "ticker"], ascending=[False, True], kind="stable").reset_index(drop=True)
+
+
 def tickers_do_painel(nomes: pd.DataFrame) -> list[str]:
     """The tickers that get fundamentals and filings: the app's 181, then every other stock and unit of the lake's
     names (``ativos_tela.acoes_da_tela``); never a BDR or ETF, whose prefix could match a B3 issuer."""
@@ -72,62 +81,39 @@ def tickers_do_painel(nomes: pd.DataFrame) -> list[str]:
     return list(dict.fromkeys((*get_all_tickers(), *acoes_da_tela(nomes))))
 
 
-def nomes_dos_etfs(tickers: list[str], pasta: Path = PASTA_DO_CADASTRO, cache: Path = CACHE) -> dict[str, str]:
-    """ETF ticker -> full fund name from the newest B3 instruments register on the lake's disk, cached per register
-    (parsing its two XML files takes minutes)."""
-    import tempfile
-    import zipfile
-    from core.fatos_bdr_etf import nomes_completos_do_cadastro
-    registros = sorted(pasta.glob("*/IN*.zip"))
-    if not registros:
-        return {}
-    ultimo, guardado = registros[-1], cache / "nomes_dos_etfs.parquet"
-    if guardado.exists():
-        tabela = pd.read_parquet(guardado)
-        if not tabela.empty and tabela["registro"].iloc[0] == ultimo.name:
-            return dict(zip(tabela["ticker"], tabela["nome"]))
-    nomes: dict[str, str] = {}
-    with tempfile.TemporaryDirectory() as temporaria:
-        with zipfile.ZipFile(ultimo) as externo:
-            externo.extractall(temporaria)
-        for interno in Path(temporaria).glob("*.zip"):
-            with zipfile.ZipFile(interno) as arquivo:
-                arquivo.extractall(temporaria)
-        for xml in sorted(Path(temporaria).glob("*.xml")):
-            nomes |= nomes_completos_do_cadastro(xml, set(tickers) - set(nomes))
-    cache.mkdir(parents=True, exist_ok=True)
-    pd.DataFrame({"registro": ultimo.name, "ticker": list(nomes), "nome": list(nomes.values())}).to_parquet(guardado)
-    return nomes
-
-
-def eventuais_de_fundos(hoje: date, cache: Path = CACHE) -> pd.DataFrame:
-    """The CVM's fund eventual documents of this year and the last (the 90 days can cross a year), downloaded once a
-    day into ``cache``."""
+def baixar_fnet(desde: date, hoje: date) -> pd.DataFrame:
+    """Every "Fato Relevante" Fundos.NET received from ``desde`` to ``hoje`` (about 1,100 in 90 days), page by page."""
     import requests
-    cache.mkdir(parents=True, exist_ok=True)
-    partes = []
-    for ano in (hoje.year - 1, hoje.year):
-        arquivo = cache / f"eventual_fi_{ano}.csv"
-        if not arquivo.exists() or date.fromtimestamp(arquivo.stat().st_mtime) < hoje:
-            resposta = requests.get(URL_EVENTUAIS.format(ano=ano), timeout=300)
-            resposta.raise_for_status()
-            arquivo.write_bytes(resposta.content)
-        partes.append(pd.read_csv(arquivo, sep=";", encoding="latin-1", dtype=str,
-                                  usecols=["CNPJ_FUNDO_CLASSE", "DENOM_SOCIAL", "DT_RECEB", "TP_DOC", "LINK_ARQ"]))
-    return pd.concat(partes, ignore_index=True)
+    parametros = {"d": 1, "s": 0, "l": POR_PAGINA, "o[0][dataEntrega]": "desc",
+                  "idCategoriaDocumento": CATEGORIA_FATO_RELEVANTE, "idTipoDocumento": 0, "idEspecieDocumento": 0,
+                  "dataInicial": f"{desde:%d/%m/%Y}", "dataFinal": f"{hoje:%d/%m/%Y}"}
+    cabecalhos = {"User-Agent": "Mozilla/5.0", "X-Requested-With": "XMLHttpRequest"}
+    linhas, total = [], None
+    while total is None or parametros["s"] < total:
+        resposta = requests.get(URL_DO_FNET, params=parametros, headers=cabecalhos, timeout=60)
+        resposta.raise_for_status()
+        pagina = resposta.json()
+        total = int(pagina["recordsTotal"])
+        linhas += pagina["data"]
+        if not pagina["data"]:
+            break
+        parametros["s"] += POR_PAGINA
+    return pd.DataFrame(linhas)
 
 
 def fatos_dos_etfs(nomes: pd.DataFrame, hoje: date) -> pd.DataFrame | None:
-    """The ETFs' CVM material facts of the last ``DIAS_DE_FATOS`` days; None (and a line on stdout) when the register
-    or the CVM download fails: the panel then keeps the stocks' and BDRs' facts."""
-    from core.fatos_bdr_etf import cnpjs_dos_etfs, fatos_dos_fundos
+    """The listed ETFs' material facts of the last ``DIAS_DE_FATOS`` days from Fundos.NET; None (and a line on stdout)
+    when the download fails: the panel then keeps the stocks' and BDRs' facts."""
+    from core.fatos_bdr_etf import fatos_do_fnet
+    desde = hoje - timedelta(days=DIAS_DE_FATOS)
     try:
-        etfs = nomes_dos_etfs(list(nomes.loc[nomes["asset_type"] == "fund_etf", "security"]))
-        eventuais = eventuais_de_fundos(hoje)
-    except Exception as erro:       # noqa: BLE001 - network or disk: the panel goes on without the ETFs' facts
+        registros = baixar_fnet(desde, hoje)
+    except Exception as erro:       # noqa: BLE001 - network or a format change: the panel goes on without them
         print(f"Fatos dos ETFs indisponíveis agora: {erro}")
         return None
-    return fatos_dos_fundos(eventuais, cnpjs_dos_etfs(etfs, eventuais), hoje - timedelta(days=DIAS_DE_FATOS))
+    if registros.empty:
+        return None
+    return fatos_do_fnet(registros, nomes[nomes["asset_type"] == "fund_etf"], desde)
 
 
 def main() -> int:

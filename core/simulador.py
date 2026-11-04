@@ -16,10 +16,10 @@ from core.rebalanceio import CustoDaOrdem, Posicao, RegrasRebalanceio, plano_de_
 from core.risco import LIMITES
 
 INICIO = pd.Timestamp("2026-11-03")
-CAPITAL_ACOES = 9_000.0
-CAPITAL_OPCOES = 1_000.0            # in the CDI until the options test passes, never mixed with the stocks
+CAPITAL_ACOES = 10_000.0          # the whole account in stocks (user, 2026-11-03, DECISOES 243)
+CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in stocks (2026-11-03)
 CARTEIRAS = ("Composto", "Conservadora", "DeepSeek")     # DeepSeek: the Composite's names it judges favorable (DECISOES 240)
-REFERENCIAS = ("BOVA11", "IVVB11")
+REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11 dropped, user 2026-11-03)
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
 CUSTO_BPS = 10.0                   # the plan's reserve, and the cost of a name outside the liquidity snapshot
 COLUNAS = ["data", "carteira", "ticker", "ordem", "preco", "custo"]
@@ -165,8 +165,10 @@ def posicoes(ordens: pd.DataFrame, carteira: str, precos: pd.DataFrame, cdi: pd.
     acoes = pd.DataFrame({"Qtd.": trilha.quantidades, "Fechamento na troca (R$)": trilha.fechamentos,
                           "Valor (R$)": trilha.quantidades * trilha.fechamentos * movimento,
                           "Desde a troca": movimento - 1.0})
-    no_cdi = pd.DataFrame({"Valor (R$)": {LINHA_CAIXA: trilha.caixa * fator.iloc[-1] / fator.loc[trilha.data],
-                                          LINHA_OPCOES: opcoes * fator.iloc[-1] / fator.iloc[0]}})
+    no_cdi = {LINHA_CAIXA: trilha.caixa * fator.iloc[-1] / fator.loc[trilha.data]}
+    if opcoes:
+        no_cdi[LINHA_OPCOES] = opcoes * fator.iloc[-1] / fator.iloc[0]
+    no_cdi = pd.DataFrame({"Valor (R$)": no_cdi})
     tabela = pd.concat([acoes, no_cdi])
     return tabela.assign(Peso=tabela["Valor (R$)"] / tabela["Valor (R$)"].sum())
 

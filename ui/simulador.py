@@ -8,7 +8,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from core.simulador import CAPITAL_ACOES, CAPITAL_OPCOES, INICIO, Painel, quedas, retornos_recentes
+from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
 
 CARTEIRA_PRINCIPAL = "Composto"
 PERCENTUAL = st.column_config.NumberColumn(format="percent")
@@ -61,15 +61,11 @@ def parecer_do_deepseek(registro: dict | None) -> None:
 def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
-        st.info(f"A conta fictícia começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} no Composto e "
-                f"{_reais(CAPITAL_OPCOES, 0)} no CDI, com BOVA11, IVVB11 e CDI ao lado. A partir do dia seguinte, esta "
-                "seção mostra o resultado.")
+        st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
+                "(Composite, Conservadora e DeepSeek).")
         return
-    st.caption(f"Conta fictícia, sem dinheiro real: {_reais(CAPITAL_ACOES, 0)} seguem o último Composto registrado no "
-               f"paper-v3 e {_reais(CAPITAL_OPCOES, 0)} (opções) ficam no CDI até o teste delas passar. A Conservadora é a "
-               "linha de controle, com o mesmo capital, e a carteira do DeepSeek compra só as ações da Composite que "
-               "ele marca de verde (parecer abaixo). Custos incluídos; IR zero enquanto as vendas do mês ficam abaixo "
-               "de R$ 20 mil. Duas semanas de retorno são ruído.")
+    st.caption(f"Conta fictícia: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira desde {INICIO:%d/%m/%Y}, com "
+               "custos. BOVA11 e CDI são só referência.")
     if not painel.com_cdi:
         st.warning("Série do CDI indisponível agora: o caixa e a linha do CDI aparecem sem rendimento.")
     curvas = painel.curvas

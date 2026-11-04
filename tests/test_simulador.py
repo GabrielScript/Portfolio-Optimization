@@ -47,8 +47,8 @@ def test_the_first_buy_takes_the_last_record_at_the_first_close_in_whole_shares(
     assert set(novas["ticker"]) == set(CINCO)                    # the last record, not the older one
     compra = novas.set_index("ticker")
     assert compra.loc["BBBB3", "preco"] == 33.0
-    assert compra.loc["BBBB3", "ordem"] == 54                    # 20% of R$ 9,000 less the plan's 10 bps, whole shares
-    assert 8_900 < (compra["ordem"] * compra["preco"]).sum() <= 9_000
+    assert compra.loc["BBBB3", "ordem"] == 60                    # 20% of R$ 10,000 less the plan's 10 bps, whole shares
+    assert 9_900 < (compra["ordem"] * compra["preco"]).sum() <= 10_000
 
 
 def test_a_trade_already_in_the_ledger_is_not_repeated():
@@ -188,9 +188,9 @@ def test_the_benchmarks_start_at_the_whole_capital_on_the_first_buy_with_no_cost
     ordens = linhas((INICIO, "Composto", {"AAAA3": (900, 10.0, 9.0)}))
     cdi = pd.Series(0.01, index=precos.index)
     curvas = sim.curvas(ordens, precos, cdi)
-    assert list(curvas.columns) == ["Composto", "BOVA11", "IVVB11", "CDI"]
-    assert curvas.iloc[0][["BOVA11", "IVVB11", "CDI"]].tolist() == pytest.approx([10_000.0] * 3)
-    assert curvas.iloc[-1][["BOVA11", "IVVB11", "CDI"]].tolist() == pytest.approx([11_000.0, 9_500.0, 10_100.0])
+    assert list(curvas.columns) == ["Composto", "BOVA11", "CDI"]
+    assert curvas.iloc[0][["BOVA11", "CDI"]].tolist() == pytest.approx([10_000.0] * 2)
+    assert curvas.iloc[-1][["BOVA11", "CDI"]].tolist() == pytest.approx([11_000.0, 10_100.0])
 
 
 def test_the_control_line_comes_after_the_composite():
@@ -253,10 +253,10 @@ def test_positions_show_the_last_rebalance_at_todays_value():
     assert tabela.loc["AAAA3", "Valor (R$)"] == pytest.approx(200 * 12.0 * 15.0 / 12.0)
     assert tabela.loc["AAAA3", "Desde a troca"] == pytest.approx(15.0 / 12.0 - 1)
     assert "DDDD3" not in tabela.index
-    na_troca = 1_000 * 1.01 + 400 * 12 + 400 * 10          # the day's cash and the two positions before the orders
+    na_troca = 2_000 * 1.01 + 400 * 12 + 400 * 10          # the day's cash and the two positions before the orders
     caixa = na_troca - (200 * 12 + 400 * 10 + 100 * 10)
     assert tabela.loc[sim.LINHA_CAIXA, "Valor (R$)"] == pytest.approx(caixa * 1.01)
-    assert tabela.loc[sim.LINHA_OPCOES, "Valor (R$)"] == pytest.approx(1_000 * 1.01 ** 2)
+    assert sim.LINHA_OPCOES not in tabela.index        # the whole R$ 10,000 is in stocks (user, 2026-11-03)
     assert tabela["Peso"].sum() == pytest.approx(1.0)
 
 
@@ -272,7 +272,7 @@ def test_the_panel_holds_the_curves_and_each_portfolios_positions():
     precos = com_referencias(tabela_de_precos([10.0, 11.0]))
     ordens = linhas((INICIO, "Composto", {"AAAA3": (900, 10.0, 0.0)}), (INICIO, "Conservadora", {"BBBB3": (900, 10.0, 0.0)}))
     painel = sim.painel(ordens, precos, pd.Series(0.01, index=precos.index))
-    assert list(painel.curvas.columns) == ["Composto", "Conservadora", "BOVA11", "IVVB11", "CDI"]
+    assert list(painel.curvas.columns) == ["Composto", "Conservadora", "BOVA11", "CDI"]
     assert set(painel.posicoes) == {"Composto", "Conservadora"}
     assert painel.posicoes["Conservadora"].index[0] == "BBBB3"
     assert painel.com_cdi
@@ -357,7 +357,7 @@ def test_the_loader_reads_the_stocks_of_the_ledger_and_the_benchmarks(tmp_path, 
     monkeypatch.setattr(servicos.precos_do_app, "ler_fechamentos", fechamentos)
     monkeypatch.setattr(servicos.cdi_lago, "daily_cdi", lambda _anos, _dia: pd.Series(dtype=float))
     resultado = servicos.carregar_simulador(pd.Timestamp("2026-11-05").date(), 1, arquivo)
-    assert pedidos == [(["AAAA3.SA", "BOVA11.SA", "IVVB11.SA"], INICIO.date())]
+    assert pedidos == [(["AAAA3.SA", "BOVA11.SA"], INICIO.date())]
     assert resultado.curvas["Composto"].iloc[0] == pytest.approx(10_000 - 9)
 
 

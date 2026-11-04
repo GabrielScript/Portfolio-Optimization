@@ -145,8 +145,6 @@ class CarteiraCalculada:
 def ler_sidebar() -> Entradas:
     with st.sidebar:
         st.markdown("## Aleph Neumann")
-        st.caption("O plano de dinheiro real: a Composite registrada no paper-v3 (15 ações, pesos iguais). Estes "
-                   "três campos mudam o plano.")
         orcamento = st.number_input("Valor a investir (R$)", 10.0, 10_000_000.0, 10_000.0, 10.0,
                                     key="orcamento")
         modo_plano = st.segmented_control("Plano de compra", list(ROTULOS_MODO), format_func=ROTULOS_MODO.get,

@@ -308,7 +308,7 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)]
     assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 29/10)"
     assert ["Conservadora", "Composto", "BOVA11", "BITH11", "QBTC11"] == list(anos[0].columns[1:6])
-    assert np.isnan(anos[0].set_index("Ano").loc["2019", "BITH11"])               # before its listing
+    assert anos[0].set_index("Ano").loc["2019", "BITH11"] == "—"    # before its listing: a dash, not "None" (2026-11-04)
     resumo = [df.value for df in at.dataframe if "Sortino" in df.value.columns]
     assert len(resumo) == 1 and list(resumo[0]["Estratégia"]) == ["Conservadora", "Composto", "BOVA11", "BITH11",
                                                                    "QBTC11"]

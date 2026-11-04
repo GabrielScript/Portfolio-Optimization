@@ -16,6 +16,7 @@ from core.periodos import juro_por_ano, medidas_por_ano, medidas_por_periodo, re
 from core.rebalanceio import SITUACAO_PULAR, MesFiscal, Rebalanceio
 from visualizations import grafico_curvas_capital
 from ui.filtros import filtrar
+from ui.formato import com_traco
 
 TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
 
@@ -181,12 +182,12 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     por_ano = pd.DataFrame({"Ano": [rotulo_do_ano(ano, parte.index) for ano in anos.index],
                             **{nome: anos[nome].to_numpy() for nome in BRACOS}, **taxas,
                             **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA[len(BRACOS):]}})
-    formato = "%.2f" if medida in SEM_PORCENTO else "percent"
     c1, c2 = st.columns([3, 2])
     with c1:
         filtrado = filtrar(por_ano, "por_ano")
-    c1.dataframe(filtrado, width="stretch", hide_index=True,
-                 column_config={nome: st.column_config.NumberColumn(format=formato) for nome in por_ano.columns[1:]},
+    # "—" for the years before a fund listed (the bitcoin ETFs), not Streamlit's "None" (the user, 2026-11-04)
+    tabela_do_ano, config_do_ano = com_traco(filtrado, por_ano.columns[1:], porcento=medida not in SEM_PORCENTO)
+    c1.dataframe(tabela_do_ano, width="stretch", hide_index=True, column_config=config_do_ano,
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
     c2.bar_chart(por_ano.set_index("Ano")[list(BRACOS)], stack=False, y_label=medida,
                  color=["#7B96F0", "#D4AF37", "#B8B2A6"])       # Conservadora, Composite (gold), BOVA11: the theme's
@@ -201,10 +202,13 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     resumo = resumo.assign(Desde=[f"{data:%d/%m/%Y}" for data in resumo["Desde"]]).rename_axis(
         "Estratégia").reset_index()
     numericas = [coluna for coluna in resumo.columns if coluna not in ("Estratégia", "Desde", "Anos acima do BOVA11")]
-    st.dataframe(filtrar(resumo.astype({coluna: float for coluna in numericas}), "resumo"), width="stretch",
-                 hide_index=True,
-                 column_config={coluna: st.column_config.NumberColumn(
-                     format="%.2f" if coluna in SEM_PORCENTO else "percent") for coluna in numericas},
+    filtrado = filtrar(resumo.astype({coluna: float for coluna in numericas}), "resumo")
+    config: dict = {}
+    for porcento in (True, False):                              # BOVA11 against itself has no alpha: "—"
+        filtrado, parte_da_config = com_traco(
+            filtrado, [c for c in numericas if (c in SEM_PORCENTO) != porcento], porcento=porcento)
+        config.update(parte_da_config)
+    st.dataframe(filtrado, width="stretch", hide_index=True, column_config=config,
                  alt="Retorno, risco e alfa de cada estratégia no período")
     inteiro = {nome: [float(medidas_por_periodo(fase[[nome]], anos=()).iloc[0][(nome, "CAGR")])
                       for fase in fases.values()] for nome in ("Conservadora", "Composto")}

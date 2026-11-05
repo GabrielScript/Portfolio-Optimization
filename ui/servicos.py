@@ -23,7 +23,7 @@ import streamlit as st
 
 import ativos_tela
 from core import (assessor, bcb, cdi_lago, cotacao_b3, dolar_bcb, focus, indicadores, lago, macro_bcb,
-                  manchetes_online, market_data, precos_do_app, reamostragem, sentimento, simulador)
+                  manchetes_online, market_data, precos_do_app, reamostragem, sentimento, simulador, simulador_opcoes)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -76,6 +76,7 @@ ARQUIVO_CURVAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "curva
 ARQUIVO_JUROS = ARQUIVO_CURVAS.with_name("juros-diarios.parquet")
 # the fictitious account's ledger (core/simulador.py), written by the daily upkeep
 ARQUIVO_SIMULADOR = Path(__file__).resolve().parents[1] / "simulador" / "ordens.csv"
+PASTA_SIMULADOR = ARQUIVO_SIMULADOR.parent      # also the options account's ledger and marks (DECISOES 259)
 # the derived results of the US test (scripts/us_avaliar.py)
 PASTA_EUA = Path(__file__).resolve().parents[1] / "docs" / "dados"
 # the DeepSeek portfolio's opinions (scripts/carteira_deepseek.py, DECISOES 240), one JSON per opinion
@@ -200,6 +201,21 @@ def carregar_simulador(dia: date, versao_dados: int, arquivo: Path = ARQUIVO_SIM
     precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], ordens["data"].min().date(), dia)
     return simulador.painel(ordens, precos.rename(columns=lambda papel: papel.removesuffix(".SA")),
                             carregar_selic_diaria(dia.year - simulador.INICIO.year + 1, dia))
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_opcoes(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULADOR
+                    ) -> simulador_opcoes.PainelOpcoes | None:
+    """The fictitious options account from its ledger and marks; None before its first cycle. Without the Selic the
+    cash shows no interest (business days stand in for its sessions)."""
+    livro = simulador_opcoes.ler(pasta / "opcoes.csv", simulador_opcoes.COLUNAS, ["data", "vencimento"])
+    if livro.empty:
+        return None
+    marcas = simulador_opcoes.ler(pasta / "opcoes_marcas.csv", simulador_opcoes.COLUNAS_MARCAS, ["data"])
+    selic = carregar_selic_diaria(dia.year - simulador_opcoes.INICIO.year + 1, dia)
+    if selic.empty:
+        selic = pd.Series(0.0, index=pd.bdate_range(livro["data"].min(), pd.Timestamp(dia)))
+    return simulador_opcoes.painel(livro, marcas, selic)
 
 
 @st.cache_data(ttl=86400, show_spinner=False)

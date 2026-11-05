@@ -43,6 +43,23 @@ CLAUDE.md), kept for the user to review; the user's two ideas are DECISOES 191 (
 9. **The ledger:** `simulador/opcoes.csv`, append-only like `ordens.csv`: `data, ideia, ticker, ativo, tipo, strike,
    vencimento, quantidade, preco, custo, motivo` (a cycle without an order writes its reason).
 
+## Amendments while building (2026-11-05, still before any option price was read)
+
+- **A separate account, not a sleeve.** The stocks accounts already hold all their R$ 10,000 in stocks since 03/11
+  (`CAPITAL_OPCOES = 0`, DECISOES 243), and their clocks stay untouched. The options account is its own fictitious
+  R$ 10,000 ("Opções"), shown beside the Selic; 10% a month is then about R$ 500 per idea, which fits lots of 100.
+- **Marks are stored.** The screen runs on the cloud, where the lake's chains do not exist: the upkeep appends each
+  bought option's daily unit value to `simulador/opcoes_marcas.csv` (`data, ticker, valor, vencida`), and the curve
+  is replayed from the ledger and the marks.
+- **IR on the expiry session.** Both ideas expire on the month's B3 expiry, so the month's net result is the expiry
+  session's; 15% of it above the losses carried is paid that session (the curve never changes with the reading day).
+- **Costs:** the stocks' fees fraction (0.03%) on the premium; the ask already pays the spread.
+- **First cycle:** the 06/11/2026 close (`INICIO`).
+- **A real two-sided quote (after the dry run, the only change it caused).** A dry run of the plumbing from 01/10
+  (nothing recorded) bought VAMO3's call at a R$ 3.00 closing ask against a R$ 0.22 bid: a lone ask, not a price.
+  Rule 6 now also requires a closing bid > 0 and ask <= 2 x bid (else the next nearest strike), and a mark uses the
+  mid only under the same condition, else the option's close. Nothing else was tuned on the dry run.
+
 ## Data
 
 The lake exports each night `option_chain_recent.parquet` to the app's `lago/`: the last 30 sessions' option rows

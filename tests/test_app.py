@@ -663,9 +663,47 @@ def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
     assert _ativos_da_fronteira(app_padrao) == com_eua - 32
 
 
+SECAO_OPCOES = "## Conta de opções (fictícia)"
+
+
+def _painel_de_opcoes():
+    from core import simulador_opcoes as so
+    dias = pd.DatetimeIndex(["2026-11-06", "2026-11-09"])
+    livro = pd.DataFrame([{"data": dias[0], "ideia": "A", "ticker": "PETRW285", "ativo": "PETR4", "tipo": "put",
+                           "strike": 28.5, "vencimento": pd.Timestamp("2026-12-04"), "quantidade": 900,
+                           "preco": 0.55, "custo": 0.15, "motivo": ""},
+                          {"data": dias[0], "ideia": "B", "ticker": None, "ativo": None, "tipo": "call",
+                           "strike": None, "vencimento": None, "quantidade": 0, "preco": None, "custo": 0.0,
+                           "motivo": "nenhum ativo passou na regra"}])
+    marcas = pd.DataFrame({"data": [dias[1]], "ticker": ["PETRW285"], "valor": [0.6], "vencida": [False]})
+    return so.painel(livro, marcas, pd.Series(0.0005, index=dias))
+
+
+def test_the_options_account_shows_after_the_simulator_with_its_orders_and_open_options(monkeypatch):
+    # DECISOES 259 (user, 2026-11-05): the fictitious money trades options
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_opcoes", lambda dia, versao: _painel_de_opcoes())
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index("## Simulador") < titulos.index(SECAO_OPCOES)
+    colunas = [tuple(df.value.columns) for df in at.dataframe]
+    assert any("Motivo" in c for c in colunas) and any("Valor (R$)" in c and "Strike" in c for c in colunas)
+
+
+def test_the_options_account_says_when_it_starts_before_its_first_cycle(monkeypatch):
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_opcoes", lambda dia, versao: None)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert any("06/11/2026" in info.value for info in at.info)
+
+
 def test_every_table_has_its_filters(monkeypatch):
     # the user's UI list of 2026-11-03: a "Filtros" button above each table, one multiselect per category column
-    from ui import alepha, cotacoes, filtros, painel, simulador
+    from ui import alepha, cotacoes, filtros, painel, simulador, simulador_opcoes
     from ui import assessor as ui_assessor
     filtradas = []
 
@@ -674,7 +712,7 @@ def test_every_table_has_its_filters(monkeypatch):
         filtradas.append(tuple(saida.columns))
         return saida
 
-    for modulo in (alepha, cotacoes, painel, simulador, ui_assessor):
+    for modulo in (alepha, cotacoes, painel, simulador, simulador_opcoes, ui_assessor):
         monkeypatch.setattr(modulo, "filtrar", gravar)
     _, alvo = _conservadora_sintetica()
     hoje = date.today()

@@ -606,6 +606,23 @@ def test_the_simulator_step_appends_the_orders_due_commits_them_and_then_is_up_t
     assert vistas[0]["ticker"].tolist() == ["PETR4"]             # the next run sees the ledger it wrote
 
 
+def test_the_options_step_appends_orders_and_marks_commits_both_and_then_is_up_to_date(app):
+    from core.simulador_opcoes import COLUNAS, COLUNAS_MARCAS
+    from scripts.manutencao import ARQUIVO_MARCAS_OPCOES, ARQUIVO_OPCOES, atualizar_opcoes, git_em
+    git = git_em(app)
+    ordem = pd.DataFrame([dict.fromkeys(COLUNAS, None) | {"data": pd.Timestamp("2026-11-06"), "ideia": "A",
+                                                          "ticker": "PETRW300", "quantidade": 100, "preco": 0.5}])
+    marca = pd.DataFrame([{"data": pd.Timestamp("2026-11-09"), "ticker": "PETRW300", "valor": 0.6, "vencida": False}])
+    devidas = [(ordem, marca), (pd.DataFrame(columns=COLUNAS), pd.DataFrame(columns=COLUNAS_MARCAS))]
+    assert atualizar_opcoes(app, git, lambda _livro, _marcas: devidas.pop(0)) == "opções: até 09/11/2026"
+    assert sorted(git("show", "--name-only", "--format=", "HEAD").splitlines()) == sorted(
+        [ARQUIVO_OPCOES.as_posix(), ARQUIVO_MARCAS_OPCOES.as_posix()])
+    vistos = []
+    assert atualizar_opcoes(app, git, lambda livro, marcas: vistos.append((livro, marcas)) or devidas.pop(0)) == (
+        "opções: em dia")
+    assert vistos[0][0]["ticker"].tolist() == ["PETRW300"] and vistos[0][1]["valor"].tolist() == [0.6]
+
+
 def test_the_simulator_step_emails_the_new_orders_and_a_failed_email_keeps_the_commit(app):
     # DECISOES 240: every buy or sell of the fictitious account goes to the user's email
     from scripts.manutencao import atualizar_simulador, git_em

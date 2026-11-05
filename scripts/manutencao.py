@@ -59,6 +59,9 @@ ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite 
 PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
+ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious options account's ledger (DECISOES 259)
+ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
+ARQUIVO_CADEIA = Path("data/b3lake/option_chain_recent.parquet")   # the lake's recent option chains (outside git)
 PASTA_DEEPSEEK = Path("deepseek")                         # the DeepSeek portfolio's record and opinions (DECISOES 240)
 ARQUIVO_DEEPSEEK = PASTA_DEEPSEEK / "carteira.csv"
 ARQUIVO_CONTROLE = PASTA_DEEPSEEK / "controle.csv"    # the DeepSeek list in equal weights (DECISOES 251)
@@ -420,6 +423,44 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
                                     custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
 
 
+def opcoes_devidas(raiz: Path, hoje: date, livro: pd.DataFrame, marcas: pd.DataFrame
+                   ) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The options account's cycles and marks due on the lake's recent chains (``core.simulador_opcoes``)."""
+    from core import cdi_lago, precos_do_app, simulador_opcoes
+    cadeia = pd.read_parquet(raiz / ARQUIVO_CADEIA)
+    cadeia["date"], cadeia["expiry"] = pd.to_datetime(cadeia["date"]), pd.to_datetime(cadeia["expiry"])
+    nomes = pd.read_parquet(raiz / PASTA_DO_LAGO / "app_names.parquet")
+    acoes = sorted(set(nomes.loc[nomes["asset_type"].isin(simulador_opcoes.TIPOS_DE_ACAO), "security"])
+                   & set(cadeia["underlying"]))
+    inicio = (pd.Timestamp(hoje) - pd.DateOffset(years=2)).date()          # 252 sessions back from any cycle
+    fechamentos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in acoes], inicio, hoje,
+                                                raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
+    fechamentos = fechamentos.rename(columns=lambda papel: papel.removesuffix(".SA"))
+    selic = cdi_lago.daily_selic(2, hoje)
+    return simulador_opcoes.atualizacao(livro, marcas, cadeia, fechamentos, acoes, selic)
+
+
+def atualizar_opcoes(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame, pd.DataFrame],
+                                                              tuple[pd.DataFrame, pd.DataFrame]]) -> str:
+    """Appends the options account's new orders and marks and commits both files (also rows a failed commit left)."""
+    from core.simulador_opcoes import COLUNAS, COLUNAS_MARCAS, acrescentar, ler
+    livro = ler(raiz / ARQUIVO_OPCOES, COLUNAS, ["data", "vencimento"])
+    marcas = ler(raiz / ARQUIVO_MARCAS_OPCOES, COLUNAS_MARCAS, ["data"])
+    novas, novas_marcas = devidas(livro, marcas)
+    for arquivo, linhas in ((ARQUIVO_OPCOES, novas), (ARQUIVO_MARCAS_OPCOES, novas_marcas)):
+        if not linhas.empty:
+            acrescentar(raiz / arquivo, linhas)
+    caminhos = [ARQUIVO_OPCOES.as_posix(), ARQUIVO_MARCAS_OPCOES.as_posix()]
+    if not pendentes(git, caminhos):
+        return "opções: em dia"
+    datas = [ler(raiz / arquivo, colunas, ["data"])["data"].max()
+             for arquivo, colunas in ((ARQUIVO_OPCOES, COLUNAS), (ARQUIVO_MARCAS_OPCOES, COLUNAS_MARCAS))]
+    fim = f"{max(pd.Timestamp(data) for data in datas if pd.notna(data)):%d/%m/%Y}"
+    commitar(git, [caminho for caminho in caminhos if (raiz / caminho).exists()],
+             f"data: conta de opções até {fim} (manutenção)")
+    return f"opções: até {fim}"
+
+
 def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], pd.DataFrame],
                         alertar: Callable[[pd.DataFrame], object] | None = None) -> str:
     """Appends to the ledger what ``devidas`` returns for it and commits it (also rows a failed commit left behind);
@@ -458,7 +499,9 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              gerar_curvas: Callable[[], object] | None = None,
              simular: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
              alertar: Callable[[pd.DataFrame], object] | None = None,
-             parecer_deepseek: Callable[[], str] | None = None) -> Resultado:
+             parecer_deepseek: Callable[[], str] | None = None,
+             opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None
+             ) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
@@ -487,6 +530,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         passos.append(("deepseek", lambda: atualizar_deepseek(raiz, git, parecer_deepseek)))
     if simular is not None:
         passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
+    if opcoes is not None:
+        passos.append(("opções", lambda: atualizar_opcoes(raiz, git, opcoes)))
     if gerar_curvas is not None:
         passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
@@ -611,7 +656,8 @@ def main() -> int:
                          ler_leitura_v3=lambda: ler_leitura(RAIZ, "scripts/paper_v3.py"),
                          gerar_curvas=lambda: rodar_curvas(RAIZ),
                          simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens),
-                         alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek)
+                         alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek,
+                         opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas))
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

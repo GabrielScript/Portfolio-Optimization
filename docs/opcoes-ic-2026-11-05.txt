@@ -1,0 +1,53 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'option_panel.parquet': '08db1e6ff15cecb565ccba245c69f71535d54c8e0e78222935dfbf067228df0c'}
+
+S1 (-iv_atm): months read 110 of 225 (dropped with < 20 issuers: 115)
+  IC:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 110.000     0.067   0.253  2.795             0.618
+2008-2015                   0.000       NaN     NaN    NaN               NaN
+2016-2020                  41.000    -0.030   0.232 -0.819             0.439
+2021-2026                  69.000     0.125   0.248  4.184             0.725
+  Partial IC given the Conservadora score:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 110.000     0.029   0.200  1.528             0.582
+2008-2015                   0.000       NaN     NaN    NaN               NaN
+2016-2020                  41.000    -0.035   0.232 -0.966             0.439
+2021-2026                  69.000     0.067   0.169  3.307             0.667
+  Rank correlation with the Conservadora score: mean 0.676; issuers per month median 72; share of the Conservadora's 15 picks with the signal: mean 0.46
+
+S2 (-skew): months read 104 of 225 (dropped with < 20 issuers: 121)
+  IC:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 104.000     0.009   0.161  0.571             0.519
+2008-2015                   0.000       NaN     NaN    NaN               NaN
+2016-2020                  35.000     0.061   0.209  1.714             0.629
+2021-2026                  69.000    -0.017   0.123 -1.157             0.464
+  Partial IC given the Conservadora score:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 104.000     0.008   0.160  0.525             0.519
+2008-2015                   0.000       NaN     NaN    NaN               NaN
+2016-2020                  35.000     0.059   0.208  1.676             0.571
+2021-2026                  69.000    -0.017   0.123 -1.175             0.493
+  Rank correlation with the Conservadora score: mean -0.059; issuers per month median 72; share of the Conservadora's 15 picks with the signal: mean 0.42
+
+S3 (-pc_ratio): months read 218 of 225 (dropped with < 20 issuers: 7)
+  IC:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 218.000    -0.014   0.151 -1.330             0.459
+2008-2015                  89.000    -0.004   0.191 -0.220             0.506
+2016-2020                  60.000    -0.019   0.132 -1.139             0.467
+2021-2026                  69.000    -0.020   0.101 -1.665             0.391
+  Partial IC given the Conservadora score:
+                            meses  IC médio  desvio      t  meses com IC > 0
+2008-01 to 2026-09 (gate) 218.000    -0.006   0.164 -0.563             0.454
+2008-2015                  89.000     0.003   0.213  0.152             0.449
+2016-2020                  60.000    -0.019   0.134 -1.080             0.417
+2021-2026                  69.000    -0.008   0.106 -0.624             0.493
+  Rank correlation with the Conservadora score: mean -0.074; issuers per month median 55; share of the Conservadora's 15 picks with the signal: mean 0.50
+
+Gate (opções: IC >= 0,02 e t >= 2,4 (Bonferroni, 3 sinais), on both the IC and the partial IC):
+  S1: NOT passed
+  S2: NOT passed
+  S3: NOT passed
+Stop: no attempt row; option signals stay display-only at most. No other window, threshold or rerun.
+(total 53 s)

@@ -441,3 +441,97 @@ def test_the_prompt_judges_for_an_extremely_aggressive_investor_and_keeps_the_ev
     assert "never change the plan's weights" in INSTRUCOES
     assert "an invented fact is the worst possible failure" in INSTRUCOES
     assert "extremamente arrojado" in PEDIDO
+
+
+def test_a_plan_stock_without_filings_says_so_in_the_pack_so_the_model_needs_no_tool_round_to_learn_it():
+    # 2026-11-04: at high effort the first request (20 s) only asked fatos_relevantes for the 5 names with no filing in
+    # the panel's 90 days, and the tool answered nothing; the pack now says it, the same fact the tool would give
+    from datetime import date
+
+    import pandas as pd
+    from core.assessor import montar_pacote
+    argumentos = dict(
+        plano=pd.Series({"VALE3.SA": 0.5, "PETR4.SA": 0.5}), registrada=date(2026, 10, 23), acoes=_tabela_das_acoes(),
+        percentuais=("Retorno 12m",), macro=[], luzes=None, manchetes=None,
+        fatos=pd.DataFrame({"ticker": ["PETR4"], "categoria": ["Fato Relevante"], "assunto": ["Plano"],
+                            "data": [date(2026, 10, 20)], "tom_do_fato": ["good"], "p_forte": [0.7]}))
+    textos = [(e.classe, e.texto) for e in montar_pacote(**argumentos)]
+    assert ("cvm", "VALE3: nenhum fato relevante ou comunicado ao mercado na CVM nos últimos 90 dias") in textos
+    assert not [t for _, t in textos if t.startswith("PETR4: nenhum fato")]
+    sem_fatos = [e.texto for e in montar_pacote(**{**argumentos, "fatos": None}) if "nenhum fato" in e.texto]
+    assert sem_fatos == []                          # no filings file: unknown, not "none"
+
+
+def _parecer_de(ticker: str, postura: str, confianca: float, tese: dict) -> str:
+    import json
+    contra = [_afirmacao("Selic de 15%", "E1", "15,00%"), _afirmacao("IPCA de 5,17%", "E2", "5,17%"),
+              _afirmacao("Focus vê Selic de 12,25%", "E3", "12,25%")]
+    return json.dumps({"cenario_macro": [_afirmacao("Selic de 15%", "E1", "15,00%")], "acoes": [
+        {"ticker": ticker, "tese": [tese], "contra_tese_macro": contra, "riscos": [], "postura": postura,
+         "confianca": confianca}], "ranking": [ticker], "resumo": f"Leitura de {ticker}.",
+        "limitacoes": ["Sem ANBIMA."]}, ensure_ascii=False)
+
+
+def test_an_opinion_in_two_parts_asks_each_part_its_own_names_in_parallel_and_joins_them_into_one():
+    # 2026-11-04: the answer of 15 names took 71 s to write; two halves written at once take about half, with the
+    # same pack, prompt and checks for every name
+    import threading
+    from datetime import datetime, timezone
+
+    from core.assessor import pedir_parecer
+    pedidos, juntos, barreira = [], threading.Lock(), threading.Barrier(2, timeout=5)
+
+    def post(url, json, timeout, headers):
+        pedido = json["messages"][1]["content"]
+        with juntos:
+            pedidos.append((pedido, len(json["messages"])))
+        if len(json["messages"]) == 2:
+            barreira.wait()                         # both halves are in flight together, or this times out
+        if "VALE3" in pedido and len(json["messages"]) == 2:
+            return _resposta_do_modelo({"content": "", "reasoning_content": "a Vale", "tool_calls": [
+                {"id": "c1", "type": "function",
+                 "function": {"name": "metricas_da_acao", "arguments": '{"ticker": "VALE3"}'}}]}, _uso(1000, 0, 100))
+        if "VALE3" in pedido:
+            return _resposta_do_modelo({"content": _parecer_de("VALE3", "neutra", 0.4, _afirmacao(
+                "Retorno de -12,3% em 12 meses", "E2001", "Retorno 12m -12,3%")), "reasoning_content": "ok"},
+                _uso(1200, 1000, 400))
+        return _resposta_do_modelo({"content": _parecer_de("PETR4", "favoravel", 0.7, _afirmacao(
+            "P/L de 4,8", "E4", "P/L 4,8")), "reasoning_content": "ok"}, _uso(1000, 900, 300))
+    ferramentas = _ferramentas()
+    resultado = pedir_parecer(list(_evidencias().values()), ["VALE3.SA", "PETR4.SA"], ferramentas, "ds",
+                              datetime(2026, 10, 25, 15, 0, tzinfo=timezone.utc), post=post, partes=2)
+    assert resultado.erro is None, resultado.erro
+    assert sorted(p for p, n in pedidos if n == 2) == sorted(p for p, n in pedidos if n == 2 and (
+        ("PETR4" in p) != ("VALE3" in p)))           # each part asks only its own names
+    parecer = resultado.validacao.parecer
+    assert [a["ticker"] for a in parecer["acoes"]] == ["PETR4", "VALE3"]
+    assert parecer["ranking"] == ["PETR4", "VALE3"]                  # favorable before neutral, then by confidence
+    assert parecer["acoes"][1]["tese"][0]["evidencia"] == "E2001"    # the second part's tools number from E2001
+    assert "E2001" in resultado.evidencias and resultado.chamadas == ["metricas_da_acao"]
+    assert len(parecer["cenario_macro"]) == 1 and parecer["limitacoes"] == ["Sem ANBIMA."]
+    assert parecer["resumo"] == "Leitura de PETR4. Leitura de VALE3."
+    assert resultado.validacao.descartes == []
+    uso = resultado.uso
+    assert (uso.entrada, uso.cache, uso.saida, uso.requisicoes) == (3200, 1900, 800, 3)
+
+
+def test_the_pack_holds_as_many_filings_per_stock_as_the_tool_would_return():
+    # 2026-11-04: with 5 in the pack and 10 from fatos_relevantes, the model spent a tool round fetching the rest
+    import json
+    from datetime import date, timedelta
+
+    import pandas as pd
+    from core.assessor import montar_pacote
+    fatos = pd.DataFrame({"ticker": ["VALE3"] * 12, "categoria": ["Comunicado ao Mercado"] * 12,
+                          "assunto": [f"Assunto {i}" for i in range(12)],
+                          "data": [date(2026, 10, 20) - timedelta(days=i) for i in range(12)],
+                          "tom_do_fato": ["neutral"] * 12, "p_forte": [0.1] * 12})
+    pacote = montar_pacote(plano=pd.Series({"VALE3.SA": 1.0}), registrada=date(2026, 10, 23),
+                           acoes=_tabela_das_acoes(), percentuais=("Retorno 12m",), macro=[], fatos=fatos, luzes=None,
+                           manchetes=None)
+    no_pacote = [e.texto for e in pacote if e.classe == "cvm"]
+    ferramentas = _ferramentas()
+    ferramentas.fontes.fatos = fatos
+    da_ferramenta = [e["texto"] for e in json.loads(ferramentas.executar(
+        "fatos_relevantes", '{"ticker": "VALE3"}'))["evidencias"]]
+    assert no_pacote == da_ferramenta and len(no_pacote) == 10

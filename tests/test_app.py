@@ -440,10 +440,11 @@ def _app_do_assessor(monkeypatch, chave: str | None) -> tuple[AppTest, list]:
     pedidos, esforcos = [], []
     _app_do_assessor.esforcos = esforcos
 
-    def pedir_parecer(pacote, universo, ferramentas, chave, agora, post=None, carteira=None, esforco=assessor.ESFORCO):
+    def pedir_parecer(pacote, universo, ferramentas, chave, agora, post=None, carteira=None, esforco=assessor.ESFORCO,
+                      partes=1):
         assert carteira == assessor.CARTEIRA_COMPOSTA          # the plan the screen judges is the Composite (DECISOES 242)
         pedidos.append((pacote, universo, chave))
-        esforcos.append(esforco)
+        esforcos.append((esforco, partes))
         selic = next(e for e in pacote if e.texto.startswith("Selic meta"))
         contra = [{"afirmacao": "Selic de 13,75%", "evidencia": selic.id, "citacao": "13,75%"}] * 3
         primeira = universo[0].removesuffix(".SA")
@@ -493,17 +494,20 @@ def test_the_opinion_depth_is_picked_on_the_screen_max_by_default_and_each_depth
     from core import assessor
     at, pedidos = _app_do_assessor(monkeypatch, "chave-de-teste")
     esforcos = _app_do_assessor.esforcos
+    # 2026-11-04, later: "Rápida" is high effort in 3 parallel parts (~75 s) and "Expressa" in 5 (~65 s)
     controle = at.segmented_control(key="esforco_do_parecer")
-    from ui.assessor import ROTULO_DO_ESFORCO
-    assert controle.value == "max" and controle.options == [ROTULO_DO_ESFORCO[e] for e in assessor.ESFORCOS]
+    from ui.assessor import ROTULO_DA_PROFUNDIDADE
+    assert controle.value == assessor.PROFUNDIDADE_PADRAO == "maxima"
+    assert controle.options == [ROTULO_DA_PROFUNDIDADE[p] for p in assessor.PROFUNDIDADES]
     at.button(key="gerar_parecer").click().run()
-    controle = at.segmented_control(key="esforco_do_parecer")
-    controle.set_value("high").run()
+    at.segmented_control(key="esforco_do_parecer").set_value("rapida").run()
     at.button(key="gerar_parecer").click().run()
-    assert not at.exception and esforcos == ["max", "high"]          # a new depth is a new opinion, not the cached one
-    at.segmented_control(key="esforco_do_parecer").set_value("max").run()
+    at.segmented_control(key="esforco_do_parecer").set_value("expressa").run()
     at.button(key="gerar_parecer").click().run()
-    assert esforcos == ["max", "high"]                              # the max opinion of the day comes from the cache
+    assert not at.exception and esforcos == [("max", 1), ("high", 3), ("high", 5)]   # each depth is its own opinion
+    at.segmented_control(key="esforco_do_parecer").set_value("maxima").run()
+    at.button(key="gerar_parecer").click().run()
+    assert esforcos == [("max", 1), ("high", 3), ("high", 5)]       # the max opinion of the day comes from the cache
 
 
 def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(monkeypatch):

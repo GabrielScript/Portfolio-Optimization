@@ -15,7 +15,8 @@ import math
 import re
 import unicodedata
 from collections.abc import Callable, Iterable
-from dataclasses import dataclass, field
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field, fields
 from datetime import date, datetime, timedelta, timezone
 from urllib.parse import urlsplit
 
@@ -137,6 +138,10 @@ INSUFICIENTE = "evidencia_insuficiente"
 CORES = {"favoravel": "verde", "neutra": "amarelo", INSUFICIENTE: "amarelo", "desfavoravel": "vermelho"}
 
 
+# the joined ranking of an opinion written in parts: favorable first, then by confidence (``juntar_partes``)
+ORDEM_DA_POSTURA = {"favoravel": 0, "neutra": 1, INSUFICIENTE: 2, "desfavoravel": 3}
+
+
 def cor_da_postura(postura: object) -> str:
     """The traffic light of a stance: green to hold, red to avoid, yellow when neutral or unknown."""
     return CORES.get(postura, "amarelo") if isinstance(postura, str) else "amarelo"
@@ -247,7 +252,11 @@ def validar_parecer(bruto: object, evidencias: dict[str, Evidencia], universo: l
     return Validacao(parecer, descartes, [])
 
 
-FATOS_POR_ACAO = 5                # the newest material filings of each plan stock in the pack
+FATOS_POR_ACAO = 10               # the newest filings of each plan stock, in the pack and from the tool alike:
+                                  # with 5 in the pack the model spent a tool round on the rest (2026-11-04)
+# a plan stock with no filing in the panel's file (its last 90 days) gets this line: at high effort the model spent a
+# whole request (20 s, 2026-11-04) asking the fatos_relevantes tool for such names and got nothing back
+SEM_FATOS = "nenhum fato relevante ou comunicado ao mercado na CVM nos últimos 90 dias"
 QUANTAS_MANCHETES = 20
 
 
@@ -307,6 +316,8 @@ def montar_pacote(*, plano: pd.Series, registrada: date, acoes: pd.DataFrame, pe
                                                                     kind="stable")
         for _, fato in do_plano.groupby("ticker", sort=True).head(FATOS_POR_ACAO).iterrows():
             itens.append(("cvm", f"{fato['data']:%Y-%m-%d}", _texto_do_fato(fato)))
+        com_fatos = set(do_plano["ticker"])
+        itens += [("cvm", registro, f"{ticker}: {SEM_FATOS}") for ticker in tickers if ticker not in com_fatos]
     if luzes is not None:
         for ticker in tickers:
             if ticker + ".SA" in luzes.index:
@@ -456,7 +467,7 @@ class Ferramentas:
         if self.fontes.fatos is None:
             raise ErroDeFerramenta(INDISPONIVEL)
         do_ticker = self.fontes.fatos[self.fontes.fatos["ticker"] == ticker].sort_values(
-            "data", ascending=False, kind="stable").head(10)
+            "data", ascending=False, kind="stable").head(FATOS_POR_ACAO)
         return [("cvm", f"{fato['data']:%Y-%m-%d}", _texto_do_fato(fato)) for _, fato in do_ticker.iterrows()]
 
     def _serie_bcb(self, serie: str) -> list[tuple[str, str, str]]:
@@ -565,10 +576,22 @@ class Ferramentas:
 MODELO = "deepseek-flash"            # DeepSeek-V4.1-Flash-1017 on the official API (pricing page, 2026-10-25)
 MODELO_PRO = "deepseek-v4-pro"       # DeepSeek-V4-Pro-0813, compared with Flash in DECISOES 137
 ESFORCO = "max"                      # thinking effort (low / high / max): the user's choice of 2026-11-03, DECISOES 240
-# picked on the screen per opinion (the user, 2026-11-04: max takes 7-8 minutes, too long to show the app live). On
-# the Composite's 15 names on 2026-11-04, high answered in 93 s (15/15 names, 6 claims dropped) and low in 101 s
-# (15/15, 15 dropped): low is no faster and checks worse, so it is not offered.
-ESFORCOS = ("max", "high")
+
+
+@dataclass(frozen=True)
+class Profundidade:
+    """How an opinion is asked: the thinking effort and in how many parallel parts the names are split."""
+    esforco: str
+    partes: int
+
+
+# picked on the screen per opinion (the user, 2026-11-04: max takes 7-8 minutes, too long to show the app live).
+# Measured on the Composite's 15 names on 2026-11-04 (real API, one run each): high in 1 part 90-93 s, in 3 parts
+# 73-74 s (twice), in 5 parts 67 s, all 15/15 names; low in 1 part 101 s with more claims dropped, so low is not
+# offered. Each part still reasons 5-9k tokens on the macro scenario, so more parts do not reach 60 s.
+PROFUNDIDADES = {"maxima": Profundidade("max", 1), "rapida": Profundidade("high", 3),
+                 "expressa": Profundidade("high", 5)}
+PROFUNDIDADE_PADRAO = "maxima"
 MAX_TOKENS = 64_000                  # per request, reasoning + answer: 15 stocks of claims took ~20k in a real run
 MAX_RODADAS_DE_FERRAMENTA = 6
 MAX_CHAMADAS_DE_FERRAMENTA = 12
@@ -738,10 +761,14 @@ def custo_das_ferramentas(chamadas_pagas: dict[str, int], agora: datetime) -> fl
 
 def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str,
                   agora: datetime, post: Callable[..., requests.Response] = requests.post,
-                  modelo: str = MODELO, carteira: str = CARTEIRA_CONSERVADORA, esforco: str = ESFORCO) -> Resultado:
+                  modelo: str = MODELO, carteira: str = CARTEIRA_CONSERVADORA, esforco: str = ESFORCO,
+                  partes: int = 1) -> Resultado:
     """The opinion on ``universo`` (the plan's tickers) from ``pacote``: thinking mode, the tools, the assistant
     message with its ``reasoning_content`` sent back on every round (the API answers 400 otherwise), one retry of an
-    empty answer and one repair request for an answer the check cannot use."""
+    empty answer and one repair request for an answer the check cannot use. ``partes`` > 1 splits the names into that
+    many groups asked at once, each with the same pack and prompt (``juntar_partes``)."""
+    if partes > 1 and len(universo) > 1:
+        return _em_partes(pacote, universo, ferramentas, chave, agora, post, modelo, carteira, esforco, partes)
     for evidencia in pacote:
         ferramentas.evidencias.setdefault(evidencia.id, evidencia)
     uso, chamadas = Uso(), []
@@ -752,6 +779,58 @@ def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Fer
         validacao, erro = None, str(falha)
     uso.custo_usd += custo_das_ferramentas(ferramentas.chamadas_pagas, agora)
     return Resultado(validacao, erro, uso, chamadas, ferramentas.evidencias)
+
+
+def _em_partes(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str, agora: datetime,
+               post: Callable[..., requests.Response], modelo: str, carteira: str, esforco: str,
+               partes: int) -> Resultado:
+    """``partes`` opinions at once, each on a contiguous group of the sorted names with its own tools (tool evidence
+    numbered from E1001, E2001, ... so the ids never collide), joined by ``juntar_partes``. The answer of 15 names took
+    71 s to write at high effort (2026-11-04); the parts write theirs in parallel."""
+    ordenados = sorted(universo, key=_ticker)
+    tamanho = math.ceil(len(ordenados) / partes)
+    grupos = [ordenados[inicio:inicio + tamanho] for inicio in range(0, len(ordenados), tamanho)]
+    proprias = [Ferramentas(ferramentas.fontes, dict(ferramentas.evidencias),
+                            PRIMEIRA_EVIDENCIA_DE_FERRAMENTA + 1000 * posicao) for posicao in range(len(grupos))]
+
+    def parte(grupo: list[str], propria: Ferramentas) -> Resultado:
+        return pedir_parecer(pacote, grupo, propria, chave, agora, post, modelo, carteira, esforco)
+    with ThreadPoolExecutor(max_workers=len(grupos)) as executor:
+        resultados = list(executor.map(parte, grupos, proprias))
+    for propria in proprias:
+        ferramentas.evidencias.update(propria.evidencias)
+        for nome, vezes in propria.chamadas_pagas.items():
+            ferramentas.chamadas_pagas[nome] = ferramentas.chamadas_pagas.get(nome, 0) + vezes
+    return juntar_partes(resultados)
+
+
+def juntar_partes(resultados: list[Resultado]) -> Resultado:
+    """One opinion from the parts': usage, tool calls and evidence summed; the stocks in part order; the ranking by
+    stance (favorable first), then confidence, then each part's own order; the summaries side by side; the first
+    part's macro scenario that has one (every part reads the same BCB evidence); limitations without repeats. A part
+    without a usable answer makes the whole opinion unavailable, with its reason."""
+    uso = Uso(**{campo.name: sum(getattr(r.uso, campo.name) for r in resultados) for campo in fields(Uso)})
+    chamadas = [chamada for r in resultados for chamada in r.chamadas]
+    evidencias = {chave: evidencia for r in resultados for chave, evidencia in r.evidencias.items()}
+    falhas = [r.erro or "; ".join(r.validacao.estrutura if r.validacao else []) or "uma parte ficou sem parecer"
+              for r in resultados if r.validacao is None or r.validacao.parecer is None]
+    if falhas:
+        return Resultado(None, "; ".join(dict.fromkeys(falhas)), uso, chamadas, evidencias)
+    pareceres = [r.validacao.parecer for r in resultados]
+    acoes = [acao for parecer in pareceres for acao in parecer["acoes"]]
+    por_ticker = {acao["ticker"]: acao for acao in acoes}
+    posicao = {ticker: i for parecer in pareceres for i, ticker in enumerate(parecer["ranking"])}
+
+    def ordem(ticker: str) -> tuple:
+        acao = por_ticker[ticker]
+        return ORDEM_DA_POSTURA.get(acao["postura"], 2), -float(acao["confianca"]), posicao[ticker]
+    com_macro = next((parecer for parecer in pareceres if parecer["cenario_macro"]), pareceres[0])
+    parecer = {"resumo": " ".join(p["resumo"] for p in pareceres if p["resumo"]),
+               "cenario_macro": com_macro["cenario_macro"], "nao_confirmadas": com_macro.get("nao_confirmadas", []),
+               "acoes": acoes, "ranking": sorted((t for p in pareceres for t in p["ranking"]), key=ordem),
+               "limitacoes": list(dict.fromkeys(texto for p in pareceres for texto in p["limitacoes"]))}
+    descartes = [motivo for r in resultados for motivo in r.validacao.descartes]
+    return Resultado(Validacao(parecer, descartes, []), None, uso, chamadas, evidencias)
 
 
 def _conversar(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str, agora: datetime,

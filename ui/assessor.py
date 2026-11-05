@@ -11,18 +11,20 @@ from collections.abc import Callable
 import pandas as pd
 import streamlit as st
 
-from core.assessor import ESFORCO, ESFORCOS, Evidencia, Resultado
+from core.assessor import PROFUNDIDADE_PADRAO, PROFUNDIDADES, Evidencia, Profundidade, Resultado
 from ui.filtros import filtrar
 
 ROTULO_DA_POSTURA = {"favoravel": "🟢 favorável", "neutra": "🟡 neutra", "desfavoravel": "🔴 desfavorável",
                      "evidencia_insuficiente": "⚪ evidência insuficiente"}
 CHAVE_DO_PARECER = "parecer_do_assessor"
-# the thinking effort, picked per opinion (the user, 2026-11-04): max is the default and the deepest; low answers fast
-# enough for a presentation (``core.assessor.ESFORCOS``: times measured on 2026-11-04 with the Composite's 15 names).
-ROTULO_DO_ESFORCO = {"max": "Máxima (~8 min)", "high": "Rápida (~1,5 min)"}
-AJUDA_DO_ESFORCO = ("Quanto o DeepSeek pensa antes de responder. Máxima: o parecer mais cuidadoso, leva minutos. "
-                    "Rápida: pensa menos, responde em cerca de 1,5 minuto; boa para mostrar o app ao vivo. Cada profundidade gera seu próprio parecer, guardado por 6 "
-                    "horas: clicar de novo na mesma profundidade mostra o mesmo parecer na hora, sem custo.")
+# the opinion's depth, picked per opinion (the user, 2026-11-04): max is the default and the deepest; the fast ones
+# answer in time to show the app live (``core.assessor.PROFUNDIDADES``: times measured on 2026-11-04, 15 names).
+ROTULO_DA_PROFUNDIDADE = {"maxima": "Máxima (~8 min)", "rapida": "Rápida (~75 s)", "expressa": "Expressa (~65 s)"}
+AJUDA_DA_PROFUNDIDADE = (
+    "Quanto o DeepSeek pensa antes de responder. Máxima: o parecer mais cuidadoso, leva minutos. Rápida: pensa menos e "
+    "divide as ações em 3 grupos lidos ao mesmo tempo, com as mesmas evidências e regras. Expressa: 5 grupos, para "
+    "quando cada segundo conta. Cada profundidade gera seu próprio parecer, guardado por 6 horas: clicar de novo na "
+    "mesma profundidade mostra o mesmo parecer na hora, sem custo.")
 NAO_CONFIRMADAS = "Notícias e posts não confirmados pelas fontes oficiais (não contam para a postura)"
 _MARKDOWN = set("\\`*_{}[]()<>#+-.!|~$:")
 
@@ -52,9 +54,9 @@ def _fonte(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str:
             f"({sem_markdown(origem)}): “{sem_markdown(afirmacao['citacao'])}”*")
 
 
-def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[str], Resultado]) -> None:
+def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profundidade], Resultado]) -> None:
     """The adviser's block; ``indisponivel`` is the reason it cannot run here (no key, no registered plan). ``gerar``
-    takes the thinking effort picked on the screen."""
+    takes the depth picked on the screen (``core.assessor.Profundidade``)."""
     st.markdown("### Assessor do Aleph Quant (DeepSeek)")
     if indisponivel:
         st.caption(f"Assessor indisponível nesta versão do app: {indisponivel}.")
@@ -65,11 +67,12 @@ def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[str], 
                "evidência; o app confere a citação e os números e descarta o que não confere. Notícias, posts e páginas "
                "comuns só contam se a CVM, o Banco Central, a B3 ou a ANBIMA confirmarem. Antes da postura, três "
                "razões macro do Banco Central contra a tese.")
-    esforco = st.segmented_control("Profundidade do parecer", ESFORCOS, format_func=ROTULO_DO_ESFORCO.get,
-                                   default=ESFORCO, key="esforco_do_parecer", help=AJUDA_DO_ESFORCO) or ESFORCO
+    escolha = st.segmented_control("Profundidade do parecer", list(PROFUNDIDADES),
+                                   format_func=ROTULO_DA_PROFUNDIDADE.get, default=PROFUNDIDADE_PADRAO,
+                                   key="esforco_do_parecer", help=AJUDA_DA_PROFUNDIDADE) or PROFUNDIDADE_PADRAO
     if st.button("Gerar parecer", key="gerar_parecer", icon=":material/psychology:"):
-        with st.spinner(f"O assessor está lendo as evidências ({ROTULO_DO_ESFORCO[esforco].lower()})…"):
-            st.session_state[CHAVE_DO_PARECER] = gerar(esforco)
+        with st.spinner(f"O assessor está lendo as evidências ({ROTULO_DA_PROFUNDIDADE[escolha].lower()})…"):
+            st.session_state[CHAVE_DO_PARECER] = gerar(PROFUNDIDADES[escolha])
     resultado = st.session_state.get(CHAVE_DO_PARECER)
     if resultado is not None:
         _mostrar(resultado, universo)

@@ -346,9 +346,10 @@ _TRAVA_DO_CONTADOR = threading.Lock()
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False, max_entries=4)
 def gerar_parecer(texto_do_pacote: str, universo: tuple[str, ...], dia: date, _pacote: tuple[assessor.Evidencia, ...],
-                  _fontes: assessor.Fontes, _chave: str, esforco: str = assessor.ESFORCO) -> assessor.Resultado:
+                  _fontes: assessor.Fontes, _chave: str, esforco: str = assessor.ESFORCO,
+                  partes: int = 1) -> assessor.Resultado:
     """The adviser's opinion (``core.assessor.pedir_parecer``), once per pack, plan and day: a second click on the
-    same day and depth (``esforco``, the thinking effort) costs nothing, and past ``PARECERES_POR_DIA`` paid ones a day the answer is the limit message. The pack
+    same day and depth (``esforco``, the thinking effort, and ``partes``, the parallel parts) costs nothing, and past ``PARECERES_POR_DIA`` paid ones a day the answer is the limit message. The pack
     enters the cache key as its text; the tools' sources and the key stay out of it (the key is never hashed)."""
     with _TRAVA_DO_CONTADOR:
         contador = contador_de_pareceres()
@@ -357,7 +358,8 @@ def gerar_parecer(texto_do_pacote: str, universo: tuple[str, ...], dia: date, _p
                                       assessor.Uso(), [])
         contador[dia] = contador.get(dia, 0) + 1
     return assessor.pedir_parecer(list(_pacote), list(universo), assessor.Ferramentas(_fontes, {}), _chave,
-                                  datetime.now(timezone.utc), carteira=assessor.CARTEIRA_COMPOSTA, esforco=esforco)
+                                  datetime.now(timezone.utc), carteira=assessor.CARTEIRA_COMPOSTA, esforco=esforco,
+                                  partes=partes)
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

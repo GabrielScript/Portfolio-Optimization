@@ -799,3 +799,16 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   "Expressa" (high in 5 parts, ~65 s). Max gives the best-checked opinion but its time varies (133-218 s measured on
   05/11); generate it before a presentation and the same click shows it from the cache.
 - The simulator's DeepSeek portfolio judges the names of both rule portfolios, next to an equal-weight control.
+
+## Session notes (2026-11-05 evening)
+
+- Fictitious options account ("Conta de opções (fictícia)", `core/simulador_opcoes.py`): R$ 10,000 apart from the
+  stocks accounts; on each month's first session it buys a put near 0.95 x spot on the stretched winner near its high
+  and a call near 1.05 x spot on the most volatile third's top momentum, 10% of the account, held to expiry, Selic on
+  the rest. Only buying (loss capped at the premiums), only two-sided quotes. The upkeep's "opções" step appends
+  `simulador/opcoes.csv` and `simulador/opcoes_marcas.csv` from the lake's `option_chain_recent.parquet`.
+- Options veto (spec `docs/superpowers/specs/2026-10-29-opcoes-veto-design.md`): read once on 05/11, no signal passed
+  (`docs/opcoes-ic-2026-11-05.txt`); options do not enter the stock choice.
+- New lake data (not used by the app yet): B3 official indices, daily index compositions, 16 BDI tables (lending,
+  open positions, forward, IOPV, margin scenarios...).
+- Next: a DeepSeek "sentinel" that watches the Composite's names during the session and alerts by email (DECISOES 261).

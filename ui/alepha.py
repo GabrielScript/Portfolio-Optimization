@@ -23,11 +23,16 @@ SESSOES_DO_SEMAFORO = 21           # the DeepSeek pack reads the CVM filings of 
 
 BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)
 SELIC = "Selic"
-CURVAS_DA_TELA = (*BRACOS, "BITH11", "QBTC11")
+CRIPTO = ("BITH11", "QBTC11")
+CURVAS_DA_TELA = (*BRACOS, SELIC, *CRIPTO)       # the Selic beside the strategies in every table (the user, 2026-11-05)
 EXCESSO_BOVA11 = "Excesso sobre o BOVA11"
 MEDIDAS_POR_ANO = ("Retorno", EXCESSO_BOVA11, EXCESSO_DO_JURO, "Vol", "Queda máx.", "Pior mês", "Sharpe", "Sortino",
                    "Calmar", "Beta (BOVA11)")
 SEM_PORCENTO = {"Sharpe", "Sortino", "Calmar", "Beta (BOVA11)", "t do alfa", "Information ratio"}
+# measures of a premium over the Selic or of market risk: the Selic itself has none (rounding noise would show a huge
+# Sharpe), so its cell is a dash
+SEM_SENTIDO_NA_SELIC = ("Sharpe", "Sortino", "Calmar", EXCESSO_DO_JURO, "Beta (BOVA11)", "Alfa a.a. (BOVA11)",
+                        "t do alfa", "Information ratio")
 PRIMEIRO_ANO = 2010
 
 
@@ -49,6 +54,8 @@ def _tabela_por_ano(curvas: pd.DataFrame, selic: pd.Series, medida: str) -> pd.D
     else:
         tabela = medidas[medida].unstack()
     tabela = tabela.reindex(columns=list(curvas.columns)).astype(float)
+    if medida in SEM_SENTIDO_NA_SELIC and SELIC in tabela:
+        tabela[SELIC] = float("nan")
     return tabela.loc[tabela.index >= PRIMEIRO_ANO]
 
 
@@ -83,24 +90,24 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
                                 for coluna in tabela.columns[3:]},
                  alt="Conservadora, Composto, BOVA11 e Selic no período inteiro e nos últimos 5 e 3 anos")
 
-    curvas = parte[list(CURVAS_DA_TELA)]
+    curvas = parte[list(BRACOS)].assign(**{SELIC: na_selic}).join(parte[list(CRIPTO)])[list(CURVAS_DA_TELA)]
     medida = st.selectbox("Medida de cada ano", MEDIDAS_POR_ANO, key="medida_por_ano")
     anos = _tabela_por_ano(curvas, selic, medida)
-    taxa = ({SELIC: juro_por_ano(juros[SELIC].dropna(), parte.index).reindex(anos.index).to_numpy()}
-            if juros is not None and SELIC in juros and medida == "Retorno" else {})
+    if juros is not None and SELIC in juros and medida == "Retorno":   # the published rate over the calendar days
+        anos[SELIC] = juro_por_ano(juros[SELIC].dropna(), parte.index).reindex(anos.index).to_numpy()
     por_ano = pd.DataFrame({"Ano": [rotulo_do_ano(ano, parte.index) for ano in anos.index],
-                            **{nome: anos[nome].to_numpy() for nome in BRACOS}, **taxa,
-                            **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA[len(BRACOS):]}})
+                            **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA}})
     filtrado = filtrar(por_ano, "por_ano")
     # "—" for the years before a fund listed (the bitcoin ETFs), not Streamlit's "None" (the user, 2026-11-04)
     tabela_do_ano, config_do_ano = com_traco(filtrado, por_ano.columns[1:], porcento=medida not in SEM_PORCENTO)
     st.dataframe(tabela_do_ano, width="stretch", hide_index=True, column_config=config_do_ano,
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
 
-    inicio_cripto = curvas[["BITH11", "QBTC11"]].dropna().index[0]
+    inicio_cripto = curvas[list(CRIPTO)].dropna().index[0]
     mesma_janela = st.toggle(f"Mesma janela para todos (desde {inicio_cripto:%d/%m/%Y}, quando os dois ETFs de "
                              "bitcoin já negociavam)", key="mesma_janela")
     resumo = resumo_do_periodo(curvas.loc[inicio_cripto:] if mesma_janela else curvas, selic)
+    resumo.loc[SELIC, [coluna for coluna in SEM_SENTIDO_NA_SELIC if coluna in resumo.columns]] = float("nan")
     resumo = resumo.assign(Desde=[f"{data:%d/%m/%Y}" for data in resumo["Desde"]]).rename_axis(
         "Estratégia").reset_index()
     numericas = [coluna for coluna in resumo.columns if coluna not in ("Estratégia", "Desde", "Anos acima do BOVA11")]

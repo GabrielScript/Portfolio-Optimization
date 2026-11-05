@@ -53,6 +53,7 @@ def _painel_sem_rede(monkeypatch) -> None:
     monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: None)
     monkeypatch.setattr(servicos, "carregar_manchetes", lambda: (None, None))
     monkeypatch.setattr(servicos, "carregar_ata_copom", lambda dia: None)
+    monkeypatch.setattr(servicos, "carregar_dolar", lambda dia, quarto: None)
     monkeypatch.setattr(servicos, "carregar_desempenho", lambda tickers, dia, versao, referencia: None)
     monkeypatch.setattr(servicos, "carregar_precos_da_tabela", lambda tickers, dia, versao: _precos_sinteticos(
         tickers, 3, dia, versao).precos)
@@ -224,6 +225,7 @@ def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
 
 
 SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
+SECAO_COTACOES = "## Cotações de agora: as ações da Composite"
 
 
 def _curvas_sinteticas() -> pd.DataFrame:
@@ -263,16 +265,46 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
         periodos[0].columns)
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)]
     assert len(anos) == 1 and anos[0]["Ano"].tolist()[-1] == "2026 (até 29/10)"
-    assert ["Conservadora", "Composto", "BOVA11", "BITH11", "QBTC11"] == list(anos[0].columns[1:6])
+    # the Selic beside the strategies in every table (the user, 2026-11-05)
+    assert ["Conservadora", "Composto", "BOVA11", "Selic", "BITH11", "QBTC11"] == list(anos[0].columns[1:7])
     assert anos[0].set_index("Ano").loc["2019", "BITH11"] == "—"    # before its listing: a dash, not "None" (2026-11-04)
     resumo = [df.value for df in at.dataframe if "Sortino" in df.value.columns]
-    assert len(resumo) == 1 and list(resumo[0]["Estratégia"]) == ["Conservadora", "Composto", "BOVA11", "BITH11",
-                                                                   "QBTC11"]
+    assert len(resumo) == 1 and list(resumo[0]["Estratégia"]) == ["Conservadora", "Composto", "BOVA11", "Selic",
+                                                                   "BITH11", "QBTC11"]
     assert {"Alfa a.a. (BOVA11)", "Queda máx.", "Calmar", "CVaR 95% diário"} <= set(resumo[0].columns)
+    na_selic = resumo[0].set_index("Estratégia").loc["Selic"]
+    # the risk-free rate has no premium over itself: a dash, not a huge Sharpe from rounding noise
+    assert (na_selic[["Sharpe", "Sortino", "Beta (BOVA11)", "Alfa a.a. (BOVA11)", "t do alfa"]] == "—").all()
+    assert na_selic["CAGR"] != "—"
     at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
     assert not at.exception
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
     assert (anos[["Conservadora", "BOVA11"]].dropna() <= 0).all().all()
+
+
+def test_the_page_shows_the_composites_quotes_now_with_the_days_change_and_a_refresh_button(monkeypatch):
+    # the user, 2026-11-05: the current quotes table left with the buy plan on 2026-11-04; bring it back
+    _servicos_sinteticos(monkeypatch)
+    descartadas = []
+    monkeypatch.setattr(servicos, "descartar_cotacoes", lambda tickers, janela: descartadas.append(tickers))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index("## O que é o Aleph Quant") < titulos.index(SECAO_COTACOES) < titulos.index(SECAO_SEM_VIES)
+    cotacoes = [df.value for df in at.dataframe if "Variação no dia" in df.value.columns]
+    assert len(cotacoes) == 1
+    tabela = cotacoes[0].set_index("Ticker")
+    _, alvo = _conservadora_sintetica()
+    assert sorted(tabela.index) == sorted(ticker.removesuffix(".SA") for ticker in alvo.index)
+    assert {"Empresa", "Setor", "Cotação (R$)", "Horário", "Fonte"} <= set(tabela.columns)
+    precos = _precos_sinteticos(tuple(alvo.index), 1, date.today(), 0).precos
+    primeiro = alvo.index[0]
+    assert tabela.loc[primeiro.removesuffix(".SA"), "Cotação (R$)"] == pytest.approx(precos[primeiro].iloc[-1])
+    assert tabela.loc[primeiro.removesuffix(".SA"), "Variação no dia"] == pytest.approx(
+        precos[primeiro].iloc[-1] / precos[primeiro].iloc[-2] - 1)
+    at.button(key="atualizar_cotacoes").click().run()
+    assert not at.exception and descartadas == [tuple(alvo.index)]
 
 
 def test_the_year_table_has_the_selic_next_to_the_returns_and_only_there(monkeypatch):
@@ -288,9 +320,12 @@ def test_the_year_table_has_the_selic_next_to_the_returns_and_only_there(monkeyp
     assert list(anos.columns[1:5]) == ["Conservadora", "Composto", "BOVA11", "Selic"] and "CDI" not in anos.columns
     assert anos.set_index("Ano").loc["2020", "Selic"] == pytest.approx(1.00041 ** 366 - 1)
     at.selectbox(key="medida_por_ano").set_value("Queda máx.").run()
-    assert not at.exception                                     # a rate has no drawdown to show
+    assert not at.exception                                     # the Selic in every measure (the user, 2026-11-05)
     anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
-    assert not {"CDI", "Selic"} & set(anos.columns)
+    assert "CDI" not in anos.columns and anos.set_index("Ano").loc["2020", "Selic"] == pytest.approx(0.0)
+    at.selectbox(key="medida_por_ano").set_value("Sharpe").run()
+    anos = [df.value for df in at.dataframe if {"Ano", "BITH11"} <= set(df.value.columns)][0]
+    assert (anos["Selic"] == "—").all()
 
 
 def test_the_market_panel_shows_news_the_dollar_and_every_stock_without_the_election(monkeypatch):
@@ -316,7 +351,6 @@ def test_the_market_panel_shows_news_the_dollar_and_every_stock_without_the_elec
     assert "notícias boas" in tom.help
     ano = date.today().year
     assert {f"Projeção Focus para o fim de {ano}", f"Projeção Focus para o fim de {ano + 1}"} <= set(rotulos)
-    assert not [m for m in at.metric if m.label == "Selic meta"]
     assert not [df for df in at.dataframe if "Pesquisa" in df.value.columns]          # no Focus table, no dates
     acoes = [df.value for df in at.dataframe if {"Retorno 12m", "Setor"} <= set(df.value.columns)]
     assert len(acoes) == 1 and len(acoes[0]) >= 100
@@ -357,6 +391,32 @@ def test_the_market_panel_shows_the_central_bank_indicators_the_risk_measures_an
     na_tela = [df.value for df in at.dataframe if "tom_do_fato" in df.value.columns][0]
     assert na_tela["tom_do_fato"].tolist() == ["ruim", painel.SEM_NOTA]
     assert not [c for c in at.caption if "lago" in c.value.lower()]
+
+
+def test_the_central_bank_block_shows_todays_selic_the_inflation_and_the_dollars_bulletin_without_the_theme_chart(
+        monkeypatch):
+    # the user, 2026-11-05: the dollar was a day behind (the SGS close), show how much the Selic is today, and the
+    # "Peso médio do tema" chart goes
+    from core import dolar_bcb
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: {
+        "IPCA 12 meses (%)": (pd.Timestamp("2026-09-01"), 5.0), "Dólar PTAX (R$)": (pd.Timestamp("2026-11-03"), 5.49)})
+    monkeypatch.setattr(servicos, "carregar_dolar", lambda dia, quarto: dolar_bcb.DolarDoDia(
+        5.4755, pd.Timestamp("2026-11-05 11:09:10"), "Intermediário"))
+    diario = pd.DataFrame({"dia": ["2026-11-02", "2026-11-03"], "itens": [40, 50], "relevantes": [10, 12],
+                           "tom": [0.1, -0.2], "eleicao": [0.3, 0.2],
+                           **{tema: 0.1 for tema in __import__("core.sentimento", fromlist=["x"]).TOPICOS_DO_PAINEL}})
+    monkeypatch.setattr(servicos, "carregar_painel", lambda: (diario, None, None))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    metricas = {m.label: m for m in at.metric}
+    assert metricas["Selic hoje (meta do Copom)"].value == "13,75% a.a."
+    assert metricas["IPCA em 12 meses"].value == "5,00%"
+    assert metricas["Juro real (Selic acima do IPCA)"].value == "8,33% a.a."
+    dolar = metricas["Dólar hoje (PTAX do Banco Central)"]
+    assert dolar.value == "R$ 5,48" and "05/11 às 11:09" in str(dolar.delta)
+    assert "Peso médio do tema" not in str(at._tree)
 
 
 def _tabela_de_acoes(at: AppTest) -> pd.DataFrame:
@@ -547,7 +607,7 @@ def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
 
 def test_every_table_has_its_filters(monkeypatch):
     # the user's UI list of 2026-11-03: a "Filtros" button above each table, one multiselect per category column
-    from ui import alepha, filtros, painel, simulador
+    from ui import alepha, cotacoes, filtros, painel, simulador
     from ui import assessor as ui_assessor
     filtradas = []
 
@@ -556,7 +616,7 @@ def test_every_table_has_its_filters(monkeypatch):
         filtradas.append(tuple(saida.columns))
         return saida
 
-    for modulo in (alepha, painel, simulador, ui_assessor):
+    for modulo in (alepha, cotacoes, painel, simulador, ui_assessor):
         monkeypatch.setattr(modulo, "filtrar", gravar)
     _, alvo = _conservadora_sintetica()
     hoje = date.today()

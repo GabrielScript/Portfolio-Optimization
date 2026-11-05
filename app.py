@@ -12,7 +12,7 @@ the Composite next to the Markowitz efficient frontier. The buy plan from the he
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 import streamlit as st
@@ -33,7 +33,7 @@ from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
 from core.optimization import ErroOtimizacao, metricas_carteira, preparar_covariancia  # noqa: E402
 from core.risco import LIMITES  # noqa: E402
-from ui import alepha, painel, parecer, servicos  # noqa: E402
+from ui import alepha, cotacoes, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -119,6 +119,8 @@ def main() -> None:
     st.markdown("## O que é o Aleph Quant")
     st.markdown(SOBRE)
     st.markdown("---")
+    secao_cotacoes(registrado)
+    st.markdown("---")
     alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
     st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
@@ -134,6 +136,14 @@ def main() -> None:
     secao_fronteira(entradas, registrado)
 
 
+def secao_cotacoes(registrado: tuple[date, pd.Series] | None) -> None:
+    """The Composite's quotes now (the user, 2026-11-05), from a year of daily closes for the previous close."""
+    tickers = () if registrado is None else tuple(registrado[1].index)
+    fechamentos = (servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos
+                   if tickers else pd.DataFrame())
+    cotacoes.secao(tickers, fechamentos, servicos.carregar_cotacoes, servicos.descartar_cotacoes, get_ticker_info())
+
+
 def secao_mercado() -> None:
     """The market panel (information only, DECISOES 124): news, the dollar and every stock, BDR and ETF of the
     app's daily prices (``ativos_tela``)."""
@@ -147,7 +157,20 @@ def secao_mercado() -> None:
         desempenho = servicos.carregar_desempenho(tickers, hoje, precos_do_app.versao_dos_dados(), BENCHMARK_ACOES)
         painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
-                             precos, info, BENCHMARK_ACOES, desempenho, servicos.carregar_ata_copom(hoje))
+                             precos, info, BENCHMARK_ACOES, desempenho, servicos.carregar_ata_copom(hoje),
+                             selic=_selic_de_hoje(hoje), dolar=servicos.carregar_dolar(hoje, _quarto_de_hora()))
+
+
+def _quarto_de_hora() -> int:
+    agora = datetime.now()
+    return agora.hour * 4 + agora.minute // 15
+
+
+def _selic_de_hoje(hoje: date) -> float | None:
+    """The Selic target in force (BCB SGS 432, ``market_data.obter_selic_meta``); None on its fixed fallback, which
+    is not today's rate."""
+    selic = servicos.carregar_selic(hoje)
+    return None if selic.fonte.startswith("fallback") else selic.valor
 
 
 def secao_assessor() -> None:

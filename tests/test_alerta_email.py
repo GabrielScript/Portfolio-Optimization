@@ -15,10 +15,21 @@ def _ordens() -> pd.DataFrame:
 
 def test_the_message_lists_each_buy_and_sell_per_portfolio_in_brazilian_numbers_and_skips_zero_orders():
     assunto, corpo = ae.mensagem_das_ordens(_ordens())
-    assert assunto == "Aleph Quant: 2 ordem(ns) no simulador em 04/11/2026"
-    assert "DeepSeek\n  COMPRA 54 PETR4 a R$ 33,00 (R$ 1.782,00)\n  VENDA 10 VALE3 a R$ 61,25 (R$ 612,50)" in corpo
-    assert "ITSA4" not in corpo and "Composto" not in corpo
+    assert assunto == "Aleph Quant (simulador): 2 ordens no fechamento de 04/11/2026"
+    assert ("  Compra: 54 PETR4 a R$ 33,00 = R$ 1.782,00\n  Venda: 10 VALE3 a R$ 61,25 = R$ 612,50\n"
+            "  Total: compras R$ 1.782,00, vendas R$ 612,50, custos R$ 2,39") in corpo
+    assert "ITSA4" not in corpo
     assert "não é recomendação de investimento" in corpo
+
+
+def test_the_message_says_what_it_is_names_each_portfolio_and_the_ones_without_orders():
+    # the user, 2026-11-05: the 04/11 email (8 DeepSeek buys only) was confusing: no day, no account, a bare name
+    _, corpo = ae.mensagem_das_ordens(_ordens())
+    primeira = corpo.splitlines()[0]
+    assert "conta fictícia" in primeira.lower() and "fechamento de 04/11/2026" in primeira and "dinheiro real" in primeira
+    assert "DeepSeek: as ações que o assessor DeepSeek julgou favoráveis" in corpo
+    assert "Sem ordens nesta data: Composite, Conservadora e Controle." in corpo
+    assert ae.mensagem_das_ordens(_ordens().iloc[:1])[0] == "Aleph Quant (simulador): 1 ordem no fechamento de 04/11/2026"
 
 
 def test_sending_logs_in_with_the_app_password_without_spaces_and_sends_to_the_user(monkeypatch):

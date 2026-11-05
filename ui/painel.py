@@ -15,10 +15,10 @@ from datetime import date, datetime
 import pandas as pd
 import streamlit as st
 
-from core import macro_bcb
+from core import dolar_bcb, macro_bcb
 from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
-from core.sentimento import ROTULOS_DOS_TOPICOS, TOPICOS_DO_PAINEL, ultimo_fato
+from core.sentimento import ultimo_fato
 from ui.filtros import filtrar
 
 AVISO = "Informação, não recomendação: nada aqui muda o plano nem as regras de risco."
@@ -55,11 +55,12 @@ def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame |
                   fundamentos: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None,
                   focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None,
                   precos: pd.DataFrame, info: dict, referencia: str, desempenho: pd.DataFrame | None = None,
-                  ata: macro_bcb.Ata | None = None) -> None:
+                  ata: macro_bcb.Ata | None = None, selic: float | None = None,
+                  dolar: dolar_bcb.DolarDoDia | None = None) -> None:
     st.markdown("## Mercado agora: notícias, macro e ações")
     st.caption(AVISO)
     _noticias(diario, manchetes)
-    _macro(hoje, focus_anual, indicadores_bcb, ata)
+    _macro(hoje, focus_anual, indicadores_bcb, ata, selic, dolar)
     _acoes(precos, info, fundamentos, fatos, referencia, desempenho)
 
 
@@ -96,8 +97,6 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
               border=True)
     if len(dias) > 1:
         st.line_chart(dias["tom"].rename("Tom do mercado"), y_label="Tom (−1 a +1)")
-    temas = dias[list(TOPICOS_DO_PAINEL)].tail(7).mean().rename(ROTULOS_DOS_TOPICOS)
-    st.bar_chart(temas.rename("Peso médio nos últimos 7 dias"), horizontal=True, x_label="Peso médio do tema")
     if manchetes is not None and not manchetes.empty:
         st.dataframe(filtrar(manchetes_com_link(manchetes), "manchetes"), width="stretch", hide_index=True, height=320,
                      column_config={"quando": st.column_config.DatetimeColumn("Quando", format="DD/MM HH:mm"),
@@ -110,17 +109,48 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
         st.caption("Manchetes indisponíveis agora.")
 
 
+IPCA_12M = "IPCA 12 meses (%)"         # the key of ``servicos.carregar_indicadores_bcb``
+AJUDA_DA_SELIC = ("Taxa básica de juros da economia, definida pelo Copom a cada 45 dias. É o rendimento de referência "
+                  "da renda fixa e a taxa sem risco usada no Sharpe e no Sortino deste app.")
+AJUDA_DO_IPCA = "Inflação oficial do país (IBGE) acumulada nos últimos 12 meses."
+AJUDA_DO_JURO_REAL = ("Quanto a Selic rende acima da inflação: (1 + Selic) / (1 + IPCA 12 meses) − 1. Juro real alto "
+                      "deixa a renda fixa atraente e pesa no preço das ações.")
+AJUDA_DO_DOLAR = ("PTAX de venda do Banco Central: média das cotações do mercado medida em boletins ao longo do dia "
+                  "(abertura por volta das 10h, intermediários às 11h e 12h, fechamento às 13h). Antes do primeiro "
+                  "boletim e em feriados, vale o último publicado.")
+
+
+def _juros_e_inflacao(selic: float | None, indicadores: dict) -> None:
+    """Today's Selic target, the IPCA over 12 months and the real rate between them (the user, 2026-11-05)."""
+    ipca = indicadores.get(IPCA_12M, (None, None))[1]
+    colunas = st.columns(3)
+    colunas[0].metric("Selic hoje (meta do Copom)", "—" if selic is None else f"{_virgula(100 * selic, 2)}% a.a.",
+                      help=AJUDA_DA_SELIC, border=True)
+    colunas[1].metric("IPCA em 12 meses", "—" if ipca is None else f"{_virgula(ipca, 2)}%", help=AJUDA_DO_IPCA,
+                      border=True)
+    real = None if selic is None or ipca is None else (1 + selic) / (1 + ipca / 100) - 1
+    colunas[2].metric("Juro real (Selic acima do IPCA)", "—" if real is None else f"{_virgula(100 * real, 2)}% a.a.",
+                      help=AJUDA_DO_JURO_REAL, border=True)
+
+
 def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None,
-           ata: macro_bcb.Ata | None = None) -> None:
-    """The Banco Central block: activity, direct investment, credit, its cost and defaults and the last Copom minutes,
-    each with a "?" (the user, 2026-11-04), then the last PTAX and the Focus median for the dollar this year and the
-    next (the user's UI list of 2026-11-03)."""
+           ata: macro_bcb.Ata | None = None, selic: float | None = None,
+           dolar: dolar_bcb.DolarDoDia | None = None) -> None:
+    """The Banco Central block: today's Selic, the IPCA and the real rate (the user, 2026-11-05); activity, direct
+    investment, credit, its cost and defaults and the last Copom minutes, each with a "?" (the user, 2026-11-04); then
+    the day's last PTAX bulletin (``core.dolar_bcb``: the SGS close was a day behind until 13h) and the Focus median for
+    the dollar this year and the next (the user's UI list of 2026-11-03)."""
     st.markdown("### Banco Central (ao vivo)")
+    _juros_e_inflacao(selic, indicadores_bcb or {})
     _economia(indicadores_bcb or {}, ata)
     st.markdown("#### Dólar")
-    ptax = next((valor for nome, (_, valor) in (indicadores_bcb or {}).items() if nome.startswith("Dólar")), None)
     colunas = st.columns(3)
-    colunas[0].metric("Dólar PTAX hoje", "—" if ptax is None else f"R$ {_virgula(ptax, 2)}", border=True)
+    if dolar is None:
+        colunas[0].metric("Dólar hoje (PTAX do Banco Central)", "—", help=AJUDA_DO_DOLAR, border=True)
+    else:
+        colunas[0].metric("Dólar hoje (PTAX do Banco Central)", f"R$ {_virgula(dolar.valor, 2)}",
+                          f"{dolar.boletim}, {dolar.quando:%d/%m às %H:%M}", delta_color="off", delta_arrow="off",
+                          help=AJUDA_DO_DOLAR, border=True)
     if focus_anual is None or DOLAR_DO_FOCUS not in focus_anual:
         st.caption("Projeção do Focus indisponível agora (API do BCB).")
         return

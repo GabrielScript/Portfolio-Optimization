@@ -22,8 +22,8 @@ import requests
 import streamlit as st
 
 import ativos_tela
-from core import (assessor, bcb, cdi_lago, cotacao_b3, focus, indicadores, lago, macro_bcb, manchetes_online,
-                  market_data, precos_do_app, reamostragem, sentimento, simulador)
+from core import (assessor, bcb, cdi_lago, cotacao_b3, dolar_bcb, focus, indicadores, lago, macro_bcb,
+                  manchetes_online, market_data, precos_do_app, reamostragem, sentimento, simulador)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -384,6 +384,16 @@ def carregar_indicadores_bcb(dia: date) -> dict[str, tuple[pd.Timestamp, float]]
     return {"IPCA 12 meses (%)": (ipca.index[-1], float(ipca.iloc[-1])),
             "Dólar PTAX (R$)": (ptax.index[-1], float(ptax.iloc[-1])),
             **macro_bcb.indicadores(bcb.baixar_serie, dia)}
+
+
+@st.cache_data(ttl=15 * 60, show_spinner=False, max_entries=4)
+def carregar_dolar(dia: date, quarto: int) -> dolar_bcb.DolarDoDia | None:
+    """The day's last PTAX bulletin (``core.dolar_bcb``); ``quarto`` (the quarter hour of the day) renews it as the
+    BCB publishes the next bulletin. None when the service fails."""
+    try:
+        return dolar_bcb.dolar_do_dia(dia)
+    except (requests.RequestException, ValueError, KeyError):
+        return None
 
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)

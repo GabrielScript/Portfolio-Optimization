@@ -19,9 +19,8 @@ from core.segredos import ARQUIVO_ENV, segredo
 
 SERVIDOR, PORTA = "smtp.gmail.com", 587
 PRAZO_S = 30
-RODAPE = ("Simulador do Aleph Quant (conta fictícia de R$ 10.000 por carteira): Composite, Conservadora, a carteira do "
-          "DeepSeek (as ações das duas que ele julga favoráveis) e o Controle (a mesma lista em pesos iguais, sem o "
-          "modelo). Informação, não é recomendação de investimento.")
+RODAPE = ("Cada carteira começou com R$ 10.000 fictícios. Informação para acompanhar o simulador, não é recomendação de "
+          "investimento.")
 
 
 @dataclass(frozen=True)
@@ -44,18 +43,40 @@ def _reais(valor: float) -> str:
     return "R$ " + f"{valor:,.2f}".replace(",", "_").replace(".", ",").replace("_", ".")
 
 
+# each simulator portfolio's name in the email and what it is (the user, 2026-11-05: a bare "DeepSeek" was confusing)
+CARTEIRAS = {
+    "Composto": ("Composite", "a carteira principal do Aleph Quant, 15 ações em pesos iguais"),
+    "Conservadora": ("Conservadora", "a regra mais simples, 15 ações em pesos iguais"),
+    "DeepSeek": ("DeepSeek", "as ações que o assessor DeepSeek julgou favoráveis, entre as da Composite e da "
+                             "Conservadora, em pesos iguais"),
+    "Controle": ("Controle", "todas as ações que o DeepSeek avaliou, em pesos iguais, sem o filtro do modelo"),
+}
+
+
+def _lista(nomes: list[str]) -> str:
+    return nomes[0] if len(nomes) == 1 else ", ".join(nomes[:-1]) + " e " + nomes[-1]
+
+
 def mensagem_das_ordens(ordens: pd.DataFrame) -> tuple[str, str]:
-    """Subject and body: the non-zero orders of each portfolio, buys and sells with price and amount."""
+    """Subject and body: what the email is (the fictitious account, the close the orders were filled at), then each
+    portfolio's name, what it is, its non-zero buys and sells with price and amount and its totals, and the portfolios
+    without orders on that close."""
     feitas = ordens[ordens["ordem"] != 0]
-    dias = sorted(pd.to_datetime(feitas["data"]).dt.date.unique())
-    quando = ", ".join(f"{dia:%d/%m/%Y}" for dia in dias)
-    assunto = f"Aleph Quant: {len(feitas)} ordem(ns) no simulador em {quando}"
-    blocos = []
+    quando = ", ".join(f"{dia:%d/%m/%Y}" for dia in sorted(pd.to_datetime(feitas["data"]).dt.date.unique()))
+    assunto = f"Aleph Quant (simulador): {len(feitas)} {'ordem' if len(feitas) == 1 else 'ordens'} no fechamento de {quando}"
+    blocos = [f"Conta fictícia do simulador do Aleph Quant: estas ordens foram executadas ao preço de fechamento de "
+              f"{quando}. Nenhum dinheiro real foi movimentado."]
     for carteira, linhas in feitas.groupby("carteira", sort=False):
-        itens = [f"  {'COMPRA' if linha.ordem > 0 else 'VENDA'} {abs(int(linha.ordem))} {linha.ticker} a "
-                 f"{_reais(float(linha.preco))} ({_reais(abs(linha.ordem) * float(linha.preco))})"
-                 for linha in linhas.itertuples()]
-        blocos.append("\n".join([str(carteira), *itens]))
+        nome, descricao = CARTEIRAS.get(str(carteira), (str(carteira), ""))
+        valores = linhas["ordem"].abs() * linhas["preco"].astype(float)
+        itens = [f"  {'Compra' if linha.ordem > 0 else 'Venda'}: {abs(int(linha.ordem))} {linha.ticker} a "
+                 f"{_reais(float(linha.preco))} = {_reais(valor)}" for linha, valor in zip(linhas.itertuples(), valores)]
+        total = (f"  Total: compras {_reais(float(valores[linhas['ordem'] > 0].sum()))}, vendas "
+                 f"{_reais(float(valores[linhas['ordem'] < 0].sum()))}, custos {_reais(float(linhas['custo'].sum()))}")
+        blocos.append("\n".join([f"{nome}: {descricao}" if descricao else nome, *itens, total]))
+    paradas = [nome for carteira, (nome, _) in CARTEIRAS.items() if carteira not in set(feitas["carteira"])]
+    if paradas:
+        blocos.append(f"Sem ordens nesta data: {_lista(paradas)}.")
     return assunto, "\n\n".join(blocos) + f"\n\n{RODAPE}\n"
 
 

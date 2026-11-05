@@ -47,6 +47,10 @@ No arm passes. All three stay close to the Composite and MV-continuo, P[> Compos
 volatility (the penalty pulls toward minimum variance); row 91 has the smallest drawdown or close to it; row 90 sits between MV-continuo and
 the Composite.
 
+**Added 05/11, after the synthetic tests and before any real data:** per session the alpha is about 1e-4 against a daily CVaR near 2e-2,
+so row 91 sits close to the minimum-CVaR portfolio and the signal moves it little (on the synthetic test, 32% against 22% of weight on the
+favoured half). Kept as registered (the book batches' per-period convention); stated so a loss is not read as the signal failing.
+
 ## 4. Output
 
 `docs/lote3-composto-b3-2026-11-05.txt`, `docs/dados/lote3-{anos,portao}-b3.parquet`, a DECISOES entry. Nothing goes to the app's selector

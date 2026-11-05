@@ -8,7 +8,7 @@ are eligible, the sector cap goes to the optimizer, and the portfolio goes throu
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -74,19 +74,29 @@ def _robusto(decisao: Decisao) -> pd.Series:
     return pesos_robusto(decisao.media * decisao.periodos, decisao.sigma, decisao.cfg, decisao.anos)
 
 
+def config_das_regras(nomes: list[str], setores: Mapping[str, str], limites: Limites) -> ConfigOtimizacao:
+    """The optimizer's caps for these names: the rules' weight, volatility and sector caps, at most ``N_CONCENTRADOS``."""
+    return ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=limites.peso_maximo_acao, n_ativos_max=N_CONCENTRADOS,
+                            vol_maxima=limites.vol_maxima, aversao_risco=AVERSAO_ROBUSTO,
+                            grupos=limites_por_setor({papel: setores[papel] for papel in nomes}, limites.teto_setor))
+
+
+def pesos_checados(braco: Braco, decisao: Decisao, setores: Mapping[str, str], limites: Limites) -> pd.Series:
+    """The arm's weights on the decision's names, through ``checar_carteira``; a violation is ``CarteiraRecusada``."""
+    pesos = braco(decisao).reindex(decisao.retornos.columns).fillna(0.0)
+    violacoes = checar_carteira(pesos, setores, densa(decisao.sigma, np.flatnonzero(pesos.to_numpy() > 0.0)), limites)
+    if violacoes:
+        raise CarteiraRecusada(violacoes)
+    return pesos
+
+
 def _construtor(braco: Braco) -> Construtor:
     def construir(setores: Mapping[str, str], periodos: int, limites: Limites = LIMITES) -> Estrategia:
         def _estrategia(treino: pd.DataFrame) -> pd.Series:
             retornos = treino[[papel for papel in treino.columns if setores.get(papel)]]
             sigma = ledoit_wolf_baixo_posto(retornos, periodos)
-            cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=limites.peso_maximo_acao, n_ativos_max=N_CONCENTRADOS,
-                                   vol_maxima=limites.vol_maxima, aversao_risco=AVERSAO_ROBUSTO,
-                                   grupos=limites_por_setor({papel: setores[papel] for papel in retornos.columns}, limites.teto_setor))
-            pesos = braco(Decisao(retornos, sigma, periodos, cfg)).reindex(retornos.columns).fillna(0.0)
-            violacoes = checar_carteira(pesos, setores, densa(sigma, np.flatnonzero(pesos.to_numpy() > 0.0)), limites)
-            if violacoes:
-                raise CarteiraRecusada(violacoes)
-            return pesos
+            decisao = Decisao(retornos, sigma, periodos, config_das_regras(list(retornos.columns), setores, limites))
+            return pesos_checados(braco, decisao, setores, limites)
         return _estrategia
     return construir
 

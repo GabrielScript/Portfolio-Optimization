@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import sys
 import time
+from collections.abc import Callable
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +25,7 @@ from core.backtest import Congelamento, ResultadoBacktest, walk_forward_dinamico
 from core.cdi_lago import daily_cdi  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
 from core.estrategias_lote2 import bracos_lote2  # noqa: E402
+from core.valor import NotaDoMes  # noqa: E402
 from core.estrategias_todas import Construtor  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
 from core.periodos import anos_em_reais  # noqa: E402
@@ -48,7 +50,7 @@ def fase_do_trabalhador(argv: list[str]) -> int | None:
 
 
 def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.DataFrame, dados: avaliar_robustez.Dados,
-                       na_janela: bool = False) -> ResultadoBacktest:
+                       na_janela: bool = False, pasta: Path = PASTA) -> ResultadoBacktest:
     def rodar() -> ResultadoBacktest:
         if not na_janela:
             esperar_a_janela_passar()
@@ -56,20 +58,27 @@ def resultado_do_braco(nome: str, construir: Construtor, fase: int, acoes: pd.Da
         resultado = walk_forward_dinamico(acoes, dados.universo, construir(dados.setores, DIAS_DO_ANO), CFG_BT, nome, Congelamento())
         print(f"{nome} phase {fase}: {time.perf_counter() - inicio:.0f} s; first failures {resultado.falhas[:2]}", flush=True)
         return resultado
-    return resultado_salvo(PASTA / f"{nome}-fase{fase}.pkl", rodar)
+    return resultado_salvo(pasta / f"{nome}-fase{fase}.pkl", rodar)
 
 
-def trabalhador(fase: int, dados: avaliar_robustez.Dados, construtores: dict[str, Construtor], ao_contrario: bool) -> None:
+def trabalhador(fase: int, dados: avaliar_robustez.Dados, construtores: dict[str, Construtor], ao_contrario: bool,
+                pasta: Path = PASTA) -> None:
     """Saves that phase's arms. About 500 MB, measured, so it may run through the nightly window: no gold, no ClickHouse."""
     acoes = _acoes(dados.precos.loc[:LAST_SESSION].iloc[fase:])
     ordem = list(construtores.items())
     for nome, construir in reversed(ordem) if ao_contrario else ordem:      # two workers on a phase meet in the middle
-        resultado_do_braco(nome, construir, fase, acoes, dados, na_janela=True)
+        resultado_do_braco(nome, construir, fase, acoes, dados, na_janela=True, pasta=pasta)
 
 
 def main(argv: list[str]) -> int:
+    return ler(argv, bracos_lote2, PASTA, "lote2")
+
+
+def ler(argv: list[str], bracos_de: Callable[[NotaDoMes], dict[str, Construtor]], pasta: Path, prefixo: str) -> int:
+    """The one reading of a batch of arms on the B3: each arm saved per phase in ``pasta``, the tables, the gate and
+    ``docs/dados/<prefixo>-{anos,portao}-b3.parquet``."""
     inicio = time.perf_counter()
-    PASTA.mkdir(parents=True, exist_ok=True)
+    pasta.mkdir(parents=True, exist_ok=True)
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
     mensal = avaliar_conservadora.carregar_mensal(FOLDER)
@@ -79,10 +88,10 @@ def main(argv: list[str]) -> int:
     n_tentativas = contar_tentativas()
     print(f"Files (sha256): {dados.sha256 | mensal.sha256 | sha256_cvm | sha256_cdi}; DSR N {n_tentativas}", flush=True)
 
-    construtores = bracos_lote2(nota)
+    construtores = bracos_de(nota)
     fase_pedida = fase_do_trabalhador(argv)
     if fase_pedida is not None:
-        trabalhador(fase_pedida, dados, construtores, "--ao-contrario" in argv)
+        trabalhador(fase_pedida, dados, construtores, "--ao-contrario" in argv, pasta)
         return 0
     bracos = tuple(construtores)
     medidas: dict[str, dict[str, list[float]]] = {nome: {"composto": [], "conservadora": [], "bova": [], "dsr": []} for nome in bracos}
@@ -95,7 +104,7 @@ def main(argv: list[str]) -> int:
         check_plumbing(fase, cagr(conservadora.valores.dropna()))
         composto = walk_forward_dinamico(acoes, dados.universo, estrategia_por_nota(nota, dados.setores), CFG_BT, COMPOSTO, Congelamento())
         conferir_composto(fase, cagr(composto.valores.dropna()))
-        resultados = {nome: resultado_do_braco(nome, construir, fase, acoes, dados) for nome, construir in construtores.items()}
+        resultados = {nome: resultado_do_braco(nome, construir, fase, acoes, dados, pasta=pasta) for nome, construir in construtores.items()}
         valores = {nome: resultado.valores for nome, resultado in resultados.items()}
         valores |= {COMPOSTO: composto.valores, CONSERVADORA: conservadora.valores}
         valores |= {nome: curva.valores for nome, curva in referencias(precos, CFG_BT).items()}
@@ -132,8 +141,8 @@ def main(argv: list[str]) -> int:
                        "p_referencia": medida["bova"], "dsr": medida["dsr"], "passa": passa})
         print(f"{nome}: P[> Composite] {np.round(medida['composto'], 3)}, P[> Conservadora] {np.round(medida['conservadora'], 3)}, "
               f"P[> BOVA11] {np.round(medida['bova'], 3)}, DSR {np.round(medida['dsr'], 3)}: {'PASSES' if passa else 'does not pass'}")
-    anos.to_parquet(SAIDA / "lote2-anos-b3.parquet", index=False)
-    pd.DataFrame(portao).to_parquet(SAIDA / "lote2-portao-b3.parquet", index=False)
+    anos.to_parquet(SAIDA / f"{prefixo}-anos-b3.parquet", index=False)
+    pd.DataFrame(portao).to_parquet(SAIDA / f"{prefixo}-portao-b3.parquet", index=False)
     print("\n" + anos.to_string(float_format=lambda valor: f"{valor:.1%}"))
     print(f"\nDone in {time.perf_counter() - inicio:.0f} s")
     return 0

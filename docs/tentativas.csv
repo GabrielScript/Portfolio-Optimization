@@ -94,3 +94,6 @@ data,script,configuracao
 2026-11-01,lote2_avaliar.py,"MVSK-tilting: from the Composite's portfolio, max delta on the four moments with proportional steps, Herfindahl within 1% of the reference, caps (Palomar 9.3.3)"
 2026-11-01,lote2_avaliar.py,"Utilidade-raiz: max (1/T) sum sqrt(1 + w'r_t), QP sequence, at most 10 names, caps (Palomar 7.3.2)"
 2026-11-01,lote2_avaliar.py,"Retorno-minimo: min w'Sigma w with w'mu >= the mean of mu over the eligible names, at most 10 names, caps, minimum variance if infeasible (Palomar 7.1)"
+2026-11-05,lote3_b3.py,"Meio-Kelly-alfa: max (1/T) sum -1/(1 + w'r~_t) on rows recentred on the Composite's Grinold alpha (IC0 0.059), at most 10 names, caps (Palomar 7.3)"
+2026-11-05,lote3_b3.py,"Mean-CVaR-alfa: max w'alpha - CVaR_0.90 on rows recentred on the Composite's Grinold alpha, per session, at most 10 names, caps (Palomar 10.4)"
+2026-11-05,lote3_b3.py,"Robust-MV-alfa: max w'alpha - ||(Sigma/T)^(1/2) w|| - (1/2) w'Sigma w with the Composite's Grinold alpha, at most 10 names, caps (Palomar 14.2)"

@@ -324,10 +324,10 @@ def montar_pacote(*, plano: pd.Series, registrada: date, acoes: pd.DataFrame, pe
 
 
 def macro_do_painel(hoje: date, selic, indicadores_bcb: dict[str, tuple[pd.Timestamp, float]] | None,
-                    resumo_focus: pd.DataFrame | None) -> list[tuple[str, str]]:
+                    resumo_focus: pd.DataFrame | None, ata=None) -> list[tuple[str, str]]:
     """The market panel's macro data as (date, text) for ``montar_pacote``: the Selic target (``selic``:
-    ``market_data.TaxaSelic``), the BCB series (name -> (date, value)) and one line per Focus indicator
-    (``core.macro.resumo_focus``)."""
+    ``market_data.TaxaSelic``), the BCB series (name -> (date, value), ``core.macro_bcb`` included), one line per
+    Focus indicator (``core.macro.resumo_focus``) and the last Copom minutes (``ata``: ``core.macro_bcb.Ata``)."""
     macro = [(f"{hoje:%Y-%m-%d}", f"Selic meta: {_br(100 * selic.valor)}% a.a. ({selic.fonte})")]
     for nome, (quando, valor) in (indicadores_bcb or {}).items():
         macro.append((f"{quando:%Y-%m-%d}", f"{nome} em {quando:%d/%m/%Y}: {_br(valor)} (BCB SGS)"))
@@ -335,6 +335,8 @@ def macro_do_painel(hoje: date, selic, indicadores_bcb: dict[str, tuple[pd.Times
         partes = "; ".join(f"{coluna} {_br(float(valor))}" for coluna, valor in linha.drop("Pesquisa").items()
                            if pd.notna(valor))
         macro.append((f"{linha['Pesquisa']:%Y-%m-%d}", f"Focus (mediana) {nome}: {partes}"))
+    if ata is not None:
+        macro.append((f"{ata.data:%Y-%m-%d}", f"{ata.titulo}, publicada em {ata.data:%d/%m/%Y}: {ata.link}"))
     return macro
 
 

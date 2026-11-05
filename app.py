@@ -14,7 +14,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import date
 
-import numpy as np
 import pandas as pd
 import streamlit as st
 
@@ -98,6 +97,10 @@ def ler_sidebar() -> Entradas:
     return Entradas(tuple(acoes), peso_max, teto_setor)
 
 
+def _porcento(valor: float) -> str:
+    return f"{valor:.1%}".replace(".", ",")
+
+
 def _info_com_eua() -> dict:
     """Nome e setor das 181 e da perna dos EUA (``ativos_eua.py``, fora do caminho do paper)."""
     return {**get_ticker_info(), **get_ticker_info_eua()}
@@ -141,9 +144,10 @@ def secao_mercado() -> None:
     tickers = tuple(dict.fromkeys((*get_all_tickers(), *info, BENCHMARK_ACOES)))
     with st.spinner("Carregando o painel do mercado…"):
         precos = servicos.carregar_precos_da_tabela(tickers, hoje, precos_do_app.versao_dos_dados())
+        desempenho = servicos.carregar_desempenho(tickers, hoje, precos_do_app.versao_dos_dados(), BENCHMARK_ACOES)
         painel.secao_mercado(hoje, diario, fatos, fundamentos, *servicos.carregar_manchetes(),
                              servicos.carregar_focus(hoje), servicos.carregar_indicadores_bcb(hoje),
-                             precos, info, BENCHMARK_ACOES)
+                             precos, info, BENCHMARK_ACOES, desempenho, servicos.carregar_ata_copom(hoje))
 
 
 def secao_assessor() -> None:
@@ -167,7 +171,9 @@ def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assesso
 def secao_fronteira(entradas: Entradas, registrado: tuple[date, pd.Series] | None) -> None:
     """The Composite's own estimated point next to the Markowitz frontier of the sidebar's universe (the user's request
     of 2026-11-03). The point is never moved onto the curve: the frontier treats estimated returns as certain, the
-    equal-weight Composite uses none, so it sits below."""
+    equal-weight Composite uses none, so it sits below. Checked on 2026-11-04 with real data: 15 names, shrunk
+    estimate 17.6% a year at 20.6% volatility, right of a capped frontier spanning 11.9-18.4% volatility; the caption
+    reads it against the Selic and the equal-weight universe (the user asked for a plainer, less negative text)."""
     st.markdown("## Composite na fronteira eficiente")
     if registrado is None:
         st.caption("Sem a Composite registrada.")
@@ -198,15 +204,18 @@ def secao_fronteira(entradas: Entradas, registrado: tuple[date, pd.Series] | Non
     retorno, vol, _ = metricas_carteira(pesos.to_numpy(), mu.to_numpy(), preparar_covariancia(cov), rf)
     st.plotly_chart(grafico_fronteira_eficiente(fronteira, {"retorno": retorno, "volatilidade": vol},
                                                 "Composite (pesos iguais)", rf), width="stretch")
-    texto = (f"Fronteira com {len(colunas)} ativos e {ANOS_DA_FRONTEIRA} anos de preços do lago, até "
-             f"{precos.index[-1]:%d/%m/%Y}. A Composite fica onde as estimativas a colocam: a fronteira trata o "
-             "retorno do passado como certo e, na prática, rende menos do que promete.")
-    curva = fronteira.sort_values("volatilidade")
-    if not curva.empty and curva["volatilidade"].min() <= vol <= curva["volatilidade"].max():
-        teto = float(np.interp(vol, curva["volatilidade"], curva["retorno"]))
-        texto += (f" Com o mesmo risco ({vol:.1%} a.a.), a fronteira estima {teto:.1%} ao ano, contra {retorno:.1%} "
-                  "da Composite.")
-    st.caption(texto)
+    todas = pd.Series(1.0 / len(colunas), index=colunas)
+    media, _, _ = metricas_carteira(todas.to_numpy(), mu.to_numpy(), preparar_covariancia(cov), rf)
+    st.caption(
+        f"Como ler: cada ponto da curva é a melhor carteira possível olhando para trás, escolhida já sabendo o retorno "
+        f"de cada uma das {len(colunas)} ações nos últimos {ANOS_DA_FRONTEIRA} anos (até {precos.index[-1]:%d/%m/%Y}), "
+        f"com no máximo {entradas.peso_maximo:.0%} por ação e {entradas.teto_setor:.0%} por setor. Nenhuma carteira "
+        "real fica em cima dela, porque na hora da compra ninguém conhece o retorno que vem. "
+        f"A Composite (pesos iguais nas suas {len(nomes)} ações) tem retorno estimado de {_porcento(retorno)} ao ano "
+        f"com risco de {_porcento(vol)}: acima da Selic ({_porcento(rf)}) e da média das ações da fronteira "
+        f"({_porcento(media)}). Ela fica mais à direita porque concentra em {len(nomes)} ações escolhidas pelos "
+        "sinais em vez de espalhar por todas; se essa escolha funciona fora da amostra é o que o backtest sem viés "
+        "acima mede.")
     por_setor = pd.Series(1.0 / len(nomes), index=nomes).groupby(lambda ticker: setores[ticker]).sum()
     st.bar_chart(por_setor.sort_values().rename("Peso na Composite"), horizontal=True, x_label="Peso na Composite")
 

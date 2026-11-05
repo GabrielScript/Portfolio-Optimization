@@ -126,3 +126,35 @@ def test_the_per_stock_table_joins_name_sector_last_close_risk_and_fundamentals_
     assert tabela.loc["VALE3", "Fechamento de"] == datas[-2]
     assert tabela.loc["PETR4", "P/L"] == pytest.approx(4.8) and np.isnan(tabela.loc["VALE3", "P/L"])
     assert "Queda máx. (3 anos)" in tabela.columns and "Balanço de" in tabela.columns
+
+
+def test_each_stock_gets_cagr_sharpe_sortino_calmar_cvar_and_its_capm_against_bova11_over_the_selic():
+    # the user, 2026-11-04: the market table also shows CVaR, information ratio, annual alpha, Calmar, the alpha's t,
+    # Sharpe, Sortino and CAGR, with the same formulas as the strategies' summary (core.periodos.resumo_do_periodo)
+    from core.indicadores import desempenho_por_acao
+    from core.metrics import cagr, comparar_benchmark, cvar_historico, drawdown, sharpe, sortino
+    datas = pd.bdate_range("2023-11-01", periods=300)
+    gerador = np.random.default_rng(7)
+    bova = pd.Series(100 * np.cumprod(1 + gerador.normal(0.0004, 0.012, len(datas))), index=datas)
+    acao = pd.Series(50 * np.cumprod(1 + 0.8 * bova.pct_change().fillna(0).to_numpy()
+                                     + gerador.normal(0.0003, 0.01, len(datas))), index=datas)
+    selic = pd.Series(0.0005, index=datas)
+    tabela = desempenho_por_acao(pd.DataFrame({"PETR4.SA": acao, "BOVA11.SA": bova}), "BOVA11.SA", selic)
+    assert list(tabela.index) == ["PETR4.SA"]
+    linha = tabela.loc["PETR4.SA"]
+    excesso = acao.pct_change().dropna() - 0.0005
+    capm = comparar_benchmark(acao, bova, selic)
+    assert linha["CAGR"] == pytest.approx(cagr(acao))
+    assert linha["Sharpe"] == pytest.approx(sharpe(excesso)) and linha["Sortino"] == pytest.approx(sortino(excesso))
+    assert linha["Calmar"] == pytest.approx(cagr(acao) / abs(drawdown(acao)[1]))
+    assert linha["CVaR 95% diário"] == pytest.approx(cvar_historico(acao.pct_change().dropna()))
+    assert (linha["Alfa a.a."], linha["t do alfa"], linha["Information ratio"]) == pytest.approx(
+        (capm.alfa_anual, capm.t_stat_alfa, capm.information_ratio))
+
+
+def test_a_stock_with_under_60_sessions_with_bova11_has_no_capm_but_keeps_its_own_measures():
+    from core.indicadores import desempenho_por_acao
+    datas = pd.bdate_range("2026-08-01", periods=40)
+    precos = pd.DataFrame({"NOVA3.SA": np.linspace(10, 12, 40), "BOVA11.SA": np.linspace(100, 101, 40)}, index=datas)
+    linha = desempenho_por_acao(precos, "BOVA11.SA", pd.Series(0.0005, index=datas)).loc["NOVA3.SA"]
+    assert np.isnan(linha["Alfa a.a."]) and np.isnan(linha["t do alfa"]) and linha["CAGR"] > 0

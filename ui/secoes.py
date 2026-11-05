@@ -192,7 +192,7 @@ def aviso_descartados(sem_dados: list[str], cobertura: list[str]) -> str | None:
     repetia), então ação pouco negociada cai na exigência de cobertura de 95%."""
     partes = []
     if sem_dados:
-        partes.append(f"Sem preços no lago (não negocia mais ou não é ação): {_sem_sufixo(sem_dados)}.")
+        partes.append(f"Sem preços (não negocia mais ou não é ação): {_sem_sufixo(sem_dados)}.")
     if cobertura:
         partes.append(f"Negociou em menos de 95% dos pregões da janela (dia sem negócio fica sem preço): "
                       f"{_sem_sufixo(cobertura)}.")

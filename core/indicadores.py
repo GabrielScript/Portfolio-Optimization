@@ -66,8 +66,39 @@ def _betas(retornos: pd.DataFrame, referencia: str) -> pd.Series:
     return pd.Series(beta, index=retornos.columns)
 
 
+MINIMO_DE_PREGOES = 60      # a name with fewer sessions with the benchmark gets no CAPM (core.metrics needs 60)
+COLUNAS_DE_DESEMPENHO = ("CAGR", "Sharpe", "Sortino", "Calmar", "CVaR 95% diário", "Alfa a.a.", "t do alfa",
+                         "Information ratio")
+
+
+def desempenho_por_acao(precos: pd.DataFrame, referencia: str, juro: pd.Series) -> pd.DataFrame:
+    """Per column of ``precos`` but ``referencia``, over the whole window given (each from its own first close): CAGR,
+    Sharpe and Sortino of the daily excess over ``juro`` (decimal per day, the Selic), Calmar (CAGR / |drawdown|), the
+    daily 95% CVaR, and the CAPM against ``referencia`` (annual alpha, its Newey-West t, information ratio), with the
+    formulas of the strategies' summary (``core.periodos.resumo_do_periodo``). The user's request of 2026-11-04."""
+    from core.metrics import cagr, comparar_benchmark, cvar_historico, drawdown, sharpe, sortino
+    bench = precos[referencia].dropna()
+    linhas = {}
+    for ticker in precos.columns.drop(referencia):
+        valores = precos[ticker].dropna()
+        if len(valores) < 3:
+            continue
+        diarios = valores.pct_change().dropna()
+        excesso = diarios - juro.reindex(diarios.index).fillna(0.0)
+        crescimento, queda = cagr(valores), drawdown(valores)[1]
+        linha = {"CAGR": crescimento, "Sharpe": sharpe(excesso), "Sortino": sortino(excesso),
+                 "Calmar": crescimento / abs(queda) if queda < 0 else np.nan, "CVaR 95% diário": cvar_historico(diarios),
+                 "Alfa a.a.": np.nan, "t do alfa": np.nan, "Information ratio": np.nan}
+        if len(valores.index.intersection(bench.index)) >= MINIMO_DE_PREGOES:
+            capm = comparar_benchmark(valores, bench, juro)
+            linha |= {"Alfa a.a.": capm.alfa_anual, "t do alfa": capm.t_stat_alfa,
+                      "Information ratio": capm.information_ratio}
+        linhas[ticker] = linha
+    return pd.DataFrame.from_dict(linhas, orient="index", columns=list(COLUNAS_DE_DESEMPENHO))
+
+
 def tabela_por_acao(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None,
-                    referencia: str) -> pd.DataFrame:
+                    referencia: str, desempenho: pd.DataFrame | None = None) -> pd.DataFrame:
     """Per stock with a price (index: ticker without ".SA"; ``referencia`` left out): name and sector (``info``), the
     last close and its date, ``risco_por_acao`` (drawdown over the window given, "Queda máx. (3 anos)" for the panel's
     three years) and the columns of ``fundamentos`` (ticker -> multiples, "Balanço de")."""
@@ -82,6 +113,8 @@ def tabela_por_acao(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame 
                            "Fechamento de": datas.reindex(risco.index).to_numpy()},
                           index=[ticker.removesuffix(".SA") for ticker in risco.index]).join(
         risco.rename(index=lambda ticker: ticker.removesuffix(".SA")))
+    if desempenho is not None:    # ``desempenho_por_acao``, computed once a day (the user, 2026-11-04)
+        tabela = tabela.join(desempenho.rename(index=lambda ticker: ticker.removesuffix(".SA")))
     return tabela if fundamentos is None else tabela.join(fundamentos)
 
 

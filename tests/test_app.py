@@ -52,6 +52,8 @@ def _painel_sem_rede(monkeypatch) -> None:
     monkeypatch.setattr(servicos, "carregar_focus", lambda dia: None)
     monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: None)
     monkeypatch.setattr(servicos, "carregar_manchetes", lambda: (None, None))
+    monkeypatch.setattr(servicos, "carregar_ata_copom", lambda dia: None)
+    monkeypatch.setattr(servicos, "carregar_desempenho", lambda tickers, dia, versao, referencia: None)
     monkeypatch.setattr(servicos, "carregar_precos_da_tabela", lambda tickers, dia, versao: _precos_sinteticos(
         tickers, 3, dia, versao).precos)
 
@@ -199,6 +201,10 @@ def test_the_composite_sits_where_it_is_next_to_the_efficient_frontier(app_padra
     assert not {"## Carteira de hoje", "## Walk-forward fora da amostra (líquido de custos)"} & set(titulos)
     assert any("Fronteira Eficiente" in figura and "Composite" in figura for figura in _figuras(app_padrao))
     assert any("Composite" in c.value and "fronteira" in c.value for c in app_padrao.caption)
+    # the user, 2026-11-04: a plainer text that reads the point against the Selic and the average stock, not a verdict
+    texto = next(c.value for c in app_padrao.caption if "Como ler" in c.value)
+    assert "Selic" in texto and "média das" in texto and "olhando para trás" in texto
+    assert "rende menos do que promete" not in texto
 
 
 def test_an_infeasible_frontier_explains_what_to_widen_and_the_plan_still_shows(app_padrao):
@@ -318,6 +324,41 @@ def test_the_market_panel_shows_news_the_dollar_and_every_stock_without_the_elec
     assert not [c for c in at.caption if "DECISOES 112" in c.value or "Log desde" in c.value]
 
 
+def test_the_market_panel_shows_the_central_bank_indicators_the_risk_measures_and_the_facts_in_portuguese(
+        monkeypatch):
+    # the user's UI list of 2026-11-04: IBC-Br, IDP, credit, its cost, defaults and the Copom minutes with a "?" each;
+    # CAGR, Sharpe, Sortino, Calmar, CVaR, alpha, its t and the information ratio in the table; the facts' tone in
+    # Portuguese with each Jev score explained; no "lago" in the captions
+    from core import macro_bcb
+    from ui import painel
+    _servicos_sinteticos(monkeypatch)
+    mes = pd.Timestamp("2026-09-01")
+    monkeypatch.setattr(servicos, "carregar_indicadores_bcb", lambda dia: {
+        macro_bcb.IBC_BR: (mes, 2.1), macro_bcb.INADIMPLENCIA: (mes, 4.98), macro_bcb.JUROS_DO_CREDITO: (mes, 32.4)})
+    monkeypatch.setattr(servicos, "carregar_ata_copom", lambda dia: macro_bcb.Ata(
+        pd.Timestamp("2026-09-16"), "Ata da 281ª reunião do Copom", "https://www.bcb.gov.br/a.pdf"))
+    monkeypatch.setattr(servicos, "carregar_desempenho", lambda tickers, dia, versao, referencia: pd.DataFrame(
+        {"Sharpe": [0.8], "t do alfa": [2.3]}, index=["PETR4.SA"]))
+    fatos = pd.DataFrame({"ticker": ["PETR4", "VALE3"], "empresa": ["Petrobras", "Vale"],
+                          "categoria": ["Fato Relevante"] * 2, "assunto": ["a", "b"],
+                          "data": pd.to_datetime(["2026-10-30", "2026-10-29"]), "link": ["https://cvm/1"] * 2,
+                          "tom_do_fato": ["bad", None], "p_ruim": [0.9, None], "p_bom": [0.05, None],
+                          "p_forte": [0.7, None]})
+    monkeypatch.setattr(servicos, "carregar_painel", lambda: (None, fatos, None))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert any(m.value == "### Banco Central (ao vivo)" for m in at.markdown)
+    inadimplencia = next(m for m in at.metric if m.label == macro_bcb.INADIMPLENCIA)
+    assert inadimplencia.value == "4,98%" and inadimplencia.help == macro_bcb.EXPLICACOES[macro_bcb.INADIMPLENCIA]
+    assert any("Ata da 281ª reunião do Copom" in m.value for m in at.markdown)
+    tabela = [df.value for df in at.dataframe if {"Retorno 12m", "Sharpe"} <= set(df.value.columns)][0]
+    assert tabela.set_index("Ticker").loc["PETR4", ["Sharpe", "t do alfa"]].tolist() == [0.8, 2.3]
+    na_tela = [df.value for df in at.dataframe if "tom_do_fato" in df.value.columns][0]
+    assert na_tela["tom_do_fato"].tolist() == ["ruim", painel.SEM_NOTA]
+    assert not [c for c in at.caption if "lago" in c.value.lower()]
+
+
 def _tabela_de_acoes(at: AppTest) -> pd.DataFrame:
     return [df.value for df in at.dataframe if {"P/L", "Retorno 12m"} <= set(df.value.columns)][0]
 
@@ -372,7 +413,11 @@ def test_online_the_market_panel_shows_the_headlines_from_the_private_store_with
     at = _app_online(monkeypatch, tmp_path, "certo")
     assert not at.exception
     tabelas = [df.value for df in at.dataframe if "titulo" in df.value.columns]
-    assert len(tabelas) == 1 and tabelas[0]["titulo"].tolist() == ["Copom mantém Selic"]
+    # the user, 2026-11-04: no "Link" column, the headline itself is the blue link to the article
+    assert len(tabelas) == 1 and "link" not in tabelas[0].columns
+    from ui import painel
+    assert tabelas[0]["titulo"].tolist() == [f"https://valor.com.br/a{painel.MARCA_DA_MANCHETE}Copom mantém Selic"]
+    assert re.search(painel.TEXTO_DA_MANCHETE, tabelas[0]["titulo"].iloc[0]).group(1) == "Copom mantém Selic"
     assert not [c for c in at.caption if "publicadas em" in c.value]      # the headline captions are gone
 
 
@@ -464,8 +509,8 @@ def test_the_us_stocks_screen_is_on_standby_while_the_b3_listed_us_assets_stay(a
 
 
 def _ativos_da_fronteira(at: AppTest) -> int:
-    legenda = next(c.value for c in at.caption if c.value.startswith("Fronteira com "))
-    return int(re.match(r"Fronteira com (\d+) ativos", legenda).group(1))
+    legenda = next(c.value for c in at.caption if c.value.startswith("Como ler"))
+    return int(re.search(r"cada uma das (\d+) ações", legenda).group(1))
 
 
 def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):

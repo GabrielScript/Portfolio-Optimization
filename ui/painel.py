@@ -15,6 +15,7 @@ from datetime import date, datetime
 import pandas as pd
 import streamlit as st
 
+from core import macro_bcb
 from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
 from core.sentimento import ROTULOS_DOS_TOPICOS, TOPICOS_DO_PAINEL, ultimo_fato
@@ -24,28 +25,68 @@ AVISO = "Informação, não recomendação: nada aqui muda o plano nem as regras
 AJUDA_DO_TOM = ("Média do tom das notícias relevantes do dia, de −1 a +1: acima de 0, mais notícias boas que ruins para "
                 "a bolsa; abaixo de 0, mais ruins que boas.")
 DOLAR_DO_FOCUS = "Câmbio"          # the Focus line the panel keeps (the adviser's pack still reads all of them)
-PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m")
+PERCENTUAIS = ("Retorno 12m", "Vol anual", "Queda máx. (3 anos)", "ROE", "Margem líquida", "DY 12m", "CAGR",
+               "CVaR 95% diário", "Alfa a.a.")
+# the measures the user asked for on 2026-11-04 (core.indicadores.desempenho_por_acao), with a "?" each
+AJUDA_DAS_MEDIDAS = {
+    "CAGR": "Retorno composto ao ano nos 3 anos da tabela (ou desde a estreia).",
+    "Sharpe": "Retorno acima da Selic por unidade de risco (volatilidade), ao ano. Acima de 0,5 é bom para ação.",
+    "Sortino": "Como o Sharpe, mas só conta a volatilidade das quedas.",
+    "Calmar": "Retorno ao ano dividido pela maior queda do período: quanto rende para cada ponto de tombo.",
+    "CVaR 95% diário": "Perda média nos 5% piores dias: o tamanho típico de um dia muito ruim.",
+    "Alfa a.a.": "Retorno ao ano que sobra depois de descontar o que o BOVA11 (o mercado) explica.",
+    "t do alfa": "Confiança no alfa: acima de 2 (ou abaixo de −2), dificilmente é só sorte.",
+    "Information ratio": "Retorno acima do BOVA11 por unidade de distância dele, ao ano.",
+}
+COLUNAS_COM_DUAS_CASAS = ("Beta", "P/VP", "Dív. líq./EBITDA", "Sharpe", "Sortino", "Calmar", "t do alfa",
+                          "Information ratio")
+# the material facts' tone (Jev's labels) in Portuguese, and what each score means (the user, 2026-11-04)
+TONS_DO_FATO = {"good": "bom", "bad": "ruim", "neutral": "neutro", "unclear": "incerto"}
+SEM_NOTA = "sem nota"
+AJUDA_DO_TOM_DO_FATO = ("Leitura do documento pelo modelo Jev: bom, ruim, neutro ou incerto para a ação. \"Sem nota\": "
+                        "ainda não lido.")
+AJUDA_P_RUIM = "Chance, segundo o Jev, de o fato ser ruim para a ação."
+AJUDA_P_BOM = "Chance, segundo o Jev, de o fato ser bom para a ação."
+AJUDA_P_FORTE = ("Chance, segundo o Jev, de o impacto ser grande ou extraordinário (e não pequeno ou rotineiro). Um "
+                 "fato com tom ruim e esta chance acima de 50% acende o alerta vermelho da ação para o assessor.")
 
 
 def secao_mercado(hoje: date, diario: pd.DataFrame | None, fatos: pd.DataFrame | None,
                   fundamentos: pd.DataFrame | None, manchetes: pd.DataFrame | None, publicadas_em: datetime | None,
                   focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None,
-                  precos: pd.DataFrame, info: dict, referencia: str) -> None:
+                  precos: pd.DataFrame, info: dict, referencia: str, desempenho: pd.DataFrame | None = None,
+                  ata: macro_bcb.Ata | None = None) -> None:
     st.markdown("## Mercado agora: notícias, macro e ações")
     st.caption(AVISO)
     _noticias(diario, manchetes)
-    _macro(hoje, focus_anual, indicadores_bcb)
-    _acoes(precos, info, fundamentos, fatos, referencia)
+    _macro(hoje, focus_anual, indicadores_bcb, ata)
+    _acoes(precos, info, fundamentos, fatos, referencia, desempenho)
 
 
 def _virgula(numero: float, casas: int) -> str:
     return f"{numero:.{casas}f}".replace(".", ",")
 
 
+# The headline is its own link (the user, 2026-11-04): Streamlit's LinkColumn takes its text only from the URL, so the
+# title rides after a fragment marker the article's site ignores, and a capture group shows it.
+MARCA_DA_MANCHETE = "#manchete="
+TEXTO_DA_MANCHETE = MARCA_DA_MANCHETE + "(.*)$"
+
+
+def manchetes_com_link(manchetes: pd.DataFrame) -> pd.DataFrame:
+    """The headlines with ``titulo`` as "link#manchete=title" and no ``link`` column; a headline without a link keeps
+    its bare title."""
+    if "link" not in manchetes.columns:
+        return manchetes
+    com_link = manchetes["link"].fillna("").astype(str) != ""
+    titulos = manchetes["link"].astype(str) + MARCA_DA_MANCHETE + manchetes["titulo"].astype(str)
+    return manchetes.assign(titulo=titulos.where(com_link, manchetes["titulo"])).drop(columns="link")
+
+
 def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> None:
     st.markdown("### Notícias e sentimento")
     if diario is None or diario.empty:
-        st.caption("Sem o painel de notícias (lago/sentimento_diario.parquet).")
+        st.caption("Painel de notícias indisponível agora.")
         return
     dias = diario.set_index(pd.to_datetime(diario["dia"]))
     ultimo = dias.iloc[-1]
@@ -58,20 +99,25 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
     temas = dias[list(TOPICOS_DO_PAINEL)].tail(7).mean().rename(ROTULOS_DOS_TOPICOS)
     st.bar_chart(temas.rename("Peso médio nos últimos 7 dias"), horizontal=True, x_label="Peso médio do tema")
     if manchetes is not None and not manchetes.empty:
-        st.dataframe(filtrar(manchetes, "manchetes"), width="stretch", hide_index=True, height=320,
+        st.dataframe(filtrar(manchetes_com_link(manchetes), "manchetes"), width="stretch", hide_index=True, height=320,
                      column_config={"quando": st.column_config.DatetimeColumn("Quando", format="DD/MM HH:mm"),
-                                    "fonte": "Fonte", "titulo": "Manchete", "tema": "Tema",
-                                    "tom": st.column_config.NumberColumn("Tom", format="%+.2f"),
-                                    "link": st.column_config.LinkColumn("Link", display_text="abrir")},
+                                    "fonte": "Fonte", "tema": "Tema",
+                                    "titulo": st.column_config.LinkColumn("Manchete", display_text=TEXTO_DA_MANCHETE,
+                                                                          alignment="left"),
+                                    "tom": st.column_config.NumberColumn("Tom", format="%+.2f")},
                      alt="Manchetes relevantes dos últimos 3 dias, com tema e tom do Jev")
     else:
         st.caption("Manchetes indisponíveis agora.")
 
 
-def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None) -> None:
-    """The dollar alone (the user's UI list of 2026-11-03): the last PTAX and the Focus median for this year and the
-    next, with no source codes or dates."""
-    st.markdown("### Dólar (Banco Central, ao vivo)")
+def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_bcb: dict | None,
+           ata: macro_bcb.Ata | None = None) -> None:
+    """The Banco Central block: activity, direct investment, credit, its cost and defaults and the last Copom minutes,
+    each with a "?" (the user, 2026-11-04), then the last PTAX and the Focus median for the dollar this year and the
+    next (the user's UI list of 2026-11-03)."""
+    st.markdown("### Banco Central (ao vivo)")
+    _economia(indicadores_bcb or {}, ata)
+    st.markdown("#### Dólar")
     ptax = next((valor for nome, (_, valor) in (indicadores_bcb or {}).items() if nome.startswith("Dólar")), None)
     colunas = st.columns(3)
     colunas[0].metric("Dólar PTAX hoje", "—" if ptax is None else f"R$ {_virgula(ptax, 2)}", border=True)
@@ -82,19 +128,43 @@ def _macro(hoje: date, focus_anual: dict[str, pd.DataFrame] | None, indicadores_
     for coluna, ano in zip(colunas[1:], (hoje.year, hoje.year + 1)):
         valor = linha[str(ano)]
         coluna.metric(f"Projeção Focus para o fim de {ano}", "—" if pd.isna(valor) else f"R$ {_virgula(valor, 2)}",
-                      help="Mediana das projeções dos economistas que o Banco Central consulta toda semana.",
+                      help="Relatório Focus: mediana das projeções de cerca de 100 bancos, gestoras e consultorias "
+                           "que o Banco Central consulta toda semana (dólar, inflação, PIB e Selic; aqui, o dólar).",
                       border=True)
 
 
+FORMATOS_DA_ECONOMIA = {
+    macro_bcb.IBC_BR: lambda v: f"{_virgula(v, 1)}%", macro_bcb.IDP: lambda v: f"US$ {_virgula(v, 1)} bi",
+    macro_bcb.CONCESSOES: lambda v: f"R$ {_virgula(v, 1)} bi", macro_bcb.CONCESSOES_12M: lambda v: f"{_virgula(v, 1)}%",
+    macro_bcb.JUROS_DO_CREDITO: lambda v: f"{_virgula(v, 2)}%", macro_bcb.INADIMPLENCIA: lambda v: f"{_virgula(v, 2)}%"}
+
+
+def _economia(indicadores: dict, ata: macro_bcb.Ata | None) -> None:
+    """One metric per ``core.macro_bcb`` indicator present, in a fixed order, and the Copom minutes' link."""
+    presentes = [nome for nome in FORMATOS_DA_ECONOMIA if nome in indicadores]
+    if not presentes:
+        st.caption("Indicadores do Banco Central indisponíveis agora (API do BCB).")
+    else:
+        colunas = st.columns(3)
+        for posicao, nome in enumerate(presentes):
+            quando, valor = indicadores[nome]
+            colunas[posicao % 3].metric(nome, "—" if pd.isna(valor) else FORMATOS_DA_ECONOMIA[nome](valor),
+                                        f"dado de {quando:%m/%Y}", delta_color="off", delta_arrow="off",
+                                        help=macro_bcb.EXPLICACOES[nome], border=True)
+    if ata is not None:
+        st.markdown(f"**{macro_bcb.ATA_DO_COPOM}:** [{ata.titulo}]({ata.link}), publicada em {ata.data:%d/%m/%Y}",
+                    help=macro_bcb.EXPLICACOES[macro_bcb.ATA_DO_COPOM])
+
+
 def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, fatos: pd.DataFrame | None,
-           referencia: str) -> None:
+           referencia: str, desempenho: pd.DataFrame | None = None) -> None:
     st.markdown("### Todas as ações, BDRs e ETFs: preço, risco, balanço e fatos relevantes")
     com_dados = precos.loc[:, precos.notna().any()]
     if referencia not in com_dados.columns:
         st.caption("Sem os preços do BOVA11 para medir o beta.")
         return
     tabela = tabela_por_acao(com_dados, info, None if fundamentos is None else fundamentos.drop(columns=["Balanço de"]),
-                             referencia).rename_axis("Ticker").reset_index()
+                             referencia, desempenho).rename_axis("Ticker").reset_index()
     tabela.insert(1, "Tipo", [info.get(f"{ticker}.SA", {}).get("tipo", "") for ticker in tabela["Ticker"]])
     if fatos is not None and not fatos.empty:
         tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
@@ -103,27 +173,39 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
     st.dataframe(tabela, width="stretch", hide_index=True, height=420,
                  column_config={"Preço (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
                                 "Fechamento de": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                                "Beta": st.column_config.NumberColumn(format="%.2f"),
                                 "P/L": st.column_config.NumberColumn(format="%.1f"),
-                                "P/VP": st.column_config.NumberColumn(format="%.2f"),
-                                "Dív. líq./EBITDA": st.column_config.NumberColumn(format="%.2f"),
-                                **{coluna: st.column_config.NumberColumn(format="percent") for coluna in PERCENTUAIS}},
+                                **{coluna: st.column_config.NumberColumn(format="%.2f", help=AJUDA_DAS_MEDIDAS.get(coluna))
+                                   for coluna in COLUNAS_COM_DUAS_CASAS},
+                                **{coluna: st.column_config.NumberColumn(format="percent", help=AJUDA_DAS_MEDIDAS.get(coluna))
+                                   for coluna in PERCENTUAIS}},
                  alt="Todas as ações da lista: preço, risco, múltiplos do balanço e o último fato relevante")
-    st.caption("Preço: fechamento de retorno total do lago (COTAHIST e eventos da B3/CVM), um pregão de atraso no "
-               "máximo; risco nos últimos 252 pregões (beta contra o BOVA11) e queda máxima em 3 anos. Balanço: último "
-               "ITR/DFP da CVM recebido (fluxos em 12 meses); bancos e seguradoras ficam sem múltiplos (outro plano de "
-               "contas). "
-               "Alguns valores de mercado logo depois de um IPO estão mil vezes pequenos (limitação do lago).")
-    st.caption("BDRs: retorno só de preço (o lago não tem os dividendos dos BDRs), em reais com o dólar dentro, sem "
-               "balanço da CVM; ganho em BDR paga 15% de IR sem a isenção de R$ 20 mil por mês. ETFs reinvestem. "
-               "Entram todos os papéis negociados nos últimos 15 dias, sem piso de liquidez: veja o \"Fechamento "
-               "de\" e desconfie do risco de quem quase não negocia. Nome e setor dos BDRs e ETFs vêm do cadastro da "
-               "B3; saltos de preço deles não passam pela revisão do lago.")
+    st.caption("Preços com dividendos reinvestidos (B3 e CVM), até o último pregão. Retorno, volatilidade e beta: 12 "
+               "meses; CAGR, Sharpe, Sortino, Calmar, CVaR e alfa: 3 anos, contra a Selic e o BOVA11. Balanço: último "
+               "ITR/DFP da CVM; bancos e seguradoras ficam sem múltiplos.")
+    st.caption("BDRs: retorno só de preço (sem os dividendos), em reais; ganho paga 15% de IR, sem a isenção de R$ 20 "
+               "mil por mês. Papéis com pouco negócio: confira o \"Fechamento de\".")
     if fatos is not None and not fatos.empty:
         with st.expander(f"Fatos relevantes e comunicados ao mercado dos últimos 90 dias ({len(fatos)})"):
-            st.dataframe(filtrar(fatos, "fatos"), width="stretch", hide_index=True, height=360,
+            st.caption("A CVM publica estes dados uma vez por semana (aos domingos): os fatos dos últimos dias entram "
+                       "na publicação seguinte. Tom e chances: leitura de cada documento pelo modelo Jev.")
+            st.dataframe(filtrar(fatos_na_tela(fatos), "fatos"), width="stretch", hide_index=True, height=360,
                          column_config={"ticker": "Ticker", "empresa": "Empresa", "categoria": "Categoria",
                                         "assunto": "Assunto", "data": st.column_config.DateColumn(
                                             "Entregue em", format="DD/MM/YYYY"),
-                                        "link": st.column_config.LinkColumn("Documento", display_text="CVM")},
+                                        "link": st.column_config.LinkColumn("Documento", display_text="CVM (link)"),
+                                        "tom_do_fato": st.column_config.TextColumn("Tom do fato",
+                                                                                   help=AJUDA_DO_TOM_DO_FATO),
+                                        "p_ruim": st.column_config.NumberColumn("Chance de ruim", format="percent",
+                                                                                help=AJUDA_P_RUIM),
+                                        "p_bom": st.column_config.NumberColumn("Chance de bom", format="percent",
+                                                                               help=AJUDA_P_BOM),
+                                        "p_forte": st.column_config.NumberColumn("Chance de impacto forte",
+                                                                                 format="percent", help=AJUDA_P_FORTE)},
                          alt="Fatos relevantes e comunicados ao mercado da CVM, mais novos primeiro")
+
+
+def fatos_na_tela(fatos: pd.DataFrame) -> pd.DataFrame:
+    """The filings with Jev's tone in Portuguese ("sem nota" for a filing not scored yet)."""
+    if "tom_do_fato" not in fatos.columns:
+        return fatos
+    return fatos.assign(tom_do_fato=fatos["tom_do_fato"].map(TONS_DO_FATO).fillna(SEM_NOTA))

@@ -33,7 +33,8 @@ def pacote_e_fontes(alvo: pd.Series, registrada: date, chave: str,
     acoes = tabela_por_acao(precos, info, fundamentos, BENCHMARK_ACOES)
     focus_anual = servicos.carregar_focus(hoje)
     macro = assessor.macro_do_painel(hoje, servicos.carregar_selic(hoje), servicos.carregar_indicadores_bcb(hoje),
-                                     None if focus_anual is None else resumo_focus(focus_anual, hoje.year))
+                                     None if focus_anual is None else resumo_focus(focus_anual, hoje.year),
+                                     servicos.carregar_ata_copom(hoje))
     desde = precos.index[-min(alepha.SESSOES_DO_SEMAFORO, len(precos.index))].date()
     luzes = None if fatos is None else semaforo(fatos, alvo.index, desde)
     pacote = assessor.montar_pacote(plano=alvo, registrada=registrada, acoes=acoes, percentuais=painel.PERCENTUAIS,

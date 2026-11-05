@@ -18,11 +18,12 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import pandas as pd
+import requests
 import streamlit as st
 
 import ativos_tela
-from core import (assessor, bcb, cdi_lago, cotacao_b3, focus, lago, manchetes_online, market_data, precos_do_app,
-                  reamostragem, sentimento, simulador)
+from core import (assessor, bcb, cdi_lago, cotacao_b3, focus, indicadores, lago, macro_bcb, manchetes_online,
+                  market_data, precos_do_app, reamostragem, sentimento, simulador)
 from core.backtest import (ResultadoBacktest, estrategia_equiponderada, estrategia_hrp, estrategia_nucleo_satelite,
                            estrategia_otimizada, estrategia_reamostrada, walk_forward)
 from core.config import ConfigBacktest, ConfigOtimizacao, LimiteGrupo, Objetivo, limites_por_setor
@@ -370,20 +371,42 @@ def carregar_focus(dia: date) -> dict[str, pd.DataFrame] | None:
 
 @st.cache_data(ttl=6 * 3600, show_spinner=False)
 def carregar_indicadores_bcb(dia: date) -> dict[str, tuple[pd.Timestamp, float]] | None:
-    """The last IPCA 12 months (SGS 13522, %) and PTAX (SGS 1, R$/US$), live from the BCB; None when it fails."""
+    """The last IPCA 12 months (SGS 13522, %) and PTAX (SGS 1, R$/US$), live from the BCB, plus the activity, direct
+    investment and credit indicators of ``core.macro_bcb`` (the user, 2026-11-04; one that fails is left out); None
+    when the IPCA or the PTAX fails."""
     try:
         ipca = bcb.baixar_serie(bcb.SERIE_IPCA_12M, dia - timedelta(days=400), dia).dropna()
         ptax = bcb.baixar_ptax(dia - timedelta(days=30), dia).dropna()
     except bcb.ErroBcb:
         return None
     return {"IPCA 12 meses (%)": (ipca.index[-1], float(ipca.iloc[-1])),
-            "Dólar PTAX (R$)": (ptax.index[-1], float(ptax.iloc[-1]))}
+            "Dólar PTAX (R$)": (ptax.index[-1], float(ptax.iloc[-1])),
+            **macro_bcb.indicadores(bcb.baixar_serie, dia)}
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False)
+def carregar_ata_copom(dia: date) -> macro_bcb.Ata | None:
+    """The last Copom minutes on the BCB site (``dia`` keys the cache); None when the site fails."""
+    try:
+        return macro_bcb.ata_do_copom()
+    except (requests.RequestException, ValueError, KeyError):
+        return None
 
 
 @st.cache_data(ttl=3600, show_spinner=False)
 def carregar_ativos_da_tela() -> pd.DataFrame:
     """Every stock, BDR and ETF of the app's daily prices, with B3's name, type and sector (``ativos_tela``)."""
     return ativos_tela.ler_nomes()
+
+
+@st.cache_data(ttl=6 * 3600, show_spinner=False, max_entries=2)
+def carregar_desempenho(tickers: tuple[str, ...], dia: date, versao_dados: int, referencia: str) -> pd.DataFrame:
+    """CAGR, Sharpe, Sortino, Calmar, CVaR and the CAPM of every name of the market table over its 3 years, against
+    ``referencia`` and over the daily Selic (``core.indicadores.desempenho_por_acao``): ~15 s, so once per day and price
+    version for every visitor of the process."""
+    precos = carregar_precos_da_tabela(tickers, dia, versao_dados)
+    precos = precos.loc[:, precos.notna().any()]
+    return indicadores.desempenho_por_acao(precos, referencia, carregar_selic_diaria(4, dia))
 
 
 @st.cache_data(ttl=3600, show_spinner=False, max_entries=2)

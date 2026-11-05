@@ -1,0 +1,202 @@
+Book's second batch on the B3: the one reading (spec docs/superpowers/specs/2026-11-01-lote2-livro-design.md, pre-registered 5e5c376).
+Run 2026-11-05 from the 42 arm results saved 01/11 (same frozen inputs, sha256 line identical to the 01/11 run). Verdict: none of the 14 arms passes; line closed.
+PBO (scripts/pbo_leitura.py, 27 curves incl. first batch): phase 0 0.011, phase 21 0.016, phase 42 0.020.
+
+=== FINAL READING 2026-11-05 17:49 (all 42 arm pkl saved; phases 0/21/42) ===
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; DSR N 89
+
+=== Phase 0: 09/02/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Kelly-exato                       0.219 0.280         0.873  0.814 0.266         34.262 0.124 -0.638          0.132              0.344
+Kelly-exato-sem-teto              0.179 0.226         0.822  0.743 0.200         52.160 0.110 -0.638          0.102              0.280
+Quintil-mu                        0.106 0.158         0.739  0.752 0.133        108.260 0.097 -0.560          0.001              0.029
+Quintil-mu-sigma                  0.332 0.442         0.963  0.983 0.515         13.955 0.149 -0.414          0.006              0.146
+Quintil-mu-sigma2                 0.336 0.413         0.952  0.981 0.467         16.025 0.147 -0.371          0.004              0.091
+Box-robusto                       0.253 0.311         0.896  0.904 0.311         28.026 0.135 -0.583          0.046              0.240
+Subset-resampling                 0.289 0.367         0.931  0.948 0.395         20.138 0.142 -0.508          0.031              0.233
+Subset-bagging                    0.308 0.407         0.950  0.951 0.458         16.464 0.149 -0.603          0.091              0.370
+Downside-1                        0.404 0.433         0.960  0.978 0.499         14.534 0.164 -0.506          0.064              0.378
+Semi-variancia                    0.203 0.258         0.853  0.788 0.239         40.195 0.118 -0.640          0.116              0.314
+Downside-3                        0.163 0.206         0.799  0.713 0.178         63.077 0.105 -0.640          0.088              0.253
+MVSK-tilting                      0.228 0.256         0.850  0.910 0.237         41.337 0.127 -0.482          0.001              0.050
+Utilidade-raiz                    0.171 0.217         0.811  0.732 0.190         57.011 0.108 -0.640          0.089              0.260
+Retorno-minimo                    0.484 0.446         0.964  0.984 0.520         13.717 0.173 -0.438          0.090              0.438
+Composto                          0.624 0.843         1.000  1.000 0.950          3.870 0.214 -0.415            NaN                NaN
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.767          7.276 0.174 -0.407            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497            NaN                NaN
+Kelly-exato: refusals 0, failures 0, annual turnover 2.57
+Kelly-exato-sem-teto: refusals 0, failures 0, annual turnover 2.68
+Quintil-mu: refusals 0, failures 0, annual turnover 2.16
+Quintil-mu-sigma: refusals 0, failures 0, annual turnover 1.65
+Quintil-mu-sigma2: refusals 0, failures 0, annual turnover 1.44
+Box-robusto: refusals 0, failures 0, annual turnover 2.26
+Subset-resampling: refusals 0, failures 0, annual turnover 2.99
+Subset-bagging: refusals 0, failures 0, annual turnover 3.45
+Downside-1: refusals 0, failures 0, annual turnover 1.83
+Semi-variancia: refusals 0, failures 0, annual turnover 2.60
+Downside-3: refusals 0, failures 0, annual turnover 2.66
+MVSK-tilting: refusals 0, failures 0, annual turnover 2.01
+Utilidade-raiz: refusals 0, failures 0, annual turnover 2.60
+Retorno-minimo: refusals 0, failures 0, annual turnover 1.68
+      Kelly-exato  Kelly-exato-sem-teto  Quintil-mu  Quintil-mu-sigma  Quintil-mu-sigma2  Box-robusto  Subset-resampling  Subset-bagging  Downside-1  Semi-variancia  Downside-3  MVSK-tilting  Utilidade-raiz  Retorno-minimo  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010        11.0%                 -2.0%        6.5%             39.5%              34.8%        40.4%              39.0%           32.1%       35.9%           10.8%       10.9%         23.0%           10.9%           37.5%     23.2%                            23.2%    6.8%
+2011         0.7%                -11.0%       -3.9%              3.2%               9.6%         6.1%               4.4%            2.9%        5.9%            2.3%        0.4%          7.2%            0.4%            7.3%      2.6%                             9.8%  -18.3%
+2012         7.8%                 11.6%       23.5%             31.6%              35.8%        17.9%              15.8%           24.6%       37.1%            6.6%        8.0%         24.5%            8.0%           45.8%     26.3%                            32.2%    6.6%
+2013       -16.8%                -16.6%      -12.4%             -9.7%              -6.8%       -10.6%             -13.3%           -8.6%       -5.8%          -17.2%      -14.2%        -10.6%          -17.5%           -1.9%     -1.3%                            -3.3%  -15.8%
+2014       -14.8%                -14.8%       -7.4%             -3.3%              -3.6%       -16.8%              -8.3%          -13.4%      -12.7%          -14.6%      -13.0%        -10.0%          -14.1%           -4.8%      7.3%                             1.6%   -3.4%
+2015       -11.0%                -11.0%       -0.3%              2.8%               0.9%        -2.7%               8.4%            3.3%       -4.3%          -13.5%      -12.4%         -2.7%          -13.1%           -5.9%      6.4%                             0.4%  -13.2%
+2016        16.9%                 16.9%        6.0%             10.9%              20.3%        20.1%              14.5%           16.7%       10.7%           16.5%       18.0%         10.9%           14.8%           24.1%     40.9%                            25.1%   38.2%
+2017        65.2%                 65.2%       48.8%             32.3%              28.7%        42.1%              41.8%           49.9%       44.3%           66.9%       68.6%         49.4%           68.4%           47.7%     34.7%                            50.8%   26.8%
+2018        40.5%                 40.5%       20.7%             19.7%              10.4%         8.8%              14.3%           23.3%       10.2%           39.4%       39.1%         20.7%           35.7%           28.9%     22.2%                            15.7%   14.6%
+2019       110.7%                110.6%       55.7%             55.3%              45.9%        71.8%              72.6%           59.3%       68.2%          112.2%      104.5%         64.7%          109.7%           43.0%     57.3%                            49.9%   31.5%
+2020        61.8%                 61.8%       13.6%             23.8%               8.6%        39.7%              22.8%           34.2%       33.8%           62.1%       65.1%         14.5%           61.7%           -1.2%     30.0%                             3.1%    3.1%
+2021        -6.3%                 -7.0%        0.3%             -1.9%              -0.7%        -9.2%               4.7%           17.8%       15.7%           -7.6%      -19.9%          6.9%          -14.8%           10.3%     20.8%                            13.6%  -12.1%
+2022         8.6%                 10.7%       -6.1%              2.1%              11.7%         1.5%               0.9%           -0.9%        3.5%           10.4%        1.2%          5.2%            5.5%           12.5%      4.6%                            26.1%    5.1%
+2023         2.7%                  3.3%       17.4%             24.9%              24.4%         8.3%              20.0%            6.8%       18.3%            1.1%       -1.3%         11.6%            0.9%           21.8%     33.6%                            22.9%   23.1%
+2024       -20.2%                -20.2%       -4.2%             -4.9%              -4.1%         2.7%              -6.0%           -4.8%       -1.7%          -22.6%      -18.9%         -7.3%          -20.9%            0.9%      5.5%                            -7.7%  -10.1%
+2025        -6.3%                 -6.3%       19.0%             24.9%              25.0%        16.5%              17.3%           16.1%       16.8%           -6.3%       -9.5%         13.0%           -6.5%           24.0%     44.1%                            31.5%   34.7%
+2026        23.2%                 23.3%        6.0%             14.4%              17.2%        17.6%              11.8%           10.9%       20.4%           21.8%       19.8%         12.0%           22.1%           15.0%     10.3%                             9.7%   28.0%
+(phase 0 done in 63 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Kelly-exato                       0.197 0.263         0.853  0.774 0.267         40.047 0.115 -0.639          0.185              0.385
+Kelly-exato-sem-teto              0.176 0.234         0.825  0.723 0.231         50.813 0.107 -0.639          0.176              0.361
+Quintil-mu                        0.025 0.053         0.585  0.585 0.070        949.947 0.076 -0.573          0.001              0.017
+Quintil-mu-sigma                  0.305 0.438         0.961  0.982 0.531         14.209 0.143 -0.440          0.018              0.202
+Quintil-mu-sigma2                 0.316 0.416         0.953  0.982 0.496         15.771 0.143 -0.381          0.010              0.138
+Box-robusto                       0.329 0.432         0.959  0.963 0.521         14.532 0.154 -0.568          0.200              0.508
+Subset-resampling                 0.209 0.289         0.878  0.902 0.301         32.451 0.124 -0.542          0.029              0.172
+Subset-bagging                    0.163 0.225         0.817  0.807 0.220         54.258 0.111 -0.598          0.040              0.180
+Downside-1                        0.342 0.387         0.941  0.968 0.449         18.153 0.150 -0.495          0.069              0.331
+Semi-variancia                    0.202 0.269         0.859  0.780 0.274         38.250 0.117 -0.639          0.193              0.395
+Downside-3                        0.196 0.262         0.853  0.761 0.266         40.191 0.114 -0.633          0.205              0.401
+MVSK-tilting                      0.203 0.249         0.842  0.896 0.249         44.110 0.122 -0.483          0.005              0.089
+Utilidade-raiz                    0.208 0.278         0.867  0.785 0.287         35.842 0.118 -0.639          0.213              0.417
+Retorno-minimo                    0.411 0.397         0.945  0.976 0.465         17.321 0.158 -0.417          0.080              0.366
+Composto                          0.559 0.782         0.999  1.000 0.927          4.501 0.199 -0.422            NaN                NaN
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.754          7.901 0.164 -0.416            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497            NaN                NaN
+Kelly-exato: refusals 0, failures 0, annual turnover 2.50
+Kelly-exato-sem-teto: refusals 0, failures 0, annual turnover 2.58
+Quintil-mu: refusals 0, failures 0, annual turnover 2.06
+Quintil-mu-sigma: refusals 0, failures 0, annual turnover 1.69
+Quintil-mu-sigma2: refusals 0, failures 0, annual turnover 1.35
+Box-robusto: refusals 0, failures 0, annual turnover 2.19
+Subset-resampling: refusals 0, failures 0, annual turnover 3.04
+Subset-bagging: refusals 0, failures 0, annual turnover 3.31
+Downside-1: refusals 0, failures 0, annual turnover 1.89
+Semi-variancia: refusals 0, failures 0, annual turnover 2.57
+Downside-3: refusals 0, failures 0, annual turnover 2.60
+MVSK-tilting: refusals 0, failures 0, annual turnover 1.84
+Utilidade-raiz: refusals 1, failures 0, annual turnover 2.57
+Retorno-minimo: refusals 0, failures 0, annual turnover 1.68
+      Kelly-exato  Kelly-exato-sem-teto  Quintil-mu  Quintil-mu-sigma  Quintil-mu-sigma2  Box-robusto  Subset-resampling  Subset-bagging  Downside-1  Semi-variancia  Downside-3  MVSK-tilting  Utilidade-raiz  Retorno-minimo  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010         8.8%                 -4.4%        7.6%             38.5%              25.8%        32.2%              27.5%           28.5%       26.8%            9.2%        8.6%         18.3%            6.8%           30.6%     17.8%                            17.8%   -0.6%
+2011        -0.8%                 -6.5%       -5.5%              7.8%              12.1%        14.1%              10.7%           -8.7%        8.3%            0.7%       -1.2%          2.8%            3.9%            8.4%      6.2%                            10.6%  -18.3%
+2012         6.7%                  9.2%       14.9%             30.6%              28.5%        16.0%              11.8%           10.8%       32.7%            5.4%        7.2%         28.5%            7.2%           47.5%     24.6%                            32.9%    6.6%
+2013       -18.4%                -18.4%      -11.1%             -7.5%              -3.8%        -8.4%              -4.1%          -14.2%       -3.0%          -18.4%      -18.7%         -8.3%          -19.0%           -0.1%      6.7%                            -2.8%  -15.8%
+2014       -12.0%                -12.0%      -10.6%             -4.5%              -2.4%       -19.8%              -9.3%           -4.2%      -12.7%          -12.6%      -11.5%         -8.6%          -12.7%           -3.5%      2.4%                             3.1%   -3.4%
+2015       -12.7%                -12.7%       -6.4%              1.2%               2.4%        -0.1%               1.0%            1.3%        2.6%          -12.9%      -13.5%         -4.8%          -13.4%           -8.9%      4.9%                             1.3%  -13.2%
+2016        17.0%                 17.0%        9.0%             15.1%              19.9%        19.8%               9.1%            7.6%       13.0%           17.3%       18.6%         12.9%           17.3%           25.9%     36.4%                            15.9%   38.2%
+2017        47.6%                 47.6%       48.8%             31.5%              27.0%        32.3%              44.4%           51.4%       42.0%           51.3%       52.6%         49.0%           50.9%           39.4%     42.9%                            51.1%   26.8%
+2018        53.7%                 53.7%       18.4%             14.7%               8.5%        21.1%              28.0%           21.7%       18.5%           54.5%       67.4%         22.7%           61.1%           24.5%     23.6%                            22.4%   14.6%
+2019       102.6%                102.6%       54.9%             55.7%              43.0%        69.0%              57.5%           53.6%       56.7%          107.2%      101.3%         56.2%          105.3%           27.7%     50.2%                            51.3%   31.5%
+2020        54.9%                 54.9%        9.5%             17.1%               6.9%        36.6%              19.1%           19.9%       17.5%           54.9%       61.1%          8.8%           54.9%            6.4%      6.0%                            -4.4%    3.1%
+2021         5.3%                 10.4%        0.9%             -0.6%               3.2%         0.8%               4.9%            1.2%       10.3%            4.6%        0.3%         11.4%            1.1%            8.0%     27.9%                             6.2%  -12.1%
+2022        -7.2%                 -7.2%      -11.7%             -1.4%              11.4%         7.0%             -15.0%          -12.0%       -0.4%           -8.4%       -9.4%          2.1%           -7.2%            6.4%     10.1%                            15.7%    5.1%
+2023         0.4%                 -0.0%       14.5%             18.1%              25.0%        11.0%              14.1%           13.0%       14.7%           -3.1%       -1.9%          9.5%            0.3%           20.8%     32.3%                            15.7%   23.1%
+2024       -16.5%                -16.5%       -8.7%             -4.7%              -2.9%         1.0%              -3.6%            0.9%        1.2%          -16.2%      -20.0%         -7.7%          -17.1%            1.7%      5.6%                            -3.3%  -10.1%
+2025        -5.3%                 -5.3%       16.3%             27.9%              24.5%        20.4%              16.6%           15.7%       12.5%           -3.4%      -11.0%         13.6%           -6.5%           26.0%     24.7%                            27.5%   34.7%
+2026        27.4%                 27.4%        8.4%             14.9%              16.4%        25.7%              12.1%           19.8%       24.0%           27.0%       29.9%         14.9%           28.7%           13.7%     15.8%                            25.4%   28.0%
+(phase 21 done in 124 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026 ===
+                                 Sharpe     IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Kelly-exato                       0.107  0.157         0.736  0.652 0.077        109.992 0.089 -0.642          0.078              0.164
+Kelly-exato-sem-teto              0.053  0.084         0.632  0.533 0.043        386.713 0.072 -0.642          0.044              0.103
+Quintil-mu                       -0.044 -0.056         0.411  0.432 0.011            inf 0.061 -0.542          0.000              0.001
+Quintil-mu-sigma                  0.243  0.355         0.923  0.961 0.267         21.624 0.130 -0.433          0.009              0.047
+Quintil-mu-sigma2                 0.344  0.457         0.966  0.988 0.416         13.113 0.149 -0.372          0.040              0.145
+Box-robusto                       0.325  0.424         0.956  0.963 0.366         15.084 0.153 -0.544          0.220              0.424
+Subset-resampling                 0.195  0.265         0.857  0.890 0.163         38.771 0.121 -0.504          0.031              0.109
+Subset-bagging                    0.220  0.313         0.896  0.903 0.214         27.811 0.126 -0.557          0.076              0.201
+Downside-1                        0.239  0.276         0.867  0.918 0.174         35.584 0.129 -0.504          0.030              0.106
+Semi-variancia                    0.097  0.143         0.718  0.628 0.070        132.006 0.086 -0.646          0.073              0.154
+Downside-3                        0.131  0.187         0.775  0.680 0.097         77.310 0.094 -0.681          0.119              0.221
+MVSK-tilting                      0.208  0.265         0.857  0.913 0.163         38.686 0.123 -0.502          0.009              0.057
+Utilidade-raiz                    0.086  0.128         0.697  0.600 0.062        166.204 0.081 -0.671          0.067              0.143
+Retorno-minimo                    0.436  0.421         0.954  0.981 0.361         15.424 0.162 -0.424          0.158              0.358
+Composto                          0.509  0.743         0.999  0.999 0.826          4.947 0.191 -0.428            NaN                NaN
+Conservadora (15, pesos iguais)   0.426  0.632         0.994  0.998 0.687          6.876 0.169 -0.395            NaN                NaN
+BOVA11                              NaN    NaN           NaN    NaN   NaN            NaN 0.067 -0.497            NaN                NaN
+Kelly-exato: refusals 0, failures 0, annual turnover 2.60
+Kelly-exato-sem-teto: refusals 0, failures 0, annual turnover 2.69
+Quintil-mu: refusals 0, failures 0, annual turnover 2.11
+Quintil-mu-sigma: refusals 0, failures 0, annual turnover 1.73
+Quintil-mu-sigma2: refusals 0, failures 0, annual turnover 1.40
+Box-robusto: refusals 0, failures 0, annual turnover 2.32
+Subset-resampling: refusals 0, failures 0, annual turnover 2.85
+Subset-bagging: refusals 0, failures 0, annual turnover 3.30
+Downside-1: refusals 0, failures 0, annual turnover 2.01
+Semi-variancia: refusals 0, failures 0, annual turnover 2.63
+Downside-3: refusals 0, failures 0, annual turnover 2.71
+MVSK-tilting: refusals 0, failures 0, annual turnover 1.96
+Utilidade-raiz: refusals 0, failures 0, annual turnover 2.66
+Retorno-minimo: refusals 0, failures 0, annual turnover 1.67
+      Kelly-exato  Kelly-exato-sem-teto  Quintil-mu  Quintil-mu-sigma  Quintil-mu-sigma2  Box-robusto  Subset-resampling  Subset-bagging  Downside-1  Semi-variancia  Downside-3  MVSK-tilting  Utilidade-raiz  Retorno-minimo  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010        10.2%                 -5.6%       -1.9%             34.5%              36.9%        39.2%              37.7%           39.9%       28.5%           10.5%       10.0%         21.9%           10.0%           32.1%     19.4%                            19.4%   -2.5%
+2011        -7.5%                -14.8%       -7.8%              4.3%               9.3%         5.2%              -5.1%          -16.6%       -1.8%           -6.9%       -7.8%         -1.3%           -7.8%            6.4%      3.3%                             7.2%  -18.3%
+2012         5.9%                  6.6%       16.3%             28.8%              32.5%        20.0%              24.0%           30.3%       26.3%            5.6%        6.0%         26.5%            6.0%           47.2%     25.6%                            32.3%    6.6%
+2013       -17.7%                -17.6%      -14.3%             -7.8%              -3.4%       -11.6%             -11.1%          -11.9%       -4.1%          -17.3%      -15.8%         -6.3%          -16.7%            0.1%     -0.7%                            -4.1%  -15.8%
+2014       -14.2%                -14.2%       -6.9%             -4.2%              -2.7%       -20.8%             -13.9%           -4.5%       -9.0%          -14.1%      -15.0%         -7.3%          -14.8%           -5.7%      4.6%                             0.2%   -3.4%
+2015       -11.3%                -11.3%       -4.4%             -0.4%              -1.3%        -2.9%               1.7%           -0.2%       -0.7%          -12.0%      -11.5%         -3.6%          -11.8%           -3.7%     -1.3%                             2.9%  -13.2%
+2016        17.9%                 17.9%        4.5%             15.0%              18.1%        15.2%               6.0%            4.6%        8.6%           19.5%       22.2%         12.1%           20.7%           17.7%     23.6%                            22.7%   38.2%
+2017        53.3%                 53.3%       39.4%             29.7%              27.9%        40.9%              38.3%           55.3%       47.1%           52.1%       68.1%         53.9%           52.5%           48.5%     43.6%                            53.1%   26.8%
+2018        44.7%                 44.6%       21.2%             12.7%               9.9%        10.8%              19.9%           33.8%        6.4%           43.4%       64.5%         23.6%           47.1%           28.1%     14.0%                            12.0%   14.6%
+2019        85.3%                 85.3%       53.8%             55.6%              46.9%        69.1%              65.9%           58.3%       59.9%           83.3%       87.0%         60.2%           82.7%           38.0%     51.7%                            43.9%   31.5%
+2020        56.8%                 56.9%       15.6%             16.8%               9.8%        40.2%              16.4%           29.3%       11.2%           55.5%       53.4%          0.5%           57.2%          -11.0%     19.0%                            14.2%    3.1%
+2021       -13.6%                -13.6%       -5.8%             -3.1%               1.6%         0.5%               1.2%            5.6%        7.0%          -14.5%      -11.6%         12.0%          -16.1%           18.6%     30.7%                            10.0%  -12.1%
+2022       -19.9%                -19.9%      -19.5%              1.3%               7.6%        12.2%              -6.8%          -10.2%       -0.8%          -19.3%      -18.3%         -1.7%          -18.3%            6.1%     10.4%                            13.9%    5.1%
+2023        -0.1%                 -3.0%       12.3%             16.7%              22.7%         9.4%              11.4%           13.4%       13.9%            1.7%       -0.9%          7.9%            0.0%           21.7%     31.2%                            15.6%   23.1%
+2024       -24.8%                -24.8%       -5.6%             -6.3%              -3.2%         1.9%              -5.5%           -7.9%        0.7%          -25.8%      -26.6%         -8.6%          -27.2%            0.1%      4.9%                            -6.5%  -10.1%
+2025        24.1%                 24.1%       24.3%             26.3%              25.7%        22.4%              29.2%            9.6%        9.4%           23.1%        9.2%         20.8%           15.2%           25.2%     33.4%                            33.5%   34.7%
+2026        20.7%                 20.7%        4.1%             11.4%              18.5%        28.5%              15.7%           12.1%       30.1%           17.4%       14.6%         15.0%           18.8%           16.4%     10.8%                            20.9%   28.0%
+(phase 42 done in 165 s)
+
+Gate, all >= 0.95 in every phase:
+Kelly-exato: P[> Composite] [0.132 0.185 0.078], P[> Conservadora] [0.344 0.385 0.164], P[> BOVA11] [0.873 0.853 0.736], DSR [0.266 0.267 0.077]: does not pass
+Kelly-exato-sem-teto: P[> Composite] [0.102 0.176 0.044], P[> Conservadora] [0.28  0.361 0.103], P[> BOVA11] [0.822 0.825 0.632], DSR [0.2   0.231 0.043]: does not pass
+Quintil-mu: P[> Composite] [0.001 0.001 0.   ], P[> Conservadora] [0.029 0.017 0.001], P[> BOVA11] [0.739 0.585 0.411], DSR [0.133 0.07  0.011]: does not pass
+Quintil-mu-sigma: P[> Composite] [0.006 0.018 0.009], P[> Conservadora] [0.146 0.202 0.047], P[> BOVA11] [0.963 0.961 0.923], DSR [0.515 0.531 0.267]: does not pass
+Quintil-mu-sigma2: P[> Composite] [0.004 0.01  0.04 ], P[> Conservadora] [0.091 0.138 0.145], P[> BOVA11] [0.952 0.953 0.966], DSR [0.467 0.496 0.416]: does not pass
+Box-robusto: P[> Composite] [0.046 0.2   0.22 ], P[> Conservadora] [0.24  0.508 0.424], P[> BOVA11] [0.896 0.959 0.956], DSR [0.311 0.521 0.366]: does not pass
+Subset-resampling: P[> Composite] [0.031 0.029 0.031], P[> Conservadora] [0.233 0.172 0.109], P[> BOVA11] [0.931 0.878 0.857], DSR [0.395 0.301 0.163]: does not pass
+Subset-bagging: P[> Composite] [0.091 0.04  0.076], P[> Conservadora] [0.37  0.18  0.201], P[> BOVA11] [0.95  0.817 0.896], DSR [0.458 0.22  0.214]: does not pass
+Downside-1: P[> Composite] [0.064 0.069 0.03 ], P[> Conservadora] [0.378 0.331 0.106], P[> BOVA11] [0.96  0.941 0.867], DSR [0.499 0.449 0.174]: does not pass
+Semi-variancia: P[> Composite] [0.116 0.193 0.073], P[> Conservadora] [0.314 0.395 0.154], P[> BOVA11] [0.853 0.859 0.718], DSR [0.239 0.274 0.07 ]: does not pass
+Downside-3: P[> Composite] [0.088 0.205 0.119], P[> Conservadora] [0.253 0.401 0.221], P[> BOVA11] [0.799 0.853 0.775], DSR [0.178 0.266 0.097]: does not pass
+MVSK-tilting: P[> Composite] [0.001 0.005 0.009], P[> Conservadora] [0.05  0.089 0.057], P[> BOVA11] [0.85  0.842 0.857], DSR [0.237 0.249 0.163]: does not pass
+Utilidade-raiz: P[> Composite] [0.089 0.213 0.067], P[> Conservadora] [0.26  0.417 0.143], P[> BOVA11] [0.811 0.867 0.697], DSR [0.19  0.287 0.062]: does not pass
+Retorno-minimo: P[> Composite] [0.09  0.08  0.158], P[> Conservadora] [0.438 0.366 0.358], P[> BOVA11] [0.964 0.945 0.954], DSR [0.52  0.465 0.361]: does not pass
+
+                   Ano  Kelly-exato  Kelly-exato-sem-teto  Quintil-mu  Quintil-mu-sigma  Quintil-mu-sigma2  Box-robusto  Subset-resampling  Subset-bagging  Downside-1  Semi-variancia  Downside-3  MVSK-tilting  Utilidade-raiz  Retorno-minimo  Composto  Conservadora (15, pesos iguais)  BOVA11   CDI  Selic
+0   2010 (desde 09/02)          NaN                   NaN         NaN               NaN                NaN          NaN                NaN             NaN         NaN             NaN         NaN           NaN             NaN             NaN       NaN                              NaN    6.8%  8.7%   8.8%
+1                 2011         0.7%                -11.0%       -3.9%              3.2%               9.6%         6.1%               4.4%            2.9%        5.9%            2.3%        0.4%          7.2%            0.4%            7.3%      2.6%                             9.8%  -18.3% 11.6%  11.6%
+2                 2012         7.8%                 11.6%       23.5%             31.6%              35.8%        17.9%              15.8%           24.6%       37.1%            6.6%        8.0%         24.5%            8.0%           45.8%     26.3%                            32.2%    6.6%  8.4%   8.5%
+3                 2013       -16.8%                -16.6%      -12.4%             -9.7%              -6.8%       -10.6%             -13.3%           -8.6%       -5.8%          -17.2%      -14.2%        -10.6%          -17.5%           -1.9%     -1.3%                            -3.3%  -15.8%  8.1%   8.2%
+4                 2014       -14.8%                -14.8%       -7.4%             -3.3%              -3.6%       -16.8%              -8.3%          -13.4%      -12.7%          -14.6%      -13.0%        -10.0%          -14.1%           -4.8%      7.3%                             1.6%   -3.4% 10.8%  10.9%
+5                 2015       -11.0%                -11.0%       -0.3%              2.8%               0.9%        -2.7%               8.4%            3.3%       -4.3%          -13.5%      -12.4%         -2.7%          -13.1%           -5.9%      6.4%                             0.4%  -13.2% 13.2%  13.3%
+6                 2016        16.9%                 16.9%        6.0%             10.9%              20.3%        20.1%              14.5%           16.7%       10.7%           16.5%       18.0%         10.9%           14.8%           24.1%     40.9%                            25.1%   38.2% 14.0%  14.0%
+7                 2017        65.2%                 65.2%       48.8%             32.3%              28.7%        42.1%              41.8%           49.9%       44.3%           66.9%       68.6%         49.4%           68.4%           47.7%     34.7%                            50.8%   26.8% 10.0%  10.0%
+8                 2018        40.5%                 40.5%       20.7%             19.7%              10.4%         8.8%              14.3%           23.3%       10.2%           39.4%       39.1%         20.7%           35.7%           28.9%     22.2%                            15.7%   14.6%  6.4%   6.4%
+9                 2019       110.7%                110.6%       55.7%             55.3%              45.9%        71.8%              72.6%           59.3%       68.2%          112.2%      104.5%         64.7%          109.7%           43.0%     57.3%                            49.9%   31.5%  6.0%   6.0%
+10                2020        61.8%                 61.8%       13.6%             23.8%               8.6%        39.7%              22.8%           34.2%       33.8%           62.1%       65.1%         14.5%           61.7%           -1.2%     30.0%                             3.1%    3.1%  2.8%   2.8%
+11                2021        -6.3%                 -7.0%        0.3%             -1.9%              -0.7%        -9.2%               4.7%           17.8%       15.7%           -7.6%      -19.9%          6.9%          -14.8%           10.3%     20.8%                            13.6%  -12.1%  4.4%   4.4%
+12                2022         8.6%                 10.7%       -6.1%              2.1%              11.7%         1.5%               0.9%           -0.9%        3.5%           10.4%        1.2%          5.2%            5.5%           12.5%      4.6%                            26.1%    5.1% 12.4%  12.4%
+13                2023         2.7%                  3.3%       17.4%             24.9%              24.4%         8.3%              20.0%            6.8%       18.3%            1.1%       -1.3%         11.6%            0.9%           21.8%     33.6%                            22.9%   23.1% 13.0%  13.0%
+14                2024       -20.2%                -20.2%       -4.2%             -4.9%              -4.1%         2.7%              -6.0%           -4.8%       -1.7%          -22.6%      -18.9%         -7.3%          -20.9%            0.9%      5.5%                            -7.7%  -10.1% 10.9%  10.9%
+15                2025        -6.3%                 -6.3%       19.0%             24.9%              25.0%        16.5%              17.3%           16.1%       16.8%           -6.3%       -9.5%         13.0%           -6.5%           24.0%     44.1%                            31.5%   34.7% 14.3%  14.3%
+16    2026 (até 16/10)        23.2%                 23.3%        6.0%             14.4%              17.2%        17.6%              11.8%           10.9%       20.4%           21.8%       19.8%         12.0%           22.1%           15.0%     10.3%                             9.7%   28.0% 11.2%  11.2%
+
+Done in 165 s

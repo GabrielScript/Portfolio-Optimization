@@ -48,3 +48,18 @@ def test_the_veto_drops_the_bottom_fifth_of_issuers_with_the_signal_only_with_20
     assert list(mantidos.index) == ["E05X3", "SEMX3"]           # 5 bottom issuers out (both classes); no signal: kept
     poucos = pontos.iloc[:19]
     assert list(opcoes.vetar(candidatos, poucos, emissor).index) == list(candidatos.index)
+
+
+def test_the_frozen_panel_keeps_only_chains_of_issuers_in_that_month_s_universe():
+    from scripts.opcoes_painel import painel_no_universo
+    cadeias = pd.DataFrame({"month": [MES, MES, MES], "underlying_isin": ["A", "B", "C"],
+                            "underlying_issuer": ["PETR", "BOVA", "VALE"], "iv_atm": [0.3, 0.2, 0.4],
+                            "skew": [0.1, 0.0, 0.2], "pc_ratio": [0.4, 0.5, 0.3], "contracts": [10, 10, 10],
+                            "n_days": [5, 5, 5]})
+    universo = pd.DataFrame({"month": [MES, MES, pd.Timestamp("2026-09-01")],
+                             "security": ["PETR4", "PETR3", "VALE3"]})       # VALE only in another month
+    assert opcoes_issuers(painel_no_universo(cadeias, universo)) == ["PETR"]
+
+
+def opcoes_issuers(painel: pd.DataFrame) -> list[str]:
+    return sorted(painel["issuer"])

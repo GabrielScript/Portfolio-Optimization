@@ -386,6 +386,21 @@ def carregar_indicadores_bcb(dia: date) -> dict[str, tuple[pd.Timestamp, float]]
             **macro_bcb.indicadores(bcb.baixar_serie, dia)}
 
 
+ARQUIVO_COMPARACAO = PASTA_EUA / "comparacao-estrategias.parquet"     # docs/dados
+ARQUIVO_GIRO = PASTA_EUA / "comparacao-giro.csv"
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_comparacao() -> tuple[pd.DataFrame, pd.DataFrame] | None:
+    """The strategies comparison of ``scripts/comparacao_estrategias.py``: curves (dates x curves, plus the CDI) and
+    the turnover per strategy; None before its first run."""
+    if not ARQUIVO_COMPARACAO.exists() or not ARQUIVO_GIRO.exists():
+        return None
+    curvas = pd.read_parquet(ARQUIVO_COMPARACAO)
+    curvas = curvas.set_index(pd.DatetimeIndex(pd.to_datetime(curvas.pop("date")), name=None))
+    return curvas, pd.read_csv(ARQUIVO_GIRO, index_col="estrategia")
+
+
 @st.cache_data(ttl=15 * 60, show_spinner=False, max_entries=4)
 def carregar_dolar(dia: date, quarto: int) -> dolar_bcb.DolarDoDia | None:
     """The day's last PTAX bulletin (``core.dolar_bcb``); ``quarto`` (the quarter hour of the day) renews it as the

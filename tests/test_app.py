@@ -54,6 +54,7 @@ def _painel_sem_rede(monkeypatch) -> None:
     monkeypatch.setattr(servicos, "carregar_manchetes", lambda: (None, None))
     monkeypatch.setattr(servicos, "carregar_ata_copom", lambda dia: None)
     monkeypatch.setattr(servicos, "carregar_dolar", lambda dia, quarto: None)
+    monkeypatch.setattr(servicos, "carregar_comparacao", lambda: None)
     monkeypatch.setattr(servicos, "carregar_desempenho", lambda tickers, dia, versao, referencia: None)
     monkeypatch.setattr(servicos, "carregar_precos_da_tabela", lambda tickers, dia, versao: _precos_sinteticos(
         tickers, 3, dia, versao).precos)
@@ -226,6 +227,7 @@ def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
 
 SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
 SECAO_COTACOES = "## Cotações de agora: as ações da Composite"
+SECAO_COMPARACAO = "## Comparação das estratégias"
 
 
 def _curvas_sinteticas() -> pd.DataFrame:
@@ -305,6 +307,62 @@ def test_the_page_shows_the_composites_quotes_now_with_the_days_change_and_a_ref
         precos[primeiro].iloc[-1] / precos[primeiro].iloc[-2] - 1)
     at.button(key="atualizar_cotacoes").click().run()
     assert not at.exception and descartadas == [tuple(alvo.index)]
+
+
+ESTRATEGIAS_DA_COMPARACAO = ["Composite", "Conservadora", "Markowitz (média-variância)", "Bayes-Stein (Jorion)",
+                             "Mínima variância", "Kelly (λ = 2)", "Reamostrada (Michaud)", "Paridade de risco (ERC)",
+                             "HRP", "HRP em árvore (grafo)", "1/N", "Quântica (QUBO)"]
+REFERENCIAS_DA_COMPARACAO = ["BOVA11 (Ibovespa)", "SMAL11 (small caps)", "DIVO11 (dividendos)", "Tesouro IPCA+"]
+
+
+def _comparacao_sintetica() -> tuple[pd.DataFrame, pd.DataFrame]:
+    """scripts/comparacao_estrategias.py's two files: curves (date x curve, CDI) and turnover per strategy."""
+    datas = pd.bdate_range("2010-06-01", "2026-10-30")
+    gerador = np.random.default_rng(11)
+    curvas = pd.DataFrame({nome: 10_000 * np.cumprod(1 + gerador.normal(0.0004 + i / 1e5, 0.012, len(datas)))
+                           for i, nome in enumerate(ESTRATEGIAS_DA_COMPARACAO + REFERENCIAS_DA_COMPARACAO)},
+                          index=datas)
+    curvas.loc[:"2012-01-30", "DIVO11 (dividendos)"] = np.nan                   # listed later
+    curvas["CDI"] = 0.0004
+    giro = pd.DataFrame({"giro_anual": 1.5, "nomes_medios": 12.0, "recusas": 0, "falhas": 0},
+                        index=pd.Index(ESTRATEGIAS_DA_COMPARACAO, name="estrategia"))
+    return curvas, giro
+
+
+def test_the_strategies_comparison_shows_every_method_and_reference_with_every_risk_measure(monkeypatch):
+    # the user's item 15 (2026-11-05): HRP, graph HRP, mean-variance, Markowitz, Kelly, 1/N, risk parity, Bayes,
+    # quantum, the Conservadora and the Composite, the dividend, debt and Ibovespa indices and the Selic, same run
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_comparacao", _comparacao_sintetica)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index(SECAO_SEM_VIES) < titulos.index(SECAO_COMPARACAO) < titulos.index("## Simulador")
+    resumo = [df.value for df in at.dataframe if "Giro anual" in df.value.columns]
+    assert len(resumo) == 1
+    tabela = resumo[0].set_index("Estratégia")
+    assert list(tabela.index) == ESTRATEGIAS_DA_COMPARACAO + REFERENCIAS_DA_COMPARACAO + ["Selic"]
+    assert {"CAGR", "Vol", "Sharpe", "Sortino", "Queda máx.", "Calmar", "CVaR 95% diário", "Beta (BOVA11)",
+            "Alfa a.a. (BOVA11)", "t do alfa", "Information ratio", "Nomes médios"} <= set(tabela.columns)
+    assert (tabela.loc["Selic", ["Sharpe", "Sortino", "Beta (BOVA11)"]] == "—").all()
+    assert tabela.loc["BOVA11 (Ibovespa)", "Giro anual"] == "—"                  # bought and held
+    assert tabela.loc["DIVO11 (dividendos)", "Desde"] != tabela.loc["Composite", "Desde"]
+    assert any(all(nome in figura for nome in ("Composite", "Conservadora", "BOVA11", "Selic"))
+               for figura in _figuras(at))
+    anos = [df.value for df in at.dataframe if {"Ano", "Paridade de risco (ERC)"} <= set(df.value.columns)]
+    assert len(anos) == 1 and "Selic" in anos[0].columns
+    at.selectbox(key="medida_comparacao").set_value("Sharpe").run()
+    assert not at.exception
+
+
+def test_without_the_comparison_file_the_section_says_so(monkeypatch):
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_comparacao", lambda: None)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert any("Sem a comparação" in c.value for c in at.caption)
 
 
 def test_the_year_table_has_the_selic_next_to_the_returns_and_only_there(monkeypatch):

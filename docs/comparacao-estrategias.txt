@@ -1,0 +1,27 @@
+DESCRIPTIVE strategies comparison to 04/11/2026 (not a reading, not a trial). Lake exports from b3lake (sha256): {'universe_prices.parquet': 'd01d712cdca54bf57023cfefd161f476ad83929d6ba892fe546cdd8ae226456f', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'a38ca301b377177b0ebe62b1392ece7e34af4b0ae1186baa8208b887da009e1d', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'cdi_daily.parquet': '36b77e0e3494902e1a7d8b3ac67f7406234047062de06510867db7d36f778a63', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': '14313e1b01590f8a1ed14c6e37496dbcf042dd806858cb22309349a13ae2bac9'}
+Composite: CAGR 19.8%, max drawdown -41.5%, turnover 2.95/yr (92 s)
+Conservadora: CAGR 16.2%, max drawdown -40.7%, turnover 2.96/yr (100 s)
+Markowitz (média-variância): CAGR 10.0%, max drawdown -52.6%, turnover 2.13/yr (161 s)
+Bayes-Stein (Jorion): CAGR 10.4%, max drawdown -49.2%, turnover 2.11/yr (225 s)
+Mínima variância: CAGR 17.1%, max drawdown -38.9%, turnover 1.30/yr (266 s)
+Kelly (λ = 2): CAGR 10.2%, max drawdown -61.9%, turnover 2.25/yr (314 s)
+Reamostrada (Michaud): CAGR 10.0%, max drawdown -51.1%, turnover 2.23/yr (2136 s)
+Paridade de risco (ERC): CAGR 8.8%, max drawdown -48.9%, turnover 0.84/yr (2144 s)
+HRP: CAGR 10.3%, max drawdown -46.8%, turnover 1.02/yr (2242 s)
+HRP em árvore (grafo): CAGR 10.8%, max drawdown -47.8%, turnover 2.04/yr (2290 s)
+1/N: CAGR 7.3%, max drawdown -50.9%, turnover 0.84/yr (2291 s)
+Quântica (QUBO): CAGR 17.0%, max drawdown -39.4%, turnover 2.73/yr (2464 s)
+                             giro_anual  nomes_medios  recusas  falhas
+estrategia                                                            
+Composite                          2.95         15.00     0.00    0.00
+Conservadora                       2.96         15.00     0.00    0.00
+Markowitz (média-variância)        2.13          9.91     0.00    0.00
+Bayes-Stein (Jorion)               2.11          9.95     0.00    0.00
+Mínima variância                   1.30         10.00     0.00    0.00
+Kelly (λ = 2)                      2.25          9.41     0.00    0.00
+Reamostrada (Michaud)              2.23         10.00     0.00    0.00
+Paridade de risco (ERC)            0.84        115.41     0.00    0.00
+HRP                                1.02        115.41     0.00    0.00
+HRP em árvore (grafo)              2.04        115.41     0.00    0.00
+1/N                                0.84        115.41     0.00    0.00
+Quântica (QUBO)                    2.73         10.82     0.00    0.00

@@ -33,7 +33,7 @@ from core.estimation import estimar_momentos, retornos_simples  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
 from core.optimization import ErroOtimizacao, metricas_carteira, preparar_covariancia  # noqa: E402
 from core.risco import LIMITES  # noqa: E402
-from ui import alepha, cotacoes, painel, parecer, servicos  # noqa: E402
+from ui import alepha, comparacao, cotacoes, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -122,6 +122,8 @@ def main() -> None:
     secao_cotacoes(registrado)
     st.markdown("---")
     alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
+    st.markdown("---")
+    comparacao.secao(servicos.carregar_comparacao(), servicos.carregar_juros())
     st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
     ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())

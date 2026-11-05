@@ -122,3 +122,24 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
 2. `core/sentinela/` (items per source, seen store, pack, checks, stages, account) with tests first, then the hourly
    task, then the screen. Target: live by 2026-11-30 so it runs 2-3 weeks before the real money of 19/12.
 3. Next: daily CVM filings (RAD/ENET).
+
+## Amendments (2026-11-05 night, before any build or run; DECISOES 264-266)
+
+1. **Fiscal items come from BCB SGS**, class `bcb`: 4649 (primary result, consolidated public sector, monthly R$ mi),
+   5793 (primary result 12m % GDP), 4513 (net debt % GDP), 13762 (general government gross debt % GDP). Tesouro
+   Nacional's own API (apiapex) was down on 05/11; its RTN XLSX (CKAN `resultado-do-tesouro-nacional`) is optional,
+   class `tesouro`.
+2. **IBGE items** via `https://apisidra.ibge.gov.br/values/...`: GDP 5932 v6564 c11255/90707 (q/q), unemployment
+   **6381** (moving quarter, monthly; 4099 is quarterly only), industry 8888 v11602 c544/129314 (y/y). **IPCA comes
+   from BCB only** (already in the app); SIDRA's IPCA is not used, so one issuer per indicator and no fact twice.
+3. **BDI lending rates**: B3 publishes no unit; read as a decimal fraction a year (inferred). Items use only relative
+   jumps (x3 the name's 21-session median), which do not depend on the unit, so they are no longer gated on the unit.
+4. **Checks**: the Sentinela has its own official class set `{cvm, mercado, bcb, ibge, tesouro}` passed as a
+   parameter; it reuses `core/assessor`'s normalization and verbatim matching only. `core/assessor`'s
+   `CLASSES_OFICIAIS` and `_url_oficial` are not changed (the adviser's behaviour stays as it is).
+5. **Execution timing**: a decision taken on session T before 17h executes at **T's close** (no lookahead: the
+   decision precedes the close); a decision after 17h, or on a non-session, executes at the next session's close.
+6. **One action per name per day.** After `reduzir_metade` only `vender` is allowed for that name until the
+   Composite's next record. A new `grave` on a name already sold is logged and emailed, with no action.
+7. The order-logic review asked by CLAUDE.md was done by the author; the user asked on 05/11 to go on without the
+   advisor.

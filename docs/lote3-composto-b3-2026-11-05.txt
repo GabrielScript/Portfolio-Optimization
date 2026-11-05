@@ -1,0 +1,124 @@
+Three optimizers fed the Composite's alpha on the B3: the one reading (spec docs/superpowers/specs/2026-11-05-lote3-composto-design.md, pre-registered 3c857f6, code 5e40bbe).
+Run 2026-11-05 with base Python 3.12 + the venv's packages; same frozen inputs as the book batches (identical sha256 line), DSR N 92. Verdict: none of the 3 arms passes.
+Solver notes (stderr): a few cvxpy 'Solution may be inaccurate' warnings in phases 0 and 21; no refusal, no failure.
+
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; DSR N 92
+
+=== Phase 0: 09/02/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Meio-Kelly-alfa                   0.616 0.591         0.991  0.997 0.717          7.842 0.201 -0.390          0.261              0.797
+Mean-CVaR-alfa                    0.382 0.341         0.916  0.959 0.333         23.298 0.153 -0.438          0.030              0.221
+Robust-MV-alfa                    0.604 0.546         0.986  0.995 0.654          9.177 0.194 -0.398          0.187              0.697
+Composto                          0.624 0.843         1.000  1.000 0.944          3.870 0.214 -0.415            NaN                NaN
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.748          7.276 0.174 -0.407            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497            NaN                NaN
+Meio-Kelly-alfa: refusals 0, failures 0, annual turnover 3.02
+Mean-CVaR-alfa: refusals 0, failures 0, annual turnover 1.97
+Robust-MV-alfa: refusals 0, failures 0, annual turnover 2.26
+      Meio-Kelly-alfa  Mean-CVaR-alfa  Robust-MV-alfa  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010            34.5%           29.5%           33.2%     23.2%                            23.2%    6.8%
+2011            11.1%            8.8%            8.4%      2.6%                             9.8%  -18.3%
+2012            29.6%           48.4%           36.4%     26.3%                            32.2%    6.6%
+2013            -0.2%            3.0%            0.4%     -1.3%                            -3.3%  -15.8%
+2014             3.8%          -12.7%           -0.8%      7.3%                             1.6%   -3.4%
+2015             4.3%           -8.1%            5.9%      6.4%                             0.4%  -13.2%
+2016            23.6%           20.2%           20.9%     40.9%                            25.1%   38.2%
+2017            53.7%           48.8%           60.0%     34.7%                            50.8%   26.8%
+2018            23.6%           16.2%           25.8%     22.2%                            15.7%   14.6%
+2019            48.7%           40.7%           47.0%     57.3%                            49.9%   31.5%
+2020            11.7%            8.9%            6.9%     30.0%                             3.1%    3.1%
+2021            13.0%            9.1%           15.4%     20.8%                            13.6%  -12.1%
+2022            20.8%            6.2%           15.3%      4.6%                            26.1%    5.1%
+2023            22.6%           22.1%           17.8%     33.6%                            22.9%   23.1%
+2024             3.8%           -0.7%            3.2%      5.5%                            -7.7%  -10.1%
+2025            28.0%           20.3%           24.9%     44.1%                            31.5%   34.7%
+2026            11.9%           11.9%           14.6%     10.3%                             9.7%   28.0%
+(phase 0 done in 43 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Meio-Kelly-alfa                   0.516 0.518         0.981  0.992 0.640         10.196 0.181 -0.378          0.200              0.689
+Mean-CVaR-alfa                    0.312 0.303         0.889  0.945 0.307         29.594 0.140 -0.443          0.029              0.187
+Robust-MV-alfa                    0.602 0.547         0.986  0.995 0.683          9.145 0.190 -0.340          0.297              0.754
+Composto                          0.559 0.782         0.999  1.000 0.922          4.501 0.199 -0.422            NaN                NaN
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.741          7.901 0.164 -0.416            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497            NaN                NaN
+Meio-Kelly-alfa: refusals 0, failures 0, annual turnover 3.11
+Mean-CVaR-alfa: refusals 0, failures 0, annual turnover 1.89
+Robust-MV-alfa: refusals 0, failures 0, annual turnover 2.43
+      Meio-Kelly-alfa  Mean-CVaR-alfa  Robust-MV-alfa  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010            28.2%           22.0%           27.1%     17.8%                            17.8%   -0.6%
+2011            12.8%            7.7%           12.6%      6.2%                            10.6%  -18.3%
+2012            29.3%           46.9%           35.0%     24.6%                            32.9%    6.6%
+2013            -0.3%            2.0%            1.5%      6.7%                            -2.8%  -15.8%
+2014             0.1%          -11.4%           -2.2%      2.4%                             3.1%   -3.4%
+2015             1.9%           -8.6%            1.7%      4.9%                             1.3%  -13.2%
+2016            18.0%           16.3%           24.8%     36.4%                            15.9%   38.2%
+2017            57.3%           47.5%           60.8%     42.9%                            51.1%   26.8%
+2018            30.2%           25.7%           25.5%     23.6%                            22.4%   14.6%
+2019            28.5%           33.3%           29.0%     50.2%                            51.3%   31.5%
+2020             9.4%           -1.5%           17.2%      6.0%                            -4.4%    3.1%
+2021            19.0%           12.1%           20.4%     27.9%                             6.2%  -12.1%
+2022            11.1%            4.6%           11.8%     10.1%                            15.7%    5.1%
+2023            13.9%           26.2%           12.4%     32.3%                            15.7%   23.1%
+2024             5.4%           -3.5%            4.3%      5.6%                            -3.3%  -10.1%
+2025            23.3%           21.1%           25.3%     24.7%                            27.5%   34.7%
+2026            20.2%            9.8%           17.5%     15.8%                            25.4%   28.0%
+(phase 21 done in 84 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Meio-Kelly-alfa                   0.522 0.526         0.982  0.993 0.759          9.914 0.183 -0.395          0.315              0.636
+Mean-CVaR-alfa                    0.391 0.382         0.938  0.971 0.550         18.683 0.155 -0.446          0.120              0.284
+Robust-MV-alfa                    0.495 0.476         0.972  0.989 0.692         12.092 0.174 -0.407          0.220              0.494
+Composto                          0.509 0.743         0.999  0.999 0.943          4.947 0.191 -0.428            NaN                NaN
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.870          6.876 0.169 -0.395            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497            NaN                NaN
+Meio-Kelly-alfa: refusals 0, failures 0, annual turnover 3.02
+Mean-CVaR-alfa: refusals 0, failures 0, annual turnover 1.95
+Robust-MV-alfa: refusals 0, failures 0, annual turnover 2.33
+      Meio-Kelly-alfa  Mean-CVaR-alfa  Robust-MV-alfa  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010            25.5%           26.8%           25.6%     19.4%                            19.4%   -2.5%
+2011            11.2%            9.3%           10.9%      3.3%                             7.2%  -18.3%
+2012            28.3%           46.6%           33.1%     25.6%                            32.3%    6.6%
+2013             1.4%            7.7%            0.8%     -0.7%                            -4.1%  -15.8%
+2014            -1.0%           -9.5%           -0.9%      4.6%                             0.2%   -3.4%
+2015            -1.4%           -9.1%           -0.9%     -1.3%                             2.9%  -13.2%
+2016            13.5%           21.1%           11.3%     23.6%                            22.7%   38.2%
+2017            65.2%           44.3%           66.4%     43.6%                            53.1%   26.8%
+2018            30.7%           24.3%           34.0%     14.0%                            12.0%   14.6%
+2019            43.4%           48.4%           42.2%     51.7%                            43.9%   31.5%
+2020             2.7%          -11.5%           -2.1%     19.0%                            14.2%    3.1%
+2021            25.8%           10.3%           17.0%     30.7%                            10.0%  -12.1%
+2022            15.1%            6.6%           14.2%     10.4%                            13.9%    5.1%
+2023            16.9%           23.6%           14.6%     31.2%                            15.6%   23.1%
+2024             0.3%           -1.3%            1.4%      4.9%                            -6.5%  -10.1%
+2025            22.7%           21.9%           20.1%     33.4%                            33.5%   34.7%
+2026            14.4%           15.9%           14.5%     10.8%                            20.9%   28.0%
+(phase 42 done in 126 s)
+
+Gate, all >= 0.95 in every phase:
+Meio-Kelly-alfa: P[> Composite] [0.261 0.2   0.315], P[> Conservadora] [0.797 0.689 0.636], P[> BOVA11] [0.991 0.981 0.982], DSR [0.717 0.64  0.759]: does not pass
+Mean-CVaR-alfa: P[> Composite] [0.03  0.029 0.12 ], P[> Conservadora] [0.221 0.187 0.284], P[> BOVA11] [0.916 0.889 0.938], DSR [0.333 0.307 0.55 ]: does not pass
+Robust-MV-alfa: P[> Composite] [0.187 0.297 0.22 ], P[> Conservadora] [0.697 0.754 0.494], P[> BOVA11] [0.986 0.986 0.972], DSR [0.654 0.683 0.692]: does not pass
+
+                   Ano  Meio-Kelly-alfa  Mean-CVaR-alfa  Robust-MV-alfa  Composto  Conservadora (15, pesos iguais)  BOVA11   CDI  Selic
+0   2010 (desde 09/02)              NaN             NaN             NaN       NaN                              NaN    6.8%  8.7%   8.8%
+1                 2011            11.1%            8.8%            8.4%      2.6%                             9.8%  -18.3% 11.6%  11.6%
+2                 2012            29.6%           48.4%           36.4%     26.3%                            32.2%    6.6%  8.4%   8.5%
+3                 2013            -0.2%            3.0%            0.4%     -1.3%                            -3.3%  -15.8%  8.1%   8.2%
+4                 2014             3.8%          -12.7%           -0.8%      7.3%                             1.6%   -3.4% 10.8%  10.9%
+5                 2015             4.3%           -8.1%            5.9%      6.4%                             0.4%  -13.2% 13.2%  13.3%
+6                 2016            23.6%           20.2%           20.9%     40.9%                            25.1%   38.2% 14.0%  14.0%
+7                 2017            53.7%           48.8%           60.0%     34.7%                            50.8%   26.8% 10.0%  10.0%
+8                 2018            23.6%           16.2%           25.8%     22.2%                            15.7%   14.6%  6.4%   6.4%
+9                 2019            48.7%           40.7%           47.0%     57.3%                            49.9%   31.5%  6.0%   6.0%
+10                2020            11.7%            8.9%            6.9%     30.0%                             3.1%    3.1%  2.8%   2.8%
+11                2021            13.0%            9.1%           15.4%     20.8%                            13.6%  -12.1%  4.4%   4.4%
+12                2022            20.8%            6.2%           15.3%      4.6%                            26.1%    5.1% 12.4%  12.4%
+13                2023            22.6%           22.1%           17.8%     33.6%                            22.9%   23.1% 13.0%  13.0%
+14                2024             3.8%           -0.7%            3.2%      5.5%                            -7.7%  -10.1% 10.9%  10.9%
+15                2025            28.0%           20.3%           24.9%     44.1%                            31.5%   34.7% 14.3%  14.3%
+16    2026 (até 16/10)            11.9%           11.9%           14.6%     10.3%                             9.7%   28.0% 11.2%  11.2%
+
+Done in 126 s

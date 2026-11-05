@@ -785,3 +785,17 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 226-
 - **Operations:** after the laptop crashed on 02/11, the lake's two scheduled tasks run on the base Python 3.14 interpreter with the venv's packages, because the venv interpreters were blocked from writing outside the project folders.
 
 Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-239.
+
+## Session notes (2026-11-04/05)
+
+- The app is "Aleph Quant", with the user's eagle above the title. The buy plan, positions and monthly IR blocks left the
+  page; a section explains what Aleph Quant is (B3 stocks, ETFs and BDRs; Composite and Conservadora; a decision tool for
+  real money). The Selic replaced the CDI on screen and in the simulator's cash.
+- Market panel: Banco Central indicators (IBC-Br, direct investment, credit granted, its rate, defaults, the last Copom
+  minutes) with a "?" each, also read by the DeepSeek adviser; CAGR, Sharpe, Sortino, Calmar, CVaR, alpha, its t and
+  information ratio per name; filings with Jev's tone in Portuguese; headlines linked by their title. CVM filings arrive
+  weekly (the CVM's open data is published on Sundays).
+- DeepSeek adviser: depth picked on screen, "Máxima" (max, default), "Rápida" (high in 3 parallel parts, ~75 s) and
+  "Expressa" (high in 5 parts, ~65 s). Max gives the best-checked opinion but its time varies (133-218 s measured on
+  05/11); generate it before a presentation and the same click shows it from the cache.
+- The simulator's DeepSeek portfolio judges the names of both rule portfolios, next to an equal-weight control.

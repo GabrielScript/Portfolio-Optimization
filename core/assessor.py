@@ -565,6 +565,10 @@ class Ferramentas:
 MODELO = "deepseek-flash"            # DeepSeek-V4.1-Flash-1017 on the official API (pricing page, 2026-10-25)
 MODELO_PRO = "deepseek-v4-pro"       # DeepSeek-V4-Pro-0813, compared with Flash in DECISOES 137
 ESFORCO = "max"                      # thinking effort (low / high / max): the user's choice of 2026-11-03, DECISOES 240
+# picked on the screen per opinion (the user, 2026-11-04: max takes 7-8 minutes, too long to show the app live). On
+# the Composite's 15 names on 2026-11-04, high answered in 93 s (15/15 names, 6 claims dropped) and low in 101 s
+# (15/15, 15 dropped): low is no faster and checks worse, so it is not offered.
+ESFORCOS = ("max", "high")
 MAX_TOKENS = 64_000                  # per request, reasoning + answer: 15 stocks of claims took ~20k in a real run
 MAX_RODADAS_DE_FERRAMENTA = 6
 MAX_CHAMADAS_DE_FERRAMENTA = 12
@@ -734,7 +738,7 @@ def custo_das_ferramentas(chamadas_pagas: dict[str, int], agora: datetime) -> fl
 
 def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str,
                   agora: datetime, post: Callable[..., requests.Response] = requests.post,
-                  modelo: str = MODELO, carteira: str = CARTEIRA_CONSERVADORA) -> Resultado:
+                  modelo: str = MODELO, carteira: str = CARTEIRA_CONSERVADORA, esforco: str = ESFORCO) -> Resultado:
     """The opinion on ``universo`` (the plan's tickers) from ``pacote``: thinking mode, the tools, the assistant
     message with its ``reasoning_content`` sent back on every round (the API answers 400 otherwise), one retry of an
     empty answer and one repair request for an answer the check cannot use."""
@@ -743,7 +747,7 @@ def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Fer
     uso, chamadas = Uso(), []
     try:
         validacao, erro = _conversar(pacote, universo, ferramentas, chave, agora, post, uso, chamadas, modelo,
-                                     carteira)
+                                     carteira, esforco)
     except ErroDoModelo as falha:
         validacao, erro = None, str(falha)
     uso.custo_usd += custo_das_ferramentas(ferramentas.chamadas_pagas, agora)
@@ -752,7 +756,8 @@ def pedir_parecer(pacote: list[Evidencia], universo: list[str], ferramentas: Fer
 
 def _conversar(pacote: list[Evidencia], universo: list[str], ferramentas: Ferramentas, chave: str, agora: datetime,
                post: Callable[..., requests.Response], uso: Uso, chamadas: list[str],
-               modelo: str, carteira: str = CARTEIRA_CONSERVADORA) -> tuple[Validacao | None, str | None]:
+               modelo: str, carteira: str = CARTEIRA_CONSERVADORA,
+               esforco: str = ESFORCO) -> tuple[Validacao | None, str | None]:
     tickers = ", ".join(sorted(_ticker(ticker) for ticker in universo))
     mensagens: list[dict] = [{"role": "system", "content": mensagem_de_sistema(pacote, carteira)},
                              {"role": "user", "content": PEDIDO.format(tickers=tickers, hoje=f"{agora:%d/%m/%Y}")}]
@@ -760,7 +765,7 @@ def _conversar(pacote: list[Evidencia], universo: list[str], ferramentas: Ferram
     pico = horario_de_pico(agora)
     for _ in range(MAX_REQUISICOES):
         corpo = {"model": modelo, "messages": mensagens, "tools": FERRAMENTAS, "thinking": {"type": "enabled"},
-                 "reasoning_effort": ESFORCO, "response_format": {"type": "json_object"}, "max_tokens": MAX_TOKENS}
+                 "reasoning_effort": esforco, "response_format": {"type": "json_object"}, "max_tokens": MAX_TOKENS}
         if rodadas >= MAX_RODADAS_DE_FERRAMENTA:
             corpo["tool_choice"] = "none"
         dados = _chamar(corpo, chave, post)

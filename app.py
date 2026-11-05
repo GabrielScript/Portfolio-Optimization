@@ -157,15 +157,15 @@ def secao_assessor() -> None:
     indisponivel = ("sem a Composite registrada" if registrado is None else
                     "falta a chave do DeepSeek nos segredos do app ([deepseek] api_key)" if chave is None else None)
     universo = [] if registrado is None else list(registrado[1].index)
-    ui_assessor.secao(indisponivel, universo, lambda: _parecer_do_plano(registrado, chave))
+    ui_assessor.secao(indisponivel, universo, lambda esforco: _parecer_do_plano(registrado, chave, esforco))
 
 
-def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str) -> assessor.Resultado:
+def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str, esforco: str) -> assessor.Resultado:
     hoje = date.today()
     data, alvo = registrado
     pacote, fontes = parecer.pacote_e_fontes(alvo, data, chave, hoje)
     texto = assessor.mensagem_de_sistema(pacote, assessor.CARTEIRA_COMPOSTA)
-    return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave)
+    return servicos.gerar_parecer(texto, tuple(alvo.index), hoje, tuple(pacote), fontes, chave, esforco)
 
 
 def secao_fronteira(entradas: Entradas, registrado: tuple[date, pd.Series] | None) -> None:

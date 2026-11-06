@@ -7,7 +7,7 @@ stable for the same fact, so the seen store recognizes it on the next hourly run
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 import pandas as pd
@@ -125,12 +125,19 @@ def itens_aluguel(saldos: pd.DataFrame, taxas: pd.DataFrame, sessoes: int = 5) -
 
 @dataclass(frozen=True)
 class Serie:
-    """A macro series: ``valores`` dated by reference period; ``mensal`` writes the period as MM/YYYY."""
+    """A macro series: ``valores`` dated by reference period; ``mensal`` writes the period as MM/YYYY; ``nomes`` (date ->
+    the issuer's own period name, e.g. "2º trimestre 2026") overrides that writing."""
     nome: str
     fonte: str
     rotulo: str
     valores: pd.Series
     mensal: bool = True
+    nomes: Mapping[pd.Timestamp, str] | None = None
+
+    def periodo(self, dia: pd.Timestamp) -> str:
+        if self.nomes and dia in self.nomes:
+            return self.nomes[dia]
+        return f"{dia:%m/%Y}" if self.mensal else f"{dia:%d/%m/%Y}"
 
 
 def itens_macro(series: Iterable[Serie]) -> list[Item]:
@@ -140,10 +147,9 @@ def itens_macro(series: Iterable[Serie]) -> list[Item]:
         valores = serie.valores.dropna().sort_index()
         if valores.empty:
             continue
-        formato = "%m/%Y" if serie.mensal else "%d/%m/%Y"
         dia, valor = valores.index[-1], float(valores.iloc[-1])
-        texto = f"{serie.rotulo}: {_publicado(valor)} em {dia:{formato}}"
+        texto = f"{serie.rotulo}: {_publicado(valor)} em {serie.periodo(dia)}"
         if len(valores) > 1:
-            texto += f" (anterior: {_publicado(float(valores.iloc[-2]))} em {valores.index[-2]:{formato}})"
+            texto += f" (anterior: {_publicado(float(valores.iloc[-2]))} em {serie.periodo(valores.index[-2])})"
         itens.append(Item(_id(serie.fonte, serie.nome, dia), serie.fonte, f"{dia:%Y-%m-%d}", MACRO, texto[:CARACTERES]))
     return itens

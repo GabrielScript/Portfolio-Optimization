@@ -148,3 +148,14 @@ def test_numbers_follow_one_four_step_magnitude_ramp():
     assert aparencia.RAMPA == ("2rem", "1.25rem", "1rem", "0.8125rem")
     css = aparencia.css(aparencia.ROYAL, "dark")
     assert '[data-testid="stMetricValue"]' in css and "2rem" in css and '[data-testid="stMetricDelta"]' in css
+
+
+@pytest.mark.parametrize("tipo", ["dark", "light"])
+def test_the_band_focus_ring_is_visible_on_every_ground(tipo):
+    # a focus indicator needs 3:1 against what is around it (the documenter found #6F8EF5 at 2.8:1 on platinum)
+    tabela = pd.DataFrame({"Ticker": ["JHSF3"], "Cotação (R$)": [9.91], "Variação no dia": [0.05]})
+    anel = aparencia.FOCO_DA_FITA[tipo]
+    assert f"outline: 2px solid {anel}" in aparencia.fita(tabela, tipo)
+    for nome in (aparencia.ROYAL, aparencia.GRAFITE):
+        for fundo in aparencia.paleta(nome, tipo).fundo:
+            assert contraste(anel, fundo) >= 3.0, (anel, fundo)

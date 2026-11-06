@@ -34,18 +34,19 @@ SELETOR_CSS = (f".st-key-{CHAVE} button[aria-checked=\"true\"] {{ background: #3
 
 ALTA = {"dark": "#5BD69A", "light": "#0E6B3F"}
 BAIXA = {"dark": "#FF8A7A", "light": "#A3301F"}
+# the band's keyboard focus ring: at least 3:1 on every ground of its native type
+FOCO_DA_FITA = {"dark": "#8FA8FF", "light": "#2A4FC8"}
 
 
 @dataclass(frozen=True)
 class Paleta:
     """One appearance in one native type. ``fundo``: the ground's gradient stops; ``painel``: the panel color (opaque,
-    as tested; drawn with ``alfa``); ``cromo``: the nameplate's chrome stops; ``fio``: the 1px hairline."""
+    as tested; drawn with ``alfa``); ``fio``: the 1px hairline."""
     fundo: tuple[str, ...]
     painel: str
     alfa: float
     aurora: tuple[str, str]
     fio: str
-    cromo: tuple[str, ...]
     texto_secundario: str
     foco: str
     selecao: str
@@ -53,24 +54,21 @@ class Paleta:
     baixa: str
 
 
-_CROMO_PRATA = ("#FFFFFF", "#DCE3F0", "#8E9BB8", "#EEF2FA", "#B9C3D8")
-_CROMO_NOITE = ("#24335E", "#0B1F5C", "#5A6A90", "#1A2C66", "#0E1A3A")
-
 PALETAS: dict[tuple[str, str], Paleta] = {
     (ROYAL, "dark"): Paleta(("#060E27", "#0A1A4D", "#0B1F5C", "#071233"), "#0E1E56", 0.62,
                             ("rgba(58,95,217,0.30)", "rgba(150,170,220,0.14)"), "rgba(201,209,224,0.18)",
-                            _CROMO_PRATA, "#B7C2DA", "#8FA8FF", "rgba(58,95,217,0.45)", ALTA["dark"], BAIXA["dark"]),
+                            "#B7C2DA", "#8FA8FF", "rgba(58,95,217,0.45)", ALTA["dark"], BAIXA["dark"]),
     (ROYAL, "light"): Paleta(("#F4F7FC", "#EEF2F9", "#DCE4F3", "#E8EDF7"), "#FFFFFF", 0.78,
                              ("rgba(58,95,217,0.14)", "rgba(120,140,190,0.12)"), "rgba(14,26,58,0.14)",
-                             _CROMO_NOITE, "#44506B", "#2A4FC8", "rgba(58,95,217,0.22)", ALTA["light"],
+                             "#44506B", "#2A4FC8", "rgba(58,95,217,0.22)", ALTA["light"],
                              BAIXA["light"]),
     (GRAFITE, "dark"): Paleta(("#0E1013", "#171A1F", "#23272F", "#121418"), "#252930", 0.62,
                               ("rgba(170,180,200,0.14)", "rgba(120,130,150,0.10)"), "rgba(201,209,224,0.18)",
-                              _CROMO_PRATA, "#B8BEC9", "#C9D1E0", "rgba(170,180,200,0.35)", ALTA["dark"],
+                              "#B8BEC9", "#C9D1E0", "rgba(170,180,200,0.35)", ALTA["dark"],
                               BAIXA["dark"]),
     (GRAFITE, "light"): Paleta(("#F3F4F6", "#E9EBEF", "#DADDE3", "#ECEEF1"), "#FFFFFF", 0.80,
                                ("rgba(120,130,150,0.14)", "rgba(90,100,120,0.10)"), "rgba(20,24,32,0.14)",
-                               ("#3A404C", "#14171D", "#6B7383", "#262B34", "#14171D"), "#474E5C", "#2A4FC8",
+                               "#474E5C", "#2A4FC8",
                                "rgba(90,100,120,0.22)", ALTA["light"], BAIXA["light"]),
 }
 
@@ -180,7 +178,7 @@ def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
           mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }}
 .aq-trilho {{ display: flex; width: max-content; animation: aq-fluxo {segundos}s linear infinite; }}
 .aq-fita:hover .aq-trilho, .aq-fita:focus-within .aq-trilho {{ animation-play-state: paused; }}
-.aq-fita:focus-visible {{ outline: 2px solid #6F8EF5; outline-offset: -2px; }}
+.aq-fita:focus-visible {{ outline: 2px solid {FOCO_DA_FITA[t]}; outline-offset: -2px; }}
 .aq-q {{ display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 24px; border-right: 1px solid {fio};
   font-variant-numeric: tabular-nums; white-space: nowrap; }}
 .aq-t {{ font-family: Manrope, Inter, sans-serif; font-weight: 700; font-size: {RAMPA[2]}; }}

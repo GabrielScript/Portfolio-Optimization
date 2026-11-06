@@ -45,7 +45,6 @@ def test_the_css_moves_slowly_and_stops_for_reduced_motion():
     css = aparencia.css(aparencia.ROYAL, "dark")
     assert "@keyframes" in css and "prefers-reduced-motion: reduce" in css
     assert "::selection" in css and ":focus-visible" in css and "scrollbar-color" in css
-    assert "background-clip: text" in css                       # the chrome nameplate
     assert aparencia.css(aparencia.ROYAL, "light") != css       # the light variant has its own ground
 
 
@@ -95,4 +94,68 @@ def test_the_picked_segment_reads_white_on_royal_in_every_appearance():
 def test_the_top_bar_keeps_a_ground_so_the_page_does_not_scroll_under_the_logo():
     css = aparencia.css(aparencia.ROYAL, "dark")
     barra = css[css.index('[data-testid="stHeader"] {'):]
-    assert "background: rgba(" in barra.split("}")[0]
+    assert f"background: {aparencia.paleta(aparencia.ROYAL, 'dark').fundo[0]};" in barra.split("}")[0]   # opaque
+
+
+def test_every_section_is_a_lit_panel_with_a_silver_top_edge_that_never_moves():
+    # the whole page, not just the first viewport (the user's /goal, 2026-11-06): each section a panel on the floor
+    css = aparencia.css(aparencia.ROYAL, "dark")
+    assert '[class*="st-key-aq-secao-"]' in css and 'st-key-aq-secao-"]::before' not in css   # no stripe
+    assert '[data-testid="stHeader"] { z-index: 999990' in css or "z-index: 999990" in css   # the bar stays on top
+    assert "translate" not in css.split("@keyframes aq-aurora")[0]        # hover feedback never shifts layout
+    assert "max-width: 78ch" in css                                       # readable measure for the prose
+
+
+def test_the_band_pauses_on_keyboard_focus_too():
+    tabela = pd.DataFrame({"Ticker": ["JHSF3"], "Cotação (R$)": [9.91], "Variação no dia": [0.05]})
+    html = aparencia.fita(tabela, "dark")
+    assert 'tabindex="0"' in html and ":focus-within" in html
+
+
+def test_the_panel_helper_keys_each_section():
+    import streamlit as st
+    assert aparencia.chave_da_secao("mercado") == "aq-secao-mercado"
+    assert callable(aparencia.painel) and st is not None
+
+
+def test_native_charts_drop_their_black_ground_and_keep_their_width():
+    # Streamlit paints the Vega svg with the native background (a black block on the royal panel, seen 2026-11-06);
+    # padding on the chart box pushed the chart past the panel's right edge
+    css = aparencia.css(aparencia.ROYAL, "dark")
+    assert '[data-testid="stVegaLiteChart"] svg' in css and "background-color: transparent !important" in css
+    regras = [r.split("{", 1) for r in css.split("}") if "{" in r]
+    assert not [sel for sel, corpo in regras if "VegaLiteChart" in sel and "padding" in corpo]
+
+
+def test_the_picker_wraps_on_a_phone_instead_of_cutting_the_last_option():
+    import inspect
+    assert "wrap=True" in inspect.getsource(aparencia.escolher)
+
+
+def test_finish_review_the_nameplate_is_solid_type_and_the_grid_has_one_alpha():
+    # the finish review (2026-11-06): the gradient "chrome" read as a grey fade, not metal; hover on panels taller
+    # than the screen signals nothing and broke the one-alpha hairline grid
+    for tipo in ("dark", "light"):
+        css = aparencia.css(aparencia.ROYAL, tipo)
+        assert "background-clip: text" not in css and ":hover" not in css
+    escuro = aparencia.paleta(aparencia.ROYAL, "dark").fio
+    assert aparencia.paleta(aparencia.GRAFITE, "dark").fio == escuro
+    tabela = pd.DataFrame({"Ticker": ["JHSF3"], "Cotação (R$)": [9.91], "Variação no dia": [0.05]})
+    assert escuro in aparencia.fita(tabela, "dark")
+
+
+def test_numbers_follow_one_four_step_magnitude_ramp():
+    assert aparencia.RAMPA == ("2rem", "1.25rem", "1rem", "0.8125rem")
+    css = aparencia.css(aparencia.ROYAL, "dark")
+    assert '[data-testid="stMetricValue"]' in css and "2rem" in css and '[data-testid="stMetricDelta"]' in css
+
+
+@pytest.mark.parametrize("tipo", ["dark", "light"])
+def test_the_band_focus_ring_is_visible_on_every_ground(tipo):
+    # a focus indicator needs 3:1 against what is around it (the documenter found #6F8EF5 at 2.8:1 on platinum)
+    tabela = pd.DataFrame({"Ticker": ["JHSF3"], "Cotação (R$)": [9.91], "Variação no dia": [0.05]})
+    anel = aparencia.FOCO_DA_FITA[tipo]
+    assert f"outline: 2px solid {anel}" in aparencia.fita(tabela, tipo)
+    for nome in (aparencia.ROYAL, aparencia.GRAFITE):
+        for fundo in aparencia.paleta(nome, tipo).fundo:
+            assert contraste(anel, fundo) >= 3.0, (anel, fundo)

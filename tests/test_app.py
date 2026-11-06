@@ -822,3 +822,8 @@ def test_streamlit_default_drops_the_stylesheet_but_keeps_the_band(app_padrao):
     estilos = _estilos(app_padrao)
     assert not app_padrao.exception
     assert "aq-aurora" not in estilos and "aq-fita" in estilos
+
+
+def test_the_sections_are_panels_not_rules():
+    fonte = APP.read_text(encoding="utf-8")
+    assert 'st.markdown("---")' not in fonte and fonte.count("aparencia.painel(") >= 9

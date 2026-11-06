@@ -11,6 +11,7 @@ import streamlit as st
 from core.sentinela import conta
 from core.sentinela.tela import PainelSentinela
 from core.simulador import quedas, retornos_recentes
+from ui import graficos
 from ui.filtros import filtrar
 
 TITULO = "## Sentinela (agente DeepSeek, conta fictícia)"
@@ -48,12 +49,13 @@ def secao(painel: PainelSentinela | None) -> None:
         for coluna, nome in zip(metricas, (conta.CONTA, conta.BASE)):
             coluna.metric(nome, _reais(curvas[nome].iloc[-1]),
                           f"{retornos.loc[nome, 'Desde o início']:+.2%}".replace(".", ","))
-        st.dataframe(filtrar(retornos.rename_axis("Curva"), "retornos_sentinela"), width="stretch",
-                     column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
+        texto = graficos.percentuais_em_texto(retornos)
+        st.dataframe(filtrar(texto.rename_axis("Curva"), "retornos_sentinela"), width="stretch",
+                     column_config=graficos.colunas_de_texto(texto),
                      alt="Retornos e queda máxima da Composite com e sem a Sentinela e da Selic")
         grafico, queda = st.columns(2)
-        grafico.line_chart(curvas, y_label="R$")
-        queda.line_chart(quedas(curvas), y_label="Queda desde o pico")
+        grafico.altair_chart(graficos.curvas_em_reais(curvas))
+        queda.altair_chart(graficos.quedas_em_percentual(quedas(curvas)))
     else:
         st.caption(f"A conta fictícia começa no primeiro fechamento com o agente no ar ({_reais(conta.CAPITAL)}).")
     st.markdown("**Alertas (grave e atenção)**")

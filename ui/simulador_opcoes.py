@@ -10,11 +10,11 @@ import streamlit as st
 
 from core.simulador import quedas, retornos_recentes
 from core.simulador_opcoes import CAPITAL, INICIO, ORCAMENTO, PainelOpcoes
+from ui import graficos
 from ui.filtros import filtrar
 
 TITULO = "## Conta de opções (fictícia)"
 REAIS = st.column_config.NumberColumn(format="R$ %.2f")
-PERCENTUAL = st.column_config.NumberColumn(format="percent")
 REGRA = (f"{ORCAMENTO:.0%} da conta por mês, no primeiro pregão: metade numa put perto de 0,95 × o preço da ação mais "
          "esticada perto da máxima de 1 ano (sua ideia A), metade numa call perto de 1,05 × o preço da vencedora mais "
          "volátil (sua ideia B), cerca de 1 mês até o vencimento, compradas pelo preço de venda em lotes de 100 e "
@@ -40,12 +40,13 @@ def secao(painel: PainelOpcoes | None) -> None:
     colunas[0].metric("Patrimônio da conta de opções", _reais(curvas["Opções"].iloc[-1]),
                       f"{retornos.loc['Opções', 'Desde o início']:+.2%}".replace(".", ","))
     colunas[1].metric("Mesmo valor na Selic", _reais(curvas["Selic"].iloc[-1]))
-    st.dataframe(filtrar(retornos.rename_axis("Curva"), "retornos_opcoes"), width="stretch",
-                 column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
+    texto = graficos.percentuais_em_texto(retornos)
+    st.dataframe(filtrar(texto.rename_axis("Curva"), "retornos_opcoes"), width="stretch",
+                 column_config=graficos.colunas_de_texto(texto),
                  alt="Retorno do dia, da semana, do mês e desde o início, e queda máxima da conta de opções e da Selic")
     grafico, queda = st.columns(2)
-    grafico.line_chart(curvas, y_label="R$")
-    queda.line_chart(quedas(curvas), y_label="Queda desde o pico")
+    grafico.altair_chart(graficos.curvas_em_reais(curvas))
+    queda.altair_chart(graficos.quedas_em_percentual(quedas(curvas)))
     st.markdown("**Opções em aberto**")
     if painel.abertas.empty:
         st.caption("Nenhuma opção em aberto: tudo na Selic até o próximo ciclo.")

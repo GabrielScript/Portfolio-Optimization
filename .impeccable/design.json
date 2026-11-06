@@ -1,0 +1,675 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-06T22:51:01+00:00",
+  "title": "Design System: Aleph Quant",
+  "extensions": {
+    "colorMeta": {
+      "royal-action": {
+        "role": "primary",
+        "displayName": "Royal Action",
+        "canonical": "#3A5FD9",
+        "oklch": "oklch(53.1% 0.192 267)",
+        "tonalRamp": [
+          "#02052B",
+          "#0C1C5C",
+          "#1F388F",
+          "#3455C4",
+          "#5279EB",
+          "#7BA0FF",
+          "#A7C7FF",
+          "#D7EEFF"
+        ]
+      },
+      "on-royal": {
+        "role": "primary",
+        "displayName": "On Royal White",
+        "canonical": "#FFFFFF",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "royal-link-dark": {
+        "role": "primary",
+        "displayName": "Royal Link (dark)",
+        "canonical": "#8FA8FF",
+        "oklch": "oklch(74.8% 0.129 271)",
+        "tonalRamp": [
+          "#050821",
+          "#18214A",
+          "#2F3D76",
+          "#485BA5",
+          "#687DCA",
+          "#8EA2E4",
+          "#B6C7FC",
+          "#E1EEFF"
+        ]
+      },
+      "royal-link-light": {
+        "role": "primary",
+        "displayName": "Royal Link (light)",
+        "canonical": "#2A4FC8",
+        "oklch": "oklch(48.0% 0.193 266)",
+        "tonalRamp": [
+          "#01052B",
+          "#0B1C5C",
+          "#1D388F",
+          "#3156C5",
+          "#4F7AEC",
+          "#79A1FF",
+          "#A6C7FF",
+          "#D6EEFF"
+        ]
+      },
+      "royal-abyss": {
+        "role": "neutral",
+        "displayName": "Royal Abyss",
+        "canonical": "#060E27",
+        "oklch": "oklch(17.3% 0.053 267)",
+        "tonalRamp": [
+          "#070B14",
+          "#1E2535",
+          "#384258",
+          "#54617E",
+          "#7582A1",
+          "#99A5BF",
+          "#C0C9DF",
+          "#E8EFFD"
+        ]
+      },
+      "royal-midnight": {
+        "role": "neutral",
+        "displayName": "Royal Midnight",
+        "canonical": "#0B1F5C",
+        "oklch": "oklch(27.0% 0.112 265)",
+        "tonalRamp": [
+          "#040A1E",
+          "#152345",
+          "#2B4070",
+          "#445F9C",
+          "#6480C1",
+          "#8BA4DC",
+          "#B4C9F6",
+          "#E0EFFF"
+        ]
+      },
+      "royal-glass-dark": {
+        "role": "neutral",
+        "displayName": "Royal Glass",
+        "canonical": "rgba(14,30,86,0.62)",
+        "oklch": "oklch(26.3% 0.104 267)",
+        "tonalRamp": [
+          "#040A1D",
+          "#172343",
+          "#2F406C",
+          "#485F98",
+          "#6880BC",
+          "#8EA4D8",
+          "#B7C9F3",
+          "#E2EEFF"
+        ]
+      },
+      "platinum-ground": {
+        "role": "neutral",
+        "displayName": "Platinum Ground",
+        "canonical": "#F4F7FC",
+        "oklch": "oklch(97.5% 0.007 261)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242527",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A9",
+          "#C7C9CC",
+          "#EDEEF0"
+        ]
+      },
+      "platinum-mist": {
+        "role": "neutral",
+        "displayName": "Platinum Mist",
+        "canonical": "#DCE4F3",
+        "oklch": "oklch(91.7% 0.022 263)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252C",
+          "#3D424B",
+          "#5B616D",
+          "#7C838F",
+          "#9FA5B0",
+          "#C5C9D2",
+          "#EBEFF5"
+        ]
+      },
+      "royal-glass-light": {
+        "role": "neutral",
+        "displayName": "Royal Glass (light)",
+        "canonical": "rgba(255,255,255,0.78)",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "graphite-ground": {
+        "role": "neutral",
+        "displayName": "Graphite Ground",
+        "canonical": "#0E1013",
+        "oklch": "oklch(17.2% 0.007 258)",
+        "tonalRamp": [
+          "#0A0B0C",
+          "#242527",
+          "#404245",
+          "#5F6165",
+          "#808286",
+          "#A3A5A8",
+          "#C7C9CC",
+          "#EDEEF0"
+        ]
+      },
+      "graphite-slate": {
+        "role": "neutral",
+        "displayName": "Graphite Slate",
+        "canonical": "#23272F",
+        "oklch": "oklch(27.2% 0.016 264)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#23252A",
+          "#3F4249",
+          "#5D616A",
+          "#7E828C",
+          "#A1A5AD",
+          "#C6C9D0",
+          "#ECEEF3"
+        ]
+      },
+      "graphite-glass-dark": {
+        "role": "neutral",
+        "displayName": "Graphite Glass",
+        "canonical": "rgba(37,41,48,0.62)",
+        "oklch": "oklch(28.0% 0.014 262)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#232529",
+          "#3F4248",
+          "#5D6169",
+          "#7E838A",
+          "#A1A5AC",
+          "#C6C9CF",
+          "#ECEEF2"
+        ]
+      },
+      "graphite-ground-light": {
+        "role": "neutral",
+        "displayName": "Graphite Ground (light)",
+        "canonical": "#F3F4F6",
+        "oklch": "oklch(96.7% 0.003 265)",
+        "tonalRamp": [
+          "#0B0B0C",
+          "#252526",
+          "#414243",
+          "#606163",
+          "#818284",
+          "#A4A5A6",
+          "#C8C9CA",
+          "#EEEEEF"
+        ]
+      },
+      "graphite-glass-light": {
+        "role": "neutral",
+        "displayName": "Graphite Glass (light)",
+        "canonical": "rgba(255,255,255,0.80)",
+        "oklch": "oklch(100.0% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "native-text-dark": {
+        "role": "neutral",
+        "displayName": "Native Text (dark)",
+        "canonical": "#FAFAFA",
+        "oklch": "oklch(98.5% 0.000 90)",
+        "tonalRamp": [
+          "#0B0B0B",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#A5A5A5",
+          "#C9C9C9",
+          "#EEEEEE"
+        ]
+      },
+      "native-text-light": {
+        "role": "neutral",
+        "displayName": "Native Text (light)",
+        "canonical": "#31333F",
+        "oklch": "oklch(32.4% 0.021 278)",
+        "tonalRamp": [
+          "#0A0B0F",
+          "#23252B",
+          "#40414B",
+          "#5E606D",
+          "#7F818F",
+          "#A2A4B0",
+          "#C7C8D2",
+          "#EDEEF4"
+        ]
+      },
+      "silver-secondary": {
+        "role": "neutral",
+        "displayName": "Silver Secondary",
+        "canonical": "#B7C2DA",
+        "oklch": "oklch(81.3% 0.036 266)",
+        "tonalRamp": [
+          "#080B11",
+          "#202530",
+          "#3B4251",
+          "#586175",
+          "#798297",
+          "#9DA5B7",
+          "#C2C9D8",
+          "#EAEEF9"
+        ]
+      },
+      "slate-secondary": {
+        "role": "neutral",
+        "displayName": "Slate Secondary",
+        "canonical": "#44506B",
+        "oklch": "oklch(43.2% 0.048 266)",
+        "tonalRamp": [
+          "#080B13",
+          "#1E2533",
+          "#394256",
+          "#55617B",
+          "#76829D",
+          "#9AA5BD",
+          "#C0C9DC",
+          "#E8EFFC"
+        ]
+      },
+      "graphite-silver": {
+        "role": "neutral",
+        "displayName": "Graphite Silver",
+        "canonical": "#B8BEC9",
+        "oklch": "oklch(80.0% 0.017 263)",
+        "tonalRamp": [
+          "#0A0B0E",
+          "#22252A",
+          "#3E4249",
+          "#5C616A",
+          "#7D838C",
+          "#A1A5AD",
+          "#C6C9D0",
+          "#ECEEF3"
+        ]
+      },
+      "graphite-secondary-light": {
+        "role": "neutral",
+        "displayName": "Graphite Secondary (light)",
+        "canonical": "#474E5C",
+        "oklch": "oklch(42.3% 0.025 264)",
+        "tonalRamp": [
+          "#090B10",
+          "#21252D",
+          "#3D424D",
+          "#5B616F",
+          "#7B8291",
+          "#9FA5B2",
+          "#C4C9D3",
+          "#EBEFF5"
+        ]
+      },
+      "hairline-dark": {
+        "role": "neutral",
+        "displayName": "Hairline (dark)",
+        "canonical": "rgba(201,209,224,0.18)",
+        "oklch": "oklch(85.9% 0.023 263)",
+        "tonalRamp": [
+          "#090B0F",
+          "#22252C",
+          "#3D424C",
+          "#5B616D",
+          "#7C838F",
+          "#9FA5B0",
+          "#C5C9D2",
+          "#EBEFF5"
+        ]
+      },
+      "hairline-light": {
+        "role": "neutral",
+        "displayName": "Hairline (light)",
+        "canonical": "rgba(14,26,58,0.14)",
+        "oklch": "oklch(22.8% 0.064 266)",
+        "tonalRamp": [
+          "#060B16",
+          "#1C2538",
+          "#36415D",
+          "#516184",
+          "#7282A7",
+          "#97A5C5",
+          "#BDC9E3",
+          "#E6EFFF"
+        ]
+      },
+      "up-dark": {
+        "role": "state",
+        "displayName": "Up Green",
+        "canonical": "#5BD69A",
+        "oklch": "oklch(79.1% 0.141 159)",
+        "tonalRamp": [
+          "#001203",
+          "#003015",
+          "#00522C",
+          "#007645",
+          "#1E9966",
+          "#63BA8D",
+          "#99DBB6",
+          "#CFFBE1"
+        ]
+      },
+      "up-light": {
+        "role": "state",
+        "displayName": "Up Deep Green",
+        "canonical": "#0E6B3F",
+        "oklch": "oklch(46.6% 0.108 156)",
+        "tonalRamp": [
+          "#001004",
+          "#002E17",
+          "#0F4F2F",
+          "#257248",
+          "#4A9469",
+          "#79B58F",
+          "#A8D6B8",
+          "#D8F8E2"
+        ]
+      },
+      "down-dark": {
+        "role": "state",
+        "displayName": "Down Coral",
+        "canonical": "#FF8A7A",
+        "oklch": "oklch(75.8% 0.145 29)",
+        "tonalRamp": [
+          "#1E0100",
+          "#460E09",
+          "#72241C",
+          "#9F3C31",
+          "#C65F52",
+          "#E2897C",
+          "#FDB4A9",
+          "#FFE1D8"
+        ]
+      },
+      "down-light": {
+        "role": "state",
+        "displayName": "Down Brick",
+        "canonical": "#A3301F",
+        "oklch": "oklch(48.2% 0.154 31)",
+        "tonalRamp": [
+          "#1F0000",
+          "#480B04",
+          "#742115",
+          "#A23929",
+          "#C95C4A",
+          "#E58876",
+          "#FFB3A4",
+          "#FFE0D5"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Nameplate",
+        "purpose": "The title 'Aleph Quant' only, solid type."
+      },
+      "headline": {
+        "displayName": "Section heading",
+        "purpose": "Section titles; native weights 800/700/700/600/600/600."
+      },
+      "metric-figure": {
+        "displayName": "Magnitude 1",
+        "purpose": "Headline figures (metric values)."
+      },
+      "quote-price": {
+        "displayName": "Magnitude 2",
+        "purpose": "Prices in the quote band."
+      },
+      "quote-ticker": {
+        "displayName": "Magnitude 3",
+        "purpose": "Tickers in the quote band."
+      },
+      "label": {
+        "displayName": "Magnitude 4",
+        "purpose": "Day change, metric labels and deltas."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Prose, 78ch max."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "Code blocks."
+      }
+    },
+    "groundGradients": {
+      "royal-dark": "linear-gradient(160deg, #060E27 0%, #0A1A4D 33%, #0B1F5C 66%, #071233 100%) fixed",
+      "royal-light": "linear-gradient(160deg, #F4F7FC 0%, #EEF2F9 33%, #DCE4F3 66%, #E8EDF7 100%) fixed",
+      "graphite-dark": "linear-gradient(160deg, #0E1013 0%, #171A1F 33%, #23272F 66%, #121418 100%) fixed",
+      "graphite-light": "linear-gradient(160deg, #F3F4F6 0%, #E9EBEF 33%, #DADDE3 66%, #ECEEF1 100%) fixed"
+    },
+    "aurora": {
+      "royal-dark": [
+        "rgba(58,95,217,0.30)",
+        "rgba(150,170,220,0.14)"
+      ],
+      "royal-light": [
+        "rgba(58,95,217,0.14)",
+        "rgba(120,140,190,0.12)"
+      ],
+      "graphite-dark": [
+        "rgba(170,180,200,0.14)",
+        "rgba(120,130,150,0.10)"
+      ],
+      "graphite-light": [
+        "rgba(120,130,150,0.14)",
+        "rgba(90,100,120,0.10)"
+      ]
+    },
+    "litEdge": {
+      "rule": "secondary text color at 0.42 alpha on the panel's top border",
+      "royal-dark": "rgba(183,194,218,0.42)",
+      "royal-light": "rgba(68,80,107,0.42)",
+      "graphite-dark": "rgba(184,190,201,0.42)",
+      "graphite-light": "rgba(71,78,92,0.42)"
+    },
+    "focus": {
+      "royal-dark": "#8FA8FF",
+      "royal-light": "#2A4FC8",
+      "graphite-dark": "#C9D1E0",
+      "graphite-light": "#2A4FC8",
+      "style": "2px solid, 2px offset"
+    },
+    "chartColorways": {
+      "light": [
+        "#2A4FC8",
+        "#5A6478",
+        "#137A4B",
+        "#C0392B",
+        "#6D3FC0",
+        "#0E7C8C",
+        "#8A6A10",
+        "#A04B00",
+        "#3D4B66",
+        "#9C2F6B"
+      ],
+      "dark": [
+        "#7B96F0",
+        "#C9D1E0",
+        "#4CC38A",
+        "#F08A76",
+        "#B39BF0",
+        "#4FC1D6",
+        "#D4AF37",
+        "#E39B4B",
+        "#9AA6BF",
+        "#F2A7C3"
+      ]
+    },
+    "shadows": [
+      {
+        "name": "panel-ambient-dark",
+        "value": "0 14px 36px rgba(2,6,23,0.40)",
+        "purpose": "Section panels on dark grounds."
+      },
+      {
+        "name": "panel-ambient-light",
+        "value": "0 14px 36px rgba(14,26,58,0.08)",
+        "purpose": "Section panels on light grounds."
+      }
+    ],
+    "motion": [
+      {
+        "name": "aurora-drift",
+        "value": "38s ease-in-out infinite; translate(-4%,-2%) scale(1) to translate(4%,3%) scale(1.08)",
+        "purpose": "Floating light behind the page; off under reduced motion."
+      },
+      {
+        "name": "band-flow",
+        "value": "max(30s, 5s per ticker) linear infinite; translateX(0) to -50%",
+        "purpose": "Quote band drift; paused on hover and focus-within; off under reduced motion."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "Section Panel",
+      "kind": "card",
+      "refersTo": "section-panel",
+      "description": "Every page section: royal glass, one hairline, a lit silver top edge, soft ambient shadow; no hover.",
+      "html": "<section class=\"ds-panel\"><h2 class=\"ds-panel-title\">O que é o Aleph Quant</h2><p class=\"ds-panel-body\">Uma ferramenta de decisão para investir dinheiro real na B3.</p></section>",
+      "css": ".ds-panel { background: rgba(14,30,86,0.62); border: 1px solid rgba(201,209,224,0.18); border-top-color: rgba(183,194,218,0.42); border-radius: 18px; padding: clamp(18px, 2.4vw, 32px); box-shadow: 0 14px 36px rgba(2,6,23,0.40); color: #FAFAFA; } .ds-panel-title { font-family: Manrope, Inter, sans-serif; font-weight: 700; margin: 0 0 12px; } .ds-panel-body { font-family: Inter, sans-serif; font-size: 15px; max-width: 78ch; margin: 0; }"
+    },
+    {
+      "name": "Appearance Picker",
+      "kind": "nav",
+      "refersTo": "picker-selected",
+      "description": "Segmented control top right; the picked segment is white on royal in every appearance.",
+      "html": "<div class=\"ds-picker\" role=\"radiogroup\"><button class=\"ds-seg\" aria-checked=\"true\">Royal cromado</button><button class=\"ds-seg\" aria-checked=\"false\">Grafite prateado</button><button class=\"ds-seg\" aria-checked=\"false\">Padrão do Streamlit</button></div>",
+      "css": ".ds-picker { display: flex; flex-wrap: wrap; } .ds-seg { font-family: Inter, sans-serif; font-size: 14px; padding: 6px 14px; background: #0E1117; color: #FAFAFA; border: 1px solid rgba(250,250,250,0.2); border-radius: 8px; cursor: pointer; } .ds-seg[aria-checked=\"true\"] { background: #3A5FD9; color: #FFFFFF; border-color: #3A5FD9; } .ds-seg:focus-visible { outline: 2px solid #8FA8FF; outline-offset: 2px; }"
+    },
+    {
+      "name": "Quote Band",
+      "kind": "custom",
+      "refersTo": "quote-item",
+      "description": "The signature: the Composite's tickers, prices and day change drifting right to left; pauses on hover and focus.",
+      "html": "<div class=\"ds-band\" tabindex=\"0\" role=\"region\" aria-label=\"Cotações\"><div class=\"ds-track\"><span class=\"ds-q\"><b class=\"ds-t\">JHSF3</b><span class=\"ds-p\">R$ 10,00</span><span class=\"ds-up\">+5,93%</span></span><span class=\"ds-q\"><b class=\"ds-t\">UGPA3</b><span class=\"ds-p\">R$ 21,48</span><span class=\"ds-down\">−0,87%</span></span><span class=\"ds-q\" aria-hidden=\"true\"><b class=\"ds-t\">JHSF3</b><span class=\"ds-p\">R$ 10,00</span><span class=\"ds-up\">+5,93%</span></span><span class=\"ds-q\" aria-hidden=\"true\"><b class=\"ds-t\">UGPA3</b><span class=\"ds-p\">R$ 21,48</span><span class=\"ds-down\">−0,87%</span></span></div></div>",
+      "css": ".ds-band { overflow: hidden; border-top: 1px solid rgba(201,209,224,0.18); border-bottom: 1px solid rgba(201,209,224,0.18); background: rgba(255,255,255,0.03); color: #FAFAFA; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); } .ds-track { display: flex; width: max-content; animation: ds-flow 30s linear infinite; } .ds-band:hover .ds-track, .ds-band:focus-within .ds-track { animation-play-state: paused; } .ds-band:focus-visible { outline: 2px solid #8FA8FF; outline-offset: -2px; } .ds-q { display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 24px; border-right: 1px solid rgba(201,209,224,0.18); font-variant-numeric: tabular-nums; white-space: nowrap; } .ds-t { font-family: Manrope, Inter, sans-serif; font-weight: 700; font-size: 1rem; } .ds-p { font-family: Inter, sans-serif; font-size: 1.25rem; font-weight: 500; } .ds-up, .ds-down { font-family: Inter, sans-serif; font-size: 0.8125rem; font-weight: 600; } .ds-up { color: #5BD69A; } .ds-down { color: #FF8A7A; } @keyframes ds-flow { from { transform: translateX(0); } to { transform: translateX(-50%); } } @media (prefers-reduced-motion: reduce) { .ds-band { overflow-x: auto; } .ds-track { animation: none; } }"
+    },
+    {
+      "name": "Metric",
+      "kind": "custom",
+      "refersTo": "metric",
+      "description": "A headline figure on the magnitude ramp in a hairline frame; label and delta at the smallest step.",
+      "html": "<div class=\"ds-metric\"><div class=\"ds-metric-label\">Retorno anual</div><div class=\"ds-metric-value\">18,4%</div><div class=\"ds-metric-delta\">+2,1 p.p. vs BOVA11</div></div>",
+      "css": ".ds-metric { border: 1px solid rgba(201,209,224,0.18); border-radius: 14px; padding: 10px 12px; background: transparent; color: #FAFAFA; font-family: Inter, sans-serif; } .ds-metric-label { font-size: 0.8125rem; } .ds-metric-value { font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; } .ds-metric-delta { font-size: 0.8125rem; font-weight: 600; font-variant-numeric: tabular-nums; color: #5BD69A; }"
+    },
+    {
+      "name": "Nameplate",
+      "kind": "custom",
+      "refersTo": "display",
+      "description": "The centered solid-type title with its two caption lines; never gradient text.",
+      "html": "<header class=\"ds-name\"><h1>Aleph Quant</h1><p>Alocação quantitativa em ações, BDRs e ETFs da B3</p><p>Gabriel Estrela Lopes</p></header>",
+      "css": ".ds-name { text-align: center; color: #FAFAFA; } .ds-name h1 { font-family: Manrope, Inter, sans-serif; font-weight: 800; letter-spacing: -0.025em; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1.05; margin: 0; } .ds-name p { font-family: Inter, sans-serif; font-size: 14px; color: #B7C2DA; margin: 4px 0 0; }"
+    },
+    {
+      "name": "Hairline Divider",
+      "kind": "custom",
+      "refersTo": "hairline-dark",
+      "description": "Markdown rule: the one hairline, faded at both ends.",
+      "html": "<hr class=\"ds-hr\">",
+      "css": ".ds-hr { border: none; height: 1px; margin: 2.2rem 0; background: linear-gradient(90deg, transparent, rgba(201,209,224,0.18) 12%, rgba(201,209,224,0.18) 88%, transparent); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Pregão at Night",
+    "overview": "The page is the B3 trading floor's quote board after dark, seen through royal-blue glass: the Composite's prices drift in one band under a solid nameplate, and every section below is a lit panel on that floor. Streamlit's native theme (`.streamlit/config.toml`, light and dark) stays underneath and writes all text, widgets and dataframes; the appearances in `ui/aparencia.py` repaint only grounds, panels, hairlines and the nameplate. No code API sets the native theme, so each appearance ships a light and a dark variant and follows whichever type the native menu reports.\n\nThree appearances, picked top right and kept in the URL (`?aparencia=`): **Royal cromado** (default), **Grafite prateado** (the same system on graphite), and **Padrão do Streamlit** (native colors, no injected stylesheet). In the native appearance the quote band and the bordered section panels stay, because they carry content, not decoration. Contrast is WCAG 2.1 AA in every pairing, held by `tests/test_tema.py` and `tests/test_aparencia.py`.",
+    "keyCharacteristics": [
+      "Dark royal or graphite gradient ground (160deg, fixed) with a slow two-spot aurora behind the content.",
+      "Translucent glass panels with one 1px hairline and a lit silver top edge.",
+      "One four-step magnitude ramp for every number; tabular numerals throughout.",
+      "Colour quarantined to the shell, data series and states; prose stays neutral."
+    ],
+    "rules": [
+      {
+        "name": "The One Hairline Rule",
+        "body": "Every edge on the page is 1px at one alpha: 0.18 on dark, 0.14 on light. The quote band uses the Royal hairline in every appearance. The only exception is a panel's top edge (see Elevation).",
+        "section": "colors"
+      },
+      {
+        "name": "The Quarantined Colour Rule",
+        "body": "Prose stays in native neutrals. Colour lives in the shell (ground, aurora, picker), the data series and the up/down states.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ten Slots Rule",
+        "body": "Each native type carries exactly ten `chartCategoricalColors`, one per slot of Streamlit's Plotly template; fewer and Plotly drops the theme colors. Light: #2A4FC8, #5A6478, #137A4B, #C0392B, #6D3FC0, #0E7C8C, #8A6A10, #A04B00, #3D4B66, #9C2F6B. Dark: #7B96F0, #C9D1E0, #4CC38A, #F08A76, #B39BF0, #4FC1D6, #D4AF37, #E39B4B, #9AA6BF, #F2A7C3. Each holds 3:1 on its grounds. Charts never set their own color range.",
+        "section": "colors"
+      },
+      {
+        "name": "The Magnitude Ramp Rule",
+        "body": "Numbers take one of four sizes: 2rem (headline figure), 1.25rem (price), 1rem (ticker), 0.8125rem (change and labels). No fifth size; tabular numerals on all of them.",
+        "section": "typography"
+      },
+      {
+        "name": "The Solid Nameplate Rule",
+        "body": "The nameplate is solid type in the native text color. Gradient \"chrome\" text read as a grey fade at review and was rejected.",
+        "section": "typography"
+      },
+      {
+        "name": "The Still Panel Rule",
+        "body": "Panels have no hover state and never translate. The \"chrome\" is one lit top edge: the secondary text color at 0.42 alpha on the 1px border, a hairline, never a stripe or pseudo-element bar.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Slow Flow Rule",
+        "body": "Motion is ambient and slow: the aurora drifts on a 38s ease-in-out loop; the band moves linearly over max(30s, 5s per ticker), pauses on hover and keyboard focus, and both stop under reduced motion.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** put every new section in `aparencia.painel(\"<name>\")` in story order.",
+      "**Do** size numbers from the magnitude ramp only (2 / 1.25 / 1 / 0.8125 rem), with tabular numerals.",
+      "**Do** draw edges with the one hairline alpha (0.18 dark / 0.14 light).",
+      "**Do** let charts take the theme colorway; put the highlighted series first.",
+      "**Do** add a light and a dark variant for any new appearance and test it for WCAG AA."
+    ],
+    "donts": [
+      "**Don't** add hover states, lifts or translations to panels.",
+      "**Don't** set gradient or clipped-background text on the nameplate or headings.",
+      "**Don't** override native text, widget or dataframe colors; repaint grounds, panels and hairlines only.",
+      "**Don't** shorten or lengthen a chart colorway from ten.",
+      "**Don't** inject appearance CSS in Padrão do Streamlit beyond the picked-segment rule; the band keeps its own styles."
+    ]
+  }
+}

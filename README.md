@@ -268,7 +268,10 @@ shown with Markdown escaped.
   test). Task "alepha sentinela" through `scripts/com_python_base.py` (base Python + the venv's packages).
 - **Also in this round:** the Conservadora left the main line (charts and headline; it stays in the tables); the 28
   formulations tested against the Composite are on the screen; `scripts/aporte_real.py` prints the ticket of the real
-  R$ 500 of 19/12 (closing-auction orders, the user places them).
+  buy of 19/12 (closing-auction orders, the user places them). Since 06/11 the amount follows the fictitious "Composto +
+  Sentinela" balance: under R$ 11,000 nothing, then R$ 500, R$ 750 from 12,500, R$ 1,000 from 13,000; it also prints
+  the agent's alpha against "Composto (base)" (DECISOES 283-284). The paid adviser opinion needs an access code; d1.1
+  scores the sentiment log beside Jev (lake `b3lake.d1score`).
 
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica

@@ -812,3 +812,19 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
 - New lake data (not used by the app yet): B3 official indices, daily index compositions, 16 BDI tables (lending,
   open positions, forward, IOPV, margin scenarios...).
 - Next: a DeepSeek "sentinel" that watches the Composite's names during the session and alerts by email (DECISOES 261).
+
+## Session notes (2026-11-05 night)
+
+- Sentinela (DeepSeek watch agent) pre-registered before any code: `docs/superpowers/specs/2026-11-05-sentinela-design.md`
+  with five amendments. Sources polled by code every hour (no API cost), the model called only on new items; hard
+  caps of 40 low + 6 max calls a day; acts only in a fictitious "Composite + Sentinela" account at >= 70%; its
+  autonomy is decided at the reading (first session on or after 2027-01-08) by proper scoring rules (Brier, log).
+- New sources confirmed: IBGE SIDRA (GDP, unemployment, industry), BCB fiscal series (primary result, net and gross
+  debt), B3 lending jumps, price/volume anomalies; Tesouro's API was down (its monthly XLSX is optional).
+- Decision judge: on 60 hand-labelled CVM filings, Liquid AI's d1.1 beat d1-ultra and Jev 1.14 (93% / 82% / 80%
+  accuracy; Brier 0.082 / 0.121 / 0.145; about 1.1 s each) (`docs/juizes-2026-11-05.md`). d1.1 replaces Jev in new
+  work; Jev stays only in the pre-registered sentiment log.
+- Research closed: the book's 25 formulations (second batch read 05/11) and three optimizers fed the Composite's
+  alpha: none passes; half Kelly and robust Markowitz tie the Composite with smaller drawdowns (branches
+  `feat/us-lote2`, `feat/lote3-composto`). The Composite stays the real-money plan (R$ 500 on 19/12, closing auction).
+- Out of scope by the user: FIIs/FIAGROs; US work shelved (not deleted). No ML/RL/multi-agent model decides weights.

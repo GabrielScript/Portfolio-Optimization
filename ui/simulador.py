@@ -10,6 +10,7 @@ import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
 from core.top5 import CARTEIRA as TOP5, INICIO as INICIO_TOP5
+from ui import graficos
 from ui.filtros import filtrar
 
 CARTEIRA_PRINCIPAL = "Composto"
@@ -18,8 +19,8 @@ SOBRE_AS_CARTEIRAS = (f"A {TOP5} compra as 5 ações de maior nota da Composite,
                       f"fechamento de {INICIO_TOP5:%d/%m/%Y}.")
 PERCENTUAL = st.column_config.NumberColumn(format="percent")
 COLUNAS_DAS_POSICOES = {"Qtd.": st.column_config.NumberColumn(format="%d"),
-                        "Fechamento na troca (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
-                        "Valor (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
+                        "Fechamento na troca (R$)": st.column_config.NumberColumn(format="localized"),
+                        "Valor (R$)": st.column_config.NumberColumn(format="localized"),
                         "Desde a troca": PERCENTUAL, "Peso": PERCENTUAL}
 
 
@@ -96,12 +97,13 @@ def secao(painel: Painel | None) -> None:
                       _sinal(principal["Desde o início"]))
     for coluna, periodo in zip(colunas[1:], ("Dia", "Semana", "Mês"), strict=True):
         coluna.metric(periodo, _sinal(principal[periodo]))
-    st.dataframe(filtrar(retornos.rename_axis("Carteira"), "retornos_simulador"), width="stretch",
-                 column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
+    texto = graficos.percentuais_em_texto(retornos)
+    st.dataframe(filtrar(texto.rename_axis("Carteira"), "retornos_simulador"), width="stretch",
+                 column_config=graficos.colunas_de_texto(texto),
                  alt="Retorno do dia, da semana, do mês e desde o início, e queda máxima de cada curva")
     grafico, queda = st.columns(2)
-    grafico.line_chart(curvas_do_grafico(curvas), y_label="R$")
-    queda.line_chart(quedas(curvas_do_grafico(curvas)), y_label="Queda desde o pico")
+    grafico.altair_chart(graficos.curvas_em_reais(curvas_do_grafico(curvas)))
+    queda.altair_chart(graficos.quedas_em_percentual(quedas(curvas_do_grafico(curvas))))
     for carteira in carteiras_com_posicoes(painel.posicoes):
         tabela = painel.posicoes[carteira]
         st.markdown(f"**Posições: {carteira}**")

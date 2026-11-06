@@ -22,6 +22,8 @@ import pandas as pd
 ROYAL, GRAFITE, PADRAO = "Royal cromado", "Grafite prateado", "Padrão do Streamlit"
 OPCOES = (ROYAL, GRAFITE, PADRAO)
 CHAVE = "aparencia"               # the widget key and the URL query parameter that keeps the choice
+# one emphasis ramp for numbers (the brief's magnitude ramp): headline figure, price, ticker, change and labels
+RAMPA = ("2rem", "1.25rem", "1rem", "0.8125rem")
 AJUDA = ("Royal cromado e Grafite prateado seguem o claro ou escuro do Streamlit (menu ⋮ → Settings → Theme). "
          "Padrão do Streamlit mostra as cores nativas, sem efeitos.")
 
@@ -63,7 +65,7 @@ PALETAS: dict[tuple[str, str], Paleta] = {
                              _CROMO_NOITE, "#44506B", "#2A4FC8", "rgba(58,95,217,0.22)", ALTA["light"],
                              BAIXA["light"]),
     (GRAFITE, "dark"): Paleta(("#0E1013", "#171A1F", "#23272F", "#121418"), "#252930", 0.62,
-                              ("rgba(170,180,200,0.14)", "rgba(120,130,150,0.10)"), "rgba(201,209,224,0.16)",
+                              ("rgba(170,180,200,0.14)", "rgba(120,130,150,0.10)"), "rgba(201,209,224,0.18)",
                               _CROMO_PRATA, "#B8BEC9", "#C9D1E0", "rgba(170,180,200,0.35)", ALTA["dark"],
                               BAIXA["dark"]),
     (GRAFITE, "light"): Paleta(("#F3F4F6", "#E9EBEF", "#DADDE3", "#ECEEF1"), "#FFFFFF", 0.80,
@@ -94,7 +96,6 @@ def css(nome: str, tipo_nativo: str) -> str:
     p = paleta(nome, tipo_nativo)
     painel = _rgba(p.painel, p.alfa)
     paradas = ", ".join(f"{cor} {int(i * 100 / (len(p.fundo) - 1))}%" for i, cor in enumerate(p.fundo))
-    cromo = ", ".join(f"{cor} {pos}%" for cor, pos in zip(p.cromo, (0, 38, 52, 68, 100)))
     sombra = "rgba(2,6,23,0.40)" if tipo(tipo_nativo) == "dark" else "rgba(14,26,58,0.08)"
     borda_acesa = _rgba(p.texto_secundario, 0.42)          # the lit silver edge of a panel: a hairline, never a stripe
     return f"""
@@ -110,21 +111,20 @@ def css(nome: str, tipo_nativo: str) -> str:
   50% {{ transform: translate(4%, 3%) scale(1.08); }}
 }}
 [data-testid="stAppViewContainer"], [data-testid="stBottomBlockContainer"] {{ background: transparent; }}
-[data-testid="stHeader"] {{ background: {_rgba(p.fundo[0], 0.96)}; border-bottom: 1px solid {p.fio}; z-index: 999990; }}
+[data-testid="stHeader"] {{ background: {p.fundo[0]}; border-bottom: 1px solid {p.fio}; z-index: 999990; }}
 [data-testid="stMain"] {{ position: relative; z-index: 1; }}
 [class*="st-key-aq-secao-"] {{
   background: {painel}; border: 1px solid {p.fio} !important; border-top-color: {borda_acesa} !important;
   border-radius: 18px; padding: clamp(18px, 2.4vw, 32px) !important; margin-top: 1.25rem;
-  box-shadow: 0 14px 36px {sombra}; transition: border-color 0.4s ease, box-shadow 0.4s ease;
+  box-shadow: 0 14px 36px {sombra};
 }}
-[class*="st-key-aq-secao-"]:hover {{ border-color: {borda_acesa} !important; box-shadow: 0 16px 40px {sombra}; }}
 [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li {{ max-width: 78ch; }}
 .st-key-aq-nome h1 {{
-  background: linear-gradient(180deg, {cromo});
-  -webkit-background-clip: text; background-clip: text;
-  letter-spacing: -0.02em; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1.05;
+  font-weight: 800; letter-spacing: -0.025em; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1.05;
 }}
-.st-key-aq-nome h1, .st-key-aq-nome h1 * {{ color: transparent !important; }}
+[data-testid="stMetricValue"] {{ font-size: {RAMPA[0]}; font-weight: 700; font-variant-numeric: tabular-nums; }}
+[data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {{ font-size: {RAMPA[3]}; }}
+[data-testid="stMetricDelta"] {{ font-weight: 600; font-variant-numeric: tabular-nums; }}
 .st-key-aq-nome [data-testid="stCaptionContainer"] {{ color: {p.texto_secundario}; }}
 [data-testid="stMarkdownContainer"] hr {{
   border: none; height: 1px; margin: 2.2rem 0;
@@ -171,7 +171,7 @@ def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
     linhas = list(zip(tabela["Ticker"], tabela["Cotação (R$)"].astype(float), tabela["Variação no dia"].astype(float)))
     itens = "".join(_item(tk, p, v, t, False) for tk, p, v in linhas)
     copia = "".join(_item(tk, p, v, t, True) for tk, p, v in linhas)
-    fio = "rgba(201,209,224,0.16)" if t == "dark" else "rgba(14,26,58,0.14)"
+    fio = PALETAS[(ROYAL, t)].fio                    # the one hairline alpha of the page
     fundo = "rgba(255,255,255,0.03)" if t == "dark" else "rgba(14,26,58,0.035)"
     segundos = max(30, 5 * len(linhas))
     return f"""<style>
@@ -183,8 +183,9 @@ def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
 .aq-fita:focus-visible {{ outline: 2px solid #6F8EF5; outline-offset: -2px; }}
 .aq-q {{ display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 24px; border-right: 1px solid {fio};
   font-variant-numeric: tabular-nums; white-space: nowrap; }}
-.aq-t {{ font-family: Manrope, Inter, sans-serif; font-weight: 700; }}
-.aq-v {{ font-weight: 600; font-size: 0.92em; }}
+.aq-t {{ font-family: Manrope, Inter, sans-serif; font-weight: 700; font-size: {RAMPA[2]}; }}
+.aq-p {{ font-size: {RAMPA[1]}; font-weight: 500; }}
+.aq-v {{ font-weight: 600; font-size: {RAMPA[3]}; }}
 @keyframes aq-fluxo {{ from {{ transform: translateX(0); }} to {{ transform: translateX(-50%); }} }}
 @media (prefers-reduced-motion: reduce) {{
   .aq-fita {{ overflow-x: auto; }} .aq-trilho {{ animation: none; }}

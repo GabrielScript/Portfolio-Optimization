@@ -45,7 +45,6 @@ def test_the_css_moves_slowly_and_stops_for_reduced_motion():
     css = aparencia.css(aparencia.ROYAL, "dark")
     assert "@keyframes" in css and "prefers-reduced-motion: reduce" in css
     assert "::selection" in css and ":focus-visible" in css and "scrollbar-color" in css
-    assert "background-clip: text" in css                       # the chrome nameplate
     assert aparencia.css(aparencia.ROYAL, "light") != css       # the light variant has its own ground
 
 
@@ -95,15 +94,14 @@ def test_the_picked_segment_reads_white_on_royal_in_every_appearance():
 def test_the_top_bar_keeps_a_ground_so_the_page_does_not_scroll_under_the_logo():
     css = aparencia.css(aparencia.ROYAL, "dark")
     barra = css[css.index('[data-testid="stHeader"] {'):]
-    assert "background: rgba(" in barra.split("}")[0]
+    assert f"background: {aparencia.paleta(aparencia.ROYAL, 'dark').fundo[0]};" in barra.split("}")[0]   # opaque
 
 
-def test_every_section_is_a_lit_panel_with_a_chrome_top_edge_and_a_glow_without_moving():
+def test_every_section_is_a_lit_panel_with_a_silver_top_edge_that_never_moves():
     # the whole page, not just the first viewport (the user's /goal, 2026-11-06): each section a panel on the floor
     css = aparencia.css(aparencia.ROYAL, "dark")
     assert '[class*="st-key-aq-secao-"]' in css and 'st-key-aq-secao-"]::before' not in css   # no stripe
     assert '[data-testid="stHeader"] { z-index: 999990' in css or "z-index: 999990" in css   # the bar stays on top
-    assert '[class*="st-key-aq-secao-"]:hover' in css
     assert "translate" not in css.split("@keyframes aq-aurora")[0]        # hover feedback never shifts layout
     assert "max-width: 78ch" in css                                       # readable measure for the prose
 
@@ -132,3 +130,21 @@ def test_native_charts_drop_their_black_ground_and_keep_their_width():
 def test_the_picker_wraps_on_a_phone_instead_of_cutting_the_last_option():
     import inspect
     assert "wrap=True" in inspect.getsource(aparencia.escolher)
+
+
+def test_finish_review_the_nameplate_is_solid_type_and_the_grid_has_one_alpha():
+    # the finish review (2026-11-06): the gradient "chrome" read as a grey fade, not metal; hover on panels taller
+    # than the screen signals nothing and broke the one-alpha hairline grid
+    for tipo in ("dark", "light"):
+        css = aparencia.css(aparencia.ROYAL, tipo)
+        assert "background-clip: text" not in css and ":hover" not in css
+    escuro = aparencia.paleta(aparencia.ROYAL, "dark").fio
+    assert aparencia.paleta(aparencia.GRAFITE, "dark").fio == escuro
+    tabela = pd.DataFrame({"Ticker": ["JHSF3"], "Cotação (R$)": [9.91], "Variação no dia": [0.05]})
+    assert escuro in aparencia.fita(tabela, "dark")
+
+
+def test_numbers_follow_one_four_step_magnitude_ramp():
+    assert aparencia.RAMPA == ("2rem", "1.25rem", "1rem", "0.8125rem")
+    css = aparencia.css(aparencia.ROYAL, "dark")
+    assert '[data-testid="stMetricValue"]' in css and "2rem" in css and '[data-testid="stMetricDelta"]' in css

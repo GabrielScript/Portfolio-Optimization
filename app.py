@@ -76,7 +76,8 @@ def main() -> None:
         if ICONE is not None:
             st.image(str(ICONE), width=104, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
         st.title("Aleph Quant", anchor=False, text_alignment="center")
-        st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Gabriel Estrela Lopes", text_alignment="center")
+        st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3", text_alignment="center")
+        st.caption("Gabriel Estrela Lopes", text_alignment="center")       # own line: no dangling "·" on a phone
     faixa = st.empty()
     registrado = servicos.carregar_plano_registrado()
     # every section a lit panel on the floor (the user's /goal of 2026-11-06: the whole layout, not one viewport)
@@ -129,7 +130,8 @@ def _peso_por_setor(alvo: pd.Series) -> None:
     setores |= servicos.setores_do_lago(tuple(t for t in nomes if t not in setores), servicos.PASTA_MARCOS_V3)
     setores = {ticker: setores.get(ticker) or ticker.removesuffix(".SA") for ticker in nomes}
     por_setor = pd.Series(1.0 / len(nomes), index=nomes).groupby(lambda ticker: setores[ticker]).sum()
-    st.bar_chart(por_setor.sort_values().rename("Peso na Composite"), horizontal=True, x_label="Peso na Composite")
+    st.bar_chart((por_setor.sort_values() * 100).rename("Peso na Composite (%)"), horizontal=True,
+                 x_label="Peso na Composite (%)")    # percent, not 0.07 (the finish review, 2026-11-06)
 
 
 def secao_mercado() -> None:

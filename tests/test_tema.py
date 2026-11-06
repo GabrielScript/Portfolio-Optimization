@@ -1,5 +1,5 @@
-"""The app's native theme (the user's design request of 2026-11-04: premium black, stylized gold and royal blue),
-checked against WCAG 2.1 contrast so the colors stay readable."""
+"""The app's native theme (the user's design request of 2026-11-06: royal blue, gray and silver, with Streamlit's own
+light and dark kept as the third choice), checked against WCAG 2.1 contrast so the colors stay readable."""
 
 import tomllib
 from pathlib import Path
@@ -22,9 +22,10 @@ def contraste(a: str, b: str) -> float:
     return (claro + 0.05) / (escuro + 0.05)
 
 
-@pytest.fixture(scope="module")
-def tema() -> dict:
-    return tomllib.loads(CONFIG.read_text(encoding="utf-8"))["theme"]
+def tema_nativo(tipo: str) -> dict:
+    """``[theme]`` with ``[theme.light]`` or ``[theme.dark]`` over it, the way Streamlit resolves them."""
+    tema = tomllib.loads(CONFIG.read_text(encoding="utf-8"))["theme"]
+    return {**{k: v for k, v in tema.items() if not isinstance(v, dict)}, **tema[tipo]}
 
 
 def test_the_wcag_contrast_formula():
@@ -32,23 +33,24 @@ def test_the_wcag_contrast_formula():
     assert contraste("#777777", "#FFFFFF") == pytest.approx(4.48, abs=0.01)
 
 
-def test_the_theme_is_premium_black_with_gold_and_royal_blue(tema):
-    assert tema["base"] == "dark"
-    assert _luminancia(tema["backgroundColor"]) < 0.01                       # near black
-    assert tema["linkColor"] == tema["chartCategoricalColors"][0]             # the gold leads links and charts
-    assert tema["primaryColor"].upper() == "#3A5FD9"                          # royal blue for the actions
+def test_both_streamlit_defaults_stay_available_through_the_settings_toggle():
+    # [theme.light] and [theme.dark] together turn on Streamlit's light/dark switch (menu > Settings)
+    claro, escuro = tema_nativo("light"), tema_nativo("dark")
+    assert claro["backgroundColor"].upper() == "#FFFFFF" and escuro["backgroundColor"].upper() == "#0E1117"
+    assert claro["primaryColor"].upper() == escuro["primaryColor"].upper() == "#3A5FD9"     # royal blue actions
+    assert "Manrope" in claro["headingFont"] and "Inter" in claro["font"]
 
 
-def test_text_links_and_buttons_meet_wcag_aa(tema):
+@pytest.mark.parametrize("tipo", ["light", "dark"])
+def test_text_links_and_buttons_meet_wcag_aa(tipo):
+    tema = tema_nativo(tipo)
     fundo, painel = tema["backgroundColor"], tema["secondaryBackgroundColor"]
-    for texto in (tema["textColor"], tema["linkColor"], tema["dataframeHeaderTextColor"]):
+    for texto in (tema["textColor"], tema["linkColor"]):
         assert min(contraste(texto, fundo), contraste(texto, painel)) >= 4.5, texto
     assert contraste("#FFFFFF", tema["primaryColor"]) >= 4.5                  # Streamlit writes button text white
     assert contraste(tema["primaryColor"], fundo) >= 3.0                      # sliders, toggles, focus rings
     for cor in tema["chartCategoricalColors"]:
         assert contraste(cor, fundo) >= 3.0, cor                              # chart lines against the background
-    barra = {**tema, **tema.get("sidebar", {})}
-    assert contraste(barra["textColor"], barra["backgroundColor"]) >= 4.5
 
 
 def test_the_logo_shows_only_once_the_user_adds_the_file(tmp_path):
@@ -86,3 +88,10 @@ def test_no_file_of_the_app_still_carries_the_old_name():
                               ":!tests/test_tema.py", ":!tests/test_app.py"],
                              capture_output=True, text=True, cwd=Path(__file__).resolve().parents[1]).stdout.split()
     assert achados == []
+
+
+@pytest.mark.parametrize("tipo", ["light", "dark"])
+def test_ten_chart_colors_so_plotly_keeps_the_theme(tipo):
+    # Streamlit's Plotly template has ten color slots: with fewer, the rest arrive as "undefined" and Plotly drops the
+    # whole colorway for its own default (seen on the page, 2026-11-06)
+    assert len(tema_nativo(tipo)["chartCategoricalColors"]) >= 10

@@ -796,3 +796,29 @@ def test_the_sentinela_section_follows_the_options_account_and_says_when_it_has_
     secao = "## Sentinela (agente DeepSeek, conta fictícia)"
     assert titulos.index("## Conta de opções (fictícia)") < titulos.index(secao)
     assert any("Ainda não rodou" in aviso.value for aviso in at.info)
+
+
+# ---------------------------------------------------------------- appearance (the user's design request, 2026-11-06)
+
+def _estilos(at: AppTest) -> str:
+    return "".join(str(bloco.proto) for bloco in at.get("html"))
+
+
+def test_the_page_opens_in_royal_chrome_with_the_picker_and_the_quote_band(app_padrao):
+    from ui import aparencia
+    assert not app_padrao.exception
+    seletor = app_padrao.get("button_group")[0]
+    assert seletor.value == aparencia.ROYAL                               # the default appearance
+    estilos = _estilos(app_padrao)
+    assert "st-key-aq-nome" in estilos and "aq-aurora" in estilos      # the royal stylesheet is on
+    assert "aq-fita" in estilos and "R$ " in estilos                    # the Composite's prices drift under the name
+    assert app_padrao.title[0].value == "Aleph Quant"                    # the chrome comes from CSS, not markdown
+
+
+def test_streamlit_default_drops_the_stylesheet_but_keeps_the_band(app_padrao):
+    from ui import aparencia
+    app_padrao.session_state[aparencia.CHAVE] = aparencia.PADRAO
+    app_padrao.run()
+    estilos = _estilos(app_padrao)
+    assert not app_padrao.exception
+    assert "aq-aurora" not in estilos and "aq-fita" in estilos

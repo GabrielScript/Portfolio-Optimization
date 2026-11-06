@@ -30,7 +30,7 @@ from assets import BENCHMARK_ACOES, get_all_tickers, get_ticker_info  # noqa: E4
 from ativos_eua import get_ticker_info_eua  # noqa: E402
 from ativos_tela import info_curada, info_da_tela  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
-from ui import alepha, comparacao, cotacoes, painel, parecer, servicos  # noqa: E402
+from ui import alepha, aparencia, comparacao, cotacoes, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -66,18 +66,23 @@ def _info_com_eua() -> dict:
 
 
 def main() -> None:
-    # native theme in .streamlit/config.toml (the user's design request of 2026-11-04); the gold title is the theme's
-    # the user's eagle above the name, both centered (the user, 2026-11-04)
-    with st.container(horizontal_alignment="center", gap=None):
+    # the appearance (the user's design request of 2026-11-06): royal chrome by default, graphite silver or
+    # Streamlit's own light/dark; the picker sits top right, the choice stays in the URL
+    with st.container(horizontal=True, horizontal_alignment="right"):
+        escolha = aparencia.escolher()
+    nativo = aparencia.aplicar(escolha)
+    # the user's eagle above the chrome name, both centered (the user, 2026-11-04); the quote band right under them
+    with st.container(horizontal_alignment="center", gap=None, key="aq-nome"):
         if ICONE is not None:
-            st.image(str(ICONE), width=120, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
-        st.title(":yellow[Aleph Quant]", text_alignment="center")
+            st.image(str(ICONE), width=104, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
+        st.title("Aleph Quant", anchor=False, text_alignment="center")
         st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Gabriel Estrela Lopes", text_alignment="center")
+    faixa = st.empty()
     registrado = servicos.carregar_plano_registrado()
     st.markdown("## O que é o Aleph Quant")
     st.markdown(SOBRE)
     st.markdown("---")
-    secao_cotacoes(registrado)
+    secao_cotacoes(registrado, faixa, nativo)
     st.markdown("---")
     alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
     st.markdown("---")
@@ -100,12 +105,14 @@ def main() -> None:
     secao_assessor()
 
 
-def secao_cotacoes(registrado: tuple[date, pd.Series] | None) -> None:
-    """The Composite's quotes now (the user, 2026-11-05), from a year of daily closes for the previous close."""
+def secao_cotacoes(registrado: tuple[date, pd.Series] | None, faixa=None, nativo: str = "dark") -> None:
+    """The Composite's quotes now (the user, 2026-11-05), from a year of daily closes for the previous close; the same
+    quotes drift in the band ``faixa`` under the name (the user's design request of 2026-11-06)."""
     tickers = () if registrado is None else tuple(registrado[1].index)
     fechamentos = (servicos.carregar_precos(tickers, 1, date.today(), precos_do_app.versao_dos_dados()).precos
                    if tickers else pd.DataFrame())
-    cotacoes.secao(tickers, fechamentos, servicos.carregar_cotacoes, servicos.descartar_cotacoes, get_ticker_info())
+    cotacoes.secao(tickers, fechamentos, servicos.carregar_cotacoes, servicos.descartar_cotacoes, get_ticker_info(),
+                   faixa=faixa, nativo=nativo)
     if registrado is not None:
         _peso_por_setor(registrado[1])
 

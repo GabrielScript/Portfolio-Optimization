@@ -11,6 +11,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from ui import aparencia
 from ui.filtros import filtrar
 
 TITULO = "## Cotações de agora: as ações da Composite"
@@ -35,9 +36,10 @@ def tabela_de_cotacoes(cotacoes: pd.DataFrame, fechamentos: pd.DataFrame, info: 
     return pd.DataFrame(linhas)
 
 
-def secao(tickers: tuple[str, ...], fechamentos: pd.DataFrame, carregar, descartar, info: dict) -> None:
+def secao(tickers: tuple[str, ...], fechamentos: pd.DataFrame, carregar, descartar, info: dict, faixa=None,
+          nativo: str = "dark") -> None:
     """The section: ``carregar(tickers, janela)`` and ``descartar(tickers, janela)`` are ``ui.servicos``'s cached quote
-    loader and its per-portfolio clear."""
+    loader and its per-portfolio clear; ``faixa``, an ``st.empty`` higher on the page, gets the quote band."""
     st.markdown(TITULO)
     if not tickers:
         st.caption("Sem a Composite registrada.")
@@ -48,6 +50,8 @@ def secao(tickers: tuple[str, ...], fechamentos: pd.DataFrame, carregar, descart
     with st.spinner("Buscando as cotações do dia…"):
         cotacoes = carregar(tickers, janela)
     tabela = tabela_de_cotacoes(cotacoes, janela, info)
+    if faixa is not None and (band := aparencia.fita(tabela, nativo)):
+        faixa.html(band)
     st.dataframe(filtrar(tabela, "cotacoes"), width="stretch", hide_index=True,
                  column_config={"Cotação (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
                                 "Fechamento anterior (R$)": st.column_config.NumberColumn(format="R$ %.2f"),

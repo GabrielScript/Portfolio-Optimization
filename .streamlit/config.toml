@@ -1,50 +1,39 @@
-# Aleph Quant's native theme (the user's design request of 2026-11-04): premium black, stylized gold and royal
-# blue. tests/test_tema.py holds it to WCAG 2.1 AA. Streamlit writes primary-button text in white, so the actions
-# take the royal blue (5.5:1 with white) and the gold leads text accents, links, table headers and charts.
+# Aleph Quant's native theme (the user's design request of 2026-11-06): Streamlit's own light and dark stay as the
+# "Padrão do Streamlit" appearance and as the base under the royal and graphite appearances (ui/aparencia.py repaints
+# grounds and panels on top). Defining both [theme.light] and [theme.dark] turns on the light/dark switch in the
+# menu > Settings. tests/test_tema.py and tests/test_aparencia.py hold every color to WCAG 2.1 AA.
 
 [theme]
-base = "dark"
-backgroundColor = "#0B0B0E"
-secondaryBackgroundColor = "#17171D"
-textColor = "#EDE6D6"
-primaryColor = "#3A5FD9"
-linkColor = "#D4AF37"
+primaryColor = "#3A5FD9"             # royal blue: 5.5:1 with the white Streamlit writes on primary buttons
 linkUnderline = false
-borderColor = "#2A2A33"
 showWidgetBorder = true
-showSidebarBorder = true
 baseRadius = "medium"
 buttonRadius = "medium"
-codeBackgroundColor = "#121217"
-codeTextColor = "#E6C866"
 
 font = "Inter:https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-headingFont = "'Playfair Display':https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&display=swap"
+headingFont = "Manrope:https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&display=swap"
 codeFont = "'JetBrains Mono':https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap"
 baseFontSize = 15
-headingFontWeights = [700, 600, 600, 600, 600, 600]
-metricValueFontWeight = 600          # Streamlit 1.66
-paddingTop = "3rem"                  # Streamlit 1.66: less empty band above the title (default about 6rem)
+headingFontWeights = [800, 700, 700, 600, 600, 600]
+metricValueFontWeight = 700          # Streamlit 1.66
+paddingTop = "2.5rem"                # Streamlit 1.66: less empty band above the title (default about 6rem)
 
-dataframeHeaderBackgroundColor = "#1C1C23"
-dataframeHeaderTextColor = "#D4AF37"
-dataframeBorderColor = "#2A2A33"
+[theme.light]
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F0F2F6"
+textColor = "#31333F"
+linkColor = "#2A4FC8"
+# royal, slate, green, brick, violet, teal, dark gold, rust, navy, plum: each at least 3:1 on white and on the platinum
+# grounds. Ten, one per slot of Streamlit's Plotly template (fewer and Plotly drops the theme colors)
+chartCategoricalColors = ["#2A4FC8", "#5A6478", "#137A4B", "#C0392B", "#6D3FC0", "#0E7C8C", "#8A6A10", "#A04B00", "#3D4B66",
+                          "#9C2F6B"]
 
-yellowColor = "#D4AF37"
-yellowTextColor = "#D4AF37"
-blueColor = "#7B96F0"
-greenColor = "#4CC38A"
-redColor = "#E8735F"
-orangeColor = "#E39B4B"
-violetColor = "#A98BEB"
-grayColor = "#9A9488"
-
-# gold, light royal blue, warm gray, green, coral, violet, teal: every one at least 3:1 on the black
-chartCategoricalColors = ["#D4AF37", "#7B96F0", "#B8B2A6", "#4CC38A", "#E8735F", "#A98BEB", "#4FC1D6"]
-chartSequentialColors = ["#1A1712", "#2E2614", "#433517", "#5A4519", "#72561C", "#8B681F", "#A47B24", "#BC8F2B", "#D4AF37", "#E8CF7A"]
-
-[theme.sidebar]
-backgroundColor = "#0D1020"
-secondaryBackgroundColor = "#161A2E"
-textColor = "#EDE6D6"
-borderColor = "#262B45"
+[theme.dark]
+backgroundColor = "#0E1117"
+secondaryBackgroundColor = "#262730"
+textColor = "#FAFAFA"
+linkColor = "#8FA8FF"
+# light royal, silver, green, coral, violet, teal, the eagle's gold, orange, steel, rose: each at least 3:1 on the night
+# grounds; ten, like the light list
+chartCategoricalColors = ["#7B96F0", "#C9D1E0", "#4CC38A", "#F08A76", "#B39BF0", "#4FC1D6", "#D4AF37", "#E39B4B", "#9AA6BF",
+                          "#F2A7C3"]

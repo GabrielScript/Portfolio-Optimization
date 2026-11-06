@@ -24,7 +24,7 @@ LOGO, ICONE = arquivo_da_logo(), arquivo_do_icone()
 st.set_page_config(page_title="Aleph Quant · Alocação quantitativa B3", page_icon=str(ICONE or ICONE_PADRAO),
                    layout="wide")
 if LOGO is not None:     # the eagle and the gold name, top-left: the page has no sidebar (the user, 2026-11-06)
-    st.logo(str(LOGO), icon_image=str(ICONE), size="large")
+    st.logo(str(LOGO), icon_image=str(LOGO), size="large")
 
 from assets import BENCHMARK_ACOES, get_all_tickers, get_ticker_info  # noqa: E402
 from ativos_eua import get_ticker_info_eua  # noqa: E402

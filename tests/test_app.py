@@ -191,7 +191,8 @@ def test_the_page_has_no_sidebar_only_the_logo_in_the_top_left_corner(monkeypatc
     at.run()
     assert not at.exception
     assert not at.sidebar.children                     # nothing drawn in the sidebar: Streamlit shows none
-    assert "st.logo(" in APP.read_text(encoding="utf-8")
+    # without a sidebar Streamlit shows ``icon_image`` in the corner: the full logo (eagle + gold name), not the icon
+    assert 'st.logo(str(LOGO), icon_image=str(LOGO)' in APP.read_text(encoding="utf-8")
 
 
 def _figuras(at: AppTest) -> list[str]:

@@ -30,7 +30,7 @@ from assets import BENCHMARK_ACOES, get_all_tickers, get_ticker_info  # noqa: E4
 from ativos_eua import get_ticker_info_eua  # noqa: E402
 from ativos_tela import info_curada, info_da_tela  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
-from ui import alepha, aparencia, comparacao, cotacoes, painel, parecer, servicos  # noqa: E402
+from ui import alepha, aparencia, comparacao, cotacoes, destaques, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -75,6 +75,8 @@ def main() -> None:
     with st.container(horizontal_alignment="center", gap=None, key="aq-nome"):
         if ICONE is not None:
             st.image(str(ICONE), width=104, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
+        if (cromado := aparencia.nome_cromado(escolha, nativo)) is not None:   # chrome asset; the h1 stays for readers
+            st.image(str(cromado), width=520, alt="Aleph Quant")
         st.title("Aleph Quant", anchor=False, text_alignment="center")
         st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3", text_alignment="center")
         st.caption("Gabriel Estrela Lopes", text_alignment="center")       # own line: no dangling "·" on a phone
@@ -82,8 +84,12 @@ def main() -> None:
     registrado = servicos.carregar_plano_registrado()
     # every section a lit panel on the floor (the user's /goal of 2026-11-06: the whole layout, not one viewport)
     with aparencia.painel("sobre"):
-        st.markdown("## O que é o Aleph Quant")
-        st.markdown(SOBRE)
+        texto, numeros = st.columns([7, 5], gap="large")      # the comp's split: what it is, then the numbers
+        with texto:
+            st.markdown("## O que é o Aleph Quant")
+            st.markdown(SOBRE)
+        with numeros:
+            destaques.mostrar(_destaques(registrado))
     with aparencia.painel("cotacoes"):
         secao_cotacoes(registrado, faixa, nativo)
     with aparencia.painel("backtest"):
@@ -106,6 +112,16 @@ def main() -> None:
         secao_mercado()
     with aparencia.painel("assessor"):
         secao_assessor()
+
+
+def _destaques(registrado: tuple[date, pd.Series] | None) -> list:
+    """The headline tiles from the files the sections below read (the comparison, the simulator, the registry)."""
+    comparacao = servicos.carregar_comparacao()
+    simulado = servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados())
+    conta = (float(simulado.curvas[ui_simulador.CARTEIRA_PRINCIPAL].iloc[-1])
+             if simulado is not None and ui_simulador.CARTEIRA_PRINCIPAL in simulado.curvas else None)
+    return destaques.numeros(None if comparacao is None else comparacao[0], conta,
+                             None if registrado is None else len(registrado[1]))
 
 
 def secao_cotacoes(registrado: tuple[date, pd.Series] | None, faixa=None, nativo: str = "dark") -> None:

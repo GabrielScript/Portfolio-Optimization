@@ -16,6 +16,7 @@ from __future__ import annotations
 import html
 import math
 from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
 
@@ -54,6 +55,11 @@ class Paleta:
     baixa: str
 
 
+# the brief's zone ramp: one silver ramp of seven steps per native type, lightest to darkest; every neutral of the
+# royal and graphite appearances (secondary text, hairline, lit edge) is one of its steps
+PRATA = {"dark": ("#EEF2FA", "#DCE3F0", "#C9D1E0", "#B7C2DA", "#8E9BB8", "#5A6A90", "#2A3556"),
+         "light": ("#E3E8F1", "#C3CAD8", "#8A94A8", "#5A6478", "#44506B", "#26324F", "#0E1A3A")}
+
 PALETAS: dict[tuple[str, str], Paleta] = {
     (ROYAL, "dark"): Paleta(("#060E27", "#0A1A4D", "#0B1F5C", "#071233"), "#0E1E56", 0.62,
                             ("rgba(58,95,217,0.30)", "rgba(150,170,220,0.14)"), "rgba(201,209,224,0.18)",
@@ -64,13 +70,18 @@ PALETAS: dict[tuple[str, str], Paleta] = {
                              BAIXA["light"]),
     (GRAFITE, "dark"): Paleta(("#0E1013", "#171A1F", "#23272F", "#121418"), "#252930", 0.62,
                               ("rgba(170,180,200,0.14)", "rgba(120,130,150,0.10)"), "rgba(201,209,224,0.18)",
-                              "#B8BEC9", "#C9D1E0", "rgba(170,180,200,0.35)", ALTA["dark"],
+                              "#B7C2DA", "#C9D1E0", "rgba(170,180,200,0.35)", ALTA["dark"],
                               BAIXA["dark"]),
     (GRAFITE, "light"): Paleta(("#F3F4F6", "#E9EBEF", "#DADDE3", "#ECEEF1"), "#FFFFFF", 0.80,
-                               ("rgba(120,130,150,0.14)", "rgba(90,100,120,0.10)"), "rgba(20,24,32,0.14)",
-                               "#474E5C", "#2A4FC8",
+                               ("rgba(120,130,150,0.14)", "rgba(90,100,120,0.10)"), "rgba(14,26,58,0.14)",
+                               "#44506B", "#2A4FC8",
                                "rgba(90,100,120,0.22)", ALTA["light"], BAIXA["light"]),
 }
+
+
+# the chrome wordmark, produced by scripts/nome_cromado.py (the finish review: CSS gradient text read as a grey fade)
+PASTA_DA_MARCA = Path(__file__).resolve().parents[1] / "marca"
+NOME_CROMADO = {"dark": "nome-cromado-escuro.webp", "light": "nome-cromado-claro.webp"}
 
 
 def tipo(valor: str | None) -> str:
@@ -80,6 +91,13 @@ def tipo(valor: str | None) -> str:
 
 def paleta(nome: str, tipo_nativo: str) -> Paleta:
     return PALETAS[(nome, tipo(tipo_nativo))]
+
+
+def nome_cromado(nome: str, tipo_nativo: str) -> Path | None:
+    """The chrome wordmark for the royal and graphite appearances; Streamlit's default keeps the plain title."""
+    if nome not in (ROYAL, GRAFITE):
+        return None
+    return PASTA_DA_MARCA / NOME_CROMADO[tipo(tipo_nativo)]
 
 
 def _rgba(cor: str, alfa: float) -> str:
@@ -118,8 +136,9 @@ def css(nome: str, tipo_nativo: str) -> str:
 }}
 [data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li {{ max-width: 78ch; }}
 .st-key-aq-nome h1 {{
-  font-weight: 800; letter-spacing: -0.025em; font-size: clamp(2.6rem, 5vw, 4rem); line-height: 1.05;
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }}
+.st-key-aq-nome img {{ max-width: min(520px, 86vw); height: auto; }}
 [data-testid="stMetricValue"] {{ font-size: {RAMPA[0]}; font-weight: 700; font-variant-numeric: tabular-nums; }}
 [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {{ font-size: {RAMPA[3]}; }}
 [data-testid="stMetricDelta"] {{ font-weight: 600; font-variant-numeric: tabular-nums; }}

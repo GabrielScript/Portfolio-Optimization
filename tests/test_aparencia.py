@@ -159,3 +159,43 @@ def test_the_band_focus_ring_is_visible_on_every_ground(tipo):
     for nome in (aparencia.ROYAL, aparencia.GRAFITE):
         for fundo in aparencia.paleta(nome, tipo).fundo:
             assert contraste(anel, fundo) >= 3.0, (anel, fundo)
+
+
+@pytest.mark.parametrize("tipo", ["dark", "light"])
+def test_neutrals_snap_to_one_seven_step_silver_ramp(tipo):
+    # the brief's zone ramp: every neutral of an appearance is a step of one silver ramp per native type
+    from tests.test_tema import _luminancia
+    rampa = aparencia.PRATA[tipo]
+    assert len(rampa) == 7 and len(set(rampa)) == 7
+    brilhos = [_luminancia(cor) for cor in rampa]
+    assert brilhos == sorted(brilhos, reverse=True)                       # lightest to darkest
+    for nome in (aparencia.ROYAL, aparencia.GRAFITE):
+        p = aparencia.paleta(nome, tipo)
+        assert p.texto_secundario in rampa
+        r, g, b = (int(x) for x in p.fio.removeprefix("rgba(").split(",")[:3])
+        assert f"#{r:02X}{g:02X}{b:02X}" in rampa                          # the hairline is a ramp step at one alpha
+
+
+def test_no_black_and_gold_chart_code_is_left_behind():
+    # the old world's palette (premium black, gold) lived on in unused chart builders (the documenter, 2026-11-06)
+    from pathlib import Path
+    import visualizations
+    fonte = Path(visualizations.__file__).read_text(encoding="utf-8")
+    assert not hasattr(visualizations, "CORES")
+    assert "plotly_dark" not in fonte and "#0B0B0E" not in fonte and "#D4AF37" not in fonte
+
+
+@pytest.mark.parametrize("tipo", ["dark", "light"])
+def test_the_chrome_nameplate_is_a_real_raster_wordmark_with_the_text_kept_for_screen_readers(tipo):
+    # the finish review: CSS gradient text read as a grey fade; chrome is a produced asset (marca/, made by
+    # scripts/nome_cromado.py), shown in the royal and graphite appearances only
+    from PIL import Image
+    for nome in (aparencia.ROYAL, aparencia.GRAFITE):
+        arquivo = aparencia.nome_cromado(nome, tipo)
+        assert arquivo is not None and arquivo.exists() and arquivo.suffix == ".webp"
+        imagem = Image.open(arquivo)
+        assert imagem.mode == "RGBA" and imagem.height >= 120                 # @2x of a ~64 px nameplate
+        assert 4 < imagem.width / imagem.height < 9                            # one line: "Aleph Quant"
+    assert aparencia.nome_cromado(aparencia.PADRAO, tipo) is None
+    css = aparencia.css(aparencia.ROYAL, tipo)
+    assert "clip: rect(0 0 0 0)" in css                                        # the h1 stays, visually hidden

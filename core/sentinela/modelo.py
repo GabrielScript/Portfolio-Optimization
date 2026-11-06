@@ -23,10 +23,16 @@ MAX_TOKENS_VARREDURA = 8_000
 MAX_TOKENS_DECISAO = 32_000
 LIMITES = {"varredura": 40, "decisao": 6}          # hard caps a day (spec, "Budget caps")
 
+PERFIL = ("The investor is extremely aggressive (\"extremamente arrojado\"): seeks the highest return over five years or more, "
+          "accepts high volatility and deep temporary drawdowns, and rejects only a permanent loss of capital (fraud, "
+          "insolvency, lasting value destruction). Judge by that yardstick: a temporary fall is not your concern.")
+
 INSTRUCOES_VARREDURA = """You are the Sentinela of Aleph Quant: a skeptical watch agent over ONE stock of a rule-based \
 B3 portfolio (the Composite). You read only the pack in the user message: new official items about this stock (CVM \
 filings, B3 market data, BCB, IBGE and Tesouro releases) and a few context lines. You have no other source and no \
 tools; never use facts from memory.
+
+""" + PERFIL + """
 
 Your only job: say whether anything in the NEW items seriously compromises this stock's value: fraud, a judicial \
 recovery or bankruptcy filing, a default, a regulator's sanction, the loss of a key license or contract, a large \
@@ -53,6 +59,8 @@ INSTRUCOES_DECISAO = """You are the Sentinela of Aleph Quant deciding, for a FIC
 halve or sell ONE stock of the Composite portfolio after the scan flagged a serious event. You read only the pack in \
 the user message: the new official items, the scan's citations, the stock's recent CVM filings and context lines. No \
 other source, no tools, never facts from memory.
+
+""" + PERFIL + """
 
 Actions: "manter" (keep: the default when the evidence is ambiguous, already priced or temporary), "reduzir_metade" \
 (sell half), "vender" (sell all). Sell only when the cited items show a lasting impairment of the company's value. A \

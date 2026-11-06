@@ -118,3 +118,10 @@ def test_budget_caps_40_low_and_6_max_calls_a_day():
 def test_budget_of_a_day_counts_the_calls_already_logged():
     orcamento = modelo.Orcamento.do_dia({"varredura": 39, "decisao": 6})
     assert orcamento.gastar("varredura") and not orcamento.gastar("varredura") and not orcamento.gastar("decisao")
+
+
+def test_both_instructions_state_the_investors_profile_as_the_adviser_does():
+    # the user, 2026-11-06: the Sentinela judges for the same extremely aggressive investor as the adviser (DECISOES 287)
+    from core.sentinela.modelo import INSTRUCOES_DECISAO, INSTRUCOES_VARREDURA, PERFIL
+    assert "extremamente arrojado" in PERFIL and "permanent loss of capital" in PERFIL
+    assert PERFIL in INSTRUCOES_VARREDURA and PERFIL in INSTRUCOES_DECISAO

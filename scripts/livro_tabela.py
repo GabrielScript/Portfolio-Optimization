@@ -25,7 +25,7 @@ DADOS = Path("docs/dados")
 EXPORTS = Path("D:/b3-datalake/exports")
 PERIODOS = {"b3": 252, "us": 12}
 FASES = {"b3": (0, 21, 42), "us": (0, 1, 2)}
-LOTES = {1: "todas", 2: "lote2"}
+LOTES = {1: "todas", 2: "lote2", 3: "lote3"}
 REFERENCIAS = ("Composto", "Conservadora")
 
 Giro = Callable[[Any], float]

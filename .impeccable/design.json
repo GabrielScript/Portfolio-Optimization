@@ -440,7 +440,7 @@
     "typographyMeta": {
       "display": {
         "displayName": "Nameplate",
-        "purpose": "The title 'Aleph Quant' only, solid type."
+        "purpose": "The title 'Aleph Quant' only: the produced chrome wordmark (royal, graphite) or the native title."
       },
       "headline": {
         "displayName": "Section heading",
@@ -613,7 +613,7 @@
   ],
   "narrative": {
     "northStar": "The Pregão at Night",
-    "overview": "The page is the B3 trading floor's quote board after dark, seen through royal-blue glass: the Composite's prices drift in one band under a solid nameplate, and every section below is a lit panel on that floor. Streamlit's native theme (`.streamlit/config.toml`, light and dark) stays underneath and writes all text, widgets and dataframes; the appearances in `ui/aparencia.py` repaint only grounds, panels, hairlines and the nameplate. No code API sets the native theme, so each appearance ships a light and a dark variant and follows whichever type the native menu reports.\n\nThree appearances, picked top right and kept in the URL (`?aparencia=`): **Royal cromado** (default), **Grafite prateado** (the same system on graphite), and **Padrão do Streamlit** (native colors, no injected stylesheet). In the native appearance the quote band and the bordered section panels stay, because they carry content, not decoration. Contrast is WCAG 2.1 AA in every pairing, held by `tests/test_tema.py` and `tests/test_aparencia.py`.",
+    "overview": "The page is the B3 trading floor's quote board after dark, seen through royal-blue glass: the Composite's prices drift in one band under a chrome nameplate, and every section below is a lit panel on that floor. Streamlit's native theme (`.streamlit/config.toml`, light and dark) stays underneath and writes all text, widgets and dataframes; the appearances in `ui/aparencia.py` repaint only grounds, panels, hairlines and the nameplate. No code API sets the native theme, so each appearance ships a light and a dark variant and follows whichever type the native menu reports.\n\nThree appearances, picked top right and kept in the URL (`?aparencia=`): **Royal cromado** (default), **Grafite prateado** (the same system on graphite), and **Padrão do Streamlit** (native colors, no injected stylesheet). In the native appearance the quote band and the bordered section panels stay, because they carry content, not decoration. Contrast is WCAG 2.1 AA in every pairing, held by `tests/test_tema.py` and `tests/test_aparencia.py`.",
     "keyCharacteristics": [
       "Dark royal or graphite gradient ground (160deg, fixed) with a slow two-spot aurora behind the content.",
       "Translucent glass panels with one 1px hairline and a lit silver top edge.",
@@ -642,8 +642,8 @@
         "section": "typography"
       },
       {
-        "name": "The Solid Nameplate Rule",
-        "body": "The nameplate is solid type in the native text color. Gradient \"chrome\" text read as a grey fade at review and was rejected.",
+        "name": "The Produced Chrome Rule",
+        "body": "Chrome is a raster asset (marca/nome-cromado-*.webp from scripts/nome_cromado.py), never CSS gradient text, which read as a grey fade at review. The h1 stays for screen readers, visually hidden.",
         "section": "typography"
       },
       {

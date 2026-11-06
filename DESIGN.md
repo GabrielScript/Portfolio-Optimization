@@ -67,7 +67,7 @@ components:
 **Creative North Star: "The Pregão at Night"**
 
 The page is the B3 trading floor's quote board after dark, seen through royal-blue glass: the Composite's prices drift
-in one band under a solid nameplate, and every section below is a lit panel on that floor. Streamlit's native theme
+in one band under a chrome nameplate, and every section below is a lit panel on that floor. Streamlit's native theme
 (`.streamlit/config.toml`, light and dark) stays underneath and writes all text, widgets and dataframes; the
 appearances in `ui/aparencia.py` repaint only grounds, panels, hairlines and the nameplate. No code API sets the native
 theme, so each appearance ships a light and a dark variant and follows whichever type the native menu reports.
@@ -98,6 +98,10 @@ Night royal and graphite grounds with silver neutrals; one royal action color an
 - **Silver / Slate Secondary**: captions and secondary text per appearance and type; also the source of the lit edge.
 - **Hairline** (dark / light): every divider, panel edge, band rule, chart frame, header rule and scrollbar thumb.
 - **Native Text**: Streamlit's own text colors, never overridden.
+- **Silver Ramp** (`PRATA` in `ui/aparencia.py`): seven steps per native type, lightest to darkest. Dark: #EEF2FA,
+  #DCE3F0, #C9D1E0, #B7C2DA, #8E9BB8, #5A6A90, #2A3556. Light: #E3E8F1, #C3CAD8, #8A94A8, #5A6478, #44506B, #26324F,
+  #0E1A3A. Every neutral of the royal and graphite appearances (secondary text, hairline base, lit edge) is a step;
+  graphite shares the ramp (tested).
 
 ### States
 - **Up / Down** (green / coral on dark, deep green / brick on light): day change in the quote band only.
@@ -123,7 +127,8 @@ Plotly template; fewer and Plotly drops the theme colors. Light: #2A4FC8, #5A647
 **Character:** A geometric, heavy Manrope for names and headings over a quiet Inter that does the reading and counting.
 
 ### Hierarchy
-- **Display**: the nameplate "Aleph Quant" only, centered under the eagle.
+- **Display**: the nameplate "Aleph Quant" only, centered under the eagle: a produced chrome wordmark in the royal
+  and graphite appearances, the native title in Streamlit's default.
 - **Headline**: section titles; native heading weights 800, 700, 700, 600, 600, 600 (h1-h6).
 - **Metric figure / Quote price / Quote ticker / Label**: the magnitude ramp, largest to smallest.
 - **Body**: prose capped at 78ch.
@@ -132,14 +137,19 @@ Plotly template; fewer and Plotly drops the theme colors. Light: #2A4FC8, #5A647
 **The Magnitude Ramp Rule.** Numbers take one of four sizes: 2rem (headline figure), 1.25rem (price), 1rem
 (ticker), 0.8125rem (change and labels). No fifth size; tabular numerals on all of them.
 
-**The Solid Nameplate Rule.** The nameplate is solid type in the native text color. Gradient "chrome" text read as a
-grey fade at review and was rejected.
+**The Produced Chrome Rule.** Chrome is a raster asset, never CSS gradient text (which read as a grey fade at
+review). `marca/nome-cromado-escuro.webp` and `-claro.webp` (908x150, @2x, lossless) come from
+`scripts/nome_cromado.py`: Manrope 800 (OFL), a horizon chrome anchored on the cap height, a top-edge bevel and a thin
+navy outline. Shown at 520px (max 86vw) with 14px of clear space under the eagle; the h1 stays in the page for
+screen readers, visually hidden.
 
 ## Layout
 
 One long single column in Streamlit's centered layout, no sidebar, 2.5rem above the first row. Order: picker
-(right-aligned row), nameplate block (eagle 104px, title, two caption lines), the full-width quote band, then one
-panel per section in story order: sobre, cotacoes, backtest, comparacao, formulas, simulador, opcoes, sentinela,
+(right-aligned row), nameplate block (eagle 104px, chrome wordmark, two caption lines), the full-width quote band,
+then one panel per section in story order. The first panel splits 7/5 like the Claude Design comp: "O que é o
+Aleph Quant" left, four headline tiles right (`ui/destaques.py`: Composite a year and max drawdown via
+`core.metrics`, the account balance, stocks in the Composite) with their period and terms in a caption. Order: sobre, cotacoes, backtest, comparacao, formulas, simulador, opcoes, sentinela,
 (eua when enabled), mercado, assessor. Panels are 1.25rem apart with fluid padding; Markdown dividers take 2.2rem.
 On a phone the picker wraps to two rows and the band keeps scrolling at full width.
 
@@ -199,7 +209,8 @@ widgets and buttons at Streamlit's `medium` radius. All borders are hairlines; n
 
 ### Don't:
 - **Don't** add hover states, lifts or translations to panels.
-- **Don't** set gradient or clipped-background text on the nameplate or headings.
+- **Don't** set gradient or clipped-background text anywhere; chrome comes only from the produced wordmark.
+- **Don't** show a headline number without its period and terms on screen, or round it differently from its section.
 - **Don't** override native text, widget or dataframe colors; repaint grounds, panels and hairlines only.
 - **Don't** shorten or lengthen a chart colorway from ten.
 - **Don't** inject appearance CSS in Padrão do Streamlit beyond the picked-segment rule; the band keeps its own styles.

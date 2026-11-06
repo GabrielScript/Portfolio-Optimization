@@ -199,3 +199,11 @@ def test_the_chrome_nameplate_is_a_real_raster_wordmark_with_the_text_kept_for_s
     assert aparencia.nome_cromado(aparencia.PADRAO, tipo) is None
     css = aparencia.css(aparencia.ROYAL, tipo)
     assert "clip: rect(0 0 0 0)" in css                                        # the h1 stays, visually hidden
+
+
+def test_the_eagle_keeps_clear_space_above_the_wordmark():
+    # the second finish review: the eagle's tail touched the top of "Quant"
+    css = aparencia.css(aparencia.ROYAL, "dark")
+    # each image sits in its own element container: the eagle is the container's first child
+    assert '.st-key-aq-nome > [data-testid="stElementContainer"]:first-child {{ margin-bottom: 14px; }}'.replace(
+        "{{", "{").replace("}}", "}") in css

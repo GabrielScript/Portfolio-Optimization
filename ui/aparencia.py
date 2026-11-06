@@ -139,6 +139,7 @@ def css(nome: str, tipo_nativo: str) -> str:
   position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
 }}
 .st-key-aq-nome img {{ max-width: min(520px, 86vw); height: auto; }}
+.st-key-aq-nome > [data-testid="stElementContainer"]:first-child {{ margin-bottom: 14px; }}
 [data-testid="stMetricValue"] {{ font-size: {RAMPA[0]}; font-weight: 700; font-variant-numeric: tabular-nums; }}
 [data-testid="stMetricLabel"], [data-testid="stMetricDelta"] {{ font-size: {RAMPA[3]}; }}
 [data-testid="stMetricDelta"] {{ font-weight: 600; font-variant-numeric: tabular-nums; }}

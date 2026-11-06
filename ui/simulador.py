@@ -17,11 +17,10 @@ CARTEIRA_PRINCIPAL = "Composto"
 # what each portfolio is (the Top-5 since the user's request of 2026-11-06, DECISOES 290)
 SOBRE_AS_CARTEIRAS = (f"A {TOP5} compra as 5 ações de maior nota da Composite, uma por setor, 20% cada, e começa no "
                       f"fechamento de {INICIO_TOP5:%d/%m/%Y}.")
-PERCENTUAL = st.column_config.NumberColumn(format="percent")
-COLUNAS_DAS_POSICOES = {"Qtd.": st.column_config.NumberColumn(format="%d"),
-                        "Fechamento na troca (R$)": st.column_config.NumberColumn(format="localized"),
-                        "Valor (R$)": st.column_config.NumberColumn(format="localized"),
-                        "Desde a troca": PERCENTUAL, "Peso": PERCENTUAL}
+# fixed pt-BR decimals through a Styler (the finish review: "localized" dropped trailing zeros)
+REAIS_DAS_POSICOES = ["Fechamento na troca (R$)", "Valor (R$)"]
+PERCENTUAIS_DAS_POSICOES = ["Desde a troca", "Peso"]
+COLUNAS_DAS_POSICOES = {"Qtd.": st.column_config.NumberColumn(format="%d")}
 
 
 def _reais(valor: float, casas: int = 2) -> str:
@@ -107,7 +106,8 @@ def secao(painel: Painel | None) -> None:
     for carteira in carteiras_com_posicoes(painel.posicoes):
         tabela = painel.posicoes[carteira]
         st.markdown(f"**Posições: {carteira}**")
-        st.dataframe(filtrar(tabela.rename_axis("Ativo"), f"posicoes_{carteira}"), width="stretch",
+        visivel = filtrar(tabela.rename_axis("Ativo"), f"posicoes_{carteira}")
+        st.dataframe(graficos.estilo_br(visivel, REAIS_DAS_POSICOES, PERCENTUAIS_DAS_POSICOES), width="stretch",
                      column_config=COLUNAS_DAS_POSICOES,
                      alt=f"Ações, caixa e reserva de opções da carteira {carteira} no último fechamento")
     st.caption(f"Último fechamento: {pd.Timestamp(curvas.index[-1]):%d/%m/%Y}.")

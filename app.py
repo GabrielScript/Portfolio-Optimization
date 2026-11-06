@@ -30,7 +30,7 @@ from assets import BENCHMARK_ACOES, get_all_tickers, get_ticker_info  # noqa: E4
 from ativos_eua import get_ticker_info_eua  # noqa: E402
 from ativos_tela import info_curada, info_da_tela  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
-from ui import alepha, aparencia, comparacao, cotacoes, destaques, painel, parecer, servicos  # noqa: E402
+from ui import alepha, aparencia, comparacao, cotacoes, destaques, graficos, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
@@ -89,7 +89,8 @@ def main() -> None:
             st.markdown("## O que é o Aleph Quant")
             st.markdown(SOBRE)
         with numeros:
-            destaques.mostrar(_destaques(registrado))
+            itens, nota = _destaques(registrado)
+            destaques.mostrar(itens, nota)
     with aparencia.painel("cotacoes"):
         secao_cotacoes(registrado, faixa, nativo)
     with aparencia.painel("backtest"):
@@ -114,14 +115,15 @@ def main() -> None:
         secao_assessor()
 
 
-def _destaques(registrado: tuple[date, pd.Series] | None) -> list:
+def _destaques(registrado: tuple[date, pd.Series] | None) -> tuple[list, str]:
     """The headline tiles from the files the sections below read (the comparison, the simulator, the registry)."""
     comparacao = servicos.carregar_comparacao()
     simulado = servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados())
     conta = (float(simulado.curvas[ui_simulador.CARTEIRA_PRINCIPAL].iloc[-1])
              if simulado is not None and ui_simulador.CARTEIRA_PRINCIPAL in simulado.curvas else None)
-    return destaques.numeros(None if comparacao is None else comparacao[0], conta,
-                             None if registrado is None else len(registrado[1]))
+    curvas = None if comparacao is None else comparacao[0]
+    return (destaques.numeros(curvas, conta, None if registrado is None else len(registrado[1])),
+            destaques.legenda(curvas))
 
 
 def secao_cotacoes(registrado: tuple[date, pd.Series] | None, faixa=None, nativo: str = "dark") -> None:
@@ -146,8 +148,7 @@ def _peso_por_setor(alvo: pd.Series) -> None:
     setores |= servicos.setores_do_lago(tuple(t for t in nomes if t not in setores), servicos.PASTA_MARCOS_V3)
     setores = {ticker: setores.get(ticker) or ticker.removesuffix(".SA") for ticker in nomes}
     por_setor = pd.Series(1.0 / len(nomes), index=nomes).groupby(lambda ticker: setores[ticker]).sum()
-    st.bar_chart((por_setor.sort_values() * 100).rename("Peso na Composite (%)"), horizontal=True,
-                 x_label="Peso na Composite (%)")    # percent, not 0.07 (the finish review, 2026-11-06)
+    st.altair_chart(graficos.barras_por_setor(por_setor))    # percent, whole sector names (the finish review)
 
 
 def secao_mercado() -> None:

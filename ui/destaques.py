@@ -41,18 +41,30 @@ def numeros(comparacao: pd.DataFrame | None, conta: float | None, acoes: int | N
         saida += [Numero("Composite ao ano", ao_ano, _br(ao_ano * 100, 1) + "%", fonte),
                   Numero("Queda máxima", queda, _br(queda * 100, 1) + "%", fonte)]
     if conta is not None:
-        saida.append(Numero("Conta Composite", conta, "R$ " + _br(conta, 0),
+        saida.append(Numero("Conta Composite (R$)", conta, _br(conta, 2),       # unit in the label: fits the tile
                             "Conta fictícia de R$ 10.000 desde 03/11/2026, com custos"))
     if acoes is not None:
         saida.append(Numero("Ações na carteira", float(acoes), str(acoes), "A Composite registrada, pesos iguais"))
     return saida
 
 
-def mostrar(itens: list[Numero]) -> None:
-    """Two by two tiles, the source in each tile's help."""
+def legenda(comparacao: pd.DataFrame | None) -> str:
+    """The tiles' period and terms, on screen (a real-money tool's first viewport keeps them visible)."""
+    conta = "Conta fictícia de R$ 10.000 desde 03/11/2026."
+    if comparacao is None or "Composite" not in comparacao.columns:
+        return conta
+    curva = comparacao["Composite"].dropna()
+    return (f"Backtest sem viés de sobrevivência de {curva.index[0]:%d/%m/%Y} a {curva.index[-1]:%d/%m/%Y}, "
+            f"depois de custos e antes do Imposto de Renda. {conta}")
+
+
+def mostrar(itens: list[Numero], nota: str = "") -> None:
+    """Two by two tiles, the source in each tile's help, the period and terms under them."""
     import streamlit as st
 
     for linha in range(0, len(itens), 2):
         colunas = st.columns(2)
         for coluna, numero in zip(colunas, itens[linha:linha + 2]):
             coluna.metric(numero.rotulo, numero.texto, help=numero.fonte, border=True)
+    if nota:
+        st.caption(nota)

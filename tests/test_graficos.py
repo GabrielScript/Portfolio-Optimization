@@ -33,3 +33,19 @@ def test_return_tables_show_a_dash_for_a_window_the_account_has_not_lived():
     assert texto.loc["Composto", "Dia"] == "0,46%" and texto.loc["Controle", "Dia"] == "\u22121,09%"
     assert texto.loc["Controle", "Semana"] == "\u2014"
     assert "None" not in texto.to_string()
+
+
+def test_tables_show_fixed_brazilian_decimals_and_keep_numbers_underneath():
+    # the second finish review: "localized" dropped trailing zeros ("5,2" beside "5,19") and the quotes kept US decimals
+    tabela = pd.DataFrame({"Valor (R$)": [673.28, 728.0, None], "Peso": [0.0669, 0.0, 0.07], "Qtd.": [128, 16, 3]})
+    estilo = graficos.estilo_br(tabela, reais=["Valor (R$)"], percentuais=["Peso"])
+    html = estilo.to_html()
+    assert "673,28" in html and "728,00" in html and "6,69%" in html and "0,00%" in html and "\u2014" in html
+    assert estilo.data["Valor (R$)"].iloc[0] == 673.28                    # sorting still sees the number
+
+
+def test_sector_weights_read_in_percent_with_whole_sector_names():
+    pesos = pd.Series({"Petróleo, Gás e Biocombustíveis": 0.2, "Tecnologia da Informação": 0.067, "Bancos": 0.133})
+    spec = graficos.barras_por_setor(pesos).to_dict()
+    assert spec["encoding"]["x"]["axis"]["format"] == ".0%" and "Peso na Composite" in spec["encoding"]["x"]["title"]
+    assert spec["encoding"]["y"]["axis"]["labelLimit"] >= 280 and spec["encoding"]["y"]["title"] is None

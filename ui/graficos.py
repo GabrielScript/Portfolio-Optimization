@@ -74,3 +74,29 @@ def colunas_de_texto(tabela: pd.DataFrame) -> dict:
     import streamlit as st
 
     return {coluna: st.column_config.TextColumn(alignment="right") for coluna in tabela.columns}
+
+
+def _reais(valor) -> str:
+    if valor is None or (isinstance(valor, float) and math.isnan(valor)):
+        return TRACO
+    return f"{float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def estilo_br(tabela: pd.DataFrame, reais: list[str], percentuais: list[str]):
+    """The table with fixed pt-BR decimals for display (two places for R$, two for percent, a dash for missing);
+    the numbers underneath stay numbers, so sorting still works."""
+    formatos = {**{c: _reais for c in reais if c in tabela.columns},
+                **{c: _percentual for c in percentuais if c in tabela.columns}}
+    return tabela.style.format(formatos)
+
+
+def barras_por_setor(pesos: pd.Series) -> alt.Chart:
+    """The Composite's weight by sector, in percent, with whole sector names."""
+    dados = pesos.sort_values(ascending=False).rename_axis("Setor").reset_index(name="Peso")
+    return (alt.Chart(dados)
+            .mark_bar(cornerRadiusEnd=3)
+            .encode(x=alt.X("Peso:Q", title="Peso na Composite (%)", axis=alt.Axis(format=".0%")),
+                    y=alt.Y("Setor:N", title=None, sort="-x", axis=alt.Axis(labelLimit=320)),
+                    tooltip=["Setor:N", alt.Tooltip("Peso:Q", format=".1%")])
+            .properties(height=alt.Step(26))
+            .configure(locale=LOCALE))

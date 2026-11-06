@@ -76,7 +76,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     na_selic = (1.0 + selic).cumprod().rename(SELIC)
     st.plotly_chart(grafico_curvas_capital({**{nome: parte[nome].dropna() for nome in NO_GRAFICO}, SELIC: na_selic},
                                            destaque="Composto",
-                                           titulo="Curva de capital (base 100), antes de custos e do Imposto de Renda"),
+                                           titulo="Curva de capital (base 100), depois de custos e antes do Imposto de Renda"),
                     width="stretch")
     com_selic = parte[list(BRACOS)].assign(**{SELIC: na_selic})
     medidas = medidas_por_periodo(com_selic)
@@ -127,8 +127,8 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     def ao_ano(nome: str) -> str:
         return f"{inteiro[(nome, 'CAGR')]:.1%}".replace(".", ",")
     st.caption(
-        f"Simulação no passado sem viés de sobrevivência (as empresas que saíram da bolsa continuam na conta), antes de "
-        f"custos e do Imposto de Renda, até {parte.index[-1]:%d/%m/%Y}. Ao ano no período inteiro: Composite {ao_ano('Composto')}, "
+        f"Simulação no passado sem viés de sobrevivência (as empresas que saíram da bolsa continuam na conta), "
+        f"depois de custos (0,10% por lado) e antes do Imposto de Renda, até {parte.index[-1]:%d/%m/%Y}. Ao ano no período inteiro: Composite {ao_ano('Composto')}, "
         f"BOVA11 {ao_ano('BOVA11')} e Selic {ao_ano(SELIC)}; a Conservadora fica nas tabelas como régua. Sharpe e Sortino "
         "usam a Selic. "
         "BITH11 e QBTC11 (bitcoin) são só comparação. Passado não garante futuro.")

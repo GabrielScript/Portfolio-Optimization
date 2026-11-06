@@ -225,7 +225,7 @@ def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
     assert not [df for df in app_padrao.dataframe if "Fatos da CVM" in df.value.columns]
 
 
-SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
+SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite e BOVA11"
 SECAO_COTACOES = "## Cotações de agora: as ações da Composite"
 SECAO_COMPARACAO = "## Comparação das estratégias"
 
@@ -258,7 +258,9 @@ def test_the_fundo_alepha_section_shows_the_live_results_by_period_and_year_with
     # curves, right below the real plan and above the simulator
     titulos = [m.value for m in at.markdown]
     assert titulos.index(SECAO_SEM_VIES) < titulos.index("## Simulador")
-    assert any(all(nome in figura for nome in ("Conservadora", "Composto", "BOVA11", "Selic")) for figura in _figuras(at))
+    # the Conservadora left the main line (the user, 2026-11-05, DECISOES 261): out of the chart, still in the tables
+    assert any(all(nome in figura for nome in ("Composto", "BOVA11", "Selic")) for figura in _figuras(at))
+    assert not [figura for figura in _figuras(at) if "Conservadora" in figura]
     assert not [s for s in at.segmented_control if s.key == "fase_das_curvas"]          # no phase picker
     periodos = [df.value for df in at.dataframe if "Período" in df.value.columns]
     assert len(periodos) == 1
@@ -348,8 +350,8 @@ def test_the_strategies_comparison_shows_every_method_and_reference_with_every_r
     assert (tabela.loc["Selic", ["Sharpe", "Sortino", "Beta (BOVA11)"]] == "—").all()
     assert tabela.loc["BOVA11 (Ibovespa)", "Giro anual"] == "—"                  # bought and held
     assert tabela.loc["DIVO11 (dividendos)", "Desde"] != tabela.loc["Composite", "Desde"]
-    assert any(all(nome in figura for nome in ("Composite", "Conservadora", "BOVA11", "Selic"))
-               for figura in _figuras(at))
+    assert any(all(nome in figura for nome in ("Composite", "BOVA11", "Selic")) for figura in _figuras(at))
+    assert not [figura for figura in _figuras(at) if "Conservadora" in figura]      # off the main line (261)
     anos = [df.value for df in at.dataframe if {"Ano", "Paridade de risco (ERC)"} <= set(df.value.columns)]
     assert len(anos) == 1 and "Selic" in anos[0].columns
     at.selectbox(key="medida_comparacao").set_value("Sharpe").run()
@@ -703,7 +705,7 @@ def test_the_options_account_says_when_it_starts_before_its_first_cycle(monkeypa
 
 def test_every_table_has_its_filters(monkeypatch):
     # the user's UI list of 2026-11-03: a "Filtros" button above each table, one multiselect per category column
-    from ui import alepha, cotacoes, filtros, painel, simulador, simulador_opcoes
+    from ui import alepha, cotacoes, filtros, formulas, painel, sentinela, simulador, simulador_opcoes
     from ui import assessor as ui_assessor
     filtradas = []
 
@@ -712,7 +714,7 @@ def test_every_table_has_its_filters(monkeypatch):
         filtradas.append(tuple(saida.columns))
         return saida
 
-    for modulo in (alepha, cotacoes, painel, simulador, simulador_opcoes, ui_assessor):
+    for modulo in (alepha, cotacoes, formulas, painel, sentinela, simulador, simulador_opcoes, ui_assessor):
         monkeypatch.setattr(modulo, "filtrar", gravar)
     _, alvo = _conservadora_sintetica()
     hoje = date.today()
@@ -748,3 +750,34 @@ def test_every_table_has_its_filters(monkeypatch):
     chaves = {m.key for m in at.multiselect}
     assert {"filtro_fatos_categoria", "filtro_manchetes_fonte",
             "filtro_parecer_deepseek_Parecer do DeepSeek", "filtro_acoes_Tipo", "filtro_acoes_Setor"} <= chaves
+
+
+SECAO_FORMULAS = "## As 28 fórmulas testadas contra a Composite"
+
+
+def test_the_page_lists_the_28_tested_formulations_none_passing_with_the_references(monkeypatch):
+    # the user's list of 2026-11-05 (low priority): the book's 25 formulations and the 3 optimizers fed the
+    # Composite's alpha on the screen, read once each (DECISOES 265 and 268)
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index(SECAO_COMPARACAO) < titulos.index(SECAO_FORMULAS) < titulos.index("## Simulador")
+    tabela = [df.value for df in at.dataframe if "Fórmula" in df.value.columns][0]
+    formulas = tabela[tabela["Grupo"] != "Referência"]
+    assert len(formulas) == 28 and (formulas["Passou no portão"] == "não").all()
+    assert {"Composite", "Conservadora"} <= set(tabela.loc[tabela["Grupo"] == "Referência", "Fórmula"])
+    assert {"CAGR (pior fase)", "CAGR (melhor fase)", "Queda máx.", "P[> Composite]", "DSR"} <= set(tabela.columns)
+
+
+def test_the_sentinela_section_follows_the_options_account_and_says_when_it_has_not_run(monkeypatch):
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_sentinela", lambda dia, versao: None)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    secao = "## Sentinela (agente DeepSeek, conta fictícia)"
+    assert titulos.index("## Conta de opções (fictícia)") < titulos.index(secao)
+    assert any("Ainda não rodou" in aviso.value for aviso in at.info)

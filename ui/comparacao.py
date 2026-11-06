@@ -20,7 +20,7 @@ from visualizations import grafico_curvas_capital
 
 TITULO = "## Comparação das estratégias"
 REFERENCIA = "BOVA11 (Ibovespa)"
-PADRAO_NO_GRAFICO = ("Composite", "Conservadora", REFERENCIA, SELIC)
+PADRAO_NO_GRAFICO = ("Composite", REFERENCIA, SELIC)        # the Conservadora off the main line (DECISOES 261)
 GIRO, NOMES = "Giro anual", "Nomes médios"
 PRIMEIRO_ANO = 2010
 LEGENDA = (

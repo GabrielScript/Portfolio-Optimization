@@ -47,6 +47,10 @@ class Arquivos:
     def ordens(self) -> Path:
         return self.pasta / "sentinela_ordens.csv"
 
+    @property
+    def pontuacao(self) -> Path:
+        return self.pasta / "sentinela_pontuacao.csv"
+
 
 @dataclass
 class Entrada:
@@ -186,6 +190,16 @@ def rodar(entrada: Entrada, arquivos: Arquivos, servicos: Servicos) -> Relatorio
     registro.acrescentar_log(arquivos.log, linhas)
     _resumo(entrada, arquivos, servicos, relatorio)
     return relatorio
+
+
+def semear(entrada: Entrada, arquivos: Arquivos) -> int:
+    """Marks every current item seen for every name, with no model call: the baseline of the first live session, so
+    the backlog of releases from before the agent went live does not spend that day's budget. Returns the pairs."""
+    novos = novos_por_acao(entrada.itens, sorted(entrada.carteira), ler_vistos(arquivos.vistos))
+    pares = [(ticker, item.id) for ticker, itens in novos.items() for item in itens]
+    marcar(arquivos.vistos, pares, entrada.agora)
+    registro.acrescentar_log(arquivos.log, [_linha(entrada.agora, "", "semeado", itens=str(len(pares)))])
+    return len(pares)
 
 
 def atualizar_conta(arquivos: Arquivos, registro_composta: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series,

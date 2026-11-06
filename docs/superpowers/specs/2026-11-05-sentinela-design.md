@@ -179,3 +179,34 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
 13. **The judges (d1.1, with d1-ultra logged)** read one company item per call (its verbatim text, the company's name
     and sector), never macro items: macro news is not about one company, and asking it once per name would multiply
     calls and answers that mean the same thing. Two noul questions per item, as in the judges check.
+
+## Amendment 6 (2026-11-06, the build; DECISOES 273-280) — choices the spec left open, fixed before going live
+
+14. **Code:** `core/sentinela/` (items, seen store, pack, checks, DeepSeek stages and daily caps, shadow judges, account,
+    scoring, log, emails, B3 calendar, sources, daily CVM, screen panel), `scripts/sentinela.py` (the hourly run),
+    `ui/sentinela.py` (the screen). Tests first, each seen failing before the code.
+15. **Novelty:** the seen store keys (ticker, item id). A macro item is new for every name until it was in a call for
+    that name, so a release reaches each name once; it may trigger that name's call. Company items newest first, then
+    macro, at most 8 a pack; the rest wait. An API failure (network, HTTP) leaves the items unseen for the next run;
+    a discarded answer marks them seen. Daily caps count every call made that day.
+16. **Go-live baseline:** `--semear` marks every item that exists before the first live run as seen, with no call, so the
+    backlog of old releases does not spend the first day's budget (a test run of 05/11 needed 40 calls for it).
+17. **Macro filters:** the Selic target is an item only on the days it changed; PTAX only on a move beyond 2.5 sigma of
+    its 63 sessions; Focus (IPCA and Selic of the current year) weekly; the Copom minutes when new. Judges' answers go to
+    the one log (`etapa = juiz:d1.1` / `juiz:d1-ultra`), not a separate file.
+18. **Context lines** are citable (`ctx-<TICKER>-n`) but a `grave` must cite at least one new item of an official class,
+    else it becomes `atencao`.
+19. **Account:** starts at the close of 06/11/2026, the first live session (before the 30/11 target). An action
+    executes on the first session at or after its planned day that is actually in the price files (a holiday the
+    calendar missed moves it, never an order on a day without a session); a sale on a record's trade day is merged into
+    that day's rows (one row per name per day); the record trades first.
+20. **Scoring:** sigma = daily standard deviation of the 63 sessions up to the decision's reference close (the last
+    session on or before its day) times sqrt(20); decision event = 20-session return below -1.5 sigma; judge event =
+    absolute 20-session return beyond 1.5 sigma. The base rate of the autonomy rule is the decisions' own event rate
+    (in sample, the strict benchmark). The score table (`simulador/sentinela_pontuacao.csv`) is rewritten whole at every
+    run from the append-only log.
+21. **Sources found or changed at the build:** CVM's old RAD search (`ENET`) was discontinued on 06/07/2026; the daily
+    filings come from `ENETWeb/frmConsultaExternaCVM.aspx/ListarDocumentos` (captcha off on 05/11; CVM code with its check
+    digit, e.g. `00951-2` = 9512 in the lake), with links written as in the weekly open data so one filing keeps one id.
+    Tesouro RTN: the monthly publication page's spreadsheet (its server answered "Falha na integração THOT/3PRO" on
+    05/11), the same page rendered by Firecrawl, then CKAN (July 2026 only); apiapex answered HTTP 503.

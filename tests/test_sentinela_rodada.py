@@ -154,3 +154,13 @@ def test_accepted_sales_execute_in_the_account_and_are_marked_executed(tmp_path)
     assert list(acoes["estado"]) == ["aceita", "executada"]
     assert rodada.atualizar_conta(arquivos, registro_composta, precos, pd.Series(0.0, index=dias),
                                   lambda ticker, valor: 0.0, inicio=dias[0]) == []
+
+
+def test_seeding_marks_every_current_item_seen_for_every_name_without_any_call(tmp_path):
+    arquivos = rodada.Arquivos(tmp_path)
+    marcados = rodada.semear(_entrada([FATO, SELIC]), arquivos)
+    assert marcados == 3                     # FATO for PETR4, SELIC for both names
+    chamadas = []
+    assert rodada.rodar(_entrada([FATO, SELIC]), arquivos, _servicos(_deepseek({}, chamadas=chamadas))).chamadas == 0
+    log = registro.ler_log(arquivos.log)
+    assert list(log["etapa"]) == ["semeado"] and str(log["itens"].iloc[0]) == "3"

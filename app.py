@@ -37,6 +37,8 @@ from ui import alepha, comparacao, cotacoes, painel, parecer, servicos  # noqa: 
 from ui import assessor as ui_assessor  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
+from ui import formulas as ui_formulas  # noqa: E402
+from ui import sentinela as ui_sentinela  # noqa: E402
 from ui import simulador_opcoes as ui_opcoes  # noqa: E402
 from visualizations import grafico_fronteira_eficiente  # noqa: E402
 
@@ -126,10 +128,14 @@ def main() -> None:
     st.markdown("---")
     comparacao.secao(servicos.carregar_comparacao(), servicos.carregar_juros())
     st.markdown("---")
+    ui_formulas.secao(servicos.carregar_formulas())
+    st.markdown("---")
     ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
     ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
     st.markdown("---")
     ui_opcoes.secao(servicos.carregar_opcoes(date.today(), precos_do_app.versao_dos_dados()))
+    st.markdown("---")
+    ui_sentinela.secao(servicos.carregar_sentinela(date.today(), precos_do_app.versao_dos_dados()))
     st.markdown("---")
     if MOSTRAR_ACOES_EUA:
         ui_eua.secao(servicos.carregar_eua())

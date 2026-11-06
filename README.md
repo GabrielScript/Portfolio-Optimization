@@ -252,6 +252,24 @@ shown with Markdown escaped.
   the 12:00 watchdog checks it. Paper-v2 is unchanged. The DSR N stays 51: the same configuration on new data is
   not a new trial (`docs/tentativas.csv`).
 
+### After v1.2 (2026-11-06): the Sentinela, a DeepSeek watch agent in a fictitious account
+
+- **What it is (spec `docs/superpowers/specs/2026-11-05-sentinela-design.md`, DECISOES 262-280):** not a strategy. Every
+  hour from 08:20 to 19:20 on B3 sessions, code reads the official sources (CVM filings, also the same-day ones from
+  RAD/ENETWeb; the lake's prices and volumes; B3 lending; BCB SGS; IBGE SIDRA; Tesouro RTN) into short verbatim items.
+  Only a Composite name with new items gets a DeepSeek-V4.1-Flash scan at low effort; every citation is checked
+  against the item's text in code (a failed check discards the answer). A checked `grave` gets one max-effort decision,
+  which acts only at confidence >= 0.70 and only in the fictitious account "Composite + Sentinela" (R$ 10,000 from the
+  06/11/2026 close), beside the plain Composite. Liquid's d1.1 and d1-ultra judge each company item in shadow. Caps:
+  40 scans and 6 decisions a day. Every call is logged with tokens and cost; Brier and log scores are derived from the
+  log; emails go out for each `grave` and a 19h digest. The one reading (first session on or after 2027-01-08) decides
+  whether it keeps its autonomy (rule in `core.sentinela.pontuacao.autonomia`).
+- **Run it:** `scripts/sentinela.py` (`--semear` before the first live run, `--forcar --sem-email --pasta DIR` for a
+  test). Task "alepha sentinela" through `scripts/com_python_base.py` (base Python + the venv's packages).
+- **Also in this round:** the Conservadora left the main line (charts and headline; it stays in the tables); the 28
+  formulations tested against the Composite are on the screen; `scripts/aporte_real.py` prints the ticket of the real
+  R$ 500 of 19/12 (closing-auction orders, the user places them).
+
 Dashboard em Python/Streamlit para otimizar carteiras de ações da B3 com foco no **investidor arrojado**.
 Usa Markowitz/Kelly com estimadores robustos (Ledoit-Wolf + shrinkage estilo Jorion), alocação hierárquica
 (HRP) e um **walk-forward fora da amostra, líquido de custos**, para que toda estratégia seja comparada nas

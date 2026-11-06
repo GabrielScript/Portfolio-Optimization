@@ -218,6 +218,33 @@ def carregar_opcoes(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULADOR
     return simulador_opcoes.painel(livro, marcas, selic)
 
 
+ARQUIVO_FORMULAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "formulas-testadas-b3.parquet"
+
+
+@st.cache_data(ttl=86400, show_spinner=False)
+def carregar_formulas(arquivo: Path = ARQUIVO_FORMULAS) -> pd.DataFrame | None:
+    """The 28 formulations tested against the Composite (``ui.formulas``); None without the file."""
+    return pd.read_parquet(arquivo) if arquivo.exists() else None
+
+
+@st.cache_data(ttl=1800, show_spinner=False)
+def carregar_sentinela(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULADOR):
+    """The Sentinela's screen from its committed files (``core.sentinela.tela``); None before its first run."""
+    from core.sentinela import conta, tela
+    from core.sentinela.rodada import Arquivos
+    arquivos = Arquivos(pasta)
+    ordens = conta.ler(arquivos.ordens)
+    precos, selic = pd.DataFrame(), pd.Series(dtype=float)
+    if not ordens.empty:
+        papeis = sorted(ordens["ticker"].unique())
+        precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], ordens["data"].min().date(), dia)
+        precos = precos.rename(columns=lambda papel: papel.removesuffix(".SA"))
+        selic = carregar_selic_diaria(1, dia)
+        if selic.empty:
+            selic = pd.Series(0.0, index=precos.index)
+    return tela.painel(arquivos, precos, selic)
+
+
 @st.cache_data(ttl=86400, show_spinner=False)
 def carregar_selic_diaria(anos: int, dia: date) -> pd.Series:
     """The daily Selic from the BCB (``cdi_lago.daily_selic``): the simulator's cash rate; empty when it fails."""

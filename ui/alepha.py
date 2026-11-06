@@ -18,10 +18,13 @@ from visualizations import grafico_curvas_capital
 from ui.filtros import filtrar
 from ui.formato import com_traco
 
-TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite, Conservadora e BOVA11"
+TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite e BOVA11"
 SESSOES_DO_SEMAFORO = 21           # the DeepSeek pack reads the CVM filings of the last 21 sessions
 
 BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)
+# the Conservadora left the main line (the user, 2026-11-05, DECISOES 261): out of the chart and the caption, still in
+# the tables, as a silent ruler
+NO_GRAFICO = ("Composto", "BOVA11")
 SELIC = "Selic"
 CRIPTO = ("BITH11", "QBTC11")
 CURVAS_DA_TELA = (*BRACOS, SELIC, *CRIPTO)       # the Selic beside the strategies in every table (the user, 2026-11-05)
@@ -71,7 +74,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     parte = quadro[quadro["fase"] == quadro["fase"].min()].set_index("date")
     selic = selic_diaria(parte, juros)
     na_selic = (1.0 + selic).cumprod().rename(SELIC)
-    st.plotly_chart(grafico_curvas_capital({**{nome: parte[nome].dropna() for nome in BRACOS}, SELIC: na_selic},
+    st.plotly_chart(grafico_curvas_capital({**{nome: parte[nome].dropna() for nome in NO_GRAFICO}, SELIC: na_selic},
                                            destaque="Composto",
                                            titulo="Curva de capital (base 100), antes de custos e IR"),
                     width="stretch")
@@ -126,6 +129,6 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     st.caption(
         f"Simulação no passado sem viés de sobrevivência (as empresas que saíram da bolsa continuam na conta), antes de "
         f"custos e IR, até {parte.index[-1]:%d/%m/%Y}. Ao ano no período inteiro: Composite {ao_ano('Composto')}, "
-        f"Conservadora {ao_ano('Conservadora')}, BOVA11 {ao_ano('BOVA11')} e Selic {ao_ano(SELIC)}. Sharpe e Sortino "
+        f"BOVA11 {ao_ano('BOVA11')} e Selic {ao_ano(SELIC)}; a Conservadora fica nas tabelas como régua. Sharpe e Sortino "
         "usam a Selic. "
         "BITH11 e QBTC11 (bitcoin) são só comparação. Passado não garante futuro.")

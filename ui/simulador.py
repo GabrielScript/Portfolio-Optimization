@@ -62,11 +62,22 @@ def parecer_do_deepseek(registro: dict | None) -> None:
                  alt="Sinal do DeepSeek para cada ação julgada: verde compra, amarelo e vermelho ficam de fora")
 
 
+SILENCIOSAS = ("Conservadora",)     # runs as the simulator's ruler, off the chart and positions (DECISOES 261)
+
+
+def curvas_do_grafico(curvas: pd.DataFrame) -> pd.DataFrame:
+    return curvas.drop(columns=[nome for nome in SILENCIOSAS if nome in curvas.columns])
+
+
+def carteiras_com_posicoes(carteiras) -> list[str]:
+    return [carteira for carteira in carteiras if carteira not in SILENCIOSAS]
+
+
 def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
         st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
-                "(Composite, Conservadora, DeepSeek e Controle).")
+                "(Composite, DeepSeek e Controle; a Conservadora corre em silêncio como régua).")
         return
     st.caption(f"Conta fictícia: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira desde {INICIO:%d/%m/%Y}, com "
                "custos. BOVA11 e Selic são só referência.")
@@ -84,9 +95,10 @@ def secao(painel: Painel | None) -> None:
                  column_config=dict.fromkeys(retornos.columns, PERCENTUAL),
                  alt="Retorno do dia, da semana, do mês e desde o início, e queda máxima de cada curva")
     grafico, queda = st.columns(2)
-    grafico.line_chart(curvas, y_label="R$")
-    queda.line_chart(quedas(curvas), y_label="Queda desde o pico")
-    for carteira, tabela in painel.posicoes.items():
+    grafico.line_chart(curvas_do_grafico(curvas), y_label="R$")
+    queda.line_chart(quedas(curvas_do_grafico(curvas)), y_label="Queda desde o pico")
+    for carteira in carteiras_com_posicoes(painel.posicoes):
+        tabela = painel.posicoes[carteira]
         st.markdown(f"**Posições: {carteira}**")
         st.dataframe(filtrar(tabela.rename_axis("Ativo"), f"posicoes_{carteira}"), width="stretch",
                      column_config=COLUNAS_DAS_POSICOES,

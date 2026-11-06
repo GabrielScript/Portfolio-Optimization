@@ -6,6 +6,7 @@ Uso: .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py            (paper-
      .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py paper_v2   (paper-v2 da Conservadora)
      .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py paper_v3   (paper-v3: composite vs same-day Conservadora)
      .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py manutencao (upkeep: liquidity, readings, push)
+     <Python312>/pythonw.exe -X utf8 scripts/com_python_base.py scripts/rodar_paper.py sentinela (hourly Sentinela)
 
 Só biblioteca padrão de propósito. Se a importação da rotina falhar (venv quebrado, pacote faltando, erro de sintaxe),
 o ``main()`` dela nem começa e não anota nada; aqui a falha vira um log com o traceback e uma linha "falhou" no
@@ -47,6 +48,10 @@ ROTINAS = {
                        lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "", "falhou", nota, "", ""]),
     "manutencao": Rotina(_LOCAL / "paper-manutencao", ["quando", "desfecho", "nota"],
                          lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", nota]),
+    "sentinela": Rotina(_LOCAL / "paper-sentinela", ["hora", "situacao", "chamadas", "graves", "acoes", "adiados",
+                                                     "emails", "falhas", "git"],
+                        lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", "0", "", "", "", "0",
+                                              nota, ""]),
 }
 
 

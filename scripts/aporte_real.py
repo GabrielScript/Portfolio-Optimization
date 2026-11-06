@@ -6,7 +6,7 @@ the rest to the fractional market (ticker with an F). It prints the ticket and w
 the user places the orders at the broker (nothing here sends an order).
 
 The amount follows the user's rule of 2026-11-06 (DECISOES 283, ``valor_do_aporte``) on the fictitious
-"Composto + Sentinela" account's last close (R$ 10,000 at the start): no buy below R$ 12,500.
+"Composto + Sentinela" account's last close (R$ 10,000 at the start): no buy below R$ 11,000; it also prints the alpha against "Composto (base)".
 
 Usage: python -X utf8 scripts/aporte_real.py [--saldo 12800] [--valor 500] [--dia 2026-12-19]
 The quotes are the last closes in the app's price files; run it on the day, before the auction (16:55-17:00).
@@ -32,8 +32,9 @@ from core.risco import LIMITES  # noqa: E402
 ARQUIVO_REGISTRO = Path("paper-v3/composto.csv")
 LOTE = 100
 ORDEM = "compra no leilão de fechamento"
-FAIXAS = ((15_000.0, 1_000.0), (13_500.0, 750.0), (12_500.0, 500.0))     # (balance from, amount): the user, 2026-11-06
+FAIXAS = ((13_000.0, 1_000.0), (12_500.0, 750.0), (11_000.0, 500.0))     # (balance from, amount): the user, 2026-11-06
 CONTA = "Composto + Sentinela"
+BASE = "Composto (base)"
 
 
 def valor_do_aporte(saldo: float) -> float:
@@ -41,15 +42,26 @@ def valor_do_aporte(saldo: float) -> float:
     return next((valor for piso, valor in FAIXAS if saldo >= piso), 0.0)
 
 
-def saldo_da_conta(dia: date, carregar=None) -> float:
-    """The fictitious "Composto + Sentinela" account at its last close (``ui.servicos.carregar_sentinela``)."""
+def alfa_contra_a_base(conta: float, base: float) -> float:
+    """What the agent added: the agent's account over the Composite alone (same R$ 10,000, same days), minus 1."""
+    return conta / base - 1
+
+
+def saldos(dia: date, carregar=None) -> tuple[float, float | None]:
+    """The agent's account and the Composite alone at their last close."""
     if carregar is None:
         from ui import servicos
         carregar = servicos.carregar_sentinela.__wrapped__
     painel = carregar(dia, 0)
     if painel is None or painel.curvas is None or painel.curvas.empty:
         raise SystemExit("A conta fictícia da Sentinela ainda não tem saldo; use --saldo")
-    return float(painel.curvas[CONTA].dropna().iloc[-1])
+    curvas = painel.curvas.ffill()
+    return float(curvas[CONTA].iloc[-1]), (float(curvas[BASE].iloc[-1]) if BASE in curvas else None)
+
+
+def saldo_da_conta(dia: date, carregar=None) -> float:
+    """The fictitious "Composto + Sentinela" account at its last close."""
+    return saldos(dia, carregar)[0]
 
 
 def linhas_da_ordem(ticker: str, quantidade: int, preco: float) -> list[dict]:
@@ -105,11 +117,13 @@ def main(argv: list[str] | None = None) -> int:
     argumentos.add_argument("--saldo", type=float, default=None)
     argumentos.add_argument("--dia", type=date.fromisoformat, default=date(2026, 12, 19))
     opcoes = argumentos.parse_args(argv)
-    saldo = opcoes.saldo if opcoes.saldo is not None else saldo_da_conta(date.today())
+    saldo, base = (opcoes.saldo, None) if opcoes.saldo is not None else saldos(date.today())
     valor = opcoes.valor if opcoes.valor is not None else valor_do_aporte(saldo)
     print(f"Conta fictícia {CONTA}: R$ {_br(saldo)} -> aporte real de R$ {_br(valor)}")
+    if base:
+        print(f"{BASE}: R$ {_br(base)}; alfa do agente: {alfa_contra_a_base(saldo, base):+.2%}")
     if valor <= 0:
-        print("Abaixo de R$ 12.500: pela regra, nenhum aporte real.")
+        print("Abaixo de R$ 11.000: pela regra, nenhum aporte real.")
         return 0
     registro = pd.read_csv(RAIZ / ARQUIVO_REGISTRO, parse_dates=["data"])
     registrada = registro["data"].max()

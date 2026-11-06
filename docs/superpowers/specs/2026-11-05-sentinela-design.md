@@ -159,3 +159,13 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
    criteria (accuracy and Brier): d1.1 93% / 0.082, d1-ultra 82% / 0.121, Jev 1.14 80% / 0.145 (`docs/juizes-2026-11-05.md`).
    d1-ultra caught one more true event (17 of 18 vs 15) but raised 10 false alarms against 1. During the shadow period
    the log also keeps d1-ultra's answer for the same items, so recall can be re-read on real events before any routing.
+
+## Amendment 4 (2026-11-05 night, before any build; DECISOES 271) — proper scoring rules decide the agent's autonomy
+
+10. Every stage-2 confidence and every judge probability is scored with proper scoring rules (Brier and log score)
+    against what the stock did after 20 sessions (event = a fall beyond 1.5 sigma of the name's 63-session moves for
+    `vender`/`reduzir_metade`). At the reading: if DeepSeek's decisions stated at >= 0.70 were right less than 55% of
+    the time, or its Brier is worse than the constant base rate's, the agent loses its autonomy (alerts only, no
+    fictitious orders) until a new pre-registered spec. Fixed now, not tuned later.
+11. Real orders (19/12 onward) go to B3's closing call auction ("ordem no fechamento"), so the real fill matches the
+    close price the backtests and the fictitious accounts use.

@@ -183,6 +183,17 @@ def test_the_sidebar_drops_the_efficient_frontier_block(monkeypatch):
     assert not [m for m in at.sidebar.markdown if m.value == "## Estudo"]
 
 
+def test_the_page_has_no_sidebar_only_the_logo_in_the_top_left_corner(monkeypatch):
+    # the user, 2026-11-06: one screen; the eagle and the gold name stay in the top-left corner (``st.logo``), the
+    # sidebar and its repeated "Aleph Quant" go
+    _servicos_sinteticos(monkeypatch)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert not at.sidebar.children                     # nothing drawn in the sidebar: Streamlit shows none
+    assert "st.logo(" in APP.read_text(encoding="utf-8")
+
+
 def _figuras(at: AppTest) -> list[str]:
     return [str(grafico.proto) for grafico in at.get("plotly_chart")]
 

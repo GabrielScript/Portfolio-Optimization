@@ -23,7 +23,7 @@ from ui.marca import ICONE_PADRAO, arquivo_da_logo, arquivo_do_icone  # noqa: E4
 LOGO, ICONE = arquivo_da_logo(), arquivo_do_icone()
 st.set_page_config(page_title="Aleph Quant · Alocação quantitativa B3", page_icon=str(ICONE or ICONE_PADRAO),
                    layout="wide")
-if LOGO is not None:
+if LOGO is not None:     # the eagle and the gold name, top-left: the page has no sidebar (the user, 2026-11-06)
     st.logo(str(LOGO), icon_image=str(ICONE), size="large")
 
 from assets import BENCHMARK_ACOES, get_all_tickers, get_ticker_info  # noqa: E402
@@ -60,12 +60,6 @@ segue as carteiras desde 03/11/2026, o painel do mercado e o parecer do assessor
 promessa: passado não garante futuro."""
 
 
-def ler_sidebar() -> None:
-    # the frontier's block (sectors, US assets, caps) left with its section (the user, 2026-11-06)
-    with st.sidebar:
-        st.markdown("## Aleph Quant")
-
-
 def _info_com_eua() -> dict:
     """Nome e setor das 181 e da perna dos EUA (``ativos_eua.py``, fora do caminho do paper)."""
     return {**get_ticker_info(), **get_ticker_info_eua()}
@@ -79,7 +73,6 @@ def main() -> None:
             st.image(str(ICONE), width=120, alt="Logo do Aleph Quant: águia dourada e azul com seta de alta na asa")
         st.title(":yellow[Aleph Quant]", text_alignment="center")
         st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Gabriel Estrela Lopes", text_alignment="center")
-    ler_sidebar()
     registrado = servicos.carregar_plano_registrado()
     st.markdown("## O que é o Aleph Quant")
     st.markdown(SOBRE)

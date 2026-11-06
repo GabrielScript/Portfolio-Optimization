@@ -5,8 +5,12 @@ auction so the fill is the close the backtests and the fictitious accounts use. 
 the rest to the fractional market (ticker with an F). It prints the ticket and writes it to ``docs/aporte-real-<day>.md``;
 the user places the orders at the broker (nothing here sends an order).
 
-Usage: python -X utf8 scripts/aporte_real.py [--valor 500] [--dia 2026-12-19]
+The amount follows the user's rule of 2026-11-06 (DECISOES 283, ``valor_do_aporte``) on the fictitious
+"Composto + Sentinela" account's last close (R$ 10,000 at the start): no buy below R$ 12,500.
+
+Usage: python -X utf8 scripts/aporte_real.py [--saldo 12800] [--valor 500] [--dia 2026-12-19]
 The quotes are the last closes in the app's price files; run it on the day, before the auction (16:55-17:00).
+``--saldo`` replaces the account's balance, ``--valor`` the rule's amount.
 """
 
 from __future__ import annotations
@@ -28,6 +32,24 @@ from core.risco import LIMITES  # noqa: E402
 ARQUIVO_REGISTRO = Path("paper-v3/composto.csv")
 LOTE = 100
 ORDEM = "compra no leilão de fechamento"
+FAIXAS = ((15_000.0, 1_000.0), (13_500.0, 750.0), (12_500.0, 500.0))     # (balance from, amount): the user, 2026-11-06
+CONTA = "Composto + Sentinela"
+
+
+def valor_do_aporte(saldo: float) -> float:
+    """The real amount for the fictitious account's balance: the highest tier the balance reaches, 0 below them all."""
+    return next((valor for piso, valor in FAIXAS if saldo >= piso), 0.0)
+
+
+def saldo_da_conta(dia: date, carregar=None) -> float:
+    """The fictitious "Composto + Sentinela" account at its last close (``ui.servicos.carregar_sentinela``)."""
+    if carregar is None:
+        from ui import servicos
+        carregar = servicos.carregar_sentinela.__wrapped__
+    painel = carregar(dia, 0)
+    if painel is None or painel.curvas is None or painel.curvas.empty:
+        raise SystemExit("A conta fictícia da Sentinela ainda não tem saldo; use --saldo")
+    return float(painel.curvas[CONTA].dropna().iloc[-1])
 
 
 def linhas_da_ordem(ticker: str, quantidade: int, preco: float) -> list[dict]:
@@ -79,16 +101,23 @@ def _markdown(dia: date, registrada: pd.Timestamp, ultimo: pd.Timestamp, tabela:
 
 def main(argv: list[str] | None = None) -> int:
     argumentos = argparse.ArgumentParser(description=__doc__.splitlines()[1])
-    argumentos.add_argument("--valor", type=float, default=500.0)
+    argumentos.add_argument("--valor", type=float, default=None)
+    argumentos.add_argument("--saldo", type=float, default=None)
     argumentos.add_argument("--dia", type=date.fromisoformat, default=date(2026, 12, 19))
     opcoes = argumentos.parse_args(argv)
+    saldo = opcoes.saldo if opcoes.saldo is not None else saldo_da_conta(date.today())
+    valor = opcoes.valor if opcoes.valor is not None else valor_do_aporte(saldo)
+    print(f"Conta fictícia {CONTA}: R$ {_br(saldo)} -> aporte real de R$ {_br(valor)}")
+    if valor <= 0:
+        print("Abaixo de R$ 12.500: pela regra, nenhum aporte real.")
+        return 0
     registro = pd.read_csv(RAIZ / ARQUIVO_REGISTRO, parse_dates=["data"])
     registrada = registro["data"].max()
     atual = registro[registro["data"] == registrada].set_index("ticker")["peso"]
     precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in atual.index], (registrada - pd.Timedelta(
         days=10)).date(), date.today()).rename(columns=lambda papel: papel.removesuffix(".SA")).ffill()
-    tabela, plano = boleta(atual / atual.sum(), precos.iloc[-1], opcoes.valor)
-    texto = _markdown(opcoes.dia, registrada, precos.index[-1], tabela, plano, opcoes.valor)
+    tabela, plano = boleta(atual / atual.sum(), precos.iloc[-1], valor)
+    texto = _markdown(opcoes.dia, registrada, precos.index[-1], tabela, plano, valor)
     destino = RAIZ / "docs" / f"aporte-real-{opcoes.dia:%Y-%m-%d}.md"
     destino.write_text(texto, encoding="utf-8", newline="\n")
     print(texto)

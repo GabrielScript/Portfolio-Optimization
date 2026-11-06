@@ -18,3 +18,25 @@ def test_the_ticket_buys_the_composite_with_whole_shares_in_the_fractional_marke
 def test_lots_of_100_go_to_the_standard_market_and_the_rest_to_the_fractional():
     linhas = aporte_real.linhas_da_ordem("AAAA3", 250, 2.0)
     assert [(linha["Ativo"], linha["Quantidade"]) for linha in linhas] == [("AAAA3", 200), ("AAAA3F", 50)]
+
+
+def test_the_amount_follows_the_users_balance_rule_of_2026_11_06():
+    # the user: R$ 500 with a final balance of 12,500-13,000, R$ 750 with 13,500-15,000, R$ 1,000 with 15,000 or more;
+    # below 12,500 nothing; the gap 13,000-13,500 keeps the lower tier (DECISOES 283)
+    from scripts.aporte_real import valor_do_aporte
+    assert valor_do_aporte(12_499.99) == 0
+    assert valor_do_aporte(12_500) == valor_do_aporte(13_000) == valor_do_aporte(13_499.99) == 500
+    assert valor_do_aporte(13_500) == valor_do_aporte(14_999.99) == 750
+    assert valor_do_aporte(15_000) == valor_do_aporte(30_000) == 1_000
+
+
+def test_before_the_sentinela_account_has_a_close_the_script_says_so_instead_of_crashing():
+    from datetime import date
+    from types import SimpleNamespace
+
+    import pytest
+
+    from scripts.aporte_real import saldo_da_conta
+    for painel in (None, SimpleNamespace(curvas=None)):
+        with pytest.raises(SystemExit, match="ainda não tem saldo"):
+            saldo_da_conta(date(2026, 11, 6), carregar=lambda dia, versao, painel=painel: painel)

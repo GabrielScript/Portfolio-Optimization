@@ -16,7 +16,7 @@ from ui.filtros import filtrar
 TITULO = "## Sentinela (agente DeepSeek, conta fictícia)"
 PERCENTUAL = st.column_config.NumberColumn(format="percent")
 REGRA = ("A cada hora, das 8h às 19h nos pregões, o código lê as fontes oficiais (CVM, inclusive os documentos do dia, "
-         "preços e volume do lago, aluguel de ações da B3, BCB, IBGE e Tesouro). Só quando uma ação da Composite tem item "
+         "preços, volume e aluguel de ações da B3, BCB, IBGE e Tesouro). Só quando uma ação da Composite tem item "
          "novo o DeepSeek lê o pacote dela em esforço baixo e diz se algo a compromete gravemente; cada citação é "
          "conferida, letra por letra, contra o texto da fonte. Um caso grave vai ao esforço máximo, que só age com "
          "confiança de 70% ou mais e só na conta fictícia \"Composite + Sentinela\" (R$ 10.000), vendendo no fechamento. "

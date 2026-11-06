@@ -191,7 +191,8 @@ def secao_assessor() -> None:
     indisponivel = ("sem a Composite registrada" if registrado is None else
                     "falta a chave do DeepSeek nos segredos do app ([deepseek] api_key)" if chave is None else None)
     universo = [] if registrado is None else list(registrado[1].index)
-    ui_assessor.secao(indisponivel, universo, lambda profundidade: _parecer_do_plano(registrado, chave, profundidade))
+    ui_assessor.secao(indisponivel, universo, lambda profundidade: _parecer_do_plano(registrado, chave, profundidade),
+                      codigo=servicos.codigo_do_parecer())
 
 
 def _parecer_do_plano(registrado: tuple[date, pd.Series], chave: str,

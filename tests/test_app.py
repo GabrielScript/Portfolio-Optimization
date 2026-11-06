@@ -225,7 +225,7 @@ def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
     assert not [df for df in app_padrao.dataframe if "Fatos da CVM" in df.value.columns]
 
 
-SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite e BOVA11"
+SECAO_SEM_VIES = "## Backtest sem viés de sobrevivência da Composite (BOVA11 como régua)"
 SECAO_COTACOES = "## Cotações de agora: as ações da Composite"
 SECAO_COMPARACAO = "## Comparação das estratégias"
 
@@ -578,6 +578,7 @@ def _app_do_assessor(monkeypatch, chave: str | None) -> tuple[AppTest, list]:
                                                                 requisicoes=2, custo_usd=0.00042), ["buscar_web"])
     monkeypatch.setattr(assessor, "pedir_parecer", pedir_parecer)
     st.cache_data.clear()
+    servicos.contador_de_pareceres().clear()           # the daily cap is per process: earlier tests must not use it up
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     if chave is not None:
         at.secrets["deepseek"] = {"api_key": chave}
@@ -628,6 +629,26 @@ def test_the_opinion_depth_is_picked_on_the_screen_max_by_default_and_each_depth
     at.segmented_control(key="esforco_do_parecer").set_value("maxima").run()
     at.button(key="gerar_parecer").click().run()
     assert esforcos == [("max", 1), ("high", 3), ("high", 5)]       # the max opinion of the day comes from the cache
+
+
+def test_with_an_access_code_in_the_secrets_only_the_right_code_pays_for_an_opinion(monkeypatch):
+    # the user, 2026-11-06: US$ 5 of DeepSeek credit went in 3 days; the public app must not let a visitor spend it
+    at, pedidos = _app_do_assessor(monkeypatch, None)
+    at.secrets["deepseek"] = {"api_key": "chave-de-teste", "codigo": "aguia-2026"}
+    at.run()
+    at.button(key="gerar_parecer").click().run()
+    assert not at.exception and not pedidos                       # no code typed: nothing is paid
+    assert any("Código de acesso" in w.value for w in at.warning)
+    at.text_input(key="codigo_do_parecer").input("errado").run()
+    at.button(key="gerar_parecer").click().run()
+    assert not pedidos
+    at.text_input(key="codigo_do_parecer").input("aguia-2026").run()
+    at.button(key="gerar_parecer").click().run()
+    assert not at.exception and len(pedidos) == 1
+
+
+def test_the_daily_cap_of_paid_opinions_is_three():
+    assert servicos.PARECERES_POR_DIA == 3
 
 
 def test_paid_opinions_stop_at_the_daily_cap_for_every_visitor_of_the_process(monkeypatch):

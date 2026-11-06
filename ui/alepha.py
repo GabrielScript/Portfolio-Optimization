@@ -18,7 +18,7 @@ from visualizations import grafico_curvas_capital
 from ui.filtros import filtrar
 from ui.formato import com_traco
 
-TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência: Composite e BOVA11"
+TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência da Composite (BOVA11 como régua)"
 SESSOES_DO_SEMAFORO = 21           # the DeepSeek pack reads the CVM filings of the last 21 sessions
 
 BRACOS = ("Conservadora", "Composto", "BOVA11")              # the live rerun's arms (scripts/curvas_ao_vivo.py)

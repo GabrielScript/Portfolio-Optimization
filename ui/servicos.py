@@ -375,7 +375,16 @@ def chave_da_api(secao: str, variavel: str) -> str | None:
         return os.environ.get(variavel) or None
 
 
-PARECERES_POR_DIA = 8      # paid opinions per day per app process: the public app spends the owner's key
+def codigo_do_parecer() -> str | None:
+    """The access code that unlocks a paid opinion (``[deepseek] codigo`` in the deployed app's secrets, or
+    ``ALEPH_CODIGO_PARECER`` locally); None leaves the button open, as in a local run."""
+    try:
+        return st.secrets["deepseek"]["codigo"]
+    except Exception:       # noqa: BLE001 - no secrets file or no such entry
+        return os.environ.get("ALEPH_CODIGO_PARECER") or None
+
+
+PARECERES_POR_DIA = 3      # paid opinions per day per app process: the public app spends the owner's key (user, 2026-11-06)
 
 
 @st.cache_resource

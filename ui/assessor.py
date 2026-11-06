@@ -6,6 +6,8 @@ Information only: nothing here reaches the weights or the orders. UI strings are
 
 from __future__ import annotations
 
+import hmac
+
 from collections.abc import Callable
 
 import pandas as pd
@@ -54,9 +56,11 @@ def _fonte(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str:
             f"({sem_markdown(origem)}): “{sem_markdown(afirmacao['citacao'])}”*")
 
 
-def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profundidade], Resultado]) -> None:
+def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profundidade], Resultado],
+          codigo: str | None = None) -> None:
     """The adviser's block; ``indisponivel`` is the reason it cannot run here (no key, no registered plan). ``gerar``
-    takes the depth picked on the screen (``core.assessor.Profundidade``)."""
+    takes the depth picked on the screen (``core.assessor.Profundidade``). With ``codigo`` set, only that access code
+    typed on the screen pays for an opinion: the public app spends the owner's key (the user, 2026-11-06)."""
     st.markdown("### Assessor do Aleph Quant (DeepSeek)")
     if indisponivel:
         st.caption(f"Assessor indisponível nesta versão do app: {indisponivel}.")
@@ -70,7 +74,12 @@ def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profun
     escolha = st.segmented_control("Profundidade do parecer", list(PROFUNDIDADES),
                                    format_func=ROTULO_DA_PROFUNDIDADE.get, default=PROFUNDIDADE_PADRAO,
                                    key="esforco_do_parecer", help=AJUDA_DA_PROFUNDIDADE) or PROFUNDIDADE_PADRAO
+    digitado = (st.text_input("Código de acesso do parecer", type="password", key="codigo_do_parecer",
+                              help="Cada parecer é pago pela chave do dono do app.") if codigo else None)
     if st.button("Gerar parecer", key="gerar_parecer", icon=":material/psychology:"):
+        if codigo and not hmac.compare_digest((digitado or "").encode(), codigo.encode()):
+            st.warning("Código de acesso errado ou vazio: nenhum parecer foi pedido, nada foi gasto.")
+            return
         with st.spinner(f"O assessor está lendo as evidências ({ROTULO_DA_PROFUNDIDADE[escolha].lower()})…"):
             st.session_state[CHAVE_DO_PARECER] = gerar(PROFUNDIDADES[escolha])
     resultado = st.session_state.get(CHAVE_DO_PARECER)

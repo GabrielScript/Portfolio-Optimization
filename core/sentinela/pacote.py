@@ -47,6 +47,18 @@ def montar_pacote(ticker: str, setor: str, peso: float, novos: list[Item], conte
     return Pacote(ticker, cabecalho, ordenados[:MAX_ITENS], list(contexto)[:MAX_CONTEXTO], ordenados[MAX_ITENS:])
 
 
+FATOS_DA_DECISAO = 10                # the name's last filings added for stage 2 (core.assessor.FATOS_POR_ACAO)
+
+
+def pacote_da_decisao(pacote: Pacote, fatos: list[Item]) -> Pacote:
+    """Stage 2's pack: stage 1's items, then at most 10 of the name's newest CVM filings not already in it."""
+    presentes = {item.id for item in pacote.itens}
+    do_nome = [item for item in fatos if item.ticker == pacote.ticker and item.fonte == "cvm"
+               and item.id not in presentes]
+    do_nome.sort(key=lambda item: _negativo(item.data))
+    return Pacote(pacote.ticker, pacote.cabecalho, pacote.itens + do_nome[:FATOS_DA_DECISAO], pacote.contexto, [])
+
+
 def _negativo(data: str) -> tuple[int, ...]:
     """Sort key for newest first on YYYY-MM-DD strings."""
     return tuple(-int(parte) for parte in data.split("-") if parte.isdigit())

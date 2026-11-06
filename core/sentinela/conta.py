@@ -104,14 +104,11 @@ def ordens_devidas(ordens: pd.DataFrame, registro: pd.DataFrame, acoes: Iterable
     escrito = conta["data"].max() if not conta.empty else pd.Timestamp.min
     feitas = []
     for acao in sorted(acoes, key=lambda acao: (pd.Timestamp(acao["executa_em"]), pd.Timestamp(acao["decidida_em"]))):
-        dia = pd.Timestamp(acao["executa_em"])
-        if dia <= escrito:
-            seguintes = precos.index[precos.index > escrito]
-            if not len(seguintes):
-                continue
-            dia = seguintes[0]
-        if dia > precos.index[-1]:
+        piso = max(pd.Timestamp(acao["executa_em"]), escrito + pd.Timedelta(days=1))
+        seguintes = precos.index[precos.index >= piso]           # a planned day with no session moves to the next one
+        if not len(seguintes):
             continue
+        dia = seguintes[0]
         conta = pd.concat([conta, simulador.ordens_devidas(conta, {CONTA: registro}, precos.loc[:dia], cdi, custo,
                                                            inicio, capital)], ignore_index=True)
         if conta.empty or conta["data"].min() > dia:

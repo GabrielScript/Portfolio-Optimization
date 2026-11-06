@@ -110,6 +110,15 @@ def test_an_action_not_yet_in_the_price_files_waits():
     assert feitas == [] and novas.empty
 
 
+def test_an_execution_date_that_was_no_session_moves_to_the_next_session_in_the_price_files():
+    precos = _precos().drop(index=DIAS[3])              # a holiday the calendar did not know
+    ordens, _ = conta.ordens_devidas(conta.vazio(), _registro("2026-12-01"), [], precos.loc[:DIAS[1]], CDI, _custo,
+                                     inicio=DIAS[0])
+    novas, feitas = conta.ordens_devidas(ordens, _registro("2026-12-01"), [_acao(3) | {"executa_em": DIAS[3]}],
+                                         precos.loc[:DIAS[5]], CDI, _custo, inicio=DIAS[0])
+    assert feitas == ["a1"] and set(novas.loc[novas["carteira"] == conta.CONTA, "data"]) == {DIAS[4]}
+
+
 def test_the_next_record_returns_the_account_to_the_composite_weights():
     precos = _precos()
     ordens, _ = conta.ordens_devidas(conta.vazio(), _registro("2026-12-01"), [_acao(2) | {"executa_em": DIAS[2]}],

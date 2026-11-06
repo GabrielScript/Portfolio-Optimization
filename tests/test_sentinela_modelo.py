@@ -68,7 +68,12 @@ def test_a_network_failure_is_caught():
     def post(url, json, timeout, headers):
         raise requests.ConnectionError("sem rede")
     varredura, resposta = modelo.varrer(PACOTE, "c", AGORA, post)
-    assert varredura.veredito == "sem_evento" and "rede" in resposta.erro
+    assert varredura.veredito == "sem_evento" and "rede" in resposta.erro and resposta.falha_da_api
+
+
+def test_a_bad_answer_is_not_an_api_failure():
+    _, resposta = modelo.varrer(PACOTE, "c", AGORA, _post("isto não é json", []))
+    assert resposta.erro and not resposta.falha_da_api
 
 
 def test_decision_uses_max_effort_the_decision_instructions_and_the_scan_citations():

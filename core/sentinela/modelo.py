@@ -81,6 +81,7 @@ class Resposta:
     bruto: object
     uso: Uso
     erro: str | None = None
+    falha_da_api: bool = False      # network or HTTP failure: the items are not marked seen and wait for the next run
 
 
 def perguntar(instrucoes: str, texto: str, esforco: str, max_tokens: int, chave: str, agora: datetime,
@@ -93,7 +94,7 @@ def perguntar(instrucoes: str, texto: str, esforco: str, max_tokens: int, chave:
     try:
         dados = _chamar(corpo, chave, post)
     except ErroDoModelo as erro:
-        return Resposta(None, uso, str(erro))
+        return Resposta(None, uso, str(erro), falha_da_api=True)
     uso.somar(dados.get("usage") or {}, horario_de_pico(agora), PRECOS[MODELO])
     escolha = (dados.get("choices") or [{}])[0]
     if escolha.get("finish_reason") == "length":

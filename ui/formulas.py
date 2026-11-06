@@ -13,7 +13,6 @@ import streamlit as st
 from ui.filtros import filtrar
 
 TITULO = "## As 28 fórmulas testadas contra a Composite"
-GRUPOS = {0: "Referência", 1: "Livro, lote 1", 2: "Livro, lote 2", 3: "Alimentadas pelo alfa da Composite"}
 NOMES = {"Composto": "Composite"}
 PERCENTUAIS = ("CAGR (pior fase)", "CAGR (melhor fase)", "Vol", "Queda máx.", "P[> Composite]", "P[> Conservadora]",
                "P[> BOVA11]")
@@ -21,12 +20,14 @@ LEGENDA = ("Cada fórmula rodou no mesmo motor, com o mesmo universo da B3 sem v
            "início (0, 21 e 42 pregões), e foi lida uma única vez. Para passar no portão, a probabilidade de bater a "
            "Composite, a Conservadora e o BOVA11 precisava ser de 95% ou mais em todas as fases, com DSR de 0,95 ou mais; "
            "a tabela mostra a pior fase de cada medida. Nenhuma passou: o sinal da Composite paga, o otimizador não "
-           "acrescenta. Antes de custos e IR; passado não garante futuro.")
+           "acrescenta. Antes de custos e do Imposto de Renda; passado não garante futuro.")
 
 
 def tabela(dados: pd.DataFrame) -> pd.DataFrame:
+    """One row per formulation; the batch ("Grupo") column left on 2026-11-06 (the user): the references read "—" in
+    the gate column."""
     return pd.DataFrame({
-        "Grupo": dados["lote"].map(GRUPOS), "Fórmula": dados["braco"].replace(NOMES),
+        "Fórmula": dados["braco"].replace(NOMES),
         "CAGR (pior fase)": dados["cagr_min"], "CAGR (melhor fase)": dados["cagr_max"], "Vol": dados["vol"],
         "Queda máx.": dados["queda"], "P[> Composite]": dados["p_composto"],
         "P[> Conservadora]": dados["p_conservadora"], "P[> BOVA11]": dados["p_referencia"], "DSR": dados["dsr"],

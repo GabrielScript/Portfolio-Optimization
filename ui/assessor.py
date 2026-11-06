@@ -13,20 +13,12 @@ from collections.abc import Callable
 import pandas as pd
 import streamlit as st
 
-from core.assessor import PROFUNDIDADE_PADRAO, PROFUNDIDADES, Evidencia, Profundidade, Resultado
+from core.assessor import Evidencia, Resultado
 from ui.filtros import filtrar
 
 ROTULO_DA_POSTURA = {"favoravel": "🟢 favorável", "neutra": "🟡 neutra", "desfavoravel": "🔴 desfavorável",
                      "evidencia_insuficiente": "⚪ evidência insuficiente"}
 CHAVE_DO_PARECER = "parecer_do_assessor"
-# the opinion's depth, picked per opinion (the user, 2026-11-04): max is the default and the deepest; the fast ones
-# answer in time to show the app live (``core.assessor.PROFUNDIDADES``: times measured on 2026-11-04, 15 names).
-ROTULO_DA_PROFUNDIDADE = {"maxima": "Máxima (~8 min)", "rapida": "Rápida (~75 s)", "expressa": "Expressa (~65 s)"}
-AJUDA_DA_PROFUNDIDADE = (
-    "Quanto o DeepSeek pensa antes de responder. Máxima: o parecer mais cuidadoso, leva minutos. Rápida: pensa menos e "
-    "divide as ações em 3 grupos lidos ao mesmo tempo, com as mesmas evidências e regras. Expressa: 5 grupos, para "
-    "quando cada segundo conta. Cada profundidade gera seu próprio parecer, guardado por 6 horas: clicar de novo na "
-    "mesma profundidade mostra o mesmo parecer na hora, sem custo.")
 NAO_CONFIRMADAS = "Notícias e posts não confirmados pelas fontes oficiais (não contam para a postura)"
 _MARKDOWN = set("\\`*_{}[]()<>#+-.!|~$:")
 
@@ -56,11 +48,12 @@ def _fonte(afirmacao: dict, evidencias: dict[str, Evidencia]) -> str:
             f"({sem_markdown(origem)}): “{sem_markdown(afirmacao['citacao'])}”*")
 
 
-def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profundidade], Resultado],
+def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[], Resultado],
           codigo: str | None = None) -> None:
     """The adviser's block; ``indisponivel`` is the reason it cannot run here (no key, no registered plan). ``gerar``
-    takes the depth picked on the screen (``core.assessor.Profundidade``). With ``codigo`` set, only that access code
-    typed on the screen pays for an opinion: the public app spends the owner's key (the user, 2026-11-06)."""
+    asks one opinion, always at the default (max) effort: the depth picker left the screen on 2026-11-06 (the user runs
+    it before a presentation or on the spot). With ``codigo`` set, only that access code typed on the screen pays for
+    an opinion: the public app spends the owner's key (the user, 2026-11-06)."""
     st.markdown("### Assessor do Aleph Quant (DeepSeek)")
     if indisponivel:
         st.caption(f"Assessor indisponível nesta versão do app: {indisponivel}.")
@@ -71,17 +64,14 @@ def secao(indisponivel: str | None, universo: list[str], gerar: Callable[[Profun
                "evidência; o app confere a citação e os números e descarta o que não confere. Notícias, posts e páginas "
                "comuns só contam se a CVM, o Banco Central, a B3 ou a ANBIMA confirmarem. Antes da postura, três "
                "razões macro do Banco Central contra a tese.")
-    escolha = st.segmented_control("Profundidade do parecer", list(PROFUNDIDADES),
-                                   format_func=ROTULO_DA_PROFUNDIDADE.get, default=PROFUNDIDADE_PADRAO,
-                                   key="esforco_do_parecer", help=AJUDA_DA_PROFUNDIDADE) or PROFUNDIDADE_PADRAO
     digitado = (st.text_input("Código de acesso do parecer", type="password", key="codigo_do_parecer",
                               help="Cada parecer é pago pela chave do dono do app.") if codigo else None)
     if st.button("Gerar parecer", key="gerar_parecer", icon=":material/psychology:"):
         if codigo and not hmac.compare_digest((digitado or "").encode(), codigo.encode()):
             st.warning("Código de acesso errado ou vazio: nenhum parecer foi pedido, nada foi gasto.")
             return
-        with st.spinner(f"O assessor está lendo as evidências ({ROTULO_DA_PROFUNDIDADE[escolha].lower()})…"):
-            st.session_state[CHAVE_DO_PARECER] = gerar(PROFUNDIDADES[escolha])
+        with st.spinner("O assessor está lendo as evidências (leva alguns minutos)…"):
+            st.session_state[CHAVE_DO_PARECER] = gerar()
     resultado = st.session_state.get(CHAVE_DO_PARECER)
     if resultado is not None:
         _mostrar(resultado, universo)

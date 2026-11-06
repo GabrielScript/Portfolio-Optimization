@@ -286,7 +286,7 @@ def bloco_alfa(otimizada: ResultadoBacktest, benchmark: ResultadoBacktest, rf_di
     with c3:
         card(_fmt(comp.tracking_error), "Tracking error")
     with c4:
-        card(_fmt(comp.information_ratio, False), "Information ratio")
+        card(_fmt(comp.information_ratio, False), "Information Ratio")
     if abs(comp.t_stat_alfa) < 2:
         st.caption("|t| < 2: o alfa não é estatisticamente distinguível de zero neste histórico.")
 

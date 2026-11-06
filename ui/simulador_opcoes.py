@@ -19,7 +19,7 @@ REGRA = (f"{ORCAMENTO:.0%} da conta por mês, no primeiro pregão: metade numa p
          "esticada perto da máxima de 1 ano (sua ideia A), metade numa call perto de 1,05 × o preço da vencedora mais "
          "volátil (sua ideia B), cerca de 1 mês até o vencimento, compradas pelo preço de venda em lotes de 100 e "
          "levadas até o vencimento. Só compra de opções: a perda máxima é o prêmio pago. O resto fica na Selic. "
-         "Custos e IR de 15% sobre o lucro incluídos.")
+         "Custos e Imposto de Renda de 15% sobre o lucro incluídos.")
 
 
 def _reais(valor: float) -> str:

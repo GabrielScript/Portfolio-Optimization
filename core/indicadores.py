@@ -68,7 +68,7 @@ def _betas(retornos: pd.DataFrame, referencia: str) -> pd.Series:
 
 MINIMO_DE_PREGOES = 60      # a name with fewer sessions with the benchmark gets no CAPM (core.metrics needs 60)
 COLUNAS_DE_DESEMPENHO = ("CAGR", "Sharpe", "Sortino", "Calmar", "CVaR 95% diário", "Alfa a.a.", "t do alfa",
-                         "Information ratio")
+                         "Information Ratio")
 
 
 def desempenho_por_acao(precos: pd.DataFrame, referencia: str, juro: pd.Series) -> pd.DataFrame:
@@ -88,11 +88,11 @@ def desempenho_por_acao(precos: pd.DataFrame, referencia: str, juro: pd.Series) 
         crescimento, queda = cagr(valores), drawdown(valores)[1]
         linha = {"CAGR": crescimento, "Sharpe": sharpe(excesso), "Sortino": sortino(excesso),
                  "Calmar": crescimento / abs(queda) if queda < 0 else np.nan, "CVaR 95% diário": cvar_historico(diarios),
-                 "Alfa a.a.": np.nan, "t do alfa": np.nan, "Information ratio": np.nan}
+                 "Alfa a.a.": np.nan, "t do alfa": np.nan, "Information Ratio": np.nan}
         if len(valores.index.intersection(bench.index)) >= MINIMO_DE_PREGOES:
             capm = comparar_benchmark(valores, bench, juro)
             linha |= {"Alfa a.a.": capm.alfa_anual, "t do alfa": capm.t_stat_alfa,
-                      "Information ratio": capm.information_ratio}
+                      "Information Ratio": capm.information_ratio}
         linhas[ticker] = linha
     return pd.DataFrame.from_dict(linhas, orient="index", columns=list(COLUNAS_DE_DESEMPENHO))
 

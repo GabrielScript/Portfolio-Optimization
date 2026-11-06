@@ -36,10 +36,10 @@ AJUDA_DAS_MEDIDAS = {
     "CVaR 95% diário": "Perda média nos 5% piores dias: o tamanho típico de um dia muito ruim.",
     "Alfa a.a.": "Retorno ao ano que sobra depois de descontar o que o BOVA11 (o mercado) explica.",
     "t do alfa": "Confiança no alfa: acima de 2 (ou abaixo de −2), dificilmente é só sorte.",
-    "Information ratio": "Retorno acima do BOVA11 por unidade de distância dele, ao ano.",
+    "Information Ratio": "Retorno acima do BOVA11 por unidade de distância dele, ao ano.",
 }
 COLUNAS_COM_DUAS_CASAS = ("Beta", "P/VP", "Dív. líq./EBITDA", "Sharpe", "Sortino", "Calmar", "t do alfa",
-                          "Information ratio")
+                          "Information Ratio")
 # the material facts' tone (Jev's labels) in Portuguese, and what each score means (the user, 2026-11-04)
 TONS_DO_FATO = {"good": "bom", "bad": "ruim", "neutral": "neutro", "unclear": "incerto"}
 SEM_NOTA = "sem nota"
@@ -212,7 +212,7 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
     st.caption("Preços com dividendos reinvestidos (B3 e CVM), até o último pregão. Retorno, volatilidade e beta: 12 "
                "meses; CAGR, Sharpe, Sortino, Calmar, CVaR e alfa: 3 anos, contra a Selic e o BOVA11. Balanço: último "
                "ITR/DFP da CVM; bancos e seguradoras ficam sem múltiplos.")
-    st.caption("BDRs: retorno só de preço (sem os dividendos), em reais; ganho paga 15% de IR, sem a isenção de R$ 20 "
+    st.caption("BDRs: retorno só de preço (sem os dividendos), em reais; ganho paga 15% de Imposto de Renda, sem a isenção de R$ 20 "
                "mil por mês. Papéis com pouco negócio: confira o \"Fechamento de\".")
     if fatos is not None and not fatos.empty:
         with st.expander(f"Fatos relevantes e comunicados ao mercado dos últimos 90 dias ({len(fatos)})"):

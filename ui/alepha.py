@@ -31,11 +31,11 @@ CURVAS_DA_TELA = (*BRACOS, SELIC, *CRIPTO)       # the Selic beside the strategi
 EXCESSO_BOVA11 = "Excesso sobre o BOVA11"
 MEDIDAS_POR_ANO = ("Retorno", EXCESSO_BOVA11, EXCESSO_DO_JURO, "Vol", "Queda máx.", "Pior mês", "Sharpe", "Sortino",
                    "Calmar", "Beta (BOVA11)")
-SEM_PORCENTO = {"Sharpe", "Sortino", "Calmar", "Beta (BOVA11)", "t do alfa", "Information ratio"}
+SEM_PORCENTO = {"Sharpe", "Sortino", "Calmar", "Beta (BOVA11)", "t do alfa", "Information Ratio"}
 # measures of a premium over the Selic or of market risk: the Selic itself has none (rounding noise would show a huge
 # Sharpe), so its cell is a dash
 SEM_SENTIDO_NA_SELIC = ("Sharpe", "Sortino", "Calmar", EXCESSO_DO_JURO, "Beta (BOVA11)", "Alfa a.a. (BOVA11)",
-                        "t do alfa", "Information ratio")
+                        "t do alfa", "Information Ratio")
 PRIMEIRO_ANO = 2010
 
 
@@ -76,7 +76,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
     na_selic = (1.0 + selic).cumprod().rename(SELIC)
     st.plotly_chart(grafico_curvas_capital({**{nome: parte[nome].dropna() for nome in NO_GRAFICO}, SELIC: na_selic},
                                            destaque="Composto",
-                                           titulo="Curva de capital (base 100), antes de custos e IR"),
+                                           titulo="Curva de capital (base 100), antes de custos e do Imposto de Renda"),
                     width="stretch")
     com_selic = parte[list(BRACOS)].assign(**{SELIC: na_selic})
     medidas = medidas_por_periodo(com_selic)
@@ -128,7 +128,7 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
         return f"{inteiro[(nome, 'CAGR')]:.1%}".replace(".", ",")
     st.caption(
         f"Simulação no passado sem viés de sobrevivência (as empresas que saíram da bolsa continuam na conta), antes de "
-        f"custos e IR, até {parte.index[-1]:%d/%m/%Y}. Ao ano no período inteiro: Composite {ao_ano('Composto')}, "
+        f"custos e do Imposto de Renda, até {parte.index[-1]:%d/%m/%Y}. Ao ano no período inteiro: Composite {ao_ano('Composto')}, "
         f"BOVA11 {ao_ano('BOVA11')} e Selic {ao_ano(SELIC)}; a Conservadora fica nas tabelas como régua. Sharpe e Sortino "
         "usam a Selic. "
         "BITH11 e QBTC11 (bitcoin) são só comparação. Passado não garante futuro.")

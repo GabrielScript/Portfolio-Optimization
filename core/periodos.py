@@ -167,7 +167,7 @@ def resumo_do_periodo(curvas: pd.DataFrame, cdi: pd.Series, referencia: str = "B
                         "Sharpe": sharpe(excesso), "Sortino": sortino(excesso), "Queda máx.": queda,
                         "Calmar": crescimento / abs(queda) if queda < 0 else float("nan"),
                         "Beta (BOVA11)": capm.beta, "Alfa a.a. (BOVA11)": capm.alfa_anual,
-                        "t do alfa": capm.t_stat_alfa, "Information ratio": capm.information_ratio,
+                        "t do alfa": capm.t_stat_alfa, "Information Ratio": capm.information_ratio,
                         "CVaR 95% diário": cvar_historico(diarios),
                         "Melhor ano": float(anos[nome].max()), "Pior ano": float(anos[nome].min()),
                         "Anos acima do BOVA11": f"{int((ambos['x'] > ambos['ref']).sum())} de {len(ambos)}"}

@@ -128,7 +128,7 @@ def test_period_summary_has_the_aggressive_investors_risk_measures_from_each_col
     assert resumo.loc["X", "Beta (BOVA11)"] == pytest.approx(2.0)
     assert resumo.loc["X", "Alfa a.a. (BOVA11)"] == pytest.approx(benchmark.alfa_anual)
     assert resumo.loc["X", "t do alfa"] == pytest.approx(benchmark.t_stat_alfa)
-    assert resumo.loc["X", "Information ratio"] == pytest.approx(benchmark.information_ratio)
+    assert resumo.loc["X", "Information Ratio"] == pytest.approx(benchmark.information_ratio)
     assert resumo.loc["X", "CVaR 95% diário"] == pytest.approx(cvar_historico(x.pct_change().dropna()))
     anos = medidas_por_ano(curvas, cdi)["Retorno"].unstack()
     assert resumo.loc["X", "Melhor ano"] == pytest.approx(anos["X"].max())

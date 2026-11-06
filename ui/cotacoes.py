@@ -18,8 +18,9 @@ PREGOES_PARA_FECHAMENTO = 10      # the window the last and the previous close c
 
 
 def tabela_de_cotacoes(cotacoes: pd.DataFrame, fechamentos: pd.DataFrame, info: dict) -> pd.DataFrame:
-    """One row per ticker of ``cotacoes`` (``preco``, ``horario``, ``fonte``): name and sector from ``info``, the quote,
-    the close of the session before the quote's and the change between them. ``fechamentos``: dates x tickers."""
+    """One row per ticker of ``cotacoes`` (``preco``, ``horario``): name and sector from ``info``, the quote, the close
+    of the session before the quote's and the change between them. ``fechamentos``: dates x tickers. The source column
+    left on 2026-11-06 (the user)."""
     linhas = []
     for ticker, cotacao in cotacoes.iterrows():
         sessao = pd.Timestamp(cotacao["horario"]).tz_localize(None).normalize() if pd.notna(cotacao["horario"]) else None
@@ -30,8 +31,7 @@ def tabela_de_cotacoes(cotacoes: pd.DataFrame, fechamentos: pd.DataFrame, info: 
         linhas.append({"Ticker": ticker.removesuffix(".SA"), "Empresa": info.get(ticker, {}).get("nome", ""),
                        "Setor": info.get(ticker, {}).get("setor", ""), "Cotação (R$)": preco,
                        "Fechamento anterior (R$)": anterior, "Variação no dia": preco / anterior - 1,
-                       "Horário": pd.Timestamp(cotacao["horario"]) if sessao is not None else pd.NaT,
-                       "Fonte": cotacao["fonte"]})
+                       "Horário": pd.Timestamp(cotacao["horario"]) if sessao is not None else pd.NaT})
     return pd.DataFrame(linhas)
 
 

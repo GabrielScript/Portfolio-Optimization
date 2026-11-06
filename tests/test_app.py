@@ -86,7 +86,6 @@ def app_padrao(monkeypatch) -> AppTest:
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
-    at.pills(key="setores").set_value(SETORES_DO_TESTE).run()
     return at
 
 
@@ -170,23 +169,17 @@ def test_no_screen_text_call_has_two_bare_dollar_signs():
                 achados.append(f"{arquivo.name}:{no.lineno}")
     assert achados == []
 
-def test_the_sidebar_keeps_only_the_amount_and_the_frontiers_universe_and_caps(monkeypatch):
-    # the user's UI list of 2026-11-03: no plan selector, no study block (objective, lambda, Kelly satellite, vol cap,
-    # windows, cost, shrinkage, bagging); the universe is every asset with the B3-listed US ones; the frontier's cap
-    # per asset goes up to 25% (user, 2026-11-04)
+def test_the_sidebar_drops_the_efficient_frontier_block(monkeypatch):
+    # the user, 2026-11-06: the "Fronteira eficiente" heading leaves the sidebar with the frontier section; its
+    # universe and caps (sectors, US assets, cap per asset and per sector) only fed that section, so they go too
     _servicos_sinteticos(monkeypatch)
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    # the user, 2026-11-04: every stock by default, so the "all assets" switch is gone; no amount without the plan
-    assert at.sidebar.checkbox(key="eua").value is True
-    assert not {w.key for w in at.sidebar.checkbox} & {"todos"} and not at.sidebar.number_input
+    assert not [m for m in at.sidebar.markdown if "Fronteira" in m.value]
     chaves = {w.key for w in [*at.sidebar.slider, *at.sidebar.checkbox, *at.sidebar.selectbox,
-                              *at.sidebar.segmented_control]}
-    assert not {"modo_plano", "objetivo", "fracao_satelite", "vol_maxima", "janela", "anos_teste", "custo_bps",
-                "reamostrar", "n_ativos_max"} & chaves
-    assert at.sidebar.slider(key="peso_maximo").max == 25 and at.sidebar.slider(key="teto_setor").max == 50
-    assert at.sidebar.slider(key="teto_setor").value == 30
+                              *at.sidebar.segmented_control, *at.sidebar.number_input]}
+    assert not chaves and not [p for p in at.pills if p.key == "setores"]
     assert not [m for m in at.sidebar.markdown if m.value == "## Estudo"]
 
 
@@ -194,28 +187,29 @@ def _figuras(at: AppTest) -> list[str]:
     return [str(grafico.proto) for grafico in at.get("plotly_chart")]
 
 
-def test_the_composite_sits_where_it_is_next_to_the_efficient_frontier(app_padrao):
-    # the user's request of 2026-11-03: the Composite and the Markowitz frontier replace "Carteira de hoje"; the point
-    # is the Composite's own estimate, never moved onto the curve
+def test_the_efficient_frontier_section_is_gone(app_padrao):
+    # the user, 2026-11-06: the whole "Composite na fronteira eficiente" section leaves the page; only its weights chart
+    # stays, under the Composite's quotes table
     assert not app_padrao.exception
     titulos = [m.value for m in app_padrao.markdown]
-    assert "## Composite na fronteira eficiente" in titulos
+    assert "## Composite na fronteira eficiente" not in titulos
     assert not {"## Carteira de hoje", "## Walk-forward fora da amostra (líquido de custos)"} & set(titulos)
-    assert any("Fronteira Eficiente" in figura and "Composite" in figura for figura in _figuras(app_padrao))
-    assert any("Composite" in c.value and "fronteira" in c.value for c in app_padrao.caption)
-    # the user, 2026-11-04: a plainer text that reads the point against the Selic and the average stock, not a verdict
-    texto = next(c.value for c in app_padrao.caption if "Como ler" in c.value)
-    assert "Selic" in texto and "média das" in texto and "olhando para trás" in texto
-    assert "rende menos do que promete" not in texto
+    assert not [figura for figura in _figuras(app_padrao) if "Fronteira Eficiente" in figura]
+    assert not [c for c in app_padrao.caption if "Como ler" in c.value or "fronteira" in c.value.lower()]
+    assert not [e for e in app_padrao.error if e.value.startswith("Fronteira inviável")]
+    assert "fronteira" not in next(m.value for m in app_padrao.markdown if "ferramenta de decisão" in m.value)
 
 
-def test_an_infeasible_frontier_explains_what_to_widen_and_the_plan_still_shows(app_padrao):
-    # one small sector plus the Composite's names, each capped at 5%, cannot add up to 100%
-    app_padrao.pills(key="setores").set_value([SETOR_PEQUENO])
-    app_padrao.sidebar.checkbox(key="eua").uncheck()
-    app_padrao.sidebar.slider(key="peso_maximo").set_value(5).run()
+def test_the_composites_weight_by_sector_sits_right_under_its_quotes_table(app_padrao):
     assert not app_padrao.exception
-    assert len([e.value for e in app_padrao.error if e.value.startswith("Fronteira inviável")]) == 1
+    ordem = [(no.type, no) for no in app_padrao.main
+             if no.type in ("dataframe", "vega_lite_chart", "markdown")]
+    cotacoes = next(i for i, (tipo, no) in enumerate(ordem)
+                    if tipo == "dataframe" and "Variação no dia" in no.value.columns)
+    tipo, grafico = ordem[cotacoes + 1]
+    assert tipo == "vega_lite_chart" and "Peso na Composite" in str(grafico.proto)
+    pesos = [no for tipo, no in ordem if tipo == "vega_lite_chart" and "Peso na Composite" in str(no.proto)]
+    assert len(pesos) == 1
 
 
 def test_the_screen_drops_the_crypto_block_and_the_cvm_light_table(app_padrao):
@@ -301,7 +295,8 @@ def test_the_page_shows_the_composites_quotes_now_with_the_days_change_and_a_ref
     tabela = cotacoes[0].set_index("Ticker")
     _, alvo = _conservadora_sintetica()
     assert sorted(tabela.index) == sorted(ticker.removesuffix(".SA") for ticker in alvo.index)
-    assert {"Empresa", "Setor", "Cotação (R$)", "Horário", "Fonte"} <= set(tabela.columns)
+    assert {"Empresa", "Setor", "Cotação (R$)", "Horário"} <= set(tabela.columns)
+    assert "Fonte" not in tabela.columns                     # the user, 2026-11-06
     precos = _precos_sinteticos(tuple(alvo.index), 1, date.today(), 0).precos
     primeiro = alvo.index[0]
     assert tabela.loc[primeiro.removesuffix(".SA"), "Cotação (R$)"] == pytest.approx(precos[primeiro].iloc[-1])
@@ -346,12 +341,17 @@ def test_the_strategies_comparison_shows_every_method_and_reference_with_every_r
     tabela = resumo[0].set_index("Estratégia")
     assert list(tabela.index) == ESTRATEGIAS_DA_COMPARACAO + REFERENCIAS_DA_COMPARACAO + ["Selic"]
     assert {"CAGR", "Vol", "Sharpe", "Sortino", "Queda máx.", "Calmar", "CVaR 95% diário", "Beta (BOVA11)",
-            "Alfa a.a. (BOVA11)", "t do alfa", "Information ratio", "Nomes médios"} <= set(tabela.columns)
+            "Alfa a.a. (BOVA11)", "t do alfa", "Information Ratio", "Nomes médios"} <= set(tabela.columns)
     assert (tabela.loc["Selic", ["Sharpe", "Sortino", "Beta (BOVA11)"]] == "—").all()
     assert tabela.loc["BOVA11 (Ibovespa)", "Giro anual"] == "—"                  # bought and held
     assert tabela.loc["DIVO11 (dividendos)", "Desde"] != tabela.loc["Composite", "Desde"]
     assert any(all(nome in figura for nome in ("Composite", "BOVA11", "Selic")) for figura in _figuras(at))
     assert not [figura for figura in _figuras(at) if "Conservadora" in figura]      # off the main line (261)
+    # the user, 2026-11-06: the "Curvas no gráfico" picker and its blue chips leave; the capital curve stays
+    assert not [m for m in at.multiselect if m.key == "curvas_comparacao" or m.label == "Curvas no gráfico"]
+    # "IR" read as income tax: the measure is "Information Ratio" in full and no screen text says a bare "IR"
+    textos = [*(m.value for m in at.markdown), *(c.value for c in at.caption), *_figuras(at)]
+    assert not [texto for texto in textos if re.search(r"\bIR\b", texto)]
     anos = [df.value for df in at.dataframe if {"Ano", "Paridade de risco (ERC)"} <= set(df.value.columns)]
     assert len(anos) == 1 and "Selic" in anos[0].columns
     at.selectbox(key="medida_comparacao").set_value("Sharpe").run()
@@ -609,26 +609,16 @@ def test_the_adviser_judges_only_the_plan_stocks_shows_checked_claims_and_its_co
     assert any("não muda os pesos" in c.value for c in at.caption)
 
 
-def test_the_opinion_depth_is_picked_on_the_screen_max_by_default_and_each_depth_is_its_own_opinion(monkeypatch):
-    # the user, 2026-11-04: max effort takes 7-8 minutes, too long for a presentation; switching the effort must not
-    # need a file edit or a request to Claude
-    from core import assessor
+def test_the_opinion_always_runs_at_max_effort_with_no_depth_or_effort_control_on_the_screen(monkeypatch):
+    # the user, 2026-11-06: the opinion is run before a presentation or on the spot, always at max effort (the
+    # default); the "Profundidade do parecer" block and its effort buttons leave the screen
     at, pedidos = _app_do_assessor(monkeypatch, "chave-de-teste")
     esforcos = _app_do_assessor.esforcos
-    # 2026-11-04, later: "Rápida" is high effort in 3 parallel parts (~75 s) and "Expressa" in 5 (~65 s)
-    controle = at.segmented_control(key="esforco_do_parecer")
-    from ui.assessor import ROTULO_DA_PROFUNDIDADE
-    assert controle.value == assessor.PROFUNDIDADE_PADRAO == "maxima"
-    assert controle.options == [ROTULO_DA_PROFUNDIDADE[p] for p in assessor.PROFUNDIDADES]
+    assert not [c for c in at.segmented_control if c.key == "esforco_do_parecer" or "Profundidade" in c.label]
     at.button(key="gerar_parecer").click().run()
-    at.segmented_control(key="esforco_do_parecer").set_value("rapida").run()
+    assert not at.exception and esforcos == [("max", 1)]
     at.button(key="gerar_parecer").click().run()
-    at.segmented_control(key="esforco_do_parecer").set_value("expressa").run()
-    at.button(key="gerar_parecer").click().run()
-    assert not at.exception and esforcos == [("max", 1), ("high", 3), ("high", 5)]   # each depth is its own opinion
-    at.segmented_control(key="esforco_do_parecer").set_value("maxima").run()
-    at.button(key="gerar_parecer").click().run()
-    assert esforcos == [("max", 1), ("high", 3), ("high", 5)]       # the max opinion of the day comes from the cache
+    assert esforcos == [("max", 1)]                                  # the opinion of the day comes from the cache
 
 
 def test_with_an_access_code_in_the_secrets_only_the_right_code_pays_for_an_opinion(monkeypatch):
@@ -671,19 +661,6 @@ def test_the_us_stocks_screen_is_on_standby_while_the_b3_listed_us_assets_stay(a
     # B3-listed BDRs and ETFs are in the frontier's universe by default (UI list of 2026-11-03)
     assert not app_alepha.exception
     assert not any(m.value == "## Ações americanas" for m in app_alepha.markdown)
-    assert app_alepha.sidebar.checkbox(key="eua").value is True
-
-
-def _ativos_da_fronteira(at: AppTest) -> int:
-    legenda = next(c.value for c in at.caption if c.value.startswith("Como ler"))
-    return int(re.search(r"cada uma das (\d+) ações", legenda).group(1))
-
-
-def test_the_b3_listed_us_assets_add_32_names_to_the_frontier(app_padrao):
-    com_eua = _ativos_da_fronteira(app_padrao)
-    app_padrao.sidebar.checkbox(key="eua").uncheck().run()
-    assert not app_padrao.exception
-    assert _ativos_da_fronteira(app_padrao) == com_eua - 32
 
 
 SECAO_OPCOES = "## Conta de opções (fictícia)"
@@ -771,6 +748,9 @@ def test_every_table_has_its_filters(monkeypatch):
     chaves = {m.key for m in at.multiselect}
     assert {"filtro_fatos_categoria", "filtro_manchetes_fonte",
             "filtro_parecer_deepseek_Parecer do DeepSeek", "filtro_acoes_Tipo", "filtro_acoes_Setor"} <= chaves
+    # the user, 2026-11-06: every table of stocks filters by the stock and by sector, always
+    assert {"filtro_acoes_Ticker", "filtro_cotacoes_Ticker", "filtro_cotacoes_Setor", "filtro_assessor_Ticker",
+            "filtro_assessor_Setor", "filtro_parecer_deepseek_Ticker", "filtro_parecer_deepseek_Setor"} <= chaves
 
 
 SECAO_FORMULAS = "## As 28 fórmulas testadas contra a Composite"
@@ -786,9 +766,11 @@ def test_the_page_lists_the_28_tested_formulations_none_passing_with_the_referen
     titulos = [m.value for m in at.markdown]
     assert titulos.index(SECAO_COMPARACAO) < titulos.index(SECAO_FORMULAS) < titulos.index("## Simulador")
     tabela = [df.value for df in at.dataframe if "Fórmula" in df.value.columns][0]
-    formulas = tabela[tabela["Grupo"] != "Referência"]
+    assert "Grupo" not in tabela.columns                     # the user, 2026-11-06
+    formulas = tabela[tabela["Passou no portão"] != "—"]
     assert len(formulas) == 28 and (formulas["Passou no portão"] == "não").all()
-    assert {"Composite", "Conservadora"} <= set(tabela.loc[tabela["Grupo"] == "Referência", "Fórmula"])
+    assert {"Composite", "Conservadora"} <= set(tabela.loc[tabela["Passou no portão"] == "—", "Fórmula"])
+    assert at.multiselect(key="filtro_formulas_testadas_Fórmula").placeholder == "Todos"
     assert {"CAGR (pior fase)", "CAGR (melhor fase)", "Queda máx.", "P[> Composite]", "DSR"} <= set(tabela.columns)
 
 

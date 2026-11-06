@@ -148,7 +148,7 @@ def test_each_stock_gets_cagr_sharpe_sortino_calmar_cvar_and_its_capm_against_bo
     assert linha["Sharpe"] == pytest.approx(sharpe(excesso)) and linha["Sortino"] == pytest.approx(sortino(excesso))
     assert linha["Calmar"] == pytest.approx(cagr(acao) / abs(drawdown(acao)[1]))
     assert linha["CVaR 95% diário"] == pytest.approx(cvar_historico(acao.pct_change().dropna()))
-    assert (linha["Alfa a.a."], linha["t do alfa"], linha["Information ratio"]) == pytest.approx(
+    assert (linha["Alfa a.a."], linha["t do alfa"], linha["Information Ratio"]) == pytest.approx(
         (capm.alfa_anual, capm.t_stat_alfa, capm.information_ratio))
 
 

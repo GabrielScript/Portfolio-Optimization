@@ -20,16 +20,18 @@ from visualizations import grafico_curvas_capital
 
 TITULO = "## Comparação das estratégias"
 REFERENCIA = "BOVA11 (Ibovespa)"
-PADRAO_NO_GRAFICO = ("Composite", REFERENCIA, SELIC)        # the Conservadora off the main line (DECISOES 261)
+# the chart's curves, fixed: the "Curvas no gráfico" picker left on 2026-11-06 (the user); the Conservadora off the
+# main line (DECISOES 261)
+NO_GRAFICO = ("Composite", REFERENCIA, SELIC)
 GIRO, NOMES = "Giro anual", "Nomes médios"
 PRIMEIRO_ANO = 2010
 LEGENDA = (
     "Todas as estratégias rodam no mesmo motor, nas mesmas datas, com o mesmo universo (todas as ações elegíveis da "
     "B3 em cada data, inclusive as que depois saíram da bolsa), troca a cada 3 meses e 0,1% de custo por lado, antes "
-    "de IR. Média-variância, Kelly e reamostrada: no máximo 20% por ação e até 10 ações. Paridade de risco, HRP e 1/N "
+    "de Imposto de Renda. Média-variância, Kelly e reamostrada: no máximo 20% por ação e até 10 ações. Paridade de risco, HRP e 1/N "
     "usam todas as elegíveis. A quântica escolhe 15 ações por recozimento simulado (computador clássico) e pondera por "
     "máximo Sharpe. Tesouro IPCA+: média dos títulos IPCA+ com mais de um ano até o vencimento (Tesouro Transparente). "
-    "Sharpe e Sortino sobre a Selic; alfa, beta e information ratio contra o BOVA11. Passado não garante futuro.")
+    "Sharpe e Sortino sobre a Selic; alfa, beta e Information Ratio contra o BOVA11. Passado não garante futuro.")
 
 
 def _curvas_com_selic(curvas: pd.DataFrame, juros: pd.DataFrame | None) -> tuple[pd.DataFrame, pd.Series]:
@@ -55,12 +57,12 @@ def secao(dados: tuple[pd.DataFrame, pd.DataFrame] | None, juros: pd.DataFrame |
     brutas, giro = dados
     curvas, selic = _curvas_com_selic(brutas, juros)
     nomes = list(curvas.columns)
-    escolhidas = st.multiselect("Curvas no gráfico", nomes, default=[n for n in PADRAO_NO_GRAFICO if n in nomes],
-                                key="curvas_comparacao")
-    if escolhidas:
-        st.plotly_chart(grafico_curvas_capital({nome: curvas[nome].dropna() for nome in escolhidas},
+    no_grafico = [nome for nome in NO_GRAFICO if nome in nomes]
+    if no_grafico:
+        st.plotly_chart(grafico_curvas_capital({nome: curvas[nome].dropna() for nome in no_grafico},
                                                destaque="Composite",
-                                               titulo="Curva de capital (base 100), depois de custos e antes de IR"),
+                                               titulo="Curva de capital (base 100), depois de custos e antes do "
+                                                      "Imposto de Renda"),
                         width="stretch")
     resumo = _resumo(curvas, selic, giro)
     numericas = [c for c in resumo.columns if c not in ("Estratégia", "Desde", "Anos acima do BOVA11")]

@@ -1,0 +1,300 @@
+{"id": "F00", "juiz": "d1.1", "p": 0.08007640088487988, "s": 1.8270503000239842, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F00", "juiz": "d1-ultra", "p": 0.03531702148293739, "s": 1.4237962000188418, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F00", "juiz": "Jev 1.14", "p": 0.24, "s": 1.2685762999753933, "tokens": 335, "custo": 1.407e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F00", "juiz": "d1.1 (Liquid direto)", "p": 0.056635693107492203, "s": 1.2723293000017293, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F00", "juiz": "d1-ultra (Liquid direto)", "p": 0.03531702148293739, "s": 1.2109683000016958, "tokens": 92, "custo": 3.864e-06, "modelo": "d1-ultra"}
+{"id": "F01", "juiz": "Jev 1.14", "p": 0.54, "s": 1.2982156999933068, "tokens": 345, "custo": 1.449e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F01", "juiz": "d1.1", "p": 0.44712647217550416, "s": 1.7615540999977384, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F01", "juiz": "d1-ultra", "p": 0.6209651777561939, "s": 1.1772445999959018, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F01", "juiz": "d1-ultra (Liquid direto)", "p": 0.6209651777561939, "s": 1.378633100015577, "tokens": 99, "custo": 4.158e-06, "modelo": "d1-ultra"}
+{"id": "F01", "juiz": "d1.1 (Liquid direto)", "p": 0.38280779652878205, "s": 1.6347984000167344, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "d1-ultra", "p": 0.9218847242708001, "s": 1.7184938999998849, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F02", "juiz": "Jev 1.14", "p": 0.83, "s": 1.503932599996915, "tokens": 346, "custo": 1.4532e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F02", "juiz": "d1.1 (Liquid direto)", "p": 0.7003890536086564, "s": 1.46859730000142, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "d1.1", "p": 0.7813800299836027, "s": 1.5391971000062767, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F02", "juiz": "d1-ultra (Liquid direto)", "p": 0.9218847242708001, "s": 3.280785700015258, "tokens": 107, "custo": 4.494e-06, "modelo": "d1-ultra"}
+{"id": "F03", "juiz": "d1.1", "p": 0.05953885651655059, "s": 1.5140105999889784, "tokens": 93, "custo": 1.86e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F03", "juiz": "Jev 1.14", "p": 0.21, "s": 1.648010000004433, "tokens": 337, "custo": 1.4154e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F03", "juiz": "d1-ultra (Liquid direto)", "p": 0.09784417575279887, "s": 1.4503260999917984, "tokens": 93, "custo": 3.906e-06, "modelo": "d1-ultra"}
+{"id": "F03", "juiz": "d1-ultra", "p": 0.09784417575279887, "s": 1.468072099989513, "tokens": 93, "custo": 3.906e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F03", "juiz": "d1.1 (Liquid direto)", "p": 0.07259775462868671, "s": 1.4702443999995012, "tokens": 93, "custo": 1.86e-06, "modelo": "d1.1"}
+{"id": "F04", "juiz": "d1-ultra", "p": 0.09784417419445134, "s": 1.5365056000009645, "tokens": 96, "custo": 4.032e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F04", "juiz": "d1.1 (Liquid direto)", "p": 0.0512243738291801, "s": 1.2155909000139218, "tokens": 96, "custo": 1.92e-06, "modelo": "d1.1"}
+{"id": "F04", "juiz": "d1-ultra (Liquid direto)", "p": 0.09784417419445134, "s": 1.1865829000016674, "tokens": 96, "custo": 4.032e-06, "modelo": "d1-ultra"}
+{"id": "F04", "juiz": "d1.1", "p": 0.051224365219772174, "s": 1.4935485999740195, "tokens": 96, "custo": 1.92e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F04", "juiz": "Jev 1.14", "p": 0.18, "s": 1.5503914000000805, "tokens": 341, "custo": 1.4322e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F05", "juiz": "d1-ultra", "p": 0.05927725625553109, "s": 1.2727869999944232, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F05", "juiz": "d1-ultra (Liquid direto)", "p": 0.05927725625553109, "s": 1.2161309999937657, "tokens": 101, "custo": 4.242e-06, "modelo": "d1-ultra"}
+{"id": "F05", "juiz": "d1.1 (Liquid direto)", "p": 0.12891457195174194, "s": 0.9980582999996841, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F05", "juiz": "Jev 1.14", "p": 0.28, "s": 1.1954339000221808, "tokens": 350, "custo": 1.47e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F05", "juiz": "d1.1", "p": 0.1019310878275175, "s": 1.3125602999934927, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F06", "juiz": "d1-ultra", "p": 0.8291578031974798, "s": 1.2430328000045847, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F06", "juiz": "Jev 1.14", "p": 0.55, "s": 1.1253971000260208, "tokens": 360, "custo": 1.512e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F06", "juiz": "d1.1 (Liquid direto)", "p": 0.5397200871653481, "s": 1.1900449999957345, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F06", "juiz": "d1-ultra (Liquid direto)", "p": 0.8291578031974798, "s": 1.076188600010937, "tokens": 117, "custo": 4.914e-06, "modelo": "d1-ultra"}
+{"id": "F06", "juiz": "d1.1", "p": 0.447126484687347, "s": 1.185553199989954, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F07", "juiz": "d1.1 (Liquid direto)", "p": 0.2672995687190796, "s": 1.218492599989986, "tokens": 108, "custo": 2.16e-06, "modelo": "d1.1"}
+{"id": "F07", "juiz": "Jev 1.14", "p": 0.45, "s": 1.0888365999853704, "tokens": 354, "custo": 1.4868e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F07", "juiz": "d1-ultra", "p": 0.30170334764715173, "s": 1.1048127000103705, "tokens": 108, "custo": 4.536e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F07", "juiz": "d1-ultra (Liquid direto)", "p": 0.30170334764715173, "s": 1.0790955999982543, "tokens": 108, "custo": 4.536e-06, "modelo": "d1-ultra"}
+{"id": "F07", "juiz": "d1.1", "p": 0.2470308717435308, "s": 1.168946899997536, "tokens": 108, "custo": 2.16e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F08", "juiz": "Jev 1.14", "p": 0.17, "s": 1.2806226999964565, "tokens": 358, "custo": 1.5036e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F08", "juiz": "d1.1", "p": 0.053865980988418716, "s": 1.1696983000147156, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F08", "juiz": "d1-ultra", "p": 0.05658365866597001, "s": 1.1147732999816071, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F08", "juiz": "d1-ultra (Liquid direto)", "p": 0.05658365866597001, "s": 1.5019954000017606, "tokens": 107, "custo": 4.494e-06, "modelo": "d1-ultra"}
+{"id": "F08", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461764896073, "s": 1.0805732999870088, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F09", "juiz": "d1.1", "p": 0.14787394076044613, "s": 1.1716710000182502, "tokens": 124, "custo": 2.48e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F09", "juiz": "d1-ultra", "p": 0.5246623165651004, "s": 1.255410200014012, "tokens": 124, "custo": 5.208e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F09", "juiz": "d1-ultra (Liquid direto)", "p": 0.5246623165651004, "s": 1.2457577000022866, "tokens": 124, "custo": 5.208e-06, "modelo": "d1-ultra"}
+{"id": "F09", "juiz": "d1.1 (Liquid direto)", "p": 0.17666812036487756, "s": 1.3389207999862265, "tokens": 124, "custo": 2.48e-06, "modelo": "d1.1"}
+{"id": "F09", "juiz": "Jev 1.14", "p": 0.49, "s": 1.114137699973071, "tokens": 370, "custo": 1.554e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F10", "juiz": "d1.1", "p": 0.3459559386403775, "s": 1.070687800005544, "tokens": 110, "custo": 2.2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F10", "juiz": "d1.1 (Liquid direto)", "p": 0.3108648428013962, "s": 1.2773557000036817, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F10", "juiz": "d1-ultra", "p": 0.7745383880545674, "s": 1.2760866999742575, "tokens": 110, "custo": 4.62e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F10", "juiz": "d1-ultra (Liquid direto)", "p": 0.7745383880545674, "s": 1.1680007000104524, "tokens": 110, "custo": 4.62e-06, "modelo": "d1-ultra"}
+{"id": "F10", "juiz": "Jev 1.14", "p": 0.56, "s": 1.1226224999991246, "tokens": 353, "custo": 1.4826e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F11", "juiz": "d1-ultra", "p": 0.04269763866264405, "s": 1.246859900013078, "tokens": 95, "custo": 3.99e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F11", "juiz": "d1.1 (Liquid direto)", "p": 0.0358999044282705, "s": 1.0446509000030346, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F11", "juiz": "d1-ultra (Liquid direto)", "p": 0.04269763866264405, "s": 1.5769593000004534, "tokens": 95, "custo": 3.99e-06, "modelo": "d1-ultra"}
+{"id": "F11", "juiz": "Jev 1.14", "p": 0.15, "s": 1.2361872000037692, "tokens": 339, "custo": 1.4238e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F11", "juiz": "d1.1", "p": 0.0762530008275807, "s": 1.0286664000013843, "tokens": 95, "custo": 1.9e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F12", "juiz": "Jev 1.14", "p": 0.27, "s": 1.0349305999989156, "tokens": 350, "custo": 1.47e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F12", "juiz": "d1-ultra (Liquid direto)", "p": 0.13286532989413977, "s": 0.9859941000177059, "tokens": 104, "custo": 4.368e-06, "modelo": "d1-ultra"}
+{"id": "F12", "juiz": "d1.1", "p": 0.3223468931547261, "s": 1.19248840000364, "tokens": 104, "custo": 2.08e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F12", "juiz": "d1.1 (Liquid direto)", "p": 0.18452069302828675, "s": 1.0668745000148192, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F12", "juiz": "d1-ultra", "p": 0.13286532989413977, "s": 1.2080692000163253, "tokens": 104, "custo": 4.368e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F13", "juiz": "d1-ultra (Liquid direto)", "p": 0.22546162016657334, "s": 1.0016127999988385, "tokens": 107, "custo": 4.494e-06, "modelo": "d1-ultra"}
+{"id": "F13", "juiz": "d1.1", "p": 0.2778211974843652, "s": 1.0857496999960858, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F13", "juiz": "d1-ultra", "p": 0.22546162016657334, "s": 1.5934864000009838, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F13", "juiz": "d1.1 (Liquid direto)", "p": 0.19264061682976016, "s": 1.0094245999935083, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F13", "juiz": "Jev 1.14", "p": 0.43, "s": 1.0441262999956962, "tokens": 351, "custo": 1.4742e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F14", "juiz": "d1.1 (Liquid direto)", "p": 0.25703457191414103, "s": 1.0525444000086281, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F14", "juiz": "d1-ultra", "p": 0.7085938497293137, "s": 1.2395352000021376, "tokens": 104, "custo": 4.368e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F14", "juiz": "d1-ultra (Liquid direto)", "p": 0.7085938497293137, "s": 1.3261311000096612, "tokens": 104, "custo": 4.368e-06, "modelo": "d1-ultra"}
+{"id": "F14", "juiz": "d1.1", "p": 0.26729954889377866, "s": 1.1470683999941684, "tokens": 104, "custo": 2.08e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F14", "juiz": "Jev 1.14", "p": 0.59, "s": 1.1879429999971762, "tokens": 348, "custo": 1.4616e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F15", "juiz": "d1-ultra", "p": 0.27144692389371533, "s": 1.160029900027439, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F15", "juiz": "d1.1 (Liquid direto)", "p": 0.161754641538239, "s": 1.1213205000094604, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F15", "juiz": "d1-ultra (Liquid direto)", "p": 0.27144692389371533, "s": 1.0374863999895751, "tokens": 99, "custo": 4.158e-06, "modelo": "d1-ultra"}
+{"id": "F15", "juiz": "d1.1", "p": 0.20968941658131182, "s": 1.0629569000157062, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F15", "juiz": "Jev 1.14", "p": 0.39, "s": 1.0458871999871917, "tokens": 341, "custo": 1.4322e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F16", "juiz": "d1-ultra (Liquid direto)", "p": 0.08946861505513176, "s": 1.0969170999887865, "tokens": 100, "custo": 4.2e-06, "modelo": "d1-ultra"}
+{"id": "F16", "juiz": "Jev 1.14", "p": 0.2, "s": 1.0002193999825977, "tokens": 348, "custo": 1.4616e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F16", "juiz": "d1-ultra", "p": 0.08946861505513176, "s": 1.135450999980094, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F16", "juiz": "d1.1", "p": 0.04183667486272345, "s": 1.4396230999846011, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F16", "juiz": "d1.1 (Liquid direto)", "p": 0.04401663173426387, "s": 1.3807267999800388, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F17", "juiz": "d1.1", "p": 0.5265110869328326, "s": 1.3173142000159714, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F17", "juiz": "Jev 1.14", "p": 0.62, "s": 1.1893621000053827, "tokens": 353, "custo": 1.4826e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F17", "juiz": "d1-ultra", "p": 0.6982966523528483, "s": 1.1116579999797978, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F17", "juiz": "d1-ultra (Liquid direto)", "p": 0.6982966523528483, "s": 1.287174099998083, "tokens": 109, "custo": 4.578e-06, "modelo": "d1-ultra"}
+{"id": "F17", "juiz": "d1.1 (Liquid direto)", "p": 0.5265110869328324, "s": 1.0421081999957096, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F18", "juiz": "d1-ultra (Liquid direto)", "p": 0.7186811674455774, "s": 0.9823475999874063, "tokens": 115, "custo": 4.83e-06, "modelo": "d1-ultra"}
+{"id": "F18", "juiz": "d1.1 (Liquid direto)", "p": 0.22782124655077746, "s": 1.0503287000174168, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F18", "juiz": "Jev 1.14", "p": 0.56, "s": 1.0863220999890473, "tokens": 359, "custo": 1.5078e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F18", "juiz": "d1-ultra", "p": 0.7186811674455774, "s": 1.9828687000263017, "tokens": 115, "custo": 4.83e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F18", "juiz": "d1.1", "p": 0.19264063257357106, "s": 1.269521399983205, "tokens": 115, "custo": 2.3e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F19", "juiz": "d1-ultra (Liquid direto)", "p": 0.3122040817744257, "s": 1.3310751999961212, "tokens": 109, "custo": 4.578e-06, "modelo": "d1-ultra"}
+{"id": "F19", "juiz": "d1.1 (Liquid direto)", "p": 0.26729954889377866, "s": 1.1086084000125993, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F19", "juiz": "d1-ultra", "p": 0.3122040817744257, "s": 1.2232287999941036, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F19", "juiz": "d1.1", "p": 0.2996109463913436, "s": 1.1104990000021644, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F19", "juiz": "Jev 1.14", "p": 0.33, "s": 0.9829311000066809, "tokens": 356, "custo": 1.4952e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F20", "juiz": "d1-ultra (Liquid direto)", "p": 0.34485309991727453, "s": 1.1262658999767154, "tokens": 117, "custo": 4.914e-06, "modelo": "d1-ultra"}
+{"id": "F20", "juiz": "d1.1", "p": 0.19264063257357106, "s": 1.0453979999874718, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F20", "juiz": "d1.1 (Liquid direto)", "p": 0.2372921717673435, "s": 1.0750896999961697, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F20", "juiz": "d1-ultra", "p": 0.34485309991727453, "s": 1.1780437999987043, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F20", "juiz": "Jev 1.14", "p": 0.4, "s": 1.1774238999933004, "tokens": 361, "custo": 1.5162e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F21", "juiz": "d1.1 (Liquid direto)", "p": 0.17666812036487756, "s": 0.986048100021435, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F21", "juiz": "d1-ultra", "p": 0.06809490109749249, "s": 1.5541599999996834, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F21", "juiz": "d1.1", "p": 0.17666811300283694, "s": 1.160931199992774, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F21", "juiz": "d1-ultra (Liquid direto)", "p": 0.06809490109749249, "s": 1.3814370000036433, "tokens": 106, "custo": 4.452e-06, "modelo": "d1-ultra"}
+{"id": "F21", "juiz": "Jev 1.14", "p": 0.24, "s": 1.0476474999741185, "tokens": 353, "custo": 1.4826e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F22", "juiz": "d1.1", "p": 0.18452070064421996, "s": 1.0469757999817375, "tokens": 116, "custo": 2.32e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F22", "juiz": "d1-ultra (Liquid direto)", "p": 0.15730750524766388, "s": 1.2962618000165094, "tokens": 116, "custo": 4.872e-06, "modelo": "d1-ultra"}
+{"id": "F22", "juiz": "Jev 1.14", "p": 0.37, "s": 1.0724698000121862, "tokens": 362, "custo": 1.5204e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F22", "juiz": "d1-ultra", "p": 0.15730750524766388, "s": 1.4636075000162236, "tokens": 116, "custo": 4.872e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F22", "juiz": "d1.1 (Liquid direto)", "p": 0.192640632573571, "s": 0.9052112000063062, "tokens": 116, "custo": 2.32e-06, "modelo": "d1.1"}
+{"id": "F23", "juiz": "Jev 1.14", "p": 0.28, "s": 1.0042944000160787, "tokens": 356, "custo": 1.4952e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F23", "juiz": "d1-ultra (Liquid direto)", "p": 0.2914061697127616, "s": 1.0355540000018664, "tokens": 109, "custo": 4.578e-06, "modelo": "d1-ultra"}
+{"id": "F23", "juiz": "d1-ultra", "p": 0.2914061697127616, "s": 1.2955918000079691, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F23", "juiz": "d1.1", "p": 0.2778211974843651, "s": 1.0390054000017699, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F23", "juiz": "d1.1 (Liquid direto)", "p": 0.24703087174353083, "s": 0.8888454000116326, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F24", "juiz": "d1.1 (Liquid direto)", "p": 0.023775515269848856, "s": 0.9133080000174232, "tokens": 112, "custo": 2.24e-06, "modelo": "d1.1"}
+{"id": "F24", "juiz": "d1-ultra (Liquid direto)", "p": 0.04692038357803836, "s": 1.2150727999978699, "tokens": 112, "custo": 4.704e-06, "modelo": "d1-ultra"}
+{"id": "F24", "juiz": "d1-ultra", "p": 0.04692038357803836, "s": 1.599128000001656, "tokens": 112, "custo": 4.704e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F24", "juiz": "Jev 1.14", "p": 0.23, "s": 0.9737892999837641, "tokens": 356, "custo": 1.4952e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F24", "juiz": "d1.1", "p": 0.011452332993000138, "s": 1.2580759999982547, "tokens": 112, "custo": 2.24e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F25", "juiz": "d1-ultra", "p": 0.2341987426829336, "s": 1.1925797000003513, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F25", "juiz": "d1.1 (Liquid direto)", "p": 0.17666813508895954, "s": 1.0928546999930404, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F25", "juiz": "Jev 1.14", "p": 0.37, "s": 1.2077626999816857, "tokens": 350, "custo": 1.47e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F25", "juiz": "d1.1", "p": 0.22782125545461396, "s": 1.0969021000200883, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F25", "juiz": "d1-ultra (Liquid direto)", "p": 0.2341987426829336, "s": 0.9605099000036716, "tokens": 106, "custo": 4.452e-06, "modelo": "d1-ultra"}
+{"id": "F26", "juiz": "d1-ultra", "p": 0.05927725198954326, "s": 1.5217393999919295, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F26", "juiz": "d1-ultra (Liquid direto)", "p": 0.05927725198954326, "s": 1.0341046999965329, "tokens": 102, "custo": 4.284e-06, "modelo": "d1-ultra"}
+{"id": "F26", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597453971662, "s": 1.0225031000154559, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F26", "juiz": "d1.1", "p": 0.0882521295968091, "s": 0.9709109000104945, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F26", "juiz": "Jev 1.14", "p": 0.17, "s": 1.0209020000183955, "tokens": 349, "custo": 1.4658e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F27", "juiz": "Jev 1.14", "p": 0.68, "s": 0.9913203000032809, "tokens": 343, "custo": 1.4406e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F27", "juiz": "d1.1 (Liquid direto)", "p": 0.3580606590236548, "s": 0.9546377000224311, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F27", "juiz": "d1-ultra (Liquid direto)", "p": 0.414461257641393, "s": 0.9777453000133391, "tokens": 102, "custo": 4.284e-06, "modelo": "d1-ultra"}
+{"id": "F27", "juiz": "d1-ultra", "p": 0.39072106197134493, "s": 1.260225999983959, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F27", "juiz": "d1.1", "p": 0.2372921855076993, "s": 1.1150189000181854, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F28", "juiz": "d1-ultra", "p": 0.018906253012472556, "s": 1.3793126000091434, "tokens": 95, "custo": 3.99e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F28", "juiz": "d1.1", "p": 0.07259775122102542, "s": 1.5426713000051677, "tokens": 95, "custo": 1.9e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F28", "juiz": "d1-ultra (Liquid direto)", "p": 0.018906253012472556, "s": 1.088866500009317, "tokens": 95, "custo": 3.99e-06, "modelo": "d1-ultra"}
+{"id": "F28", "juiz": "d1.1 (Liquid direto)", "p": 0.0971744327863987, "s": 0.9494266999827232, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F28", "juiz": "Jev 1.14", "p": 0.39, "s": 1.6378498999984004, "tokens": 340, "custo": 1.428e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F29", "juiz": "d1-ultra", "p": 0.855341996751136, "s": 2.453473799978383, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F29", "juiz": "d1.1", "p": 0.7721787489973043, "s": 1.7751385000010487, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F29", "juiz": "d1-ultra (Liquid direto)", "p": 0.855341996751136, "s": 1.4498025000211783, "tokens": 94, "custo": 3.948e-06, "modelo": "d1-ultra"}
+{"id": "F29", "juiz": "d1.1 (Liquid direto)", "p": 0.7429654377513794, "s": 0.9374083000002429, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F29", "juiz": "Jev 1.14", "p": 0.72, "s": 1.7147861999983434, "tokens": 342, "custo": 1.4364e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F30", "juiz": "d1.1", "p": 0.772178744545386, "s": 2.181885099998908, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F30", "juiz": "d1-ultra (Liquid direto)", "p": 0.855341996751136, "s": 1.01395500000217, "tokens": 94, "custo": 3.948e-06, "modelo": "d1-ultra"}
+{"id": "F30", "juiz": "d1.1 (Liquid direto)", "p": 0.6540440728119271, "s": 1.004164399986621, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F30", "juiz": "Jev 1.14", "p": 0.73, "s": 2.1823691000172403, "tokens": 342, "custo": 1.4364e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F30", "juiz": "d1-ultra", "p": 0.855341996751136, "s": 1.489631400007056, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F31", "juiz": "d1-ultra", "p": 0.4264895951521023, "s": 1.195214900013525, "tokens": 113, "custo": 4.746e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F31", "juiz": "d1.1 (Liquid direto)", "p": 0.16175462781290295, "s": 1.2143061000097077, "tokens": 113, "custo": 2.26e-06, "modelo": "d1.1"}
+{"id": "F31", "juiz": "d1-ultra (Liquid direto)", "p": 0.4264895951521023, "s": 1.0954579999961425, "tokens": 113, "custo": 4.746e-06, "modelo": "d1-ultra"}
+{"id": "F31", "juiz": "Jev 1.14", "p": 0.4, "s": 1.0464968000014778, "tokens": 357, "custo": 1.4994e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F31", "juiz": "d1.1", "p": 0.25703457674690133, "s": 1.3536907999950927, "tokens": 113, "custo": 2.26e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F32", "juiz": "d1-ultra (Liquid direto)", "p": 0.8781030246259028, "s": 1.3887901999987662, "tokens": 98, "custo": 4.116e-06, "modelo": "d1-ultra"}
+{"id": "F32", "juiz": "Jev 1.14", "p": 0.65, "s": 1.6587542000052053, "tokens": 349, "custo": 1.4658e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F32", "juiz": "d1.1", "p": 0.6045776105813816, "s": 1.1191640000033658, "tokens": 98, "custo": 1.96e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F32", "juiz": "d1.1 (Liquid direto)", "p": 0.6659525328168151, "s": 1.1716246999858413, "tokens": 98, "custo": 1.96e-06, "modelo": "d1.1"}
+{"id": "F32", "juiz": "d1-ultra", "p": 0.8781030246259028, "s": 1.4486427000083495, "tokens": 98, "custo": 4.116e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F33", "juiz": "d1.1 (Liquid direto)", "p": 0.7903106043877692, "s": 1.3251747000031173, "tokens": 114, "custo": 2.28e-06, "modelo": "d1.1"}
+{"id": "F33", "juiz": "Jev 1.14", "p": 0.78, "s": 0.9759577999939211, "tokens": 366, "custo": 1.5372e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F33", "juiz": "d1.1", "p": 0.807359367426429, "s": 1.8303906000219285, "tokens": 114, "custo": 2.28e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F33", "juiz": "d1-ultra", "p": 0.7382047464374181, "s": 1.4411107999912929, "tokens": 114, "custo": 4.788e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F33", "juiz": "d1-ultra (Liquid direto)", "p": 0.7382047464374181, "s": 1.0301709999912418, "tokens": 114, "custo": 4.788e-06, "modelo": "d1-ultra"}
+{"id": "F34", "juiz": "d1-ultra", "p": 0.07811527233897028, "s": 2.0957276000117417, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F34", "juiz": "d1.1 (Liquid direto)", "p": 0.13499259654505846, "s": 1.3218792999978177, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F34", "juiz": "d1.1", "p": 0.09261685731143793, "s": 1.6182495999964885, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F34", "juiz": "d1-ultra (Liquid direto)", "p": 0.07811527233897028, "s": 1.062833000003593, "tokens": 100, "custo": 4.2e-06, "modelo": "d1-ultra"}
+{"id": "F34", "juiz": "Jev 1.14", "p": 0.27, "s": 0.9800440999970306, "tokens": 347, "custo": 1.4574e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F35", "juiz": "d1-ultra", "p": 0.7285530807614236, "s": 1.1025982999999542, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F35", "juiz": "d1.1 (Liquid direto)", "p": 0.4734889004494026, "s": 1.3899698999885004, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F35", "juiz": "d1-ultra (Liquid direto)", "p": 0.7285530807614236, "s": 1.0450732000172138, "tokens": 117, "custo": 4.914e-06, "modelo": "d1-ultra"}
+{"id": "F35", "juiz": "Jev 1.14", "p": 0.51, "s": 1.1131610999873374, "tokens": 363, "custo": 1.5246e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F35", "juiz": "d1.1", "p": 0.33404746718318484, "s": 3.088125800015405, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F36", "juiz": "d1-ultra (Liquid direto)", "p": 0.8220509968168928, "s": 1.0489576999971177, "tokens": 92, "custo": 3.864e-06, "modelo": "d1-ultra"}
+{"id": "F36", "juiz": "Jev 1.14", "p": 0.69, "s": 1.816917199990712, "tokens": 337, "custo": 1.4154e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F36", "juiz": "d1-ultra", "p": 0.8220509968168928, "s": 2.7441408000013325, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F36", "juiz": "d1.1 (Liquid direto)", "p": 0.5, "s": 0.9628610000072513, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F36", "juiz": "d1.1", "p": 0.6045776347809937, "s": 1.1518346999946516, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F37", "juiz": "d1-ultra", "p": 0.040724817295189494, "s": 2.2137439999787603, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F37", "juiz": "d1.1", "p": 0.07259775462868669, "s": 1.0482256999821402, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F37", "juiz": "d1.1 (Liquid direto)", "p": 0.07625299547988944, "s": 1.1495348000025842, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F37", "juiz": "d1-ultra (Liquid direto)", "p": 0.040724817295189494, "s": 0.9634442999958992, "tokens": 92, "custo": 3.864e-06, "modelo": "d1-ultra"}
+{"id": "F37", "juiz": "Jev 1.14", "p": 0.21, "s": 1.005406199983554, "tokens": 336, "custo": 1.4112e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F38", "juiz": "Jev 1.14", "p": 0.69, "s": 1.0160954999737442, "tokens": 341, "custo": 1.4322e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F38", "juiz": "d1.1", "p": 0.7114061421208372, "s": 1.0092016000126023, "tokens": 97, "custo": 1.94e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F38", "juiz": "d1.1 (Liquid direto)", "p": 0.7221788126705244, "s": 1.011033300019335, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "d1-ultra", "p": 0.9319051056243032, "s": 2.60566810000455, "tokens": 97, "custo": 4.074e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F38", "juiz": "d1-ultra (Liquid direto)", "p": 0.9319051056243032, "s": 1.4058661999879405, "tokens": 97, "custo": 4.074e-06, "modelo": "d1-ultra"}
+{"id": "F39", "juiz": "d1.1 (Liquid direto)", "p": 0.07259775974017893, "s": 0.947094900009688, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F39", "juiz": "Jev 1.14", "p": 0.2, "s": 1.9279345000104513, "tokens": 349, "custo": 1.4658e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F39", "juiz": "d1.1", "p": 0.06258096624135207, "s": 2.9081824999884702, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F39", "juiz": "d1-ultra", "p": 0.07129506430093685, "s": 1.4214448000129778, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F39", "juiz": "d1-ultra (Liquid direto)", "p": 0.07129506430093685, "s": 1.2442527000093833, "tokens": 102, "custo": 4.284e-06, "modelo": "d1-ultra"}
+{"id": "F40", "juiz": "d1.1", "p": 0.44712645966366155, "s": 1.734205299988389, "tokens": 105, "custo": 2.1e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F40", "juiz": "d1-ultra (Liquid direto)", "p": 0.6439101850233135, "s": 0.9975683999946341, "tokens": 105, "custo": 4.41e-06, "modelo": "d1-ultra"}
+{"id": "F40", "juiz": "d1.1 (Liquid direto)", "p": 0.24703089057236824, "s": 0.8660060999973211, "tokens": 105, "custo": 2.1e-06, "modelo": "d1.1"}
+{"id": "F40", "juiz": "d1-ultra", "p": 0.6439101850233135, "s": 1.0567244999983814, "tokens": 105, "custo": 4.41e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F40", "juiz": "Jev 1.14", "p": 0.4, "s": 1.7556877000024542, "tokens": 349, "custo": 1.4658e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F41", "juiz": "d1-ultra (Liquid direto)", "p": 0.6982966523528483, "s": 1.036802099988563, "tokens": 115, "custo": 4.83e-06, "modelo": "d1-ultra"}
+{"id": "F41", "juiz": "d1-ultra", "p": 0.6982966523528483, "s": 2.199417600000743, "tokens": 115, "custo": 4.83e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F41", "juiz": "Jev 1.14", "p": 0.83, "s": 1.136508399999002, "tokens": 361, "custo": 1.5162e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F41", "juiz": "d1.1", "p": 0.6659525215573813, "s": 1.4004181000054814, "tokens": 115, "custo": 2.3e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F41", "juiz": "d1.1 (Liquid direto)", "p": 0.7903105876125045, "s": 0.9865117000008468, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F42", "juiz": "d1-ultra (Liquid direto)", "p": 0.22546161194543257, "s": 0.948355000000447, "tokens": 100, "custo": 4.2e-06, "modelo": "d1-ultra"}
+{"id": "F42", "juiz": "d1.1", "p": 0.11745713346647835, "s": 1.1040160999982618, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F42", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345719141411, "s": 0.9889359000080731, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F42", "juiz": "Jev 1.14", "p": 0.45, "s": 1.780874699994456, "tokens": 347, "custo": 1.4574e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F42", "juiz": "d1-ultra", "p": 0.22546161194543257, "s": 1.7765455999760889, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F43", "juiz": "Jev 1.14", "p": 0.43, "s": 0.9794154999835882, "tokens": 341, "custo": 1.4322e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F43", "juiz": "d1-ultra", "p": 0.17794899973975992, "s": 1.5067441000137478, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F43", "juiz": "d1-ultra (Liquid direto)", "p": 0.17794899973975992, "s": 1.0887572999927215, "tokens": 101, "custo": 4.242e-06, "modelo": "d1-ultra"}
+{"id": "F43", "juiz": "d1.1", "p": 0.08825212552427207, "s": 1.4387378999963403, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F43", "juiz": "d1.1 (Liquid direto)", "p": 0.08825212552427207, "s": 0.9173754999937955, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "d1-ultra", "p": 0.09357238231412823, "s": 1.4755860999866854, "tokens": 103, "custo": 4.326e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F44", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461113713125, "s": 1.2122546999889892, "tokens": 103, "custo": 2.06e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "Jev 1.14", "p": 0.11, "s": 2.164233299990883, "tokens": 352, "custo": 1.4784e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F44", "juiz": "d1.1", "p": 0.056635693107492203, "s": 1.3395419000007678, "tokens": 103, "custo": 2.06e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F44", "juiz": "d1-ultra (Liquid direto)", "p": 0.09357238231412823, "s": 1.5950115000014193, "tokens": 103, "custo": 4.326e-06, "modelo": "d1-ultra"}
+{"id": "F45", "juiz": "d1.1", "p": 0.7989701996175703, "s": 2.1065899999812245, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F45", "juiz": "d1.1 (Liquid direto)", "p": 0.6540440613596226, "s": 0.9170040000171866, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F45", "juiz": "d1-ultra", "p": 0.9459945710110412, "s": 1.1895590999920387, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F45", "juiz": "Jev 1.14", "p": 0.76, "s": 1.6735675999952946, "tokens": 345, "custo": 1.449e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F45", "juiz": "d1-ultra (Liquid direto)", "p": 0.9459945710110412, "s": 1.3099633999809157, "tokens": 101, "custo": 4.242e-06, "modelo": "d1-ultra"}
+{"id": "F46", "juiz": "d1-ultra", "p": 0.07129505923561445, "s": 1.0892400000011548, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F46", "juiz": "d1-ultra (Liquid direto)", "p": 0.07129505923561445, "s": 1.0836023000010755, "tokens": 101, "custo": 4.242e-06, "modelo": "d1-ultra"}
+{"id": "F46", "juiz": "Jev 1.14", "p": 0.26, "s": 2.1644781999930274, "tokens": 347, "custo": 1.4574e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F46", "juiz": "d1.1", "p": 0.06910462416079076, "s": 2.289107699994929, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F46", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597711919736, "s": 1.3383091000141576, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F47", "juiz": "Jev 1.14", "p": 0.75, "s": 1.0203155000053812, "tokens": 371, "custo": 1.5582e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F47", "juiz": "d1-ultra", "p": 0.4753376834348995, "s": 1.1297983000113163, "tokens": 123, "custo": 5.166e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F47", "juiz": "d1.1 (Liquid direto)", "p": 0.3108648536441879, "s": 1.0706535000063013, "tokens": 123, "custo": 2.46e-06, "modelo": "d1.1"}
+{"id": "F47", "juiz": "d1.1", "p": 0.28859386827046074, "s": 1.5893587000027765, "tokens": 123, "custo": 2.46e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F47", "juiz": "d1-ultra (Liquid direto)", "p": 0.4753376834348995, "s": 1.492234000004828, "tokens": 123, "custo": 5.166e-06, "modelo": "d1-ultra"}
+{"id": "F48", "juiz": "Jev 1.14", "p": 0.52, "s": 2.2353884000040125, "tokens": 359, "custo": 1.5078e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F48", "juiz": "d1-ultra (Liquid direto)", "p": 0.4876613324012321, "s": 1.137968600000022, "tokens": 109, "custo": 4.578e-06, "modelo": "d1-ultra"}
+{"id": "F48", "juiz": "d1.1 (Liquid direto)", "p": 0.20968941658131185, "s": 1.1192758999823127, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F48", "juiz": "d1-ultra", "p": 0.4876613324012321, "s": 1.1402888000011444, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F48", "juiz": "d1.1", "p": 0.257034571914141, "s": 1.341649599984521, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F49", "juiz": "d1-ultra", "p": 0.11671093250452969, "s": 1.0708851999952458, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F49", "juiz": "Jev 1.14", "p": 0.17, "s": 0.9767254000180401, "tokens": 347, "custo": 1.4574e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F49", "juiz": "d1.1", "p": 0.048705632673383535, "s": 1.1205804999917746, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F49", "juiz": "d1.1 (Liquid direto)", "p": 0.039760200376155436, "s": 1.3162946000229567, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F49", "juiz": "d1-ultra (Liquid direto)", "p": 0.11671093250452969, "s": 1.2501091999874916, "tokens": 100, "custo": 4.2e-06, "modelo": "d1-ultra"}
+{"id": "F50", "juiz": "d1.1 (Liquid direto)", "p": 0.7429654280858591, "s": 1.1238084000069648, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F50", "juiz": "d1-ultra (Liquid direto)", "p": 0.9021558247666503, "s": 0.9762583000119776, "tokens": 101, "custo": 4.242e-06, "modelo": "d1-ultra"}
+{"id": "F50", "juiz": "d1.1", "p": 0.7813800343066227, "s": 1.0386367999890354, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F50", "juiz": "d1-ultra", "p": 0.9021558247666503, "s": 1.074340499995742, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F50", "juiz": "Jev 1.14", "p": 0.7, "s": 1.336070399993332, "tokens": 345, "custo": 1.449e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F51", "juiz": "d1.1", "p": 0.19264060895785512, "s": 1.308904800011078, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F51", "juiz": "d1-ultra (Liquid direto)", "p": 0.2341987426829336, "s": 1.1636931000102777, "tokens": 106, "custo": 4.452e-06, "modelo": "d1-ultra"}
+{"id": "F51", "juiz": "Jev 1.14", "p": 0.37, "s": 0.9808926999976393, "tokens": 350, "custo": 1.47e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F51", "juiz": "d1.1 (Liquid direto)", "p": 0.19264061682976014, "s": 0.8918021000281442, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "d1-ultra", "p": 0.2341987426829336, "s": 2.099759400007315, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F52", "juiz": "d1.1", "p": 0.28859387866175884, "s": 1.1853620999900158, "tokens": 97, "custo": 1.94e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F52", "juiz": "d1-ultra", "p": 0.7285530807614236, "s": 1.4227246000082232, "tokens": 97, "custo": 4.074e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F52", "juiz": "Jev 1.14", "p": 0.56, "s": 1.1925201000121888, "tokens": 342, "custo": 1.4364e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F52", "juiz": "d1.1 (Liquid direto)", "p": 0.28859387866175884, "s": 1.0307723000005353, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F52", "juiz": "d1-ultra (Liquid direto)", "p": 0.7285530807614236, "s": 0.9572861000197008, "tokens": 97, "custo": 4.074e-06, "modelo": "d1-ultra"}
+{"id": "F53", "juiz": "d1-ultra", "p": 0.7085938400082761, "s": 1.456701899995096, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F53", "juiz": "Jev 1.14", "p": 0.49, "s": 1.9282020000100601, "tokens": 347, "custo": 1.4574e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F53", "juiz": "d1.1", "p": 0.33404746718318484, "s": 1.0370212999987416, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F53", "juiz": "d1-ultra (Liquid direto)", "p": 0.7085938400082761, "s": 1.1794142999860924, "tokens": 100, "custo": 4.2e-06, "modelo": "d1-ultra"}
+{"id": "F53", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345815796616, "s": 0.9234761999978218, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F54", "juiz": "d1.1", "p": 0.34595593864037755, "s": 1.4116847999976017, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F54", "juiz": "d1.1 (Liquid direto)", "p": 0.3459559386403775, "s": 0.9298943000030704, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F54", "juiz": "Jev 1.14", "p": 0.53, "s": 1.0003233999887016, "tokens": 343, "custo": 1.4406e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F54", "juiz": "d1-ultra (Liquid direto)", "p": 0.6662128596620659, "s": 1.0649039999989327, "tokens": 99, "custo": 4.158e-06, "modelo": "d1-ultra"}
+{"id": "F54", "juiz": "d1-ultra", "p": 0.6662128596620659, "s": 1.4723075999936555, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F55", "juiz": "Jev 1.14", "p": 0.48, "s": 3.00106589999632, "tokens": 339, "custo": 1.4238e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F55", "juiz": "d1.1 (Liquid direto)", "p": 0.31086485364418787, "s": 0.9972773999907076, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F55", "juiz": "d1.1", "p": 0.20102979225307424, "s": 1.0712136000220198, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F55", "juiz": "d1-ultra (Liquid direto)", "p": 0.6325127183904117, "s": 1.2872960999957286, "tokens": 94, "custo": 3.948e-06, "modelo": "d1-ultra"}
+{"id": "F55", "juiz": "d1-ultra", "p": 0.6325127183904117, "s": 1.1493594000057783, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F56", "juiz": "d1.1", "p": 0.8073593752983346, "s": 1.3458357000199612, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F56", "juiz": "d1-ultra", "p": 0.791311118533024, "s": 1.0999187999987043, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F56", "juiz": "d1-ultra (Liquid direto)", "p": 0.791311118533024, "s": 1.0284363999962807, "tokens": 117, "custo": 4.914e-06, "modelo": "d1-ultra"}
+{"id": "F56", "juiz": "Jev 1.14", "p": 0.77, "s": 0.956804400018882, "tokens": 371, "custo": 1.5582e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F56", "juiz": "d1.1 (Liquid direto)", "p": 0.7627078099121819, "s": 0.9248643000028096, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F57", "juiz": "d1-ultra (Liquid direto)", "p": 0.10228896436121182, "s": 0.9386398000060581, "tokens": 99, "custo": 4.158e-06, "modelo": "d1-ultra"}
+{"id": "F57", "juiz": "Jev 1.14", "p": 0.26, "s": 1.0605115999933332, "tokens": 346, "custo": 1.4532e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F57", "juiz": "d1-ultra", "p": 0.10228896436121182, "s": 1.5981593999895267, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F57", "juiz": "d1.1 (Liquid direto)", "p": 0.06910462090487567, "s": 1.4321075000043493, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F57", "juiz": "d1.1", "p": 0.053865987437121496, "s": 0.9923622999922372, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F58", "juiz": "d1.1 (Liquid direto)", "p": 0.06258095881832378, "s": 0.9700744999863673, "tokens": 118, "custo": 2.36e-06, "modelo": "d1.1"}
+{"id": "F58", "juiz": "Jev 1.14", "p": 0.09, "s": 1.1494501999986824, "tokens": 368, "custo": 1.5456e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F58", "juiz": "d1.1", "p": 0.07259775803634812, "s": 1.1295601000019815, "tokens": 118, "custo": 2.36e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F58", "juiz": "d1-ultra", "p": 0.0491779506290198, "s": 1.407785099989269, "tokens": 118, "custo": 4.956e-06, "modelo": "liquid/d1-ultra-20261015"}
+{"id": "F58", "juiz": "d1-ultra (Liquid direto)", "p": 0.0491779506290198, "s": 1.0181054999993648, "tokens": 118, "custo": 4.956e-06, "modelo": "d1-ultra"}
+{"id": "F59", "juiz": "d1-ultra (Liquid direto)", "p": 0.1218969665556328, "s": 1.406984300003387, "tokens": 110, "custo": 4.62e-06, "modelo": "d1-ultra"}
+{"id": "F59", "juiz": "d1.1", "p": 0.05663569040331748, "s": 1.1728241999808233, "tokens": 110, "custo": 2.2e-06, "modelo": "liquid/d1.1-20261027"}
+{"id": "F59", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461113713127, "s": 0.9165606000169646, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F59", "juiz": "Jev 1.14", "p": 0.13, "s": 1.0591190999839455, "tokens": 358, "custo": 1.5036e-05, "modelo": "typesafe/jev-1.14-20261014"}
+{"id": "F59", "juiz": "d1-ultra", "p": 0.1218969665556328, "s": 1.1317755999916699, "tokens": 110, "custo": 4.62e-06, "modelo": "liquid/d1-ultra-20261015"}

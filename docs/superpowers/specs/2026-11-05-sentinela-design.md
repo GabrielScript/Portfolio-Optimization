@@ -152,3 +152,10 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
    vendor's own benchmark, so before d1-ultra may route anything, it is checked on our own items: 60 Portuguese CVM
    filings of the Composite's names, labelled by hand (material / not material), Brier and accuracy against Jev 1.14
    on the same items. Still shadow only, still never decides on money.
+
+## Amendment 3 (2026-11-05 night, after the judges check of amendment 2; DECISOES 270)
+
+9. **The shadow judge is d1.1 (Liquid API direct), not d1-ultra.** On the 60 filings of amendment 2, by its own
+   criteria (accuracy and Brier): d1.1 93% / 0.082, d1-ultra 82% / 0.121, Jev 1.14 80% / 0.145 (`docs/juizes-2026-11-05.md`).
+   d1-ultra caught one more true event (17 of 18 vs 15) but raised 10 false alarms against 1. During the shadow period
+   the log also keeps d1-ultra's answer for the same items, so recall can be re-read on real events before any routing.

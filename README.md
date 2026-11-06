@@ -849,3 +849,28 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   alpha: none passes; half Kelly and robust Markowitz tie the Composite with smaller drawdowns (branches
   `feat/us-lote2`, `feat/lote3-composto`). The Composite stays the real-money plan (R$ 500 on 19/12, closing auction).
 - Out of scope by the user: FIIs/FIAGROs; US work shelved (not deleted). No ML/RL/multi-agent model decides weights.
+
+## Session notes (2026-11-06)
+
+- The Sentinela went live: hourly 08:20-19:20 on B3 sessions (task "alepha sentinela"), 0 DeepSeek calls on its first
+  day (nothing new after the 00:20 seeding). Its fictitious "Composto + Sentinela" account starts at the 06/11 close
+  beside "Composto (base)". Both of its instructions now state the extremely aggressive investor's profile
+  (DECISOES 287).
+- The live app restarted twice through a comment in `requirements.txt` (the Cloud had the new `app.py` with old `ui`
+  modules in memory, DECISOES 281). The backtest title names the Composite alone, with BOVA11 as the yardstick.
+- DeepSeek spend: US$ 5 of credit went in 3 days, against small logged costs (about US$ 0.04 per max opinion, under
+  US$ 0.001 per scan). The public app's button now needs an access code (`[deepseek] codigo` in the Cloud secrets, set
+  by the user and checked live), and the cap is 3 a day (DECISOES 283).
+- The real buy of 19/12 is sized by the Sentinela account's balance: no buy under R$ 11,000; R$ 500 from 11,000;
+  R$ 750 from 12,500; R$ 1,000 from 13,000. The ticket also prints the agent's alpha against "Composto (base)"
+  (DECISOES 284).
+- d1.1 (Liquid AI) scores the sentiment log beside Jev, with Jev's own questions, in `sentiment/scores_d1/` (lake
+  72df5de). Jev's log is untouched (DECISOES 284).
+- Scheduled tasks: paper v1, v2 and v3 had not run since 03/11, because the venv's python cannot write outside the
+  project. Every app task now runs the base-Python launcher, which also passes the venv's packages to child processes.
+  Paper v2 and v3 refresh the lake through the lake's own base runner on their due days (`core/python_do_lago.py`).
+  All eight tasks ended 06/11 with rc 0 (DECISOES 282, 285, 286). The block is not Windows Security, and its cause is
+  still unknown.
+- The CI's failure e-mails of 06/11 came from `openpyxl` missing from `requirements.txt`. That is fixed, and the
+  actions no longer run on Node 20. B3 hours checked 06/11: continuous trading in stocks ends at 17:55, and their
+  closing call runs 17:55-18:00.

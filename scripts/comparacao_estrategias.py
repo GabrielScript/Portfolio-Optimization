@@ -5,10 +5,15 @@ costs, so the screen compares like with like. Not a reading and not a trial: not
 N does not change (DECISOES 257).
 
     .venv/Scripts/python -X utf8 scripts/comparacao_estrategias.py [LAKE_EXPORTS_FOLDER]     (default: data/b3lake)
+    .venv/Scripts/python -X utf8 scripts/comparacao_estrategias.py --so-top5 [LAKE_EXPORTS_FOLDER]
+
+``--so-top5`` runs only the Composite and the Composite top-5 (DECISOES 290) and adds the top-5 to the saved files, on
+their dates, once the recomputed Composite matches the saved one (otherwise it stops: run the full comparison).
 
 Engine: ``core.backtest.walk_forward_dinamico`` with attempt 51's ``CFG_BT`` (5-year training, a rebalance every 63
 sessions, 10 bps a side, R$ 10 thousand), the point-in-time universe of the lake (delisted names included), phase 0.
-- Composite and Conservadora: the registered rules (``scripts/curvas_ao_vivo.py``'s, the same code).
+- Composite and Conservadora: the registered rules (``scripts/curvas_ao_vivo.py``'s, the same code); the Composite
+  top-5 (``core.top5``): the Composite's score, 5 names, 1 per sector (DECISOES 290).
 - Mean-variance family on the whole eligible universe with the app's limits (``CFG_KELLY``: 20% per name, up to 10
   names, 40% vol cap): Markowitz (maximum Sharpe on sample means), Bayes-Stein (maximum Sharpe on Jorion-shrunk means),
   minimum variance, Kelly lambda = 2 and Michaud's resampled maximum Sharpe (B = 100 blocks of 21, seed 0).
@@ -55,6 +60,28 @@ COMPOSITE, CONSERVADORA = "Composite", "Conservadora"
 ETFS = {"BOVA11": "BOVA11 (Ibovespa)", "SMAL11": "SMAL11 (small caps)", "DIVO11": "DIVO11 (dividendos)"}
 FASE = 0                              # the screen's phase (DECISOES 252)
 PESO_MINIMO = 1e-6                    # a weight below it is not a holding
+TOLERANCIA = 1e-6                     # relative gap that still counts as the same Composite curve
+
+
+def juntar_curva(curvas: pd.DataFrame, giro: pd.DataFrame, nome: str, composite: pd.Series, nova: pd.Series,
+                 giro_novo: pd.Series) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """The saved ``curvas`` (date x curve) and ``giro`` (strategy x turnover) with ``nome`` = ``nova`` on their dates,
+    right after the Composite (replacing an older ``nome``). ``composite`` is the Composite recomputed in the same run
+    as ``nova``: it must match the saved one on those dates (``ValueError`` if not), so both curves stay like with
+    like."""
+    salva = curvas[COMPOSITE].dropna()
+    refeita = composite.reindex(salva.index)
+    gap = float(((refeita - salva).abs() / salva.abs()).max())
+    if not gap <= TOLERANCIA:
+        raise ValueError(f"the recomputed Composite differs from the saved one (max relative gap {gap:.2e}): the "
+                         "inputs moved since the saved run; run the full comparison instead")
+    juntas = curvas.drop(columns=[nome], errors="ignore")
+    juntas.insert(juntas.columns.get_loc(COMPOSITE) + 1, nome, nova.reindex(juntas.index))
+    linhas = giro.drop(index=[nome], errors="ignore")
+    posicao = list(linhas.index).index(COMPOSITE) + 1
+    giro_junto = pd.concat([linhas.iloc[:posicao], giro_novo.to_frame(nome).T.reindex(columns=linhas.columns),
+                            linhas.iloc[posicao:]]).rename_axis(linhas.index.name)
+    return juntas, giro_junto
 
 
 def estrategia_paridade_de_risco() -> Callable[[pd.DataFrame], pd.Series]:
@@ -103,6 +130,7 @@ def tesouro_nas_datas(datas: pd.DatetimeIndex) -> pd.Series:
 
 
 def main(argv: list[str]) -> int:
+    from core import top5
     from core.cdi_lago import daily_cdi
     from core.composto import estrategia_por_nota
     from core.qpo import CFG_MAX_SHARPE, K, qubo_selector, selection_then_max_sharpe
@@ -113,6 +141,8 @@ def main(argv: list[str]) -> int:
     from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT
 
     inicio = time.perf_counter()
+    so_top5 = "--so-top5" in argv
+    argv = [argumento for argumento in argv if argumento != "--so-top5"]
     lago = Path(argv[0]) if argv else LAGO
     with tempfile.TemporaryDirectory(prefix="comparacao-") as temporaria:
         entradas = Path(temporaria)
@@ -134,6 +164,10 @@ def main(argv: list[str]) -> int:
                   f"({time.perf_counter() - inicio:.0f} s)", flush=True)
             return resultado
 
+        if so_top5:
+            return _so_top5(rodar(estrategia_por_nota(nota, dados.setores), COMPOSITE),
+                            rodar(top5.estrategia(nota, dados.setores), top5.NOME), top5.NOME, lago, somas,
+                            ultima, inicio)
         quantica = selection_then_max_sharpe(
             qubo_selector(dados.setores, FULL_UNIVERSE, K, anneal_solver(dados.setores, SECTOR_CAP, {}), {}),
             mensal.retornos, mensal.proventos, dados.setores,
@@ -143,6 +177,7 @@ def main(argv: list[str]) -> int:
                   f"from {lago.name} (sha256): {somas}")
             resultados = {
                 COMPOSITE: rodar(estrategia_por_nota(nota, dados.setores), COMPOSITE),
+                top5.NOME: rodar(top5.estrategia(nota, dados.setores), top5.NOME),
                 CONSERVADORA: rodar(estrategia_conservadora(mensal.retornos, mensal.proventos, dados.setores),
                                     CONSERVADORA),
                 **{nome: rodar(estrategia, nome) for nome, estrategia in otimizadores(cdi).items()},
@@ -160,6 +195,26 @@ def main(argv: list[str]) -> int:
     giro.to_csv(GIRO, encoding="utf-8", lineterminator="\n")
     print(f"{CURVAS.relative_to(RAIZ)} and {GIRO.relative_to(RAIZ)} up to {ultima:%d/%m/%Y} in "
           f"{time.perf_counter() - inicio:.0f} s; log in {SAIDA.relative_to(RAIZ)}")
+    return 0
+
+
+def _so_top5(composite: ResultadoBacktest, nova: ResultadoBacktest, nome: str, lago: Path, somas: dict,
+             ultima: pd.Timestamp, inicio: float) -> int:
+    """``--so-top5``: adds ``nova`` to the saved files (``juntar_curva``) and appends its lines to the log."""
+    curvas = pd.read_parquet(CURVAS).set_index("date")
+    giro = pd.read_csv(GIRO, index_col="estrategia")
+    juntas, giro_junto = juntar_curva(curvas, giro, nome, composite.valores, nova.valores,
+                                      resumo_de_giro({nome: nova}).loc[nome])
+    juntas.rename_axis("date").reset_index().to_parquet(CURVAS, index=False)
+    giro_junto.to_csv(GIRO, encoding="utf-8", lineterminator="\n")
+    valores = juntas[nome].dropna()
+    with SAIDA.open("a", encoding="utf-8", newline="\n") as saida:
+        print(f"\n{nome} added by --so-top5 (DECISOES 290) on the saved dates to {valores.index[-1]:%d/%m/%Y}; the "
+              f"Composite recomputed to {ultima:%d/%m/%Y} from {lago.name} (sha256 {somas}) matched the saved one. "
+              f"{nome}: CAGR {cagr(valores):.1%}, max drawdown {drawdown(valores)[1]:.1%}, turnover "
+              f"{nova.turnover_anual_medio:.2f}/yr.", file=saida)
+    print(f"{nome} added to {CURVAS.relative_to(RAIZ)} and {GIRO.relative_to(RAIZ)} in "
+          f"{time.perf_counter() - inicio:.0f} s")
     return 0
 
 

@@ -28,7 +28,7 @@ def test_the_message_says_what_it_is_names_each_portfolio_and_the_ones_without_o
     primeira = corpo.splitlines()[0]
     assert "conta fictícia" in primeira.lower() and "fechamento de 04/11/2026" in primeira and "dinheiro real" in primeira
     assert "DeepSeek: as ações que o assessor DeepSeek julgou favoráveis" in corpo
-    assert "Sem ordens nesta data: Composite, Conservadora e Controle." in corpo
+    assert "Sem ordens nesta data: Composite, Conservadora, Controle e Composite top-5." in corpo
     assert ae.mensagem_das_ordens(_ordens().iloc[:1])[0] == "Aleph Quant (simulador): 1 ordem no fechamento de 04/11/2026"
 
 
@@ -72,3 +72,10 @@ def test_credentials_come_from_the_env_and_are_none_without_the_password(tmp_pat
 def _sem_variaveis(monkeypatch):
     for nome in ("GMAIL_USER", "GMAIL_PASSWORD_APP", "ALERTA_EMAIL_PARA"):
         monkeypatch.delenv(nome, raising=False)
+
+
+def test_the_email_names_the_top5_and_says_what_it_is():
+    from core import top5
+    from core.alerta_email import CARTEIRAS
+    nome, descricao = CARTEIRAS[top5.CARTEIRA]
+    assert nome == "Composite top-5" and "5 ações" in descricao and "setor" in descricao

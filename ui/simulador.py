@@ -9,9 +9,13 @@ import pandas as pd
 import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
+from core.top5 import CARTEIRA as TOP5, INICIO as INICIO_TOP5
 from ui.filtros import filtrar
 
 CARTEIRA_PRINCIPAL = "Composto"
+# what each portfolio is (the Top-5 since the user's request of 2026-11-06, DECISOES 290)
+SOBRE_AS_CARTEIRAS = (f"A {TOP5} compra as 5 ações de maior nota da Composite, uma por setor, 20% cada, e começa no "
+                      f"fechamento de {INICIO_TOP5:%d/%m/%Y}.")
 PERCENTUAL = st.column_config.NumberColumn(format="percent")
 COLUNAS_DAS_POSICOES = {"Qtd.": st.column_config.NumberColumn(format="%d"),
                         "Fechamento na troca (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
@@ -77,10 +81,11 @@ def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
         st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
-                "(Composite, DeepSeek e Controle; a Conservadora corre em silêncio como régua).")
+                f"(Composite, DeepSeek, Controle e {TOP5}; a Conservadora corre em silêncio como régua). "
+                + SOBRE_AS_CARTEIRAS)
         return
     st.caption(f"Conta fictícia: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira desde {INICIO:%d/%m/%Y}, com "
-               "custos. BOVA11 e Selic são só referência.")
+               "custos. BOVA11 e Selic são só referência. " + SOBRE_AS_CARTEIRAS)
     if not painel.com_cdi:
         st.warning("Série da Selic indisponível agora: o caixa e a linha da Selic aparecem sem rendimento.")
     curvas = painel.curvas

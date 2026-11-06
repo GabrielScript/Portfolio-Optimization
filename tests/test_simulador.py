@@ -61,7 +61,7 @@ def test_a_trade_already_in_the_ledger_is_not_repeated():
 def test_the_deepseek_portfolio_is_the_third_one_and_trades_at_the_first_session_on_or_after_its_record():
     # DECISOES 240: the opinion is formed after a close, so its record is dated the next calendar day and trades at the
     # first session from then on (a Saturday record trades on Monday)
-    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle")
+    assert sim.CARTEIRAS[:4] == ("Composto", "Conservadora", "DeepSeek", "Controle")
     precos = tabela_de_precos([10.0, 10.0, 10.0, 10.0, 10.0])          # Tue 03/11 to Mon 09/11
     registros = {"DeepSeek": registro("2026-11-07", {"AAAA3": 0.2, "BBBB3": 0.2})}
     novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
@@ -383,3 +383,14 @@ def test_the_ledger_file_round_trips_and_a_missing_one_is_empty(tmp_path):
     assert lido["ordem"].tolist() == [900, -900]
     assert lido["data"].tolist() == [INICIO, pd.Timestamp("2026-11-04")]
     assert arquivo.read_bytes().count(b"\r") == 0
+
+
+def test_the_top5_is_the_fifth_account_and_starts_at_the_close_of_its_launch_record():
+    # the user, 2026-11-06 (DECISOES 290): the Composite's 5 highest scores, a ghost strategy to follow
+    from core import top5
+    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle", top5.CARTEIRA)
+    precos = tabela_de_precos([10.0, 10.0, 10.0, 10.0, 10.0])          # Tue 03/11 to Mon 09/11
+    registros = {top5.CARTEIRA: registro("2026-11-06", {"AAAA3": 0.2, "BBBB3": 0.2})}
+    novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
+    assert set(novas["data"]) == {pd.Timestamp("2026-11-06")} and set(novas["ticker"]) == {"AAAA3", "BBBB3"}
+    assert set(novas["carteira"]) == {"Top-5"}

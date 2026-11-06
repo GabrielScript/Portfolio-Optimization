@@ -9,3 +9,12 @@ def test_the_conservadora_runs_silently_out_of_the_simulators_chart_and_position
                            "Selic": [1.0]})
     assert list(simulador.curvas_do_grafico(curvas).columns) == ["Composto", "DeepSeek", "BOVA11", "Selic"]
     assert simulador.carteiras_com_posicoes(["Composto", "Conservadora", "DeepSeek"]) == ["Composto", "DeepSeek"]
+
+
+def test_the_top5_is_on_the_chart_and_the_caption_says_what_it_is_and_when_it_starts():
+    # the user, 2026-11-06 (DECISOES 290): a ghost strategy followed like the others
+    curvas = pd.DataFrame({"Composto": [1.0], "Top-5": [1.0], "BOVA11": [1.0]})
+    assert list(simulador.curvas_do_grafico(curvas).columns) == ["Composto", "Top-5", "BOVA11"]
+    assert simulador.carteiras_com_posicoes(["Composto", "Top-5"]) == ["Composto", "Top-5"]
+    assert "Top-5" in simulador.SOBRE_AS_CARTEIRAS and "06/11/2026" in simulador.SOBRE_AS_CARTEIRAS
+    assert "uma por setor" in simulador.SOBRE_AS_CARTEIRAS

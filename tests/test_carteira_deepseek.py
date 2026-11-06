@@ -109,7 +109,7 @@ def test_an_opinion_is_due_when_the_conservadora_changed_or_an_old_opinion_never
 
 def test_the_simulator_follows_the_control_beside_the_three_portfolios():
     from core import simulador
-    assert simulador.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle")
+    assert simulador.CARTEIRAS[:4] == ("Composto", "Conservadora", "DeepSeek", "Controle")   # Top-5 after (DECISOES 290)
 
 
 def test_an_opinion_is_saved_with_both_bases_and_writes_the_portfolio_and_the_control(tmp_path, monkeypatch):

@@ -58,6 +58,7 @@ PASTA_LEITURAS = Path("paper-v2/leituras")
 ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite book (DECISOES 166)
 PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
+ARQUIVO_TOP5 = Path("simulador/top5.csv")              # the Top-5 account's record (core.top5, DECISOES 290)
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious options account's ledger (DECISOES 259)
 ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
@@ -411,7 +412,7 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
     from core.rebalanceio import custo_com_liquidez
     registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
                  "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
-    for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE)):
+    for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE), ("Top-5", ARQUIVO_TOP5)):
         if (raiz / arquivo).exists():
             registros[carteira] = pd.read_csv(raiz / arquivo, parse_dates=["data"])
     papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
@@ -484,6 +485,23 @@ def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], 
     return f"{nota}; e-mail enviado"
 
 
+def atualizar_top5(raiz: Path, git: Git, pesos_do_dia: Callable[[pd.Timestamp], pd.Series]) -> str:
+    """Appends the Top-5 records due on the Composite's record (``core.top5.registros_devidos``; ``pesos_do_dia``:
+    ``core.top5.pesos_do_dia``, which reads the lake only when a record is due) and commits the file."""
+    from core import top5
+    if not (raiz / ARQUIVO_REGISTRO_V3).exists():
+        return "top-5: sem o registro da Composite"
+    composto = pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"])
+    novas = top5.registros_devidos(composto, top5.ler(raiz / ARQUIVO_TOP5), pesos_do_dia)
+    if not novas.empty:
+        top5.acrescentar(raiz / ARQUIVO_TOP5, novas)
+    if not pendentes(git, [ARQUIVO_TOP5.as_posix()]):
+        return "top-5: em dia"
+    base = f"{top5.ler(raiz / ARQUIVO_TOP5)['base'].max():%d/%m/%Y}"
+    commitar(git, [ARQUIVO_TOP5.as_posix()], f"data: registro da Composite top-5 de {base} (manutenção)")
+    return f"top-5: registro de {base}"
+
+
 def atualizar_deepseek(raiz: Path, git: Git, gerar: Callable[[], str]) -> str:
     """Runs the DeepSeek portfolio's opinion when due (``gerar``: ``scripts/carteira_deepseek.py``, DECISOES 240) and
     commits its folder when it wrote files."""
@@ -500,14 +518,15 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              simular: Callable[[pd.DataFrame], pd.DataFrame] | None = None,
              alertar: Callable[[pd.DataFrame], object] | None = None,
              parecer_deepseek: Callable[[], str] | None = None,
-             opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None
-             ) -> Resultado:
+             opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
+             top5: Callable[[pd.Timestamp], pd.Series] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
     the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step);
     ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step); ``simular``: the account's orders
-    due for its ledger (None: no simulator step)."""
+    due for its ledger (None: no simulator step); ``top5``: the Top-5 weights of a Composite record's close (None: no
+    Top-5 record step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -528,6 +547,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
               ("painel", lambda: atualizar_painel(raiz, git, pasta_do_log, lambda: _gerar_painel(raiz, pasta_do_log)))]
     if parecer_deepseek is not None:            # before the simulator, which trades its record
         passos.append(("deepseek", lambda: atualizar_deepseek(raiz, git, parecer_deepseek)))
+    if top5 is not None:                        # before the simulator, which trades its record
+        passos.append(("top-5", lambda: atualizar_top5(raiz, git, top5)))
     if simular is not None:
         passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
     if opcoes is not None:
@@ -647,6 +668,11 @@ def rodar_parecer_deepseek() -> str:
     return linhas[-1] if linhas else "DeepSeek: sem saída"
 
 
+def _pesos_do_top5(data: pd.Timestamp) -> pd.Series:
+    from core import top5
+    return top5.pesos_do_dia(data)
+
+
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
@@ -657,7 +683,8 @@ def main() -> int:
                          gerar_curvas=lambda: rodar_curvas(RAIZ),
                          simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens),
                          alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek,
-                         opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas))
+                         opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas),
+                         top5=_pesos_do_top5)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

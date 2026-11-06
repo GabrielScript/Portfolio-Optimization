@@ -737,3 +737,68 @@ def test_curvas_com_o_calendario_em_date_como_o_arquivo_publicado(app):
     calendario.to_parquet(app / ARQUIVO_CALENDARIO, index=False)
     _curvas_ate(app, "2026-10-27")
     assert atualizar_curvas(app, git_em(app), lambda: None).startswith("curvas ao vivo: em dia")
+
+
+def _registro_do_composto(app: Path, *datas: str) -> None:
+    (app / "paper-v3").mkdir(exist_ok=True)
+    pd.DataFrame({"data": [d for d in datas for _ in range(2)], "ticker": ["AAAA3", "BBBB3"] * len(datas),
+                  "peso": 0.5, "preco": 9.0}).to_csv(app / "paper-v3" / "composto.csv", index=False)
+
+
+def _cinco(data: pd.Timestamp) -> pd.Series:
+    return pd.Series(0.2, index=["AAAA3.SA", "BBBB3.SA", "CCCC3.SA", "DDDD3.SA", "EEEE3.SA"])
+
+
+def test_the_top5_step_records_the_composites_record_in_force_and_commits_it_once(app):
+    # the user, 2026-11-06 (DECISOES 290): the record the simulator trades for the Top-5 account
+    from core import top5
+    from scripts.manutencao import ARQUIVO_TOP5, atualizar_top5, git_em
+    _registro_do_composto(app, "2026-10-27")
+    git = git_em(app)
+    dias = []
+    assert atualizar_top5(app, git, lambda data: dias.append(data) or _cinco(data)) == "top-5: registro de 27/10/2026"
+    assert dias == [pd.Timestamp("2026-10-27")]
+    registro = top5.ler(app / ARQUIVO_TOP5)
+    assert set(registro["data"]) == {top5.INICIO} and len(registro) == 5
+    assert not git("status", "--porcelain", "--", str(ARQUIVO_TOP5))            # committed
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_top5(app, git, lambda data: pytest.fail("no new Composite record")) == "top-5: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
+def test_the_top5_step_without_the_composites_record_does_nothing(app):
+    from scripts.manutencao import atualizar_top5, git_em
+    assert atualizar_top5(app, git_em(app), _cinco) == "top-5: sem o registro da Composite"
+
+
+def test_a_run_with_the_top5_step_records_it_before_the_simulator_trades(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    _registro_do_composto(app, "2026-10-27")
+    vistos = []
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 6, 22, 30), lambda: _saida(10),
+                         simular=lambda ordens: vistos.append((app / "simulador" / "top5.csv").exists()) or
+                         pd.DataFrame(), top5=_cinco)
+    assert resultado.desfecho == "ok" and vistos == [True]
+    assert resultado.nota.index("top-5: registro de 27/10/2026") < resultado.nota.index("simulador:")
+
+
+def test_the_simulator_trades_the_top5_record_when_it_exists(app, monkeypatch):
+    from scripts import manutencao as m
+    (app / "lago").mkdir()
+    (app / "paper-v3").mkdir()
+    papeis = ["AAAA3", "BBBB3", "CCCC3", "DDDD3", "EEEE3"]
+    dias = pd.bdate_range("2026-11-03", periods=4)
+    pd.DataFrame({"date": dias, **dict.fromkeys(papeis, 10.0), "BOVA11": 100.0, "IVVB11": 100.0}).to_parquet(
+        app / m.ARQUIVO_CALENDARIO, index=False)
+    for nome in ("composto", "conservadora"):
+        pd.DataFrame({"data": "2026-10-27", "ticker": papeis, "peso": 0.2, "preco": 9.0}).to_csv(
+            app / "paper-v3" / f"{nome}.csv", index=False)
+    from core import top5
+    top5.acrescentar(app / m.ARQUIVO_TOP5, top5.registros_devidos(
+        pd.read_csv(app / "paper-v3" / "composto.csv", parse_dates=["data"]), top5.vazio(), _cinco))
+    monkeypatch.setattr("core.cdi_lago.daily_cdi", lambda _anos, _hoje: pd.Series(dtype=float))
+    from core.simulador import ler_ordens
+    novas = m.ordens_do_simulador(app, date(2026, 11, 6), ler_ordens(app / m.ARQUIVO_SIMULADOR))
+    assert set(novas.loc[novas["carteira"] == "Top-5", "data"]) == {pd.Timestamp("2026-11-06")}
+    assert set(novas.loc[novas["carteira"] == "Top-5", "ticker"]) == set(papeis)

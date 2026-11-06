@@ -50,6 +50,7 @@ CARTEIRAS = {
     "DeepSeek": ("DeepSeek", "as ações que o assessor DeepSeek julgou favoráveis, entre as da Composite e da "
                              "Conservadora, em pesos iguais"),
     "Controle": ("Controle", "todas as ações que o DeepSeek avaliou, em pesos iguais, sem o filtro do modelo"),
+    "Top-5": ("Composite top-5", "as 5 ações de maior nota da Composite, no máximo uma por setor, 20% cada"),
 }
 
 

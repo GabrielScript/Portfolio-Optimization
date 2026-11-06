@@ -29,7 +29,8 @@ LEGENDA = (
     "Todas as estratégias rodam no mesmo motor, nas mesmas datas, com o mesmo universo (todas as ações elegíveis da "
     "B3 em cada data, inclusive as que depois saíram da bolsa), troca a cada 3 meses e 0,1% de custo por lado, antes "
     "de Imposto de Renda. Média-variância, Kelly e reamostrada: no máximo 20% por ação e até 10 ações. Paridade de risco, HRP e 1/N "
-    "usam todas as elegíveis. A quântica escolhe 15 ações por recozimento simulado (computador clássico) e pondera por "
+    "usam todas as elegíveis. Composite top-5: as 5 ações de maior nota da Composite, uma por setor, 20% cada. "
+    "A quântica escolhe 15 ações por recozimento simulado (computador clássico) e pondera por "
     "máximo Sharpe. Tesouro IPCA+: média dos títulos IPCA+ com mais de um ano até o vencimento (Tesouro Transparente). "
     "Sharpe e Sortino sobre a Selic; alfa, beta e Information Ratio contra o BOVA11. Passado não garante futuro.")
 

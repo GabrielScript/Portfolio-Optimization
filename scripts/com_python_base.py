@@ -12,7 +12,12 @@ import sys
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-site.addsitedir(str(RAIZ / ".venv" / "Lib" / "site-packages"))
+PACOTES = RAIZ / ".venv" / "Lib" / "site-packages"
+site.addsitedir(str(PACOTES))
+# the children (the upkeep's carteira_deepseek.py, readings, live curves) run sys.executable, this base interpreter:
+# they get the venv's packages and the project root ahead of the base site-packages (DECISOES 286)
+os.environ["PYTHONPATH"] = os.pathsep.join(
+    [str(PACOTES), str(RAIZ), *filter(None, [os.environ.get("PYTHONPATH")])])
 os.chdir(RAIZ)
 sys.path.insert(0, str(RAIZ))
 script = sys.argv[1]

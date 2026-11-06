@@ -143,3 +143,12 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
    Composite's next record. A new `grave` on a name already sold is logged and emailed, with no action.
 7. The order-logic review asked by CLAUDE.md was done by the author; the user asked on 05/11 to go on without the
    advisor.
+
+## Amendment 2 (2026-11-05 night, before any build; DECISOES 269)
+
+8. **The shadow judge is Liquid AI's d1-ultra, not Jev.** Same request shape (`state` + typed `noul`/`choice`/`score`
+   questions, `typesafe-sdk` with `base_url="https://api.liquid.ai"`, key `LIQUID_API_KEY`), US$ 0.042 per million input
+   tokens, output free. The vendor reports it beats Jev 1.14 on 112 evaluations with better calibration; that is the
+   vendor's own benchmark, so before d1-ultra may route anything, it is checked on our own items: 60 Portuguese CVM
+   filings of the Composite's names, labelled by hand (material / not material), Brier and accuracy against Jev 1.14
+   on the same items. Still shadow only, still never decides on money.

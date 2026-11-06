@@ -96,6 +96,7 @@ def css(nome: str, tipo_nativo: str) -> str:
     paradas = ", ".join(f"{cor} {int(i * 100 / (len(p.fundo) - 1))}%" for i, cor in enumerate(p.fundo))
     cromo = ", ".join(f"{cor} {pos}%" for cor, pos in zip(p.cromo, (0, 38, 52, 68, 100)))
     sombra = "rgba(2,6,23,0.40)" if tipo(tipo_nativo) == "dark" else "rgba(14,26,58,0.08)"
+    borda_acesa = _rgba(p.texto_secundario, 0.42)          # the lit silver edge of a panel: a hairline, never a stripe
     return f"""
 .stApp {{ background: linear-gradient(160deg, {paradas}) fixed; }}
 .stApp::before {{
@@ -109,8 +110,15 @@ def css(nome: str, tipo_nativo: str) -> str:
   50% {{ transform: translate(4%, 3%) scale(1.08); }}
 }}
 [data-testid="stAppViewContainer"], [data-testid="stBottomBlockContainer"] {{ background: transparent; }}
-[data-testid="stHeader"] {{ background: {_rgba(p.fundo[0], 0.96)}; border-bottom: 1px solid {p.fio}; }}
+[data-testid="stHeader"] {{ background: {_rgba(p.fundo[0], 0.96)}; border-bottom: 1px solid {p.fio}; z-index: 999990; }}
 [data-testid="stMain"] {{ position: relative; z-index: 1; }}
+[class*="st-key-aq-secao-"] {{
+  background: {painel}; border: 1px solid {p.fio} !important; border-top-color: {borda_acesa} !important;
+  border-radius: 18px; padding: clamp(18px, 2.4vw, 32px) !important; margin-top: 1.25rem;
+  box-shadow: 0 14px 36px {sombra}; transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}}
+[class*="st-key-aq-secao-"]:hover {{ border-color: {borda_acesa} !important; box-shadow: 0 16px 40px {sombra}; }}
+[data-testid="stMarkdownContainer"] p, [data-testid="stMarkdownContainer"] li {{ max-width: 78ch; }}
 .st-key-aq-nome h1 {{
   background: linear-gradient(180deg, {cromo});
   -webkit-background-clip: text; background-clip: text;
@@ -124,10 +132,10 @@ def css(nome: str, tipo_nativo: str) -> str:
 }}
 [data-testid="stExpander"] details, [data-testid="stMetric"], [data-testid="stPlotlyChart"],
 [data-testid="stVegaLiteChart"], [data-testid="stArrowVegaLiteChart"] {{
-  background: {painel}; border: 1px solid {p.fio}; border-radius: 14px; box-shadow: 0 10px 28px {sombra};
+  background: transparent; border: 1px solid {p.fio}; border-radius: 14px;
 }}
-[data-testid="stPlotlyChart"], [data-testid="stVegaLiteChart"], [data-testid="stArrowVegaLiteChart"],
-[data-testid="stMetric"] {{ padding: 10px 12px; }}
+[data-testid="stPlotlyChart"], [data-testid="stMetric"] {{ padding: 10px 12px; }}
+[data-testid="stVegaLiteChart"] svg, [data-testid="stArrowVegaLiteChart"] svg {{ background-color: transparent !important; }}
 [data-testid="stDataFrame"] {{ border: 1px solid {p.fio}; border-radius: 12px; overflow: hidden; }}
 [data-testid="stCaptionContainer"] {{ color: {p.texto_secundario}; }}
 ::selection {{ background: {p.selecao}; }}
@@ -155,7 +163,7 @@ def _item(ticker: str, preco: float, variacao: float, tipo_nativo: str, oculto: 
 
 def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
     """The quote band: each ``Ticker`` with its ``Cotação (R$)`` and ``Variação no dia``, drifting right to left in a
-    loop (the set is drawn twice; the copy is hidden from screen readers). Paused on hover, still under reduced
+    loop (the set is drawn twice; the copy is hidden from screen readers). Paused on hover or focus, still under reduced
     motion. Empty table, no band."""
     if tabela.empty:
         return ""
@@ -171,7 +179,8 @@ def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
           mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }}
 .aq-trilho {{ display: flex; width: max-content; animation: aq-fluxo {segundos}s linear infinite; }}
-.aq-fita:hover .aq-trilho {{ animation-play-state: paused; }}
+.aq-fita:hover .aq-trilho, .aq-fita:focus-within .aq-trilho {{ animation-play-state: paused; }}
+.aq-fita:focus-visible {{ outline: 2px solid #6F8EF5; outline-offset: -2px; }}
 .aq-q {{ display: inline-flex; align-items: baseline; gap: 10px; padding: 12px 24px; border-right: 1px solid {fio};
   font-variant-numeric: tabular-nums; white-space: nowrap; }}
 .aq-t {{ font-family: Manrope, Inter, sans-serif; font-weight: 700; }}
@@ -181,7 +190,18 @@ def fita(tabela: pd.DataFrame, tipo_nativo: str) -> str:
   .aq-fita {{ overflow-x: auto; }} .aq-trilho {{ animation: none; }}
 }}
 </style>
-<div class="aq-fita" role="region" aria-label="Cotações das ações da Composite"><div class="aq-trilho">{itens}{copia}</div></div>"""
+<div class="aq-fita" role="region" tabindex="0" aria-label="Cotações das ações da Composite"><div class="aq-trilho">{itens}{copia}</div></div>"""
+
+
+def chave_da_secao(nome: str) -> str:
+    return f"aq-secao-{nome}"
+
+
+def painel(nome: str):
+    """A section of the page as a lit panel (styled by ``css``; Streamlit's own bordered card in its default look)."""
+    import streamlit as st
+
+    return st.container(border=True, key=chave_da_secao(nome))
 
 
 def escolher() -> str:
@@ -189,7 +209,7 @@ def escolher() -> str:
     import streamlit as st
 
     return st.segmented_control("Aparência", OPCOES, default=ROYAL, required=True, key=CHAVE, bind="query-params",
-                                help=AJUDA, label_visibility="collapsed")
+                                help=AJUDA, label_visibility="collapsed", wrap=True)   # wraps on a phone
 
 
 def aplicar(nome: str) -> str:

@@ -79,30 +79,32 @@ def main() -> None:
         st.caption("Alocação quantitativa em ações, BDRs e ETFs da B3 · Gabriel Estrela Lopes", text_alignment="center")
     faixa = st.empty()
     registrado = servicos.carregar_plano_registrado()
-    st.markdown("## O que é o Aleph Quant")
-    st.markdown(SOBRE)
-    st.markdown("---")
-    secao_cotacoes(registrado, faixa, nativo)
-    st.markdown("---")
-    alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
-    st.markdown("---")
-    comparacao.secao(servicos.carregar_comparacao(), servicos.carregar_juros())
-    st.markdown("---")
-    ui_formulas.secao(servicos.carregar_formulas())
-    st.markdown("---")
-    ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
-    ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
-    st.markdown("---")
-    ui_opcoes.secao(servicos.carregar_opcoes(date.today(), precos_do_app.versao_dos_dados()))
-    st.markdown("---")
-    ui_sentinela.secao(servicos.carregar_sentinela(date.today(), precos_do_app.versao_dos_dados()))
-    st.markdown("---")
+    # every section a lit panel on the floor (the user's /goal of 2026-11-06: the whole layout, not one viewport)
+    with aparencia.painel("sobre"):
+        st.markdown("## O que é o Aleph Quant")
+        st.markdown(SOBRE)
+    with aparencia.painel("cotacoes"):
+        secao_cotacoes(registrado, faixa, nativo)
+    with aparencia.painel("backtest"):
+        alepha.resultados_da_conservadora(servicos.carregar_curvas_conservadora(), servicos.carregar_juros())
+    with aparencia.painel("comparacao"):
+        comparacao.secao(servicos.carregar_comparacao(), servicos.carregar_juros())
+    with aparencia.painel("formulas"):
+        ui_formulas.secao(servicos.carregar_formulas())
+    with aparencia.painel("simulador"):
+        ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
+        ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
+    with aparencia.painel("opcoes"):
+        ui_opcoes.secao(servicos.carregar_opcoes(date.today(), precos_do_app.versao_dos_dados()))
+    with aparencia.painel("sentinela"):
+        ui_sentinela.secao(servicos.carregar_sentinela(date.today(), precos_do_app.versao_dos_dados()))
     if MOSTRAR_ACOES_EUA:
-        ui_eua.secao(servicos.carregar_eua())
-        st.markdown("---")
-    secao_mercado()
-    st.markdown("---")
-    secao_assessor()
+        with aparencia.painel("eua"):
+            ui_eua.secao(servicos.carregar_eua())
+    with aparencia.painel("mercado"):
+        secao_mercado()
+    with aparencia.painel("assessor"):
+        secao_assessor()
 
 
 def secao_cotacoes(registrado: tuple[date, pd.Series] | None, faixa=None, nativo: str = "dark") -> None:

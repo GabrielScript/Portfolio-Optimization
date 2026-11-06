@@ -184,8 +184,8 @@ def test_atualizar_universo_chama_o_python_do_venv_do_lago_e_nao_o_uv(monkeypatc
     chamadas = []
     monkeypatch.setattr(subprocess, "run", lambda comando, **opcoes: chamadas.append((comando, opcoes["cwd"])))
     atualizar_universo(tmp_path)
-    assert chamadas == [([str(tmp_path / ".venv" / "Scripts" / "python.exe"), "-m", "b3lake.cli", "universe"],
-                         tmp_path)]
+    from core.python_do_lago import comando_do_lago          # DECISOES 285: the base runner when it exists
+    assert chamadas == [(comando_do_lago(tmp_path, "universe"), tmp_path)]
 
 
 def test_o_criterio_secundario_pede_vol_anual_da_conservadora_menor_ou_igual_a_do_bova11():

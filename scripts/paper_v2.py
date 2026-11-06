@@ -82,6 +82,7 @@ from core.impostos import ISENCAO_DE_VENDAS  # noqa: E402
 from core.lago import ler_setores  # noqa: E402
 from core.paper import Acao, curva_do_registro, rebalanceio_devido  # noqa: E402
 from core.registro import registrar_carteira  # noqa: E402
+from core.python_do_lago import comando_do_lago  # noqa: E402
 from core.risco import pode_negociar  # noqa: E402
 from core.sinais import estrategia_conservadora  # noqa: E402
 from scripts.avaliar_conservadora import CONSERVADORA  # noqa: E402
@@ -257,9 +258,8 @@ def rodar(dados: DadosDoLago, registro: pd.DataFrame, data: pd.Timestamp) -> Rod
 
 def atualizar_universo(projeto: Path = PROJETO_DO_LAGO) -> None:
     """O ``universe`` do lago: preços e universo ponto no tempo até o último fechamento, copiados para o app."""
-    # o Python do venv do lago, como a tarefa "b3lake daily": o uv fica fora do PATH da tarefa agendada
-    python_do_lago = str(projeto / ".venv" / "Scripts" / "python.exe")
-    subprocess.run([python_do_lago, "-m", "b3lake.cli", "universe"], cwd=projeto, check=True,
+    # o mesmo runner da tarefa "b3lake daily" quando existe (DECISOES 285), senão o Python do venv do lago
+    subprocess.run(comando_do_lago(projeto, "universe"), cwd=projeto, check=True,
                    capture_output=True, text=True, encoding="utf-8", timeout=3600, creationflags=_SEM_JANELA)
 
 

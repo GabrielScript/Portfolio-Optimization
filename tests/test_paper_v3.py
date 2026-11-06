@@ -182,9 +182,10 @@ def test_the_live_cvm_loader_reads_what_the_research_loader_reads_and_hashes_bot
 
 
 def test_the_lake_update_runs_universe_then_fundamentals_with_the_lakes_python(tmp_path):
+    # DECISOES 285: the command comes from core.python_do_lago (the base runner when it exists)
+    from core.python_do_lago import comando_do_lago
     from scripts.paper_v3 import atualizar_lago
     chamadas = []
     atualizar_lago(tmp_path, lambda comando, **opcoes: chamadas.append((comando, opcoes["cwd"], opcoes["check"])))
-    python = str(tmp_path / ".venv" / "Scripts" / "python.exe")
-    assert chamadas == [([python, "-m", "b3lake.cli", "universe"], tmp_path, True),
-                        ([python, "-m", "b3lake.cli", "fundamentals"], tmp_path, True)]
+    assert chamadas == [(comando_do_lago(tmp_path, "universe"), tmp_path, True),
+                        (comando_do_lago(tmp_path, "fundamentals"), tmp_path, True)]

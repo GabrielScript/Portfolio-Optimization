@@ -34,6 +34,7 @@ from core.paper import Acao, curva_do_registro, rebalanceio_devido  # noqa: E402
 from core.qubo_universo import composite_score  # noqa: E402
 from core.registro import registrar_carteira  # noqa: E402
 from core.robustez import psr_da_diferenca  # noqa: E402
+from core.python_do_lago import comando_do_lago  # noqa: E402
 from core.sinais import conservadora  # noqa: E402
 from core.valor import Balancos, NotaDoMes  # noqa: E402
 from core.views import nota_media_dos_escores  # noqa: E402
@@ -224,9 +225,8 @@ def criterio(tabela: pd.DataFrame) -> bool:
 def atualizar_lago(projeto: Path = PROJETO_DO_LAGO, rodar: Callable[..., object] = subprocess.run) -> None:
     """The lake's ``universe`` (prices and point-in-time universe up to the last close) and ``fundamentals`` (CVM
     DFP/ITR, network; not part of ``daily``), both copied to the app; the lake's venv Python, as its scheduled task."""
-    python_do_lago = str(projeto / ".venv" / "Scripts" / "python.exe")
-    for comando in ("universe", "fundamentals"):
-        rodar([python_do_lago, "-m", "b3lake.cli", comando], cwd=projeto, check=True, capture_output=True, text=True,
+    for comando in ("universe", "fundamentals"):     # the base runner when it exists (DECISOES 285)
+        rodar(comando_do_lago(projeto, comando), cwd=projeto, check=True, capture_output=True, text=True,
               encoding="utf-8", timeout=3600, creationflags=_SEM_JANELA)
 
 

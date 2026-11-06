@@ -169,3 +169,13 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
     fictitious orders) until a new pre-registered spec. Fixed now, not tuned later.
 11. Real orders (19/12 onward) go to B3's closing call auction ("ordem no fechamento"), so the real fill matches the
     close price the backtests and the fictitious accounts use.
+
+## Amendment 5 (2026-11-05 night, before any build; DECISOES 272) — which sources reach which model
+
+12. **DeepSeek (stage 1 and 2)** reads the per-stock pack: company items (CVM filings; price/volume anomalies from the
+    lake; BDI lending jumps) plus macro items only on the run where they are new (BCB: Selic, Copom, Focus, PTAX,
+    IBC-Br, credit, IPCA, fiscal SGS 4649/5793/4513/13762; IBGE SIDRA: GDP 5932, unemployment 6381, industry 8888;
+    Tesouro RTN optional). ANBIMA only confirms, never an item.
+13. **The judges (d1.1, with d1-ultra logged)** read one company item per call (its verbatim text, the company's name
+    and sector), never macro items: macro news is not about one company, and asking it once per name would multiply
+    calls and answers that mean the same thing. Two noul questions per item, as in the judges check.

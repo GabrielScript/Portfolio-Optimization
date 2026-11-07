@@ -802,3 +802,34 @@ def test_the_simulator_trades_the_top5_record_when_it_exists(app, monkeypatch):
     novas = m.ordens_do_simulador(app, date(2026, 11, 6), ler_ordens(app / m.ARQUIVO_SIMULADOR))
     assert set(novas.loc[novas["carteira"] == "Top-5", "data"]) == {pd.Timestamp("2026-11-06")}
     assert set(novas.loc[novas["carteira"] == "Top-5", "ticker"]) == set(papeis)
+
+
+def _doze_e_tres(data: pd.Timestamp) -> pd.Series:
+    return pd.Series(1 / 15, index=[*(f"P{i:02d}3.SA" for i in range(12)), "MUTC34", "W1DC34", "ITLC34"])
+
+
+def test_the_12_3_step_records_the_composites_record_in_force_and_commits_it_once(app):
+    # the user, 2026-11-07 (DECISOES 299): the record the simulator trades for the 12/3 account
+    from core import mista, top5
+    from scripts.manutencao import ARQUIVO_MISTA, atualizar_mista, git_em
+    _registro_do_composto(app, "2026-10-27")
+    git = git_em(app)
+    assert atualizar_mista(app, git, _doze_e_tres) == "12/3: registro de 27/10/2026"
+    registro = top5.ler(app / ARQUIVO_MISTA)
+    assert set(registro["data"]) == {mista.INICIO} and len(registro) == 15
+    assert not git("status", "--porcelain", "--", str(ARQUIVO_MISTA))
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_mista(app, git, lambda data: pytest.fail("no new Composite record")) == "12/3: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
+def test_a_run_with_the_12_3_step_records_it_before_the_simulator_trades(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    _registro_do_composto(app, "2026-10-27")
+    vistos = []
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 9, 22, 30), lambda: _saida(10),
+                         simular=lambda ordens: vistos.append((app / "simulador" / "mista_12_3.csv").exists()) or
+                         pd.DataFrame(), mista=_doze_e_tres)
+    assert resultado.desfecho == "ok" and vistos == [True]
+    assert resultado.nota.index("12/3: registro de 27/10/2026") < resultado.nota.index("simulador:")

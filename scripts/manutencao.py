@@ -59,6 +59,7 @@ ARQUIVO_REGISTRO_V3 = Path("paper-v3/composto.csv")      # paper-v3's composite 
 PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
 ARQUIVO_TOP5 = Path("simulador/top5.csv")              # the Top-5 account's record (core.top5, DECISOES 290)
+ARQUIVO_MISTA = Path("simulador/mista_12_3.csv")       # the 12/3 account's record (core.mista, DECISOES 299)
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious options account's ledger (DECISOES 259)
 ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
@@ -412,7 +413,8 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
     from core.rebalanceio import custo_com_liquidez
     registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
                  "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
-    for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE), ("Top-5", ARQUIVO_TOP5)):
+    for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE), ("Top-5", ARQUIVO_TOP5),
+                              ("12/3", ARQUIVO_MISTA)):
         if (raiz / arquivo).exists():
             registros[carteira] = pd.read_csv(raiz / arquivo, parse_dates=["data"])
     papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
@@ -502,6 +504,23 @@ def atualizar_top5(raiz: Path, git: Git, pesos_do_dia: Callable[[pd.Timestamp], 
     return f"top-5: registro de {base}"
 
 
+def atualizar_mista(raiz: Path, git: Git, pesos_do_dia: Callable[[pd.Timestamp], pd.Series]) -> str:
+    """Appends the 12/3 records due on the Composite's record (``core.top5.registros_devidos`` from ``core.mista.INICIO``;
+    ``pesos_do_dia``: ``core.mista.pesos_do_dia``) and commits the file."""
+    from core import mista, top5
+    if not (raiz / ARQUIVO_REGISTRO_V3).exists():
+        return "12/3: sem o registro da Composite"
+    composto = pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"])
+    novas = top5.registros_devidos(composto, top5.ler(raiz / ARQUIVO_MISTA), pesos_do_dia, mista.INICIO)
+    if not novas.empty:
+        top5.acrescentar(raiz / ARQUIVO_MISTA, novas)
+    if not pendentes(git, [ARQUIVO_MISTA.as_posix()]):
+        return "12/3: em dia"
+    base = f"{top5.ler(raiz / ARQUIVO_MISTA)['base'].max():%d/%m/%Y}"
+    commitar(git, [ARQUIVO_MISTA.as_posix()], f"data: registro da 12/3 de {base} (manutenção)")
+    return f"12/3: registro de {base}"
+
+
 def atualizar_deepseek(raiz: Path, git: Git, gerar: Callable[[], str]) -> str:
     """Runs the DeepSeek portfolio's opinion when due (``gerar``: ``scripts/carteira_deepseek.py``, DECISOES 240) and
     commits its folder when it wrote files."""
@@ -519,7 +538,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              alertar: Callable[[pd.DataFrame], object] | None = None,
              parecer_deepseek: Callable[[], str] | None = None,
              opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
-             top5: Callable[[pd.Timestamp], pd.Series] | None = None) -> Resultado:
+             top5: Callable[[pd.Timestamp], pd.Series] | None = None,
+             mista: Callable[[pd.Timestamp], pd.Series] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
@@ -549,6 +569,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         passos.append(("deepseek", lambda: atualizar_deepseek(raiz, git, parecer_deepseek)))
     if top5 is not None:                        # before the simulator, which trades its record
         passos.append(("top-5", lambda: atualizar_top5(raiz, git, top5)))
+    if mista is not None:                       # before the simulator, which trades its record
+        passos.append(("12/3", lambda: atualizar_mista(raiz, git, mista)))
     if simular is not None:
         passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
     if opcoes is not None:
@@ -673,6 +695,11 @@ def _pesos_do_top5(data: pd.Timestamp) -> pd.Series:
     return top5.pesos_do_dia(data)
 
 
+def _pesos_da_mista(data: pd.Timestamp) -> pd.Series:
+    from core import mista
+    return mista.pesos_do_dia(data)
+
+
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
@@ -684,7 +711,7 @@ def main() -> int:
                          simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens),
                          alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek,
                          opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas),
-                         top5=_pesos_do_top5)
+                         top5=_pesos_do_top5, mista=_pesos_da_mista)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

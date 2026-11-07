@@ -9,14 +9,17 @@ import pandas as pd
 import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
+from core.mista import CARTEIRA as MISTA, INICIO as INICIO_MISTA
 from core.top5 import CARTEIRA as TOP5, INICIO as INICIO_TOP5
 from ui import formato, graficos
 from ui.filtros import filtrar
 
 CARTEIRA_PRINCIPAL = "Composto"
-# what each portfolio is (the Top-5 since the user's request of 2026-11-06, DECISOES 290)
+# what each portfolio is (the Top-5 since the user's request of 2026-11-06, DECISOES 290; the 12/3 since 2026-11-07, 299)
 SOBRE_AS_CARTEIRAS = (f"A {TOP5} compra as 5 ações de maior nota da Composite, uma por setor, 20% cada, e começa no "
-                      f"fechamento de {INICIO_TOP5:%d/%m/%Y}.")
+                      f"fechamento de {INICIO_TOP5:%d/%m/%Y}. A {MISTA} junta as 12 primeiras da Composite com as 3 "
+                      f"BDRs americanas de maior momentum, 1/15 cada, já pagando 15% de Imposto de Renda sobre o lucro das BDRs, e "
+                      f"começa no fechamento de {INICIO_MISTA:%d/%m/%Y}.")
 # fixed pt-BR decimals through a Styler (the finish review: "localized" dropped trailing zeros)
 REAIS_DAS_POSICOES = ["Fechamento na troca (R$)", "Valor (R$)"]
 PERCENTUAIS_DAS_POSICOES = ["Desde a troca", "Peso"]

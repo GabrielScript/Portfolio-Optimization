@@ -388,9 +388,45 @@ def test_the_ledger_file_round_trips_and_a_missing_one_is_empty(tmp_path):
 def test_the_top5_is_the_fifth_account_and_starts_at_the_close_of_its_launch_record():
     # the user, 2026-11-06 (DECISOES 290): the Composite's 5 highest scores, a ghost strategy to follow
     from core import top5
-    assert sim.CARTEIRAS == ("Composto", "Conservadora", "DeepSeek", "Controle", top5.CARTEIRA)
+    assert sim.CARTEIRAS[:5] == ("Composto", "Conservadora", "DeepSeek", "Controle", top5.CARTEIRA)
     precos = tabela_de_precos([10.0, 10.0, 10.0, 10.0, 10.0])          # Tue 03/11 to Mon 09/11
     registros = {top5.CARTEIRA: registro("2026-11-06", {"AAAA3": 0.2, "BBBB3": 0.2})}
     novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
     assert set(novas["data"]) == {pd.Timestamp("2026-11-06")} and set(novas["ticker"]) == {"AAAA3", "BBBB3"}
     assert set(novas["carteira"]) == {"Top-5"}
+
+
+def _precos_bdr(aapl: list[float], aaaa: list[float]) -> pd.DataFrame:
+    dias = pd.bdate_range(INICIO, periods=len(aapl))
+    outros = {papel: [10.0] * len(aapl) for papel in ("BBBB3", "CCCC3", "DDDD3", "EEEE3", "FFFF3")}
+    return pd.DataFrame({"AAPL34": aapl, "AAAA3": aaaa} | outros, index=dias, dtype=float)
+
+
+def _vende_aapl_e_aaaa(precos: pd.DataFrame, carteira: str) -> pd.DataFrame:
+    entrada = {"AAPL34": 0.2, "AAAA3": 0.2, "BBBB3": 0.2, "CCCC3": 0.2, "DDDD3": 0.2}
+    registros = {carteira: pd.concat([registro("2026-11-03", entrada), registro("2026-11-04", OUTROS)])}
+    return sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo)
+
+
+def test_the_12_3_account_pays_15_percent_on_a_bdr_gain_and_nothing_on_a_stock():
+    # the user, 2026-11-07: the ghost runs net of the BDR tax (15%, no R$ 20 mil exemption); a R$ 10,000 account never
+    # sells R$ 20 mil of stocks in a month, so its stock gains are exempt
+    assert "12/3" in sim.CARTEIRAS and "AAPL34" in sim.TRIBUTADOS_15 and "AAAA3" not in sim.TRIBUTADOS_15
+    novas = _vende_aapl_e_aaaa(_precos_bdr([10.0, 15.0], [10.0, 15.0]), "12/3").set_index(["data", "ticker"])
+    venda = novas.loc[(pd.Timestamp("2026-11-04"), "AAPL34")]
+    assert venda["ordem"] < 0
+    assert venda["custo"] == pytest.approx(0.15 * -venda["ordem"] * (15.0 - 10.0))
+    assert novas.loc[(pd.Timestamp("2026-11-04"), "AAAA3"), "custo"] == 0.0
+
+
+def test_a_bdr_sold_at_a_loss_pays_nothing_and_other_accounts_pay_no_bdr_tax():
+    perda = _vende_aapl_e_aaaa(_precos_bdr([10.0, 8.0], [10.0, 10.0]), "12/3")
+    assert perda.loc[perda["ticker"] == "AAPL34", "custo"].eq(0.0).all()
+    outra = _vende_aapl_e_aaaa(_precos_bdr([10.0, 15.0], [10.0, 10.0]), "Composto")
+    assert outra.loc[outra["ticker"] == "AAPL34", "custo"].eq(0.0).all()
+
+
+def test_the_bdr_gain_is_over_the_average_price_of_every_buy():
+    assert sim.ganho_sobre_o_preco_medio(
+        linhas(("2026-11-03", "12/3", {"AAPL34": (10, 10.0, 0.0)}), ("2026-11-04", "12/3", {"AAPL34": (10, 20.0, 0.0)})),
+        "AAPL34", 5, 18.0) == pytest.approx(5 * (18.0 - 15.0))

@@ -19,8 +19,13 @@ INICIO = pd.Timestamp("2026-11-03")
 CAPITAL_ACOES = 10_000.0          # the whole account in stocks (user, 2026-11-03, DECISOES 243)
 CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in stocks (2026-11-03)
 # DeepSeek: the names of both rule portfolios it judges favorable; Controle: the same list in equal weights, no model
-# (DECISOES 240 and 251); Top-5: the Composite's 5 highest scores, one per sector (``core.top5.CARTEIRA``, DECISOES 290)
-CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5")
+# (DECISOES 240 and 251); Top-5: the Composite's 5 highest scores, one per sector (``core.top5.CARTEIRA``, DECISOES 290);
+# 12/3: the Composite with 12 names plus 3 US BDRs (``core.mista.CARTEIRA``, DECISOES 299)
+CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3")
+# a gain on a BDR or a BR-listed ETF pays 15% with no R$ 20 mil exemption; a R$ 10,000 account never sells R$ 20 mil of
+# stocks in a month, so stocks stay exempt. Only the 12/3 holds them (the user, 2026-11-07: the ghost net of that tax)
+CARTEIRAS_COM_IR = ("12/3",)
+IR = 0.15
 REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11 dropped, user 2026-11-03)
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
 CUSTO_BPS = 10.0                   # the plan's reserve, and the cost of a name outside the liquidity snapshot
@@ -33,6 +38,36 @@ LINHA_OPCOES = f"Reserva de opções ({JURO})"
 def _fator_do_juro(cdi: pd.Series, dias: pd.DatetimeIndex) -> pd.Series:
     """The accumulated rate (the daily Selic) per session. The last session's rate may not be out yet: it repeats the last known one."""
     return (1.0 + cdi.reindex(dias).ffill().fillna(0.0)).cumprod()
+
+
+def _tributados() -> frozenset[str]:
+    from ativos_eua import ATIVOS_EUA
+    return frozenset(ativo["ticker"] for ativo in ATIVOS_EUA)
+
+
+TRIBUTADOS_15 = _tributados()
+
+
+def ganho_sobre_o_preco_medio(feitas: pd.DataFrame, ticker: str, vendidas: float, preco: float) -> float:
+    """The gain of selling ``vendidas`` shares at ``preco`` over the average price of the ledger's buys still held."""
+    quantidade, medio = 0.0, 0.0
+    for _, linha in feitas[feitas["ticker"] == ticker].sort_values("data", kind="mergesort").iterrows():
+        if linha["ordem"] > 0:
+            medio = (quantidade * medio + linha["ordem"] * linha["preco"]) / (quantidade + linha["ordem"])
+            quantidade += linha["ordem"]
+        else:
+            quantidade += linha["ordem"]
+    return vendidas * (preco - medio)
+
+
+def _com_ir(feitas: pd.DataFrame, linhas: pd.DataFrame) -> pd.DataFrame:
+    """15% of each taxed sale's gain added to that order's cost (losses pay nothing and are not carried)."""
+    linhas = linhas.copy()
+    for posicao, linha in linhas.iterrows():
+        if linha["ordem"] < 0 and linha["ticker"] in TRIBUTADOS_15:
+            ganho = ganho_sobre_o_preco_medio(feitas, linha["ticker"], -linha["ordem"], linha["preco"])
+            linhas.loc[posicao, "custo"] = linha["custo"] + IR * max(ganho, 0.0)
+    return linhas
 
 
 @dataclass(frozen=True)
@@ -118,6 +153,8 @@ def ordens_devidas(ordens: pd.DataFrame, registros: Mapping[str, pd.DataFrame], 
         feitas = ordens[ordens["carteira"] == carteira]
         for data, pesos in _pendentes(registro, feitas, precos.index, inicio):
             linhas = _rebalancear(feitas, carteira, data, pesos, precos, cdi, custo, capital)
+            if carteira in CARTEIRAS_COM_IR and not feitas.empty:
+                linhas = _com_ir(feitas, linhas)
             feitas = linhas if feitas.empty else pd.concat([feitas, linhas], ignore_index=True)
             novas.append(linhas)
     return pd.concat(novas, ignore_index=True) if novas else pd.DataFrame(columns=COLUNAS)

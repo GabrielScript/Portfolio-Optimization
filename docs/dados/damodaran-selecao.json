@@ -1,0 +1,758 @@
+[
+ {
+  "id": "A3MJAXEyJiY",
+  "title": "Session 12: The Terminal Value",
+  "date": "2025-11-07",
+  "words": 6797,
+  "tema": "cash_flow_growth_terminal"
+ },
+ {
+  "id": "C4zBohJ_Pts",
+  "title": "Session 11: Closure on Growth and First Steps on Terminal Value",
+  "date": "2025-11-07",
+  "words": 16490,
+  "tema": "cash_flow_growth_terminal"
+ },
+ {
+  "id": "CncUmN65lDs",
+  "title": "Session 12: Incremental, time-weighted Cash Flow Returns",
+  "date": "2025-11-07",
+  "words": 13960,
+  "tema": "cash_flow_growth_terminal"
+ },
+ {
+  "id": "EOwEdlva1Rc",
+  "title": "Session 9: Digging Deeper into Cash Flows",
+  "date": "2025-11-07",
+  "words": 14726,
+  "tema": "cash_flow_growth_terminal"
+ },
+ {
+  "id": "so6vCWKCiXE",
+  "title": "Session 11: More on Growth and Terminal Value",
+  "date": "2025-11-07",
+  "words": 15149,
+  "tema": "cash_flow_growth_terminal"
+ },
+ {
+  "id": "4hg8SHop4DM",
+  "title": "Cost of Capital: Dataset Support",
+  "date": "2024-11-07",
+  "words": 2053,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "XOKIkHQWpDM",
+  "title": "Total Beta: Dataset Support",
+  "date": "2024-11-07",
+  "words": 1382,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "0FeHGmeqcX0",
+  "title": "Session 11: Hurdle Rates Closure and First Steps on Investment Returns",
+  "date": "2025-11-07",
+  "words": 14383,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "awEyDWhEdhg",
+  "title": "Session 9: More on beta - bottom up betas and private company betas",
+  "date": "2025-11-07",
+  "words": 14494,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "FT7ZfG6Abzg",
+  "title": "Session 7: Measuring Relative Risk - Betas and Alternatives",
+  "date": "2025-11-07",
+  "words": 14828,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "MtsRSkV4HUg",
+  "title": "Session 8: Closure on Cost of Capital + First steps on cash flows",
+  "date": "2025-11-07",
+  "words": 14794,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "QpeK80N9mhM",
+  "title": "Session 8: Cost of capital closure + First steps on cash flows",
+  "date": "2025-11-07",
+  "words": 14445,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "qWSxyWsA09w",
+  "title": "Session 7: Betas, relative risk and first steps on cost of debt",
+  "date": "2025-11-07",
+  "words": 14079,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "fdEnaqWUYzM",
+  "title": "Session 17: Optimizing the Debt Mix with Cost of Capital approach",
+  "date": "2025-11-07",
+  "words": 14340,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "zDbBR8-myEQ",
+  "title": "Session 18: Finishing up with Cost of Capital Optimization",
+  "date": "2025-11-07",
+  "words": 8194,
+  "tema": "cost_of_capital"
+ },
+ {
+  "id": "qLm-JNEmWBA",
+  "title": "Data Update 4 for 2023: Country Risk",
+  "date": "2023-11-07",
+  "words": 5213,
+  "tema": "country_risk"
+ },
+ {
+  "id": "F-6_XeUxbmI",
+  "title": "Country Risk: A 2023 Mid-year Update",
+  "date": "2023-11-07",
+  "words": 5620,
+  "tema": "country_risk"
+ },
+ {
+  "id": "h1Q2Mg48y0I",
+  "title": "Country Risk: The 2024 Update",
+  "date": "2024-11-07",
+  "words": 6742,
+  "tema": "country_risk"
+ },
+ {
+  "id": "ouNEMzzNQEo",
+  "title": "Session 6: Company Exposure to Country Risk + Implied Equity Risk Premiums",
+  "date": "2025-11-07",
+  "words": 15110,
+  "tema": "country_risk"
+ },
+ {
+  "id": "LTDZCLjCa-E",
+  "title": "Country Risk 2025: The Story behind the Numbers!",
+  "date": "2025-11-07",
+  "words": 5562,
+  "tema": "country_risk"
+ },
+ {
+  "id": "sres2R8etKA",
+  "title": "Country Risk: Determinants, Measures and Implications - The 2026 Edition",
+  "date": "2026-08-07",
+  "words": 6687,
+  "tema": "country_risk"
+ },
+ {
+  "id": "8UfmkYAat5A",
+  "title": "Chapter 11: Roller Coaster Investing - Cyclical & Commodity firms",
+  "date": "2024-11-07",
+  "words": 2932,
+  "tema": "cyclical_commodity"
+ },
+ {
+  "id": "JcoyiCRrQ-I",
+  "title": "Data Update 2 for 2023: A Rocky Year for Equities!",
+  "date": "2023-11-07",
+  "words": 4587,
+  "tema": "data_update"
+ },
+ {
+  "id": "RKJ1c442AcY",
+  "title": "Data Update 1 for 2023: Setting the table",
+  "date": "2023-11-07",
+  "words": 4277,
+  "tema": "data_update"
+ },
+ {
+  "id": "N7M2fKroRRo",
+  "title": "Data Update 3 for 2023: Interest Rates and Bond Returns in 2022",
+  "date": "2023-11-07",
+  "words": 3476,
+  "tema": "data_update"
+ },
+ {
+  "id": "qfssMonQ8Ek",
+  "title": "Data Update 5 for 2023: Profitability, Returns and Value",
+  "date": "2023-11-07",
+  "words": 3452,
+  "tema": "data_update"
+ },
+ {
+  "id": "rtIEgXLx6MI",
+  "title": "Data Update 6 for 2023: The Upside and Downside of Debt",
+  "date": "2023-11-07",
+  "words": 5956,
+  "tema": "data_update"
+ },
+ {
+  "id": "QKJt3cv7c2k",
+  "title": "Data Update 7 for 2023: Dividends, Buybacks and Cashflows",
+  "date": "2023-11-07",
+  "words": 6569,
+  "tema": "data_update"
+ },
+ {
+  "id": "5u5Pom4gfKY",
+  "title": "Data Update 2 for 2024: A Comeback Year for Stocks!",
+  "date": "2024-11-07",
+  "words": 4338,
+  "tema": "data_update"
+ },
+ {
+  "id": "8np1_fSeInc",
+  "title": "Data Update 1 for 2024: The data speaks, but what is it saying?",
+  "date": "2024-11-07",
+  "words": 4066,
+  "tema": "data_update"
+ },
+ {
+  "id": "GjCPRQfT_xM",
+  "title": "Data Update 5 for 2024: Profitability - The End Game for Business?",
+  "date": "2024-11-07",
+  "words": 5178,
+  "tema": "data_update"
+ },
+ {
+  "id": "ouVQJVGs9lI",
+  "title": "Data Update 4 for 2024: Danger plus Opportunity - Risk enters the Equation!",
+  "date": "2024-11-07",
+  "words": 6640,
+  "tema": "data_update"
+ },
+ {
+  "id": "r8Dlnp1dX5Q",
+  "title": "Data Update 3 for 2024: A Rule Breaking Year for Interest Rates",
+  "date": "2024-11-07",
+  "words": 3094,
+  "tema": "data_update"
+ },
+ {
+  "id": "2IeIpahp5X4",
+  "title": "Data Update 6 for 2025: From Macro to Micro - The Hurdle Rate Question",
+  "date": "2025-11-07",
+  "words": 5447,
+  "tema": "data_update"
+ },
+ {
+  "id": "AvbfOyLSrfk",
+  "title": "Data Update 3 for 2025: The times they are a'changin...",
+  "date": "2025-11-07",
+  "words": 5129,
+  "tema": "data_update"
+ },
+ {
+  "id": "JZzuZznpgfc",
+  "title": "Data Update 5 for 2025: It is a small world after all!",
+  "date": "2025-11-07",
+  "words": 5556,
+  "tema": "data_update"
+ },
+ {
+  "id": "Pt-tJJZNFPo",
+  "title": "Data Update 4 for 2025: Interest Rates, Inflation and the Fed!",
+  "date": "2025-11-07",
+  "words": 4847,
+  "tema": "data_update"
+ },
+ {
+  "id": "SCpqqrW-rrc",
+  "title": "Data Update 1 for 2025: The Draw (and Dangers) of Data!",
+  "date": "2025-11-07",
+  "words": 3643,
+  "tema": "data_update"
+ },
+ {
+  "id": "yCKTN71cwrA",
+  "title": "Data Update 2 for 2025: The Party Continued for US Equities",
+  "date": "2025-11-07",
+  "words": 4652,
+  "tema": "data_update"
+ },
+ {
+  "id": "f8Xf76QaHSg",
+  "title": "Data Update 9 for 2025: Dividends and Buybacks - Inertia and Me-tooism!",
+  "date": "2025-11-07",
+  "words": 5475,
+  "tema": "data_update"
+ },
+ {
+  "id": "kVk0v0l6s8A",
+  "title": "Data Update 7 for 2025: The End Game in Business",
+  "date": "2025-11-07",
+  "words": 6345,
+  "tema": "data_update"
+ },
+ {
+  "id": "LacfrEOh8kw",
+  "title": "Data Update 8 for 2025: The Draw and Drawbacks of Debt",
+  "date": "2025-11-07",
+  "words": 6298,
+  "tema": "data_update"
+ },
+ {
+  "id": "6JLvhmGzeuQ",
+  "title": "Data Update 4 for 2026: A Tumultuous Year (2025) for Global Markets!",
+  "date": "2026-02-07",
+  "words": 5078,
+  "tema": "data_update"
+ },
+ {
+  "id": "BzG8M74BfrY",
+  "title": "Data Update 2 for 2026: A Test for US Equities",
+  "date": "2026-02-07",
+  "words": 4553,
+  "tema": "data_update"
+ },
+ {
+  "id": "Jq55_yR_wJ4",
+  "title": "Data Update 3 for 2026: The Trust Deficit - From Bonds to Gold to Bitcoin!",
+  "date": "2026-02-07",
+  "words": 4185,
+  "tema": "data_update"
+ },
+ {
+  "id": "nvR2gxNREHM",
+  "title": "Data Update 1 for 2026: The Push and Pull of Data",
+  "date": "2026-02-07",
+  "words": 5391,
+  "tema": "data_update"
+ },
+ {
+  "id": "r06tnztEOys",
+  "title": "Data Update 5 for 2026: Risk and Hurdle Rates - The 2026 Edition!",
+  "date": "2026-02-07",
+  "words": 5849,
+  "tema": "data_update"
+ },
+ {
+  "id": "3X6rah8r4Do",
+  "title": "Data Update 7 for 2026: Debt and Taxes",
+  "date": "2026-03-07",
+  "words": 5957,
+  "tema": "data_update"
+ },
+ {
+  "id": "wipmKevNjAk",
+  "title": "Data Update 6 for 2026: In Search of Profitability and Value!",
+  "date": "2026-03-07",
+  "words": 6423,
+  "tema": "data_update"
+ },
+ {
+  "id": "SRpJEkzJpKs",
+  "title": "Data Update 8 for 2026: Dividends and Buybacks - The Investing Harvest!",
+  "date": "2026-03-07",
+  "words": 6705,
+  "tema": "data_update"
+ },
+ {
+  "id": "ZNLVpHr-QNA",
+  "title": "Dividends, Buybacks and FCFE: Dataset Support",
+  "date": "2024-11-07",
+  "words": 1867,
+  "tema": "dividends_buybacks"
+ },
+ {
+  "id": "HwmBqsMySTg",
+  "title": "Session 22: Dividend Trade offs",
+  "date": "2025-11-07",
+  "words": 8409,
+  "tema": "dividends_buybacks"
+ },
+ {
+  "id": "Ka_oFIhWmwo",
+  "title": "Session 21: Dividends and Cash Return - First Steps",
+  "date": "2025-11-07",
+  "words": 14057,
+  "tema": "dividends_buybacks"
+ },
+ {
+  "id": "bm1zE4wCQvI",
+  "title": "Session 24: Closure on Dividends and First Steps on Valuation",
+  "date": "2025-11-07",
+  "words": 14709,
+  "tema": "dividends_buybacks"
+ },
+ {
+  "id": "juhEybZYE2M",
+  "title": "Session 23: Assessing Dividend (and Cash Return) Policy",
+  "date": "2025-11-07",
+  "words": 14480,
+  "tema": "dividends_buybacks"
+ },
+ {
+  "id": "o2QmpgAbmV4",
+  "title": "Chapter 9: Doomsday - Declining and Distressed firms",
+  "date": "2024-11-07",
+  "words": 2492,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "mpx-__Trhak",
+  "title": "Chapter/Session 13: Valuing and Pricing Declining Firms",
+  "date": "2024-11-07",
+  "words": 5989,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "tBXho7i8_8Q",
+  "title": "Chapter/Session 17: Investing in Decline",
+  "date": "2024-11-07",
+  "words": 4857,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "g3VT_cclr4U",
+  "title": "Dealing with Decline: Intel, Walgreens and Starbucks put to the test!",
+  "date": "2024-11-07",
+  "words": 6061,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "7oUgHVSn5Y0",
+  "title": "Session 24: Distressed Equity as an Option and Acquisition Valuation",
+  "date": "2025-11-07",
+  "words": 14263,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "Z-h8bchiwwo",
+  "title": "Session 26: Distressed Equity as an Option and Acquisition Valuation",
+  "date": "2025-11-07",
+  "words": 13432,
+  "tema": "emerging_declining"
+ },
+ {
+  "id": "CdhTVs36z4c",
+  "title": "Good (Bad) Banks and Good (Bad) Investments: At the right price...",
+  "date": "2023-11-07",
+  "words": 6498,
+  "tema": "financial_services"
+ },
+ {
+  "id": "1FJPdARRPV0",
+  "title": "Chapter 10: Bank on it - Financial Service firm valuation",
+  "date": "2024-11-07",
+  "words": 4148,
+  "tema": "financial_services"
+ },
+ {
+  "id": "ml2Hfnx3kos",
+  "title": "Session 17: Valuing Declining, Emerging Market and Financial Service companies",
+  "date": "2025-11-07",
+  "words": 15411,
+  "tema": "financial_services"
+ },
+ {
+  "id": "2sC-szm7tfE",
+  "title": "Chapter/Session 2: The Corporate Life Cycle - Basics",
+  "date": "2024-11-07",
+  "words": 4996,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "Aw_ljPKgFVw",
+  "title": "Chapter/Session 8: Cash Return (Dividends) across the Life Cycle",
+  "date": "2024-11-07",
+  "words": 3326,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "erRg4CL13VM",
+  "title": "Chapter/Session 4: Corporate Life Cycle - Transitions",
+  "date": "2024-11-07",
+  "words": 5507,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "gxKFZUwNyzU",
+  "title": "The Corporate Life Cycle: Implications for Managing and Investing",
+  "date": "2024-11-07",
+  "words": 1575,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "loRxUyfqMEk",
+  "title": "Chapter/Session 7: Business Financing across the Life Cycle",
+  "date": "2024-11-07",
+  "words": 5203,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "Tf-VW0XiQtM",
+  "title": "Chapter/Session 6: Business Investing across the Life Cycle",
+  "date": "2024-11-07",
+  "words": 5674,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "x7dbavHECfc",
+  "title": "Chapter/Session 3: The Corporate Life Cycle - Measures and Determinants",
+  "date": "2024-11-07",
+  "words": 5020,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "YwLAdkHYvAc",
+  "title": "The Corporate Life Cycle: The Key Ideas",
+  "date": "2024-11-07",
+  "words": 6191,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "V1UcOCHTmFM",
+  "title": "Chapter/Session 18: Managing across the life cycle",
+  "date": "2024-11-07",
+  "words": 5317,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "6GM2HcXYcsY",
+  "title": "Session 16: Valuing the market and companies across the life cycle",
+  "date": "2025-11-07",
+  "words": 13666,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "oBLZ-tPH9X0",
+  "title": "Session 15: Valuations across the life cycle",
+  "date": "2025-11-07",
+  "words": 15108,
+  "tema": "life_cycle"
+ },
+ {
+  "id": "tDqTHFBKwsY",
+  "title": "Facebook (Meta) Lesson 3: Tell me a story!",
+  "date": "2023-11-07",
+  "words": 7224,
+  "tema": "narrative"
+ },
+ {
+  "id": "iqyfByXmZHI",
+  "title": "A Tesla Revisit: Story Twists and Turns with Value Consequences",
+  "date": "2023-11-07",
+  "words": 7018,
+  "tema": "narrative"
+ },
+ {
+  "id": "V6ks9qAqT7U",
+  "title": "Chapter 5: Stories and Numbers!",
+  "date": "2024-11-07",
+  "words": 4038,
+  "tema": "narrative"
+ },
+ {
+  "id": "fx5jnE5HnhE",
+  "title": "DeepSeek crashes the AI Party: Story break, change or shift?",
+  "date": "2025-11-07",
+  "words": 6552,
+  "tema": "narrative"
+ },
+ {
+  "id": "0S_3bx0QfeA",
+  "title": "Session 14: Last Loose Ends + First Steps on Storytelling",
+  "date": "2025-11-07",
+  "words": 13799,
+  "tema": "narrative"
+ },
+ {
+  "id": "H0q6MxqfnsA",
+  "title": "Session 15: More story telling and first company valuations",
+  "date": "2025-11-07",
+  "words": 13046,
+  "tema": "narrative"
+ },
+ {
+  "id": "nmPDxY7Q3lk",
+  "title": "Session 13: Stock-based Compensation and Stories in Valuation",
+  "date": "2025-11-07",
+  "words": 15009,
+  "tema": "narrative"
+ },
+ {
+  "id": "WEgelyAqeeA",
+  "title": "Session 14: Closure on stories and numbers and fist valuations!",
+  "date": "2025-11-07",
+  "words": 15504,
+  "tema": "narrative"
+ },
+ {
+  "id": "naKbhKUaTYY",
+  "title": "Session 21 (of 42): Growth Investing - Against the tide of history!",
+  "date": "2026-04-07",
+  "words": 2752,
+  "tema": "narrative"
+ },
+ {
+  "id": "LfQP4DXJGjc",
+  "title": "Session 18 (of 42): Get in on the ground floor - The IPO Story",
+  "date": "2026-04-07",
+  "words": 2967,
+  "tema": "narrative"
+ },
+ {
+  "id": "QID0UbRuIYk",
+  "title": "The Market's Narrative: How Investors are pricing in the Iran War!",
+  "date": "2026-04-07",
+  "words": 3488,
+  "tema": "narrative"
+ },
+ {
+  "id": "uJN3CUcgF8A",
+  "title": "The Price of Risk: With Equity Risk Premiums, Caveat Emptor!",
+  "date": "2023-11-07",
+  "words": 7582,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "6HMKLNLCaAs",
+  "title": "Implied ERP: Dataset Support",
+  "date": "2024-11-07",
+  "words": 1871,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "9IfLkzlqMJw",
+  "title": "Country Equity Risk Premiums: Dataset support",
+  "date": "2024-11-07",
+  "words": 2086,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "7NgfMyUHoFg",
+  "title": "Session 5: Finishing up riskfree rates and moving on to risk premiums",
+  "date": "2025-11-07",
+  "words": 13283,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "bK6YC8oBX-c",
+  "title": "Session 4: The DCF Big Picture and first steps on Riskfree rates",
+  "date": "2025-11-07",
+  "words": 14011,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "oFz94rZbc4c",
+  "title": "Session 4: DCF Big Picture and First Steps in Riskfree Rates",
+  "date": "2025-11-07",
+  "words": 15433,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "1wyr2R471Dc",
+  "title": "Session 5: Closure on Riskfree Rates & Equity Risk Premiums",
+  "date": "2025-11-07",
+  "words": 14865,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "GcFNj2f7EOQ",
+  "title": "Session 6: Implied Equity Risk Premiums",
+  "date": "2025-11-07",
+  "words": 13992,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "nGXi-YnQqao",
+  "title": "Session 7: Equity Risk Premiums and Betas",
+  "date": "2025-11-07",
+  "words": 16362,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "oeRtLInQTAM",
+  "title": "Session 6: Riskfree Rates and Equity Risk Premiums",
+  "date": "2025-11-07",
+  "words": 14412,
+  "tema": "rates_erp_crp"
+ },
+ {
+  "id": "P87WFfCMvYI",
+  "title": "Pricing Ratios: Dataset Support",
+  "date": "2024-11-07",
+  "words": 1511,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "EP-RSiVtwA0",
+  "title": "Chapter/Session 9: Valuation and Pricing 101",
+  "date": "2024-11-07",
+  "words": 4815,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "i80avS70k8E",
+  "title": "Chapter/Session 10: Valuing and Pricing Start-ups and Young High Growth Firms",
+  "date": "2024-11-07",
+  "words": 5332,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "9zFaoB7KIRI",
+  "title": "Session 19: Pricing Continued",
+  "date": "2025-11-07",
+  "words": 13102,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "f5eDlMgI-RA",
+  "title": "Session 18: Intrinsic Value Closure and Pricing Beginnings",
+  "date": "2025-11-07",
+  "words": 14300,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "ldTsmcTNJE8",
+  "title": "Session 17: Pricing 101",
+  "date": "2025-11-07",
+  "words": 14170,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "MqNyBBttuK8",
+  "title": "Session 22: Pricing Closure and Asset-based Valuation/Pricing",
+  "date": "2025-11-07",
+  "words": 13296,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "oSSRcLhum1s",
+  "title": "Session 20: Pricing Closure and Asset-based Valuation/Pricing",
+  "date": "2025-11-07",
+  "words": 13861,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "rjqwM6ZTpA0",
+  "title": "Session 21 (UG) and Session 19 (MBA): Pricing Analytics and Peer Groups",
+  "date": "2025-11-07",
+  "words": 13224,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "FdlCocXHnMs",
+  "title": "A Golden Year: Gold's Price Surge in 2025 - Macro Signal or Pricing Noise?",
+  "date": "2025-11-07",
+  "words": 5669,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "hscEYvWELPk",
+  "title": "Trillion dollar Market Caps: Fairy Tale Pricing or Great Businesses?",
+  "date": "2025-12-07",
+  "words": 6097,
+  "tema": "relative_valuation"
+ },
+ {
+  "id": "hsxo5pi5OTQ",
+  "title": "From Eyeballs to ARR: Buzzy Pricing Metrics and the AI Trade!",
+  "date": "2026-10-24",
+  "words": 8092,
+  "tema": "relative_valuation"
+ }
+]

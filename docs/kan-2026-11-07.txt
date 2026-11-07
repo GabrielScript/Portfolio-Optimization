@@ -1,0 +1,140 @@
+KAN forecast and KAN-15 on the B3: the one reading (2026-11-07)
+Pre-registration: docs/superpowers/specs/2026-11-07-kan-design.md, commit a61fdb8 (before any KAN number).
+Code: qpo_kaggle/kan.py (tests/test_kan.py), scripts/kan_prever.py, kan_ler_ic.py, kan_avaliar_b3.py.
+Run: KAN-1 177 s, KAN-2 414 s on 3 CPU threads (.venv-qpo, torch 2.14.1+cpu); the 213 columns of previsoes.npz
+unchanged by sha256. The first run died after 34 months on a Windows lock of the state swap; fixed test-first (retry)
+and resumed: batches are seeded by seed and month and Adam restarts each month, so the resume is the same run.
+Erratum to the spec's section 3 (a description, not a rule): hidden values pass only through silu outside the
+extended grid, [-4.4, 4.4] for the second layer, not outside [-2, 2].
+
+== Section 4, forecast ==
+B3: monthly Spearman IC against the 3-month target, 2012-01 to 2026-07; gate IC >= 0.02 and Newey-West t >= 2.0
+         months    IC     t share > 0 passes
+KAN-1       175 0.111 5.942     0.720   True
+KAN-2       175 0.100 6.154     0.760   True
+Ridge       175 0.127 6.372     0.731   True
+MLP         175 0.109 5.496     0.749   True
+VQC         175 0.104 5.975     0.731   True
+Fourier     175 0.077 5.500     0.760   True
+composto    175 0.114 6.036     0.720   True
+KAN-1 - Ridge: -0.0158, t -2.93
+KAN-1 - MLP: +0.0021, t +0.41
+KAN-1 - composto: -0.0027, t -0.27
+KAN-2 - KAN-1: -0.0114, t -1.73
+KAN-1 by seed: seed 0 0.1096, seed 1 0.1087, seed 2 0.1090
+KAN-2 by seed: seed 0 0.0747, seed 1 0.0831, seed 2 0.0914
+KAN edge (KAN-1 passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+KAN-1 curves, last month (descriptive): non-linearity 1 - R^2 of the best line, by seed
+semente            0     1     2
+atributo                        
+baixa_vol      0.534 0.349 0.554
+crescimento    0.413 0.523 0.080
+dividendos     0.550 0.954 0.986
+formula_magica 0.541 0.411 0.584
+momentum       0.152 0.060 0.031
+trending_value 0.041 0.131 0.036
+
+phi averaged over seeds, at 5 of the 21 points (angle -pi/2 = worst-ranked, +pi/2 = best-ranked)
+atributo   baixa_vol  crescimento  dividendos  formula_magica  momentum  trending_value
+u                                                                                      
+-1.570796     -0.478       -0.066      +0.073          -0.182    -0.117          -0.044
+-0.785398     -0.026       -0.006      -0.036          -0.029    -0.035          -0.012
+ 0.000000     -0.004       -0.008      -0.025          -0.002    +0.017          +0.015
+ 0.785398     +0.026       +0.013      +0.043          +0.057    +0.101          +0.063
+ 1.570796     +0.034       +0.027      +0.077          -0.065    +0.116          +0.106
+
+== Section 5, portfolio ==
+
+=== Phase 0: 09/02/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+KAN-15                            0.232 0.345         0.919  0.943 0.129         22.794 0.129 -0.497          0.003              0.076
+Composto                          0.624 0.843         1.000  1.000 0.810          3.870 0.214 -0.415            NaN                NaN
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.483          7.276 0.174 -0.407            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497            NaN                NaN
+KAN-15: refusals 0, failures 0, annual turnover 4.50
+Composto: refusals 0, failures 0, annual turnover 2.96
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 2.97
+      KAN-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010   14.0%     23.2%                            23.2%    6.8%
+2011    3.3%      2.6%                             9.8%  -18.3%
+2012   28.4%     26.3%                            32.2%    6.6%
+2013   -5.4%     -1.3%                            -3.3%  -15.8%
+2014   -7.1%      7.3%                             1.6%   -3.4%
+2015   -3.9%      6.4%                             0.4%  -13.2%
+2016   23.7%     40.9%                            25.1%   38.2%
+2017   45.2%     34.7%                            50.8%   26.8%
+2018   12.1%     22.2%                            15.7%   14.6%
+2019   36.3%     57.3%                            49.9%   31.5%
+2020   -0.8%     30.0%                             3.1%    3.1%
+2021    5.0%     20.8%                            13.6%  -12.1%
+2022   18.1%      4.6%                            26.1%    5.1%
+2023   26.7%     33.6%                            22.9%   23.1%
+2024   -5.3%      5.5%                            -7.7%  -10.1%
+2025   30.4%     44.1%                            31.5%   34.7%
+2026    8.5%     10.3%                             9.7%   28.0%
+KAN-15 latest picks (14/08/2026): ABEV3, CMIG4, CPFE3, CXSE3, FIQE3, ISAE4, ITSA4, ITUB4, JHSF3, LEVE3, LOGG3, MDNE3, MILS3, RIAA3, TAEE11
+(phase 0 done in 40 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+KAN-15                            0.157 0.268         0.860  0.899 0.061         37.809 0.112 -0.473          0.002              0.038
+Composto                          0.559 0.782         0.999  1.000 0.699          4.501 0.199 -0.422            NaN                NaN
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.402          7.901 0.164 -0.416            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497            NaN                NaN
+KAN-15: refusals 0, failures 0, annual turnover 4.41
+Composto: refusals 0, failures 0, annual turnover 3.07
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 2.98
+      KAN-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010   11.9%     17.8%                            17.8%   -0.6%
+2011   -0.1%      6.2%                            10.6%  -18.3%
+2012   29.1%     24.6%                            32.9%    6.6%
+2013   -7.7%      6.7%                            -2.8%  -15.8%
+2014   -2.2%      2.4%                             3.1%   -3.4%
+2015   -0.1%      4.9%                             1.3%  -13.2%
+2016   17.8%     36.4%                            15.9%   38.2%
+2017   41.6%     42.9%                            51.1%   26.8%
+2018   17.9%     23.6%                            22.4%   14.6%
+2019   48.6%     50.2%                            51.3%   31.5%
+2020   -7.2%      6.0%                            -4.4%    3.1%
+2021  -12.3%     27.9%                             6.2%  -12.1%
+2022   12.8%     10.1%                            15.7%    5.1%
+2023   15.8%     32.3%                            15.7%   23.1%
+2024  -11.0%      5.6%                            -3.3%  -10.1%
+2025   29.8%     24.7%                            27.5%   34.7%
+2026   20.6%     15.8%                            25.4%   28.0%
+(phase 21 done in 78 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+KAN-15                            0.184 0.311         0.894  0.928 0.155         28.148 0.118 -0.481          0.006              0.036
+Composto                          0.509 0.743         0.999  0.999 0.765          4.947 0.191 -0.428            NaN                NaN
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.607          6.876 0.169 -0.395            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497            NaN                NaN
+KAN-15: refusals 0, failures 0, annual turnover 4.43
+Composto: refusals 0, failures 0, annual turnover 3.22
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 3.03
+      KAN-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010   11.8%     19.4%                            19.4%   -2.5%
+2011   -7.5%      3.3%                             7.2%  -18.3%
+2012   27.8%     25.6%                            32.3%    6.6%
+2013   -6.5%     -0.7%                            -4.1%  -15.8%
+2014   -8.4%      4.6%                             0.2%   -3.4%
+2015   -3.4%     -1.3%                             2.9%  -13.2%
+2016   13.5%     23.6%                            22.7%   38.2%
+2017   56.1%     43.6%                            53.1%   26.8%
+2018   16.8%     14.0%                            12.0%   14.6%
+2019   62.0%     51.7%                            43.9%   31.5%
+2020    9.5%     19.0%                            14.2%    3.1%
+2021   -8.6%     30.7%                            10.0%  -12.1%
+2022   17.1%     10.4%                            13.9%    5.1%
+2023   12.1%     31.2%                            15.6%   23.1%
+2024   -8.9%      4.9%                            -6.5%  -10.1%
+2025   31.2%     33.4%                            33.5%   34.7%
+2026    6.5%     10.8%                            20.9%   28.0%
+(phase 42 done in 116 s)
+
+Gate, all >= 0.95 in every phase:
+KAN-15: P[> Composite] [0.003 0.002 0.006], P[> Conservadora] [0.076 0.038 0.036], P[> BOVA11] [0.919 0.86  0.894], DSR [0.129 0.061 0.155]: does not pass
+
+Done in 116 s

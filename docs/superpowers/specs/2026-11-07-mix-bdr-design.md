@@ -45,3 +45,12 @@ every branch's trials, **N = 100** (95 + 5).
 ## 4. Output
 
 `docs/mix-bdr-2026-11-07.txt` and a DECISOES entry. Nothing goes to the app.
+
+## Addendum (2026-11-07, before any arm's number; the first run stopped at BR-13's first rebalance)
+
+The fixed limits are the whole portfolio's (30% per sector, 20% per name and issuer). The BR sleeve holds (15 - k)/15
+of the portfolio, so 4 names of one sector inside a 13-name sleeve are 4/13 = 30.8% of the sleeve but 4/15 = 26.7% of
+the whole, and the engine refused it. The sleeve is therefore checked with the whole portfolio's limits scaled to
+it: sector, name and issuer caps times 15 / (15 - k); the volatility cap is unchanged. The US sleeve has no sector
+rule (as pre-registered): at k = 5 it can hold up to 5/15 = 33% in one US sector, above the 30% the app allows; this
+is reported with the picks, not corrected.

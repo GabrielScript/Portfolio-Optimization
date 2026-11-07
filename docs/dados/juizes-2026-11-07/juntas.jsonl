@@ -1,0 +1,180 @@
+{"id": "F00", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.816107299993746, "tokens": 189, "saida": 42, "modelo": "openai/gpt-oss-120b"}
+{"id": "F00", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.2284376999596134, "tokens": 141, "saida": 80, "modelo": "deepseek-flash"}
+{"id": "F01", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.1909626999986358, "tokens": 192, "saida": 40, "modelo": "openai/gpt-oss-120b"}
+{"id": "F01", "juiz": "DeepSeek Flash (low)", "p": 0.2, "s": 4.554691699973773, "tokens": 147, "saida": 393, "modelo": "deepseek-flash"}
+{"id": "F02", "juiz": "DeepSeek Flash (low)", "p": 0.4, "s": 3.4252220000489615, "tokens": 155, "saida": 207, "modelo": "deepseek-flash"}
+{"id": "F02", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.276595500006806, "tokens": 198, "saida": 37, "modelo": "openai/gpt-oss-120b"}
+{"id": "F03", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.474998699966818, "tokens": 189, "saida": 35, "modelo": "openai/gpt-oss-120b"}
+{"id": "F03", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.8948806000407785, "tokens": 144, "saida": 119, "modelo": "deepseek-flash"}
+{"id": "F04", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.228716199984774, "tokens": 191, "saida": 41, "modelo": "openai/gpt-oss-120b"}
+{"id": "F04", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.6071719999890774, "tokens": 144, "saida": 87, "modelo": "deepseek-flash"}
+{"id": "F05", "juiz": "GPT-OSS-120B (Groq)", "p": 0.92, "s": 1.3260261000250466, "tokens": 194, "saida": 35, "modelo": "openai/gpt-oss-120b"}
+{"id": "F05", "juiz": "DeepSeek Flash (low)", "p": 0.03, "s": 1.9648736999952234, "tokens": 151, "saida": 57, "modelo": "deepseek-flash"}
+{"id": "F06", "juiz": "GPT-OSS-120B (Groq)", "p": 0.72, "s": 1.1092002000077628, "tokens": 212, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F06", "juiz": "DeepSeek Flash (low)", "p": 0.7, "s": 3.146791299979668, "tokens": 166, "saida": 243, "modelo": "deepseek-flash"}
+{"id": "F07", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.2807907999958843, "tokens": 202, "saida": 47, "modelo": "openai/gpt-oss-120b"}
+{"id": "F07", "juiz": "DeepSeek Flash (low)", "p": 0.2, "s": 1.983910599956289, "tokens": 157, "saida": 53, "modelo": "deepseek-flash"}
+{"id": "F08", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.2244948000297882, "tokens": 202, "saida": 40, "modelo": "openai/gpt-oss-120b"}
+{"id": "F08", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.475704599986784, "tokens": 160, "saida": 102, "modelo": "deepseek-flash"}
+{"id": "F09", "juiz": "DeepSeek Flash (low)", "p": 0.6, "s": 3.5565099000232294, "tokens": 174, "saida": 232, "modelo": "deepseek-flash"}
+{"id": "F09", "juiz": "GPT-OSS-120B (Groq)", "p": 0.73, "s": 1.1464565999922343, "tokens": 216, "saida": 45, "modelo": "openai/gpt-oss-120b"}
+{"id": "F10", "juiz": "DeepSeek Flash (low)", "p": 0.35, "s": 2.846672600018792, "tokens": 161, "saida": 172, "modelo": "deepseek-flash"}
+{"id": "F10", "juiz": "GPT-OSS-120B (Groq)", "p": 0.87, "s": 1.1851142999948934, "tokens": 205, "saida": 45, "modelo": "openai/gpt-oss-120b"}
+{"id": "F11", "juiz": "GPT-OSS-120B (Groq)", "p": 0.08, "s": 1.046808000013698, "tokens": 191, "saida": 46, "modelo": "openai/gpt-oss-120b"}
+{"id": "F11", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.7769580000313, "tokens": 145, "saida": 81, "modelo": "deepseek-flash"}
+{"id": "F12", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.3095271000056528, "tokens": 154, "saida": 140, "modelo": "deepseek-flash"}
+{"id": "F12", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.2274793999968097, "tokens": 200, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F13", "juiz": "DeepSeek Flash (low)", "p": 0.35, "s": 2.9049839000217617, "tokens": 158, "saida": 188, "modelo": "deepseek-flash"}
+{"id": "F13", "juiz": "GPT-OSS-120B (Groq)", "p": 0.7, "s": 1.0287267999956384, "tokens": 203, "saida": 38, "modelo": "openai/gpt-oss-120b"}
+{"id": "F14", "juiz": "GPT-OSS-120B (Groq)", "p": 0.82, "s": 1.1784645000007004, "tokens": 200, "saida": 42, "modelo": "openai/gpt-oss-120b"}
+{"id": "F14", "juiz": "DeepSeek Flash (low)", "p": 0.8, "s": 2.568502100009937, "tokens": 154, "saida": 142, "modelo": "deepseek-flash"}
+{"id": "F15", "juiz": "DeepSeek Flash (low)", "p": 0.1, "s": 2.1151208999799564, "tokens": 148, "saida": 99, "modelo": "deepseek-flash"}
+{"id": "F15", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.0994138999958523, "tokens": 194, "saida": 51, "modelo": "openai/gpt-oss-120b"}
+{"id": "F16", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.4070987000013702, "tokens": 196, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F16", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.9478783999802545, "tokens": 152, "saida": 78, "modelo": "deepseek-flash"}
+{"id": "F17", "juiz": "DeepSeek Flash (low)", "p": 0.3, "s": 2.4586076000123285, "tokens": 159, "saida": 145, "modelo": "deepseek-flash"}
+{"id": "F17", "juiz": "GPT-OSS-120B (Groq)", "p": 0.72, "s": 1.036806499992963, "tokens": 205, "saida": 49, "modelo": "openai/gpt-oss-120b"}
+{"id": "F18", "juiz": "DeepSeek Flash (low)", "p": 0.6, "s": 3.312918499985244, "tokens": 165, "saida": 227, "modelo": "deepseek-flash"}
+{"id": "F18", "juiz": "GPT-OSS-120B (Groq)", "p": 0.86, "s": 1.0345415000338107, "tokens": 208, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F19", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.0793802999542095, "tokens": 206, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F19", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.0097225999925286, "tokens": 158, "saida": 103, "modelo": "deepseek-flash"}
+{"id": "F20", "juiz": "GPT-OSS-120B (Groq)", "p": 0.45, "s": 1.1940510999993421, "tokens": 209, "saida": 61, "modelo": "openai/gpt-oss-120b"}
+{"id": "F20", "juiz": "DeepSeek Flash (low)", "p": 0.4, "s": 2.7813692000345327, "tokens": 168, "saida": 160, "modelo": "deepseek-flash"}
+{"id": "F21", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.344617599970661, "tokens": 158, "saida": 101, "modelo": "deepseek-flash"}
+{"id": "F21", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.018662599963136, "tokens": 200, "saida": 41, "modelo": "openai/gpt-oss-120b"}
+{"id": "F22", "juiz": "GPT-OSS-120B (Groq)", "p": 0.3, "s": 1.051547200011555, "tokens": 205, "saida": 48, "modelo": "openai/gpt-oss-120b"}
+{"id": "F22", "juiz": "DeepSeek Flash (low)", "p": 0.1, "s": 2.103798199968878, "tokens": 162, "saida": 105, "modelo": "deepseek-flash"}
+{"id": "F23", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.0636686999932863, "tokens": 206, "saida": 54, "modelo": "openai/gpt-oss-120b"}
+{"id": "F23", "juiz": "DeepSeek Flash (low)", "p": 0.1, "s": 2.277295399981085, "tokens": 158, "saida": 124, "modelo": "deepseek-flash"}
+{"id": "F24", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.0636106000165455, "tokens": 207, "saida": 46, "modelo": "openai/gpt-oss-120b"}
+{"id": "F24", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.1123364999657497, "tokens": 162, "saida": 95, "modelo": "deepseek-flash"}
+{"id": "F25", "juiz": "DeepSeek Flash (low)", "p": 0.65, "s": 3.085670000000391, "tokens": 158, "saida": 196, "modelo": "deepseek-flash"}
+{"id": "F25", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.087290800001938, "tokens": 202, "saida": 57, "modelo": "openai/gpt-oss-120b"}
+{"id": "F26", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.1055199999827892, "tokens": 195, "saida": 48, "modelo": "openai/gpt-oss-120b"}
+{"id": "F26", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.183315899979789, "tokens": 155, "saida": 68, "modelo": "deepseek-flash"}
+{"id": "F27", "juiz": "GPT-OSS-120B (Groq)", "p": 0.7, "s": 1.3781958000035957, "tokens": 196, "saida": 68, "modelo": "openai/gpt-oss-120b"}
+{"id": "F27", "juiz": "DeepSeek Flash (low)", "p": 0.9, "s": 2.353367200004868, "tokens": 152, "saida": 98, "modelo": "deepseek-flash"}
+{"id": "F28", "juiz": "GPT-OSS-120B (Groq)", "p": 0.86, "s": 1.0467775000142865, "tokens": 191, "saida": 46, "modelo": "openai/gpt-oss-120b"}
+{"id": "F28", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.2190988999791443, "tokens": 145, "saida": 95, "modelo": "deepseek-flash"}
+{"id": "F29", "juiz": "DeepSeek Flash (low)", "p": 0.8, "s": 2.2171802999801002, "tokens": 144, "saida": 135, "modelo": "deepseek-flash"}
+{"id": "F29", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.0608108000014909, "tokens": 192, "saida": 40, "modelo": "openai/gpt-oss-120b"}
+{"id": "F30", "juiz": "DeepSeek Flash (low)", "p": 0.75, "s": 2.715505000029225, "tokens": 144, "saida": 156, "modelo": "deepseek-flash"}
+{"id": "F30", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.1195781999849714, "tokens": 192, "saida": 45, "modelo": "openai/gpt-oss-120b"}
+{"id": "F31", "juiz": "DeepSeek Flash (low)", "p": 0.35, "s": 3.3290247000404634, "tokens": 166, "saida": 190, "modelo": "deepseek-flash"}
+{"id": "F31", "juiz": "GPT-OSS-120B (Groq)", "p": 0.4, "s": 1.0959169000270776, "tokens": 207, "saida": 51, "modelo": "openai/gpt-oss-120b"}
+{"id": "F32", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.0692251999862492, "tokens": 195, "saida": 43, "modelo": "openai/gpt-oss-120b"}
+{"id": "F32", "juiz": "DeepSeek Flash (low)", "p": 0.85, "s": 2.2465912000043318, "tokens": 150, "saida": 115, "modelo": "deepseek-flash"}
+{"id": "F33", "juiz": "DeepSeek Flash (low)", "p": 0.85, "s": 2.653891600028146, "tokens": 165, "saida": 172, "modelo": "deepseek-flash"}
+{"id": "F33", "juiz": "GPT-OSS-120B (Groq)", "p": 0.92, "s": 1.2195161000126973, "tokens": 208, "saida": 37, "modelo": "openai/gpt-oss-120b"}
+{"id": "F34", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.119263599975966, "tokens": 195, "saida": 32, "modelo": "openai/gpt-oss-120b"}
+{"id": "F34", "juiz": "DeepSeek Flash (low)", "p": 0.08, "s": 2.3462627999833785, "tokens": 151, "saida": 80, "modelo": "deepseek-flash"}
+{"id": "F35", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.4805519999936223, "tokens": 210, "saida": 37, "modelo": "openai/gpt-oss-120b"}
+{"id": "F35", "juiz": "DeepSeek Flash (low)", "p": 0.65, "s": 4.169901399989612, "tokens": 168, "saida": 333, "modelo": "deepseek-flash"}
+{"id": "F36", "juiz": "DeepSeek Flash (low)", "p": 0.8, "s": 2.3484820000012405, "tokens": 142, "saida": 118, "modelo": "deepseek-flash"}
+{"id": "F36", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.145563600002788, "tokens": 190, "saida": 52, "modelo": "openai/gpt-oss-120b"}
+{"id": "F37", "juiz": "GPT-OSS-120B (Groq)", "p": 0.2, "s": 1.233520200010389, "tokens": 190, "saida": 58, "modelo": "openai/gpt-oss-120b"}
+{"id": "F37", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.3140578999882564, "tokens": 141, "saida": 97, "modelo": "deepseek-flash"}
+{"id": "F38", "juiz": "DeepSeek Flash (low)", "p": 0.75, "s": 2.781469100038521, "tokens": 146, "saida": 185, "modelo": "deepseek-flash"}
+{"id": "F38", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.119475000014063, "tokens": 190, "saida": 35, "modelo": "openai/gpt-oss-120b"}
+{"id": "F39", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.839119500014931, "tokens": 155, "saida": 68, "modelo": "deepseek-flash"}
+{"id": "F39", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.208882199949585, "tokens": 195, "saida": 43, "modelo": "openai/gpt-oss-120b"}
+{"id": "F40", "juiz": "DeepSeek Flash (low)", "p": 0.2, "s": 3.258136799966451, "tokens": 155, "saida": 272, "modelo": "deepseek-flash"}
+{"id": "F40", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.0168828999740072, "tokens": 201, "saida": 47, "modelo": "openai/gpt-oss-120b"}
+{"id": "F41", "juiz": "DeepSeek Flash (low)", "p": 0.88, "s": 2.15735469997162, "tokens": 162, "saida": 106, "modelo": "deepseek-flash"}
+{"id": "F41", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.108544200018514, "tokens": 207, "saida": 56, "modelo": "openai/gpt-oss-120b"}
+{"id": "F42", "juiz": "DeepSeek Flash (low)", "p": 0.1, "s": 3.161293800047133, "tokens": 149, "saida": 199, "modelo": "deepseek-flash"}
+{"id": "F42", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.195777699991595, "tokens": 194, "saida": 61, "modelo": "openai/gpt-oss-120b"}
+{"id": "F43", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.1595893000485376, "tokens": 194, "saida": 36, "modelo": "openai/gpt-oss-120b"}
+{"id": "F43", "juiz": "DeepSeek Flash (low)", "p": 0.2, "s": 2.7644864000030793, "tokens": 149, "saida": 128, "modelo": "deepseek-flash"}
+{"id": "F44", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.571894600056112, "tokens": 153, "saida": 120, "modelo": "deepseek-flash"}
+{"id": "F44", "juiz": "GPT-OSS-120B (Groq)", "p": 0.7, "s": 1.1232947999960743, "tokens": 198, "saida": 46, "modelo": "openai/gpt-oss-120b"}
+{"id": "F45", "juiz": "DeepSeek Flash (low)", "p": 0.65, "s": 3.4905771000194363, "tokens": 151, "saida": 237, "modelo": "deepseek-flash"}
+{"id": "F45", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.1002403000020422, "tokens": 194, "saida": 40, "modelo": "openai/gpt-oss-120b"}
+{"id": "F46", "juiz": "GPT-OSS-120B (Groq)", "p": 0.2, "s": 1.1638751999707893, "tokens": 193, "saida": 43, "modelo": "openai/gpt-oss-120b"}
+{"id": "F46", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.403087900020182, "tokens": 153, "saida": 71, "modelo": "deepseek-flash"}
+{"id": "F47", "juiz": "GPT-OSS-120B (Groq)", "p": 0.72, "s": 1.4270287999534048, "tokens": 216, "saida": 44, "modelo": "openai/gpt-oss-120b"}
+{"id": "F47", "juiz": "DeepSeek Flash (low)", "p": 0.2, "s": 2.7898466999758966, "tokens": 169, "saida": 163, "modelo": "deepseek-flash"}
+{"id": "F48", "juiz": "DeepSeek Flash (low)", "p": 0.35, "s": 4.4626023999881, "tokens": 157, "saida": 411, "modelo": "deepseek-flash"}
+{"id": "F48", "juiz": "GPT-OSS-120B (Groq)", "p": 0.7, "s": 1.0786599999992177, "tokens": 201, "saida": 50, "modelo": "openai/gpt-oss-120b"}
+{"id": "F49", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.0934234000160359, "tokens": 194, "saida": 40, "modelo": "openai/gpt-oss-120b"}
+{"id": "F49", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.8627251999569125, "tokens": 148, "saida": 87, "modelo": "deepseek-flash"}
+{"id": "F50", "juiz": "GPT-OSS-120B (Groq)", "p": 0.8, "s": 1.049929900036659, "tokens": 194, "saida": 42, "modelo": "openai/gpt-oss-120b"}
+{"id": "F50", "juiz": "DeepSeek Flash (low)", "p": 0.8, "s": 2.930583499954082, "tokens": 153, "saida": 181, "modelo": "deepseek-flash"}
+{"id": "F51", "juiz": "DeepSeek Flash (low)", "p": 0.45, "s": 3.305232399958186, "tokens": 158, "saida": 242, "modelo": "deepseek-flash"}
+{"id": "F51", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.1936180999618955, "tokens": 202, "saida": 38, "modelo": "openai/gpt-oss-120b"}
+{"id": "F52", "juiz": "GPT-OSS-120B (Groq)", "p": 0.72, "s": 1.0866716000018641, "tokens": 194, "saida": 49, "modelo": "openai/gpt-oss-120b"}
+{"id": "F52", "juiz": "DeepSeek Flash (low)", "p": 0.75, "s": 2.904884100018535, "tokens": 146, "saida": 189, "modelo": "deepseek-flash"}
+{"id": "F53", "juiz": "DeepSeek Flash (low)", "p": 0.6, "s": 2.9397066999808885, "tokens": 152, "saida": 212, "modelo": "deepseek-flash"}
+{"id": "F53", "juiz": "GPT-OSS-120B (Groq)", "p": 0.6, "s": 1.1574545000330545, "tokens": 197, "saida": 57, "modelo": "openai/gpt-oss-120b"}
+{"id": "F54", "juiz": "GPT-OSS-120B (Groq)", "p": 0.65, "s": 1.1121380999684334, "tokens": 195, "saida": 53, "modelo": "openai/gpt-oss-120b"}
+{"id": "F54", "juiz": "DeepSeek Flash (low)", "p": 0.3, "s": 4.583261799998581, "tokens": 147, "saida": 410, "modelo": "deepseek-flash"}
+{"id": "F55", "juiz": "GPT-OSS-120B (Groq)", "p": 0.85, "s": 1.1686422000057064, "tokens": 191, "saida": 43, "modelo": "openai/gpt-oss-120b"}
+{"id": "F55", "juiz": "DeepSeek Flash (low)", "p": 0.7, "s": 4.074650800030213, "tokens": 143, "saida": 240, "modelo": "deepseek-flash"}
+{"id": "F56", "juiz": "DeepSeek Flash (low)", "p": 0.75, "s": 3.707878499990329, "tokens": 168, "saida": 326, "modelo": "deepseek-flash"}
+{"id": "F56", "juiz": "GPT-OSS-120B (Groq)", "p": 0.78, "s": 1.1918324999860488, "tokens": 211, "saida": 36, "modelo": "openai/gpt-oss-120b"}
+{"id": "F57", "juiz": "GPT-OSS-120B (Groq)", "p": 0.15, "s": 1.3290946999914013, "tokens": 195, "saida": 38, "modelo": "openai/gpt-oss-120b"}
+{"id": "F57", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.7713883999967948, "tokens": 152, "saida": 80, "modelo": "deepseek-flash"}
+{"id": "F58", "juiz": "GPT-OSS-120B (Groq)", "p": 0.1, "s": 1.1193196999956854, "tokens": 215, "saida": 67, "modelo": "openai/gpt-oss-120b"}
+{"id": "F58", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 2.069652300036978, "tokens": 170, "saida": 102, "modelo": "deepseek-flash"}
+{"id": "F59", "juiz": "DeepSeek Flash (low)", "p": 0.05, "s": 1.9155627999571152, "tokens": 161, "saida": 87, "modelo": "deepseek-flash"}
+{"id": "F59", "juiz": "GPT-OSS-120B (Groq)", "p": 0.73, "s": 1.1139443999854848, "tokens": 207, "saida": 49, "modelo": "openai/gpt-oss-120b"}
+{"id": "F00", "juiz": "d1.1 (Liquid direto)", "p": 0.056635693107492203, "s": 1.2723293000017293, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F01", "juiz": "d1.1 (Liquid direto)", "p": 0.38280779652878205, "s": 1.6347984000167344, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "d1.1 (Liquid direto)", "p": 0.7003890536086564, "s": 1.46859730000142, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F03", "juiz": "d1.1 (Liquid direto)", "p": 0.07259775462868671, "s": 1.4702443999995012, "tokens": 93, "custo": 1.86e-06, "modelo": "d1.1"}
+{"id": "F04", "juiz": "d1.1 (Liquid direto)", "p": 0.0512243738291801, "s": 1.2155909000139218, "tokens": 96, "custo": 1.92e-06, "modelo": "d1.1"}
+{"id": "F05", "juiz": "d1.1 (Liquid direto)", "p": 0.12891457195174194, "s": 0.9980582999996841, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F06", "juiz": "d1.1 (Liquid direto)", "p": 0.5397200871653481, "s": 1.1900449999957345, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F07", "juiz": "d1.1 (Liquid direto)", "p": 0.2672995687190796, "s": 1.218492599989986, "tokens": 108, "custo": 2.16e-06, "modelo": "d1.1"}
+{"id": "F08", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461764896073, "s": 1.0805732999870088, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F09", "juiz": "d1.1 (Liquid direto)", "p": 0.17666812036487756, "s": 1.3389207999862265, "tokens": 124, "custo": 2.48e-06, "modelo": "d1.1"}
+{"id": "F10", "juiz": "d1.1 (Liquid direto)", "p": 0.3108648428013962, "s": 1.2773557000036817, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F11", "juiz": "d1.1 (Liquid direto)", "p": 0.0358999044282705, "s": 1.0446509000030346, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F12", "juiz": "d1.1 (Liquid direto)", "p": 0.18452069302828675, "s": 1.0668745000148192, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F13", "juiz": "d1.1 (Liquid direto)", "p": 0.19264061682976016, "s": 1.0094245999935083, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F14", "juiz": "d1.1 (Liquid direto)", "p": 0.25703457191414103, "s": 1.0525444000086281, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F15", "juiz": "d1.1 (Liquid direto)", "p": 0.161754641538239, "s": 1.1213205000094604, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F16", "juiz": "d1.1 (Liquid direto)", "p": 0.04401663173426387, "s": 1.3807267999800388, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F17", "juiz": "d1.1 (Liquid direto)", "p": 0.5265110869328324, "s": 1.0421081999957096, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F18", "juiz": "d1.1 (Liquid direto)", "p": 0.22782124655077746, "s": 1.0503287000174168, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F19", "juiz": "d1.1 (Liquid direto)", "p": 0.26729954889377866, "s": 1.1086084000125993, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F20", "juiz": "d1.1 (Liquid direto)", "p": 0.2372921717673435, "s": 1.0750896999961697, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F21", "juiz": "d1.1 (Liquid direto)", "p": 0.17666812036487756, "s": 0.986048100021435, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F22", "juiz": "d1.1 (Liquid direto)", "p": 0.192640632573571, "s": 0.9052112000063062, "tokens": 116, "custo": 2.32e-06, "modelo": "d1.1"}
+{"id": "F23", "juiz": "d1.1 (Liquid direto)", "p": 0.24703087174353083, "s": 0.8888454000116326, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F24", "juiz": "d1.1 (Liquid direto)", "p": 0.023775515269848856, "s": 0.9133080000174232, "tokens": 112, "custo": 2.24e-06, "modelo": "d1.1"}
+{"id": "F25", "juiz": "d1.1 (Liquid direto)", "p": 0.17666813508895954, "s": 1.0928546999930404, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F26", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597453971662, "s": 1.0225031000154559, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F27", "juiz": "d1.1 (Liquid direto)", "p": 0.3580606590236548, "s": 0.9546377000224311, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F28", "juiz": "d1.1 (Liquid direto)", "p": 0.0971744327863987, "s": 0.9494266999827232, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F29", "juiz": "d1.1 (Liquid direto)", "p": 0.7429654377513794, "s": 0.9374083000002429, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F30", "juiz": "d1.1 (Liquid direto)", "p": 0.6540440728119271, "s": 1.004164399986621, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F31", "juiz": "d1.1 (Liquid direto)", "p": 0.16175462781290295, "s": 1.2143061000097077, "tokens": 113, "custo": 2.26e-06, "modelo": "d1.1"}
+{"id": "F32", "juiz": "d1.1 (Liquid direto)", "p": 0.6659525328168151, "s": 1.1716246999858413, "tokens": 98, "custo": 1.96e-06, "modelo": "d1.1"}
+{"id": "F33", "juiz": "d1.1 (Liquid direto)", "p": 0.7903106043877692, "s": 1.3251747000031173, "tokens": 114, "custo": 2.28e-06, "modelo": "d1.1"}
+{"id": "F34", "juiz": "d1.1 (Liquid direto)", "p": 0.13499259654505846, "s": 1.3218792999978177, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F35", "juiz": "d1.1 (Liquid direto)", "p": 0.4734889004494026, "s": 1.3899698999885004, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F36", "juiz": "d1.1 (Liquid direto)", "p": 0.5, "s": 0.9628610000072513, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F37", "juiz": "d1.1 (Liquid direto)", "p": 0.07625299547988944, "s": 1.1495348000025842, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "d1.1 (Liquid direto)", "p": 0.7221788126705244, "s": 1.011033300019335, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F39", "juiz": "d1.1 (Liquid direto)", "p": 0.07259775974017893, "s": 0.947094900009688, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F40", "juiz": "d1.1 (Liquid direto)", "p": 0.24703089057236824, "s": 0.8660060999973211, "tokens": 105, "custo": 2.1e-06, "modelo": "d1.1"}
+{"id": "F41", "juiz": "d1.1 (Liquid direto)", "p": 0.7903105876125045, "s": 0.9865117000008468, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F42", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345719141411, "s": 0.9889359000080731, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F43", "juiz": "d1.1 (Liquid direto)", "p": 0.08825212552427207, "s": 0.9173754999937955, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461113713125, "s": 1.2122546999889892, "tokens": 103, "custo": 2.06e-06, "modelo": "d1.1"}
+{"id": "F45", "juiz": "d1.1 (Liquid direto)", "p": 0.6540440613596226, "s": 0.9170040000171866, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F46", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597711919736, "s": 1.3383091000141576, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F47", "juiz": "d1.1 (Liquid direto)", "p": 0.3108648536441879, "s": 1.0706535000063013, "tokens": 123, "custo": 2.46e-06, "modelo": "d1.1"}
+{"id": "F48", "juiz": "d1.1 (Liquid direto)", "p": 0.20968941658131185, "s": 1.1192758999823127, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F49", "juiz": "d1.1 (Liquid direto)", "p": 0.039760200376155436, "s": 1.3162946000229567, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F50", "juiz": "d1.1 (Liquid direto)", "p": 0.7429654280858591, "s": 1.1238084000069648, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "d1.1 (Liquid direto)", "p": 0.19264061682976014, "s": 0.8918021000281442, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F52", "juiz": "d1.1 (Liquid direto)", "p": 0.28859387866175884, "s": 1.0307723000005353, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F53", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345815796616, "s": 0.9234761999978218, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F54", "juiz": "d1.1 (Liquid direto)", "p": 0.3459559386403775, "s": 0.9298943000030704, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F55", "juiz": "d1.1 (Liquid direto)", "p": 0.31086485364418787, "s": 0.9972773999907076, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F56", "juiz": "d1.1 (Liquid direto)", "p": 0.7627078099121819, "s": 0.9248643000028096, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F57", "juiz": "d1.1 (Liquid direto)", "p": 0.06910462090487567, "s": 1.4321075000043493, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F58", "juiz": "d1.1 (Liquid direto)", "p": 0.06258095881832378, "s": 0.9700744999863673, "tokens": 118, "custo": 2.36e-06, "modelo": "d1.1"}
+{"id": "F59", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461113713127, "s": 0.9165606000169646, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}

@@ -15,7 +15,7 @@ import streamlit as st
 from core.periodos import medidas_por_ano, resumo_do_periodo, rotulo_do_ano
 from ui.alepha import EXCESSO_BOVA11, MEDIDAS_POR_ANO, SELIC, SEM_PORCENTO, SEM_SENTIDO_NA_SELIC, selic_diaria
 from ui.filtros import filtrar
-from ui.formato import com_traco
+from ui import formato
 from visualizations import grafico_curvas_capital
 
 TITULO = "## Comparação das estratégias"
@@ -68,12 +68,9 @@ def secao(dados: tuple[pd.DataFrame, pd.DataFrame] | None, juros: pd.DataFrame |
     resumo = _resumo(curvas, selic, giro)
     numericas = [c for c in resumo.columns if c not in ("Estratégia", "Desde", "Anos acima do BOVA11")]
     filtrado = filtrar(resumo.astype({coluna: float for coluna in numericas}), "comparacao")
-    config: dict = {}
     sem_porcento = SEM_PORCENTO | {GIRO, NOMES}
-    for porcento in (True, False):
-        filtrado, parte = com_traco(filtrado, [c for c in numericas if (c in sem_porcento) != porcento],
-                                    porcento=porcento)
-        config.update(parte)
+    filtrado, config = formato.br(filtrado, {c: formato.decimal if c in sem_porcento else formato.percentual
+                                             for c in numericas})
     st.dataframe(filtrado, width="stretch", hide_index=True, column_config=config,
                  alt="Retorno, risco, alfa, giro e número de ações de cada estratégia e referência")
 
@@ -81,9 +78,11 @@ def secao(dados: tuple[pd.DataFrame, pd.DataFrame] | None, juros: pd.DataFrame |
     anos = _tabela_por_ano(curvas, selic, medida)
     por_ano = pd.DataFrame({"Ano": [rotulo_do_ano(ano, curvas.index) for ano in anos.index],
                             **{nome: anos[nome].to_numpy() for nome in nomes}})
-    tabela, config_do_ano = com_traco(filtrar(por_ano, "comparacao_por_ano"), por_ano.columns[1:],
-                                      porcento=medida not in SEM_PORCENTO)
-    st.dataframe(tabela, width="stretch", hide_index=True, column_config=config_do_ano,
+    escrever = formato.decimal if medida in SEM_PORCENTO else formato.percentual
+    tabela, config_do_ano = formato.br(filtrar(por_ano, "comparacao_por_ano"),
+                                       dict.fromkeys(por_ano.columns[1:], escrever))
+    st.dataframe(tabela, width="stretch", hide_index=True,
+                 column_config={**config_do_ano, "Ano": formato.COLUNA_DO_ANO},
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO} para cada estratégia e referência")
     st.caption(LEGENDA)
 

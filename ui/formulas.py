@@ -10,6 +10,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
+from ui import formato
 from ui.filtros import filtrar
 
 TITULO = "## As 28 fórmulas testadas contra a Composite"
@@ -42,9 +43,9 @@ def secao(dados: pd.DataFrame | None) -> None:
         st.caption("Sem a tabela das fórmulas testadas nesta versão do app.")
         return
     quadro = tabela(dados)
-    configuracao = {coluna: st.column_config.NumberColumn(format="percent") for coluna in PERCENTUAIS}
-    configuracao |= {"DSR": st.column_config.NumberColumn(format="%.2f"),
-                     "Giro (vezes ao ano)": st.column_config.NumberColumn(format="%.2f")}
-    st.dataframe(filtrar(quadro, "formulas_testadas"), width="stretch", hide_index=True, column_config=configuracao,
+    estilo, configuracao = formato.br(filtrar(quadro, "formulas_testadas"),
+                                      {**dict.fromkeys(PERCENTUAIS, formato.percentual), "DSR": formato.decimal,
+                                       "Giro (vezes ao ano)": formato.decimal})
+    st.dataframe(estilo, width="stretch", hide_index=True, column_config=configuracao,
                  alt="As 28 fórmulas testadas, com CAGR, risco, probabilidade de bater cada referência e o portão")
     st.caption(LEGENDA)

@@ -8,10 +8,10 @@ and add a pt-BR locale, a zoomed R$ axis, dd/mm dates and drawdowns in percent. 
 
 from __future__ import annotations
 
-import math
-
 import altair as alt
 import pandas as pd
+
+from ui import formato
 
 # Vega's d3 locale for Brazil: decimal comma, dot for thousands, R$ before the amount, Portuguese month names
 LOCALE = {
@@ -24,8 +24,6 @@ LOCALE = {
                         "Outubro", "Novembro", "Dezembro"],
              "shortMonths": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"]},
 }
-TRACO = "—"          # an account too young for the window
-MENOS = "−"
 
 
 def _longo(curvas: pd.DataFrame, valor: str) -> pd.DataFrame:
@@ -56,17 +54,23 @@ def quedas_em_percentual(quedas: pd.DataFrame) -> alt.Chart:
     return _linhas(quedas, "Queda", "Queda desde o pico (%)", ".1%", zero=True)
 
 
-def _percentual(valor) -> str:
-    if valor is None or (isinstance(valor, float) and math.isnan(valor)):
-        return TRACO
-    texto = f"{abs(float(valor)) * 100:,.2f}%".replace(",", "X").replace(".", ",").replace("X", ".")
-    return (MENOS if float(valor) < 0 else "") + texto
+def tom_por_dia(tom: pd.Series) -> alt.Chart:
+    """The news tone of each day (-1 to +1) in signed pt-BR numbers and dd/mm dates (st.line_chart wrote "-0.14" and
+    English dates)."""
+    dados = tom.rename_axis("Data").reset_index(name="Tom")
+    return (alt.Chart(dados)
+            .mark_line(strokeWidth=2, point=True)
+            .encode(x=alt.X("Data:T", title=None, axis=alt.Axis(format="%d/%m", labelAngle=0)),
+                    y=alt.Y("Tom:Q", title="Tom do mercado (−1 a +1)", axis=alt.Axis(format="+.2f")),
+                    tooltip=[alt.Tooltip("Data:T", format="%d/%m/%Y"), alt.Tooltip("Tom:Q", format="+.2f")])
+            .properties(height=260)
+            .configure(locale=LOCALE))
 
 
 def percentuais_em_texto(tabela: pd.DataFrame) -> pd.DataFrame:
     """A table of fractions as pt-BR percent strings, with a dash where the account has no history for the window
     (the dataframe printed "None" there)."""
-    return tabela.apply(lambda coluna: coluna.map(_percentual))
+    return tabela.apply(lambda coluna: coluna.map(formato.percentual))
 
 
 def colunas_de_texto(tabela: pd.DataFrame) -> dict:
@@ -74,20 +78,6 @@ def colunas_de_texto(tabela: pd.DataFrame) -> dict:
     import streamlit as st
 
     return {coluna: st.column_config.TextColumn(alignment="right") for coluna in tabela.columns}
-
-
-def _reais(valor) -> str:
-    if valor is None or (isinstance(valor, float) and math.isnan(valor)):
-        return TRACO
-    return f"{float(valor):,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
-
-
-def estilo_br(tabela: pd.DataFrame, reais: list[str], percentuais: list[str]):
-    """The table with fixed pt-BR decimals for display (two places for R$, two for percent, a dash for missing);
-    the numbers underneath stay numbers, so sorting still works."""
-    formatos = {**{c: _reais for c in reais if c in tabela.columns},
-                **{c: _percentual for c in percentuais if c in tabela.columns}}
-    return tabela.style.format(formatos)
 
 
 def barras_por_setor(pesos: pd.Series) -> alt.Chart:

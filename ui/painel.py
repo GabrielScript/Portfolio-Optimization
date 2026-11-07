@@ -19,6 +19,7 @@ from core import dolar_bcb, macro_bcb
 from core.indicadores import tabela_por_acao
 from core.macro import resumo_focus
 from core.sentimento import ultimo_fato
+from ui import formato, graficos
 from ui.filtros import filtrar
 
 AVISO = "Informação, não recomendação: nada aqui muda o plano nem as regras de risco."
@@ -80,8 +81,15 @@ def manchetes_com_link(manchetes: pd.DataFrame) -> pd.DataFrame:
     if "link" not in manchetes.columns:
         return manchetes
     com_link = manchetes["link"].fillna("").astype(str) != ""
-    titulos = manchetes["link"].astype(str) + MARCA_DA_MANCHETE + manchetes["titulo"].astype(str)
+    vazio = manchetes["titulo"].fillna("").astype(str).str.strip() == ""
+    fonte = manchetes["fonte"].fillna("").astype(str) if "fonte" in manchetes.columns else ""
+    titulo = manchetes["titulo"].astype(str).where(~vazio, "(sem título) · " + fonte)   # the URL showed otherwise
+    titulos = manchetes["link"].astype(str) + MARCA_DA_MANCHETE + titulo
     return manchetes.assign(titulo=titulos.where(com_link, manchetes["titulo"])).drop(columns="link")
+
+
+def tom_em_texto(tom: float) -> str:
+    return formato.com_sinal(tom)
 
 
 def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> None:
@@ -93,17 +101,18 @@ def _noticias(diario: pd.DataFrame | None, manchetes: pd.DataFrame | None) -> No
     ultimo = dias.iloc[-1]
     c1, c2 = st.columns(2)
     c1.metric("Notícias relevantes para a bolsa", f"{int(ultimo['relevantes'])}", border=True)
-    c2.metric("Tom do mercado", "—" if pd.isna(ultimo["tom"]) else f"{ultimo['tom']:+.2f}", help=AJUDA_DO_TOM,
+    c2.metric("Tom do mercado", tom_em_texto(ultimo["tom"]), help=AJUDA_DO_TOM,
               border=True)
     if len(dias) > 1:
-        st.line_chart(dias["tom"].rename("Tom do mercado"), y_label="Tom (−1 a +1)")
+        st.altair_chart(graficos.tom_por_dia(dias["tom"].dropna()))
     if manchetes is not None and not manchetes.empty:
-        st.dataframe(filtrar(manchetes_com_link(manchetes), "manchetes"), width="stretch", hide_index=True, height=320,
-                     column_config={"quando": st.column_config.DatetimeColumn("Quando", format="DD/MM HH:mm"),
+        estilo, config = formato.br(filtrar(manchetes_com_link(manchetes).rename(columns={"tom": "Tom"}), "manchetes"),
+                                    {"Tom": formato.com_sinal})
+        st.dataframe(estilo, width="stretch", hide_index=True, height=320,
+                     column_config={**config, "quando": st.column_config.DatetimeColumn("Quando", format="DD/MM HH:mm"),
                                     "fonte": "Fonte", "tema": "Tema",
                                     "titulo": st.column_config.LinkColumn("Manchete", display_text=TEXTO_DA_MANCHETE,
-                                                                          alignment="left"),
-                                    "tom": st.column_config.NumberColumn("Tom", format="%+.2f")},
+                                                                          alignment="left")},
                      alt="Manchetes relevantes dos últimos 3 dias, com tema e tom do Jev")
     else:
         st.caption("Manchetes indisponíveis agora.")
@@ -200,14 +209,11 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
         tabela["Último fato relevante"] = tabela["Ticker"].map(ultimo_fato(fatos)).fillna("")
     tabela = filtrar(tabela, "acoes", so_para_filtro=["Tipo"])     # the type is a filter, not a column (2026-11-03)
     st.caption(f"{len(tabela)} papéis na tabela.")
-    st.dataframe(tabela, width="stretch", hide_index=True, height=420,
-                 column_config={"Preço (R$)": st.column_config.NumberColumn(format="R$ %.2f"),
-                                "Fechamento de": st.column_config.DateColumn(format="DD/MM/YYYY"),
-                                "P/L": st.column_config.NumberColumn(format="%.1f"),
-                                **{coluna: st.column_config.NumberColumn(format="%.2f", help=AJUDA_DAS_MEDIDAS.get(coluna))
-                                   for coluna in COLUNAS_COM_DUAS_CASAS},
-                                **{coluna: st.column_config.NumberColumn(format="percent", help=AJUDA_DAS_MEDIDAS.get(coluna))
-                                   for coluna in PERCENTUAIS}},
+    estilo, config = formato.br(tabela, {"Preço (R$)": formato.decimal, "P/L": formato.uma_casa,
+                                         **dict.fromkeys(COLUNAS_COM_DUAS_CASAS, formato.decimal),
+                                         **dict.fromkeys(PERCENTUAIS, formato.percentual)}, ajuda=AJUDA_DAS_MEDIDAS)
+    st.dataframe(estilo, width="stretch", hide_index=True, height=420,
+                 column_config={**config, "Fechamento de": st.column_config.DateColumn(format="DD/MM/YYYY")},
                  alt="Todas as ações da lista: preço, risco, múltiplos do balanço e o último fato relevante")
     st.caption("Preços com dividendos reinvestidos (B3 e CVM), até o último pregão. Retorno, volatilidade e beta: 12 "
                "meses; CAGR, Sharpe, Sortino, Calmar, CVaR e alfa: 3 anos, contra a Selic e o BOVA11. Balanço: último "
@@ -218,19 +224,18 @@ def _acoes(precos: pd.DataFrame, info: dict, fundamentos: pd.DataFrame | None, f
         with st.expander(f"Fatos relevantes e comunicados ao mercado dos últimos 90 dias ({len(fatos)})"):
             st.caption("A CVM publica estes dados uma vez por semana (aos domingos): os fatos dos últimos dias entram "
                        "na publicação seguinte. Tom e chances: leitura de cada documento pelo modelo Jev.")
-            st.dataframe(filtrar(fatos_na_tela(fatos), "fatos"), width="stretch", hide_index=True, height=360,
-                         column_config={"ticker": "Ticker", "empresa": "Empresa", "categoria": "Categoria",
+            chances = {"p_ruim": "Chance de ruim", "p_bom": "Chance de bom", "p_forte": "Chance de impacto forte"}
+            estilo, config = formato.br(filtrar(fatos_na_tela(fatos).rename(columns=chances), "fatos"),
+                                        dict.fromkeys(chances.values(), formato.percentual),
+                                        ajuda={"Chance de ruim": AJUDA_P_RUIM, "Chance de bom": AJUDA_P_BOM,
+                                               "Chance de impacto forte": AJUDA_P_FORTE})
+            st.dataframe(estilo, width="stretch", hide_index=True, height=360,
+                         column_config={**config, "ticker": "Ticker", "empresa": "Empresa", "categoria": "Categoria",
                                         "assunto": "Assunto", "data": st.column_config.DateColumn(
                                             "Entregue em", format="DD/MM/YYYY"),
                                         "link": st.column_config.LinkColumn("Documento", display_text="CVM (link)"),
                                         "tom_do_fato": st.column_config.TextColumn("Tom do fato",
-                                                                                   help=AJUDA_DO_TOM_DO_FATO),
-                                        "p_ruim": st.column_config.NumberColumn("Chance de ruim", format="percent",
-                                                                                help=AJUDA_P_RUIM),
-                                        "p_bom": st.column_config.NumberColumn("Chance de bom", format="percent",
-                                                                               help=AJUDA_P_BOM),
-                                        "p_forte": st.column_config.NumberColumn("Chance de impacto forte",
-                                                                                 format="percent", help=AJUDA_P_FORTE)},
+                                                                                   help=AJUDA_DO_TOM_DO_FATO)},
                          alt="Fatos relevantes e comunicados ao mercado da CVM, mais novos primeiro")
 
 

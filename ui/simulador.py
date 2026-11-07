@@ -10,7 +10,7 @@ import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
 from core.top5 import CARTEIRA as TOP5, INICIO as INICIO_TOP5
-from ui import graficos
+from ui import formato, graficos
 from ui.filtros import filtrar
 
 CARTEIRA_PRINCIPAL = "Composto"
@@ -80,7 +80,7 @@ def carteiras_com_posicoes(carteiras) -> list[str]:
 def secao(painel: Painel | None) -> None:
     st.markdown("## Simulador")
     if painel is None:
-        st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
+        st.caption(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL_ACOES, 0)} em ações em cada carteira "
                 f"(Composite, DeepSeek, Controle e {TOP5}; a Conservadora corre em silêncio como régua). "
                 + SOBRE_AS_CARTEIRAS)
         return
@@ -107,7 +107,8 @@ def secao(painel: Painel | None) -> None:
         tabela = painel.posicoes[carteira]
         st.markdown(f"**Posições: {carteira}**")
         visivel = filtrar(tabela.rename_axis("Ativo"), f"posicoes_{carteira}")
-        st.dataframe(graficos.estilo_br(visivel, REAIS_DAS_POSICOES, PERCENTUAIS_DAS_POSICOES), width="stretch",
-                     column_config=COLUNAS_DAS_POSICOES,
+        estilo, config = formato.br(visivel, {**dict.fromkeys(REAIS_DAS_POSICOES, formato.decimal),
+                                              **dict.fromkeys(PERCENTUAIS_DAS_POSICOES, formato.percentual)})
+        st.dataframe(estilo, width="stretch", column_config={**config, **COLUNAS_DAS_POSICOES},
                      alt=f"Ações, caixa e reserva de opções da carteira {carteira} no último fechamento")
     st.caption(f"Último fechamento: {pd.Timestamp(curvas.index[-1]):%d/%m/%Y}.")

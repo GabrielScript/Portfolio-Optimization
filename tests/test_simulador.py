@@ -317,7 +317,7 @@ def test_before_the_first_buy_the_screen_says_when_it_starts():
     from streamlit.testing.v1 import AppTest
     tela = AppTest.from_function(_tela_vazia, default_timeout=TIMEOUT_S).run()
     assert not tela.exception
-    assert "03/11/2026" in tela.info[0].value
+    assert any("03/11/2026" in nota.value for nota in tela.caption)    # prose, not a blue box
     assert not tela.dataframe
 
 

@@ -11,11 +11,10 @@ import streamlit as st
 from core.sentinela import conta
 from core.sentinela.tela import PainelSentinela
 from core.simulador import quedas, retornos_recentes
-from ui import graficos
+from ui import formato, graficos
 from ui.filtros import filtrar
 
 TITULO = "## Sentinela (agente DeepSeek, conta fictícia)"
-PERCENTUAL = st.column_config.NumberColumn(format="percent")
 REGRA = ("A cada hora, das 8h às 19h nos pregões, o código lê as fontes oficiais (CVM, inclusive os documentos do dia, "
          "preços, volume e aluguel de ações da B3, BCB, IBGE e Tesouro). Só quando uma ação da Composite tem item "
          "novo o DeepSeek lê o pacote dela em esforço baixo e diz se algo a compromete gravemente; cada citação é "
@@ -31,16 +30,24 @@ def _reais(valor: float) -> str:
     return "R$ " + f"{valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 
+def dolares(valor: float) -> str:
+    return "US$ " + formato.decimal(valor)
+
+
+def descartadas_em_texto(fracao: float | None) -> str:
+    return formato.percentual(fracao, casas=1)
+
+
 def secao(painel: PainelSentinela | None) -> None:
     st.markdown(TITULO)
     if painel is None:
-        st.info(f"Ainda não rodou. {REGRA}", title="Sentinela")
+        st.caption(f"Ainda não rodou. {REGRA}")
         return
     st.caption(f"{REGRA} {LEITURA}")
     colunas = st.columns(3)
     colunas[0].metric("Chamadas ao DeepSeek", f"{painel.chamadas}", help="Varreduras e decisões desde o início")
-    colunas[1].metric("Custo dos modelos", f"US$ {painel.custo_usd:.4f}".replace(".", ","))
-    descartadas = "-" if painel.descartadas is None else f"{painel.descartadas:.1%}".replace(".", ",")
+    colunas[1].metric("Custo dos modelos", dolares(painel.custo_usd))
+    descartadas = descartadas_em_texto(painel.descartadas)
     colunas[2].metric("Respostas descartadas na checagem", descartadas, help="Meta abaixo de 5%; acima de 10% o agente para")
     if painel.curvas is not None:
         curvas = painel.curvas
@@ -68,8 +75,8 @@ def secao(painel: PainelSentinela | None) -> None:
     if painel.acoes.empty:
         st.caption("Nenhuma ordem até agora.")
     else:
-        st.dataframe(filtrar(painel.acoes, "ordens_sentinela"), width="stretch", hide_index=True,
-                     column_config={"Confiança": PERCENTUAL},
+        estilo, config = formato.br(filtrar(painel.acoes, "ordens_sentinela"), {"Confiança": formato.percentual})
+        st.dataframe(estilo, width="stretch", hide_index=True, column_config=config,
                      alt="Cada decisão de vender ou reduzir, com a confiança e se foi aceita, recusada ou executada")
     autonomia = painel.autonomia
     if autonomia.n:

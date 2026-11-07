@@ -459,7 +459,7 @@ def test_the_market_panel_shows_the_central_bank_indicators_the_risk_measures_an
     assert inadimplencia.value == "4,98%" and inadimplencia.help == macro_bcb.EXPLICACOES[macro_bcb.INADIMPLENCIA]
     assert any("Ata da 281ª reunião do Copom" in m.value for m in at.markdown)
     tabela = [df.value for df in at.dataframe if {"Retorno 12m", "Sharpe"} <= set(df.value.columns)][0]
-    assert tabela.set_index("Ticker").loc["PETR4", ["Sharpe", "t do alfa"]].tolist() == [0.8, 2.3]
+    assert tabela.set_index("Ticker").loc["PETR4", ["Sharpe", "t do alfa"]].tolist() == ["0,80", "2,30"]
     na_tela = [df.value for df in at.dataframe if "tom_do_fato" in df.value.columns][0]
     assert na_tela["tom_do_fato"].tolist() == ["ruim", painel.SEM_NOTA]
     assert not [c for c in at.caption if "lago" in c.value.lower()]
@@ -710,7 +710,7 @@ def test_the_options_account_says_when_it_starts_before_its_first_cycle(monkeypa
     at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
     at.run()
     assert not at.exception
-    assert any("06/11/2026" in info.value for info in at.info)
+    assert any("06/11/2026" in nota.value for nota in at.caption)    # prose, not a blue box
 
 
 def test_every_table_has_its_filters(monkeypatch):
@@ -795,7 +795,7 @@ def test_the_sentinela_section_follows_the_options_account_and_says_when_it_has_
     titulos = [m.value for m in at.markdown]
     secao = "## Sentinela (agente DeepSeek, conta fictícia)"
     assert titulos.index("## Conta de opções (fictícia)") < titulos.index(secao)
-    assert any("Ainda não rodou" in aviso.value for aviso in at.info)
+    assert any("Ainda não rodou" in nota.value for nota in at.caption)
 
 
 # ---------------------------------------------------------------- appearance (the user's design request, 2026-11-06)

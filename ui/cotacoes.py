@@ -11,7 +11,7 @@ from __future__ import annotations
 import pandas as pd
 import streamlit as st
 
-from ui import aparencia, graficos
+from ui import aparencia, formato
 from ui.filtros import filtrar
 
 TITULO = "## Cotações de agora: as ações da Composite"
@@ -52,9 +52,11 @@ def secao(tickers: tuple[str, ...], fechamentos: pd.DataFrame, carregar, descart
     tabela = tabela_de_cotacoes(cotacoes, janela, info)
     if faixa is not None and (band := aparencia.fita(tabela, nativo)):
         faixa.html(band)
-    st.dataframe(graficos.estilo_br(filtrar(tabela, "cotacoes"), ["Cotação (R$)", "Fechamento anterior (R$)"],
-                                    ["Variação no dia"]), width="stretch", hide_index=True,
-                 column_config={"Horário": st.column_config.DatetimeColumn(format="DD/MM HH:mm")},
+    estilo, config = formato.br(filtrar(tabela, "cotacoes"), {"Cotação (R$)": formato.decimal,
+                                                              "Fechamento anterior (R$)": formato.decimal,
+                                                              "Variação no dia": formato.percentual})
+    st.dataframe(estilo, width="stretch", hide_index=True,
+                 column_config={**config, "Horário": st.column_config.DatetimeColumn(format="DD/MM HH:mm")},
                  alt="Cotação de agora, fechamento anterior e variação no dia de cada ação da Composite")
     st.caption("Último negócio na B3 com atraso de cerca de 15 minutos; depois do pregão, o fechamento oficial. "
                "Variação contra o fechamento do pregão anterior.")

@@ -16,7 +16,7 @@ from core.periodos import (EXCESSO_DO_JURO, juro_por_ano, medidas_por_ano, medid
                            rotulo_do_ano)
 from visualizations import grafico_curvas_capital
 from ui.filtros import filtrar
-from ui.formato import com_traco
+from ui import formato
 
 TITULO_SEM_VIES = "## Backtest sem viés de sobrevivência da Composite (BOVA11 como régua)"
 SESSOES_DO_SEMAFORO = 21           # the DeepSeek pack reads the CVM filings of the last 21 sessions
@@ -88,9 +88,8 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
         **{f"{medida} {nome}": medidas[(nome, coluna)].astype(float).to_numpy()
            for medida, coluna in (("Retorno a.a.", "CAGR"), ("Vol", "Vol anual"), ("Queda máx.", "MDD"))
            for nome in nomes}})
-    st.dataframe(filtrar(tabela, "periodos"), width="stretch", hide_index=True,
-                 column_config={coluna: st.column_config.NumberColumn(format="percent")
-                                for coluna in tabela.columns[3:]},
+    estilo, config = formato.br(filtrar(tabela, "periodos"), dict.fromkeys(tabela.columns[3:], formato.percentual))
+    st.dataframe(estilo, width="stretch", hide_index=True, column_config=config,
                  alt="Conservadora, Composto, BOVA11 e Selic no período inteiro e nos últimos 5 e 3 anos")
 
     curvas = parte[list(BRACOS)].assign(**{SELIC: na_selic}).join(parte[list(CRIPTO)])[list(CURVAS_DA_TELA)]
@@ -102,8 +101,10 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
                             **{nome: anos[nome].to_numpy() for nome in CURVAS_DA_TELA}})
     filtrado = filtrar(por_ano, "por_ano")
     # "—" for the years before a fund listed (the bitcoin ETFs), not Streamlit's "None" (the user, 2026-11-04)
-    tabela_do_ano, config_do_ano = com_traco(filtrado, por_ano.columns[1:], porcento=medida not in SEM_PORCENTO)
-    st.dataframe(tabela_do_ano, width="stretch", hide_index=True, column_config=config_do_ano,
+    escrever = formato.decimal if medida in SEM_PORCENTO else formato.percentual
+    tabela_do_ano, config_do_ano = formato.br(filtrado, dict.fromkeys(por_ano.columns[1:], escrever))
+    st.dataframe(tabela_do_ano, width="stretch", hide_index=True,
+                 column_config={**config_do_ano, "Ano": formato.COLUNA_DO_ANO},
                  alt=f"{medida} de cada ano civil desde {PRIMEIRO_ANO}: {', '.join(por_ano.columns[1:])}")
 
     inicio_cripto = curvas[list(CRIPTO)].dropna().index[0]
@@ -115,11 +116,8 @@ def resultados_da_conservadora(quadro: pd.DataFrame | None, juros: pd.DataFrame 
         "Estratégia").reset_index()
     numericas = [coluna for coluna in resumo.columns if coluna not in ("Estratégia", "Desde", "Anos acima do BOVA11")]
     filtrado = filtrar(resumo.astype({coluna: float for coluna in numericas}), "resumo")
-    config: dict = {}
-    for porcento in (True, False):                              # BOVA11 against itself has no alpha: "—"
-        filtrado, parte_da_config = com_traco(
-            filtrado, [c for c in numericas if (c in SEM_PORCENTO) != porcento], porcento=porcento)
-        config.update(parte_da_config)
+    filtrado, config = formato.br(filtrado, {c: formato.decimal if c in SEM_PORCENTO else formato.percentual
+                                             for c in numericas})       # BOVA11 against itself has no alpha: "—"
     st.dataframe(filtrado, width="stretch", hide_index=True, column_config=config,
                  alt="Retorno, risco e alfa de cada estratégia no período")
     inteiro = medidas.iloc[0]

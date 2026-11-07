@@ -10,11 +10,11 @@ import streamlit as st
 
 from core.simulador import quedas, retornos_recentes
 from core.simulador_opcoes import CAPITAL, INICIO, ORCAMENTO, PainelOpcoes
-from ui import graficos
+from ui import formato, graficos
 from ui.filtros import filtrar
 
 TITULO = "## Conta de opções (fictícia)"
-REAIS = st.column_config.NumberColumn(format="R$ %.2f")
+QUANTIDADE = {"Qtd.": st.column_config.NumberColumn(format="%d")}
 REGRA = (f"{ORCAMENTO:.0%} da conta por mês, no primeiro pregão: metade numa put perto de 0,95 × o preço da ação mais "
          "esticada perto da máxima de 1 ano (sua ideia A), metade numa call perto de 1,05 × o preço da vencedora mais "
          "volátil (sua ideia B), cerca de 1 mês até o vencimento, compradas pelo preço de venda em lotes de 100 e "
@@ -29,7 +29,7 @@ def _reais(valor: float) -> str:
 def secao(painel: PainelOpcoes | None) -> None:
     st.markdown(TITULO)
     if painel is None:
-        st.info(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL)} fictícios só para opções, separados "
+        st.caption(f"Começa no fechamento de {INICIO:%d/%m/%Y}: {_reais(CAPITAL)} fictícios só para opções, separados "
                 f"das contas de ações. {REGRA}")
         return
     st.caption(f"Conta fictícia de {_reais(CAPITAL)} desde {INICIO:%d/%m/%Y}. {REGRA} Comprar opções fora do dinheiro "
@@ -51,14 +51,14 @@ def secao(painel: PainelOpcoes | None) -> None:
     if painel.abertas.empty:
         st.caption("Nenhuma opção em aberto: tudo na Selic até o próximo ciclo.")
     else:
-        st.dataframe(filtrar(painel.abertas, "opcoes_abertas"), width="stretch", hide_index=True,
-                     column_config={"Prêmio (R$)": REAIS, "Valor (R$)": REAIS, "Strike": REAIS,
-                                    "Qtd.": st.column_config.NumberColumn(format="%d")},
+        estilo, config = formato.br(filtrar(painel.abertas, "opcoes_abertas"),
+                                    dict.fromkeys(("Prêmio (R$)", "Valor (R$)", "Strike"), formato.decimal))
+        st.dataframe(estilo, width="stretch", hide_index=True, column_config={**config, **QUANTIDADE},
                      alt="Opções compradas que ainda não venceram, com o valor na última marcação")
     st.markdown("**Ordens de cada ciclo**")
     ordens = painel.ordens.assign(Data=pd.to_datetime(painel.ordens["Data"]).dt.strftime("%d/%m/%Y"))
-    st.dataframe(filtrar(ordens, "opcoes_ordens"), width="stretch", hide_index=True,
-                 column_config={"Prêmio (R$)": REAIS, "Custo (R$)": REAIS, "Strike": REAIS,
-                                "Qtd.": st.column_config.NumberColumn(format="%d")},
+    estilo, config = formato.br(filtrar(ordens, "opcoes_ordens"),
+                                dict.fromkeys(("Prêmio (R$)", "Custo (R$)", "Strike"), formato.decimal))
+    st.dataframe(estilo, width="stretch", hide_index=True, column_config={**config, **QUANTIDADE},
                  alt="Cada ciclo: a opção comprada por ideia, ou o motivo de não ter comprado")
     st.caption(f"Último fechamento: {pd.Timestamp(curvas.index[-1]):%d/%m/%Y}.")

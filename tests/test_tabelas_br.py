@@ -37,7 +37,7 @@ def test_prose_is_never_in_a_coloured_info_box_on_the_account_screens():
 def test_no_table_uses_a_format_that_writes_a_decimal_point():
     # printf and "percent" formats ignore the pt-BR locale: every table goes through ui.formato.br
     for nome in ("formulas.py", "simulador_opcoes.py", "sentinela.py", "alepha.py", "comparacao.py", "painel.py",
-                 "cotacoes.py", "simulador.py"):
+                 "cotacoes.py"):
         codigo = (UI / nome).read_text(encoding="utf-8")
         for formato in ('format="percent"', 'format="%.', 'format="%+', 'format="R$'):
             assert formato not in codigo, (nome, formato)

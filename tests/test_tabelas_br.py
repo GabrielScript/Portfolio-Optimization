@@ -47,3 +47,11 @@ def test_no_table_uses_a_format_that_writes_a_decimal_point():
 def test_both_per_year_tables_use_the_wide_year_column():
     for nome in ("alepha.py", "comparacao.py"):
         assert "COLUNA_DO_ANO" in (UI / nome).read_text(encoding="utf-8"), nome
+
+
+def test_a_headline_stored_as_its_url_reads_as_words_from_the_url():
+    # the final live review: rows showed "https://www.infomoney.com.br/economia/ipca-..." as the headline
+    manchetes = pd.DataFrame({"titulo": ["https://www.infomoney.com.br/economia/ipca-sobe-0-5-em-outubro/"],
+                              "fonte": ["InfoMoney"], "link": ["https://www.infomoney.com.br/economia/ipca-sobe-0-5-em-outubro/"]})
+    titulo = painel.manchetes_com_link(manchetes)["titulo"].iloc[0]
+    assert titulo.endswith("#manchete=Ipca sobe 0 5 em outubro · InfoMoney")

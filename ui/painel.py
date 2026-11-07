@@ -75,6 +75,13 @@ MARCA_DA_MANCHETE = "#manchete="
 TEXTO_DA_MANCHETE = MARCA_DA_MANCHETE + "(.*)$"
 
 
+def titulo_do_endereco(endereco: str) -> str:
+    """Readable words from a URL's last path segment: ".../ipca-sobe-em-outubro/" -> "Ipca sobe em outubro"."""
+    trecho = endereco.split("?")[0].rstrip("/").rsplit("/", 1)[-1].rsplit(".", 1)[0]
+    palavras = trecho.replace("-", " ").replace("_", " ").strip()
+    return palavras[:1].upper() + palavras[1:] if palavras else "(sem título)"
+
+
 def manchetes_com_link(manchetes: pd.DataFrame) -> pd.DataFrame:
     """The headlines with ``titulo`` as "link#manchete=title" and no ``link`` column; a headline without a link keeps
     its bare title."""
@@ -84,6 +91,8 @@ def manchetes_com_link(manchetes: pd.DataFrame) -> pd.DataFrame:
     vazio = manchetes["titulo"].fillna("").astype(str).str.strip() == ""
     fonte = manchetes["fonte"].fillna("").astype(str) if "fonte" in manchetes.columns else ""
     titulo = manchetes["titulo"].astype(str).where(~vazio, "(sem título) · " + fonte)   # the URL showed otherwise
+    url = titulo.str.startswith("http")            # some feeds store the URL as the title (the final live review)
+    titulo = titulo.where(~url, titulo.map(titulo_do_endereco) + " · " + fonte)
     titulos = manchetes["link"].astype(str) + MARCA_DA_MANCHETE + titulo
     return manchetes.assign(titulo=titulos.where(com_link, manchetes["titulo"])).drop(columns="link")
 

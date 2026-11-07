@@ -35,13 +35,13 @@ def test_return_tables_show_a_dash_for_a_window_the_account_has_not_lived():
     assert "None" not in texto.to_string()
 
 
-def test_tables_show_fixed_brazilian_decimals_and_keep_numbers_underneath():
-    # the second finish review: "localized" dropped trailing zeros ("5,2" beside "5,19") and the quotes kept US decimals
-    tabela = pd.DataFrame({"Valor (R$)": [673.28, 728.0, None], "Peso": [0.0669, 0.0, 0.07], "Qtd.": [128, 16, 3]})
-    estilo = graficos.estilo_br(tabela, reais=["Valor (R$)"], percentuais=["Peso"])
-    html = estilo.to_html()
-    assert "673,28" in html and "728,00" in html and "6,69%" in html and "0,00%" in html and "\u2014" in html
-    assert estilo.data["Valor (R$)"].iloc[0] == 673.28                    # sorting still sees the number
+def test_the_news_tone_chart_reads_in_brazilian_numbers_and_dates():
+    # the whole-page review: st.line_chart wrote "-0.14" and "Fri 23 ... November"
+    dias = pd.date_range("2026-11-02", periods=3)
+    spec = graficos.tom_por_dia(pd.Series([-0.14, 0.45, 0.1], index=dias)).to_dict()
+    assert spec["config"]["locale"]["number"]["decimal"] == ","
+    assert spec["encoding"]["x"]["axis"]["format"] == "%d/%m"
+    assert spec["encoding"]["y"]["axis"]["format"] == "+.2f" and "Tom" in spec["encoding"]["y"]["title"]
 
 
 def test_sector_weights_read_in_percent_with_whole_sector_names():

@@ -113,6 +113,8 @@ def css(nome: str, tipo_nativo: str) -> str:
     painel = _rgba(p.painel, p.alfa)
     paradas = ", ".join(f"{cor} {int(i * 100 / (len(p.fundo) - 1))}%" for i, cor in enumerate(p.fundo))
     sombra = "rgba(2,6,23,0.40)" if tipo(tipo_nativo) == "dark" else "rgba(14,26,58,0.08)"
+    # the table canvas is painted in the native ground: blending it with the panel gives the table the panel's tone
+    mistura = "lighten" if tipo(tipo_nativo) == "dark" else "darken"
     borda_acesa = _rgba(p.texto_secundario, 0.42)          # the lit silver edge of a panel: a hairline, never a stripe
     return f"""
 .stApp {{ background: linear-gradient(160deg, {paradas}) fixed; }}
@@ -155,6 +157,7 @@ def css(nome: str, tipo_nativo: str) -> str:
 [data-testid="stPlotlyChart"], [data-testid="stMetric"] {{ padding: 10px 12px; }}
 [data-testid="stVegaLiteChart"] svg, [data-testid="stArrowVegaLiteChart"] svg {{ background-color: transparent !important; }}
 [data-testid="stDataFrame"] {{ border: 1px solid {p.fio}; border-radius: 12px; overflow: hidden; }}
+[data-testid="stDataFrame"] canvas {{ mix-blend-mode: {mistura}; }}
 [data-testid="stCaptionContainer"] {{ color: {p.texto_secundario}; }}
 ::selection {{ background: {p.selecao}; }}
 html, .stApp, [data-testid="stMain"] {{ scrollbar-color: {p.fio} transparent; }}

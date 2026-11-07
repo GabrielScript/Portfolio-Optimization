@@ -207,3 +207,13 @@ def test_the_eagle_keeps_clear_space_above_the_wordmark():
     # each image sits in its own element container: the eagle is the container's first child
     assert '.st-key-aq-nome > [data-testid="stElementContainer"]:first-child {{ margin-bottom: 14px; }}'.replace(
         "{{", "{").replace("}}", "}") in css
+
+
+@pytest.mark.parametrize(("tipo", "modo"), [("dark", "lighten"), ("light", "darken")])
+def test_tables_take_the_panel_tone_through_blending_their_canvas(tipo, modo):
+    # dataframes are drawn on a canvas in the native ground color, which CSS cannot repaint; blending the canvas with
+    # the panel behind it (lighten on night grounds, darken on platinum) gives the table the panel's tone while the
+    # native text, lighter (dark) or darker (light) than the ground, stays as it is
+    css = aparencia.css(aparencia.ROYAL, tipo)
+    assert f'[data-testid="stDataFrame"] canvas {{ mix-blend-mode: {modo}; }}' in css
+    assert aparencia.css(aparencia.PADRAO, tipo) == ""                 # Streamlit's default keeps native tables

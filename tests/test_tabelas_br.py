@@ -55,3 +55,13 @@ def test_a_headline_stored_as_its_url_reads_as_words_from_the_url():
                               "fonte": ["InfoMoney"], "link": ["https://www.infomoney.com.br/economia/ipca-sobe-0-5-em-outubro/"]})
     titulo = painel.manchetes_com_link(manchetes)["titulo"].iloc[0]
     assert titulo.endswith("#manchete=Ipca sobe 0 5 em outubro · InfoMoney")
+
+
+def test_a_percent_sign_in_a_headline_does_not_break_its_link():
+    # live: "XP reduz projeção do PIB a 0,3% em 2027" showed the raw URL (a bare % is malformed in a link)
+    manchetes = pd.DataFrame({"titulo": ["XP reduz o PIB a 0,3% em 2027", "Selic a 13,75%"], "fonte": ["a", "b"],
+                              "link": ["https://a.com/1", "https://a.com/2"]})
+    titulos = painel.manchetes_com_link(manchetes)["titulo"].tolist()
+    assert all("%" not in t for t in titulos)
+    assert titulos[0].endswith("#manchete=XP reduz o PIB a 0,3 por cento em 2027")
+    assert titulos[1].endswith("#manchete=Selic a 13,75 por cento")

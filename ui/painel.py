@@ -93,6 +93,7 @@ def manchetes_com_link(manchetes: pd.DataFrame) -> pd.DataFrame:
     titulo = manchetes["titulo"].astype(str).where(~vazio, "(sem título) · " + fonte)   # the URL showed otherwise
     url = titulo.str.startswith("http")            # some feeds store the URL as the title (the final live review)
     titulo = titulo.where(~url, titulo.map(titulo_do_endereco) + " · " + fonte)
+    titulo = titulo.str.replace("%", " por cento")      # a bare % makes the link malformed: it showed the URL
     titulos = manchetes["link"].astype(str) + MARCA_DA_MANCHETE + titulo
     return manchetes.assign(titulo=titulos.where(com_link, manchetes["titulo"])).drop(columns="link")
 

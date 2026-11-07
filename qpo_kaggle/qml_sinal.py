@@ -6,6 +6,7 @@ Runs in ``.venv-qpo``: the app imports neither torch nor PennyLane, so inputs an
 
 from __future__ import annotations
 
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
@@ -22,6 +23,8 @@ N_ATRIBUTOS = 6
 CAMADAS = 3
 OCULTOS = 7
 GRADE_DE_PENALIDADES = np.logspace(-6.0, 4.0, 41)      # times the mean squared singular value
+TENTATIVAS_DA_TROCA = 10
+PAUSA_DA_TROCA = 0.5                                    # seconds, times the attempt
 TETO_DE_GRAUS = 0.9                                     # effective degrees of freedom / rows
 
 
@@ -138,10 +141,19 @@ def _ler_estado(arquivo: Path) -> dict | None:
     return torch.load(arquivo, map_location="cpu", weights_only=True) if arquivo.exists() else None
 
 
-def _gravar_estado(arquivo: Path, estado: dict) -> None:
+def _gravar_estado(arquivo: Path, estado: dict, tentativas: int = TENTATIVAS_DA_TROCA) -> None:
+    """Write then swap, so a stopped run never leaves half a state. Windows can deny the swap for a moment while a
+    scanner holds the new file (seen 2026-11-07 after 34 months), so the swap is retried before giving up."""
     temporario = arquivo.with_suffix(".tmp")
     torch.save(estado, temporario)
-    temporario.replace(arquivo)
+    for tentativa in range(tentativas):
+        try:
+            temporario.replace(arquivo)
+            return
+        except PermissionError:
+            if tentativa == tentativas - 1:
+                raise
+            time.sleep(PAUSA_DA_TROCA * (tentativa + 1))
 
 
 def prever_torch(classe: Callable[..., nn.Module], pacote: Pacote, semente: int, treino: Treino, pasta: Path) -> np.ndarray:

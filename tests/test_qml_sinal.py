@@ -137,3 +137,25 @@ def test_a_stopped_run_resumes_to_the_same_forecast(tmp_path):
     prever_torch(Mlp, parcial, 1, CURTA, tmp_path / "retomada")
     retomada = prever_torch(Mlp, pacote, 1, CURTA, tmp_path / "retomada")
     assert retomada[pacote.mes >= 3] == pytest.approx(inteira[pacote.mes >= 3])
+
+
+def test_the_state_file_survives_a_windows_lock_on_the_swap(tmp_path, monkeypatch):
+    # 2026-11-07: Windows denied the .tmp -> .pt swap after 34 months (a scanner holding the new file); the run died
+    from pathlib import Path
+
+    from qpo_kaggle import qml_sinal
+
+    real = Path.replace
+    falhas = {"restam": 2}
+
+    def trava(self, alvo):
+        if falhas["restam"] > 0:
+            falhas["restam"] -= 1
+            raise PermissionError(5, "Acesso negado")
+        return real(self, alvo)
+
+    monkeypatch.setattr(Path, "replace", trava)
+    monkeypatch.setattr(qml_sinal.time, "sleep", lambda _: None)
+    arquivo = tmp_path / "estado_0.pt"
+    qml_sinal._gravar_estado(arquivo, {"feitos": 3})
+    assert torch.load(arquivo, weights_only=True)["feitos"] == 3 and falhas["restam"] == 0

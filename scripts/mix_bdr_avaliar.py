@@ -25,6 +25,8 @@ from core.backtest import Congelamento, ResultadoBacktest, walk_forward_dinamico
 from core.cdi_lago import daily_cdi  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
 from core.metrics import cagr, drawdown  # noqa: E402
+from dataclasses import replace  # noqa: E402
+from core.risco import LIMITES  # noqa: E402
 from core.mix_bdr import NOMES, curva_mista, escolher_eua  # noqa: E402
 from core.robustez import psr_da_diferenca  # noqa: E402
 from core.sinais import estrategia_conservadora  # noqa: E402
@@ -96,7 +98,11 @@ def main() -> int:
         refs = referencias(dados.precos.loc[:LAST_SESSION].iloc[fase:], CFG_BT)
         mistas, picks_de_hoje, poucos = {}, {}, {}
         for k in KS:
-            br = rodar(estrategia_por_nota(nota, dados.setores, nomes=NOMES - k), f"BR-{NOMES - k}")
+            escala = NOMES / (NOMES - k)      # the whole portfolio's caps on the sleeve's share (spec addendum)
+            limites = replace(LIMITES, teto_setor=LIMITES.teto_setor * escala,
+                              peso_maximo_acao=LIMITES.peso_maximo_acao * escala,
+                              peso_maximo_emissor=LIMITES.peso_maximo_emissor * escala)
+            br = rodar(estrategia_por_nota(nota, dados.setores, nomes=NOMES - k, limites=limites), f"BR-{NOMES - k}")
             datas = [d for d in br.pesos_alvo.index if d >= INICIO_DA_LEITURA]
             escolhas = {d: escolher_eua(precos_eua, volume_eua, d, k) for d in datas}
             poucos[k] = sum(len(v) < k for v in escolhas.values())

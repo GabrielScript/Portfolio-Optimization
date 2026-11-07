@@ -262,8 +262,13 @@ shown with Markdown escaped.
   which acts only at confidence >= 0.70 and only in the fictitious account "Composite + Sentinela" (R$ 10,000 from the
   06/11/2026 close), beside the plain Composite. Liquid's d1.1 and d1-ultra judge each company item in shadow. Caps:
   40 scans and 6 decisions a day. Every call is logged with tokens and cost; Brier and log scores are derived from the
-  log; emails go out for each `grave` and a 19h digest. The one reading (first session on or after 2027-01-08) decides
-  whether it keeps its autonomy (rule in `core.sentinela.pontuacao.autonomia`).
+  log; emails go out for each `grave` and a 19h digest, only when there is news (no "nothing new" emails). The one
+  reading (first session on or after 2027-01-08) decides whether it keeps its autonomy (rule in
+  `core.sentinela.pontuacao.autonomia`).
+- **Since 07/11 (spec amendments 7-8, DECISOES 303-304):** each new Fato Relevante of the Composite's names is
+  downloaded once from RAD and its PDF text (first 3,000 characters, `pypdf`) follows the subject line, so the scan
+  sees what changed, not only the title; Comunicados stay subject-only. An answer the code checks discard (or one not
+  JSON or cut) is asked again once with the reason; the rules do not change and network failures are not retried.
 - **Run it:** `scripts/sentinela.py` (`--semear` before the first live run, `--forcar --sem-email --pasta DIR` for a
   test). Task "alepha sentinela" through `scripts/com_python_base.py` (base Python + the venv's packages).
 - **Also in this round:** the Conservadora left the main line (charts and headline; it stays in the tables); the 28
@@ -874,3 +879,17 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
 - The CI's failure e-mails of 06/11 came from `openpyxl` missing from `requirements.txt`. That is fixed, and the
   actions no longer run on Node 20. B3 hours checked 06/11: continuous trading in stocks ends at 17:55, and their
   closing call runs 17:55-18:00.
+
+## Session notes (2026-11-07)
+
+- Research, none adopted (DECISOES 295-300; DSR union N 102): eight papers on new architectures and quantum portfolios
+  (`docs/novas-arquiteturas-2026-11-07.md`; KAN the best fit, quantum closed again); KAN no edge; periphery tilt fails;
+  fixed BR/BDR mixes (15 names with 1 to 5 US BDRs) beat the Composite in 2021-2026 but fail the gate; HERC with CDaR
+  (Raffinot 2018, matched to skfolio to 1e-6) alone gives 11-12% a year and on the Composite's 15 names 15-19%,
+  against the Composite's 19-21%: equal weights inside the Composite stay. The four branches are pushed, not merged.
+- New ghost account "12/3" in the simulator from 09/11/2026: the Composite with 12 names plus the 3 US BDRs of highest
+  12-1 momentum, 1/15 each, net of the 15% tax on BDR gains (`core/mista.py`, DECISOES 299).
+- The Sentinela: the 06/11 seeding had marked the week's results filings as seen; a one-off run read them on 07/11
+  (BBSE3, PSSA3 and LEVE3 `atencao`, no `grave`). It now reads each new Fato Relevante's text and asks a discarded
+  answer again once (above). GPT-OSS-120B on Groq was checked on the 60 hand-labelled CVM filings: 67% right against
+  d1.1's 93% and DeepSeek Flash's 82%, with the same latency as d1.1; it replaces nothing (`docs/juizes-2026-11-07.md`).

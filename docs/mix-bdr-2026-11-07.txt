@@ -1,0 +1,68 @@
+Fixed BR/BDR mixes on the B3: the one reading (2026-11-07)
+Pre-registration: docs/superpowers/specs/2026-11-07-mix-bdr-design.md, a7f62f0, addendum 475268f (sleeve limits scaled, before any arm's number).
+Code: core/mix_bdr.py (tests/test_mix_bdr.py), scripts/mix_bdr_avaliar.py. 833 s. Pre-tax; BDR dividends missing (understates the US leg).
+
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; US slice 567b0265c5eb52a3998fa537b112cee885e840dfdfa6a5b3a55c3c076f01f7a7; US names in the lake 32 of 32; DSR N 100
+
+=== Phase 0: 22/01/2021 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD   vol  P[> Composto]  P[> Conservadora]
+BDR-1                             0.764 1.048         0.994  0.994 0.881          2.461 0.260 -0.183 0.181          0.965              0.985
+BDR-2                             0.810 1.018         0.992  0.993 0.866          2.614 0.269 -0.177 0.179          0.931              0.981
+BDR-3                             0.862 0.990         0.991  0.991 0.852          2.753 0.286 -0.190 0.185          0.923              0.977
+BDR-4                             0.808 0.862         0.980  0.981 0.769          3.641 0.273 -0.212 0.184          0.851              0.950
+BDR-5                             0.767 0.767         0.966  0.967 0.695          4.604 0.262 -0.253 0.183          0.786              0.917
+Composto                          0.509 0.731         0.959  0.961 0.665          5.056 0.204 -0.225 0.183            NaN                NaN
+Conservadora (15, pesos iguais)   0.311 0.426         0.845  0.863 0.382         14.916 0.159 -0.213 0.169            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.108 -0.264 0.187            NaN                NaN
+IVVB11                              NaN   NaN           NaN    NaN   NaN            NaN 0.123 -0.307 0.175            NaN                NaN
+rebalances with fewer eligible US names than k: k=1 0, k=2 0, k=3 0, k=4 0, k=5 0
+      BDR-1  BDR-2  BDR-3  BDR-4  BDR-5  Composto  Conservadora (15, pesos iguais)  BOVA11  IVVB11
+2021  21.9%  24.3%  28.7%  30.1%  24.3%     22.2%                            11.8%  -10.9%   29.4%
+2022   4.1%   5.1%   1.9%  -0.9%  -7.1%      4.6%                            26.1%    5.1%  -23.4%
+2023  38.7%  39.7%  38.9%  34.2%  36.1%     33.6%                            22.9%   23.1%   14.5%
+2024  21.8%  33.4%  42.6%  49.3%  54.1%      5.5%                            -7.7%  -10.1%   58.3%
+2025  48.3%  34.9%  31.9%  23.8%  26.9%     44.1%                            31.5%   34.7%    4.0%
+2026  16.5%  17.8%  21.6%  22.7%  21.8%     10.3%                             9.7%   28.0%    3.4%
+BDR-1 US picks at the last rebalance: MUTC34
+BDR-2 US picks at the last rebalance: MUTC34, W1DC34
+BDR-3 US picks at the last rebalance: MUTC34, W1DC34, ITLC34
+BDR-4 US picks at the last rebalance: MUTC34, W1DC34, ITLC34, A1MD34
+BDR-5 US picks at the last rebalance: MUTC34, W1DC34, ITLC34, A1MD34, LILY34
+(phase 0 done in 252 s)
+
+=== Phase 21: 25/02/2021 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD   vol  P[> Composto]  P[> Conservadora]
+BDR-1                             0.772 0.981         0.990  0.991 0.666          2.757 0.265 -0.185 0.182          0.961              0.991
+BDR-2                             0.944 1.108         0.996  0.996 0.769          2.131 0.307 -0.176 0.184          0.979              0.996
+BDR-3                             1.078 1.195         0.998  0.998 0.827          1.851 0.343 -0.190 0.187          0.986              0.998
+BDR-4                             1.030 1.073         0.995  0.995 0.742          2.306 0.329 -0.214 0.186          0.962              0.993
+BDR-5                             1.038 1.007         0.992  0.992 0.687          2.641 0.330 -0.238 0.184          0.941              0.988
+Composto                          0.528 0.682         0.947  0.948 0.388          5.765 0.210 -0.196 0.184            NaN                NaN
+Conservadora (15, pesos iguais)   0.279 0.286         0.751  0.774 0.112         32.986 0.154 -0.184 0.168            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.120 -0.264 0.185            NaN                NaN
+IVVB11                              NaN   NaN           NaN    NaN   NaN            NaN 0.123 -0.307 0.175            NaN                NaN
+rebalances with fewer eligible US names than k: k=1 0, k=2 0, k=3 0, k=4 0, k=5 0
+(phase 21 done in 580 s)
+
+=== Phase 42: 26/03/2021 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD   vol  P[> Composto]  P[> Conservadora]
+BDR-1                             0.658 0.843         0.977  0.977 0.763          3.752 0.241 -0.180 0.183          0.839              0.979
+BDR-2                             0.738 0.879         0.981  0.981 0.788          3.474 0.257 -0.200 0.180          0.849              0.979
+BDR-3                             0.735 0.813         0.972  0.972 0.739          4.083 0.260 -0.197 0.186          0.795              0.963
+BDR-4                             0.605 0.607         0.923  0.923 0.563          7.301 0.229 -0.209 0.184          0.614              0.890
+BDR-5                             0.649 0.610         0.924  0.924 0.566          7.273 0.238 -0.231 0.183          0.646              0.891
+Composto                          0.515 0.701         0.951  0.951 0.649          5.432 0.209 -0.213 0.184            NaN                NaN
+Conservadora (15, pesos iguais)   0.234 0.257         0.727  0.748 0.254         40.862 0.147 -0.178 0.168            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.117 -0.264 0.183            NaN                NaN
+IVVB11                              NaN   NaN           NaN    NaN   NaN            NaN 0.110 -0.307 0.173            NaN                NaN
+rebalances with fewer eligible US names than k: k=1 0, k=2 0, k=3 0, k=4 0, k=5 0
+(phase 42 done in 833 s)
+
+Gate, all >= 0.95 in every phase:
+BDR-1: P[> Composite] [0.965 0.961 0.839], P[> Conservadora] [0.985 0.991 0.979], P[> BOVA11] [0.994 0.99  0.977], DSR [0.881 0.666 0.763]: does not pass
+BDR-2: P[> Composite] [0.931 0.979 0.849], P[> Conservadora] [0.981 0.996 0.979], P[> BOVA11] [0.992 0.996 0.981], DSR [0.866 0.769 0.788]: does not pass
+BDR-3: P[> Composite] [0.923 0.986 0.795], P[> Conservadora] [0.977 0.998 0.963], P[> BOVA11] [0.991 0.998 0.972], DSR [0.852 0.827 0.739]: does not pass
+BDR-4: P[> Composite] [0.851 0.962 0.614], P[> Conservadora] [0.95  0.993 0.89 ], P[> BOVA11] [0.98  0.995 0.923], DSR [0.769 0.742 0.563]: does not pass
+BDR-5: P[> Composite] [0.786 0.941 0.646], P[> Conservadora] [0.917 0.988 0.891], P[> BOVA11] [0.966 0.992 0.924], DSR [0.695 0.687 0.566]: does not pass
+
+Done in 833 s

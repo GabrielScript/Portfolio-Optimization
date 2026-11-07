@@ -1,11 +1,11 @@
-DESCRIPTIVE live rerun of attempt 51's loop to 29/10/2026 (not a reading, not a trial; the gate lines below mean nothing here). Lake exports from b3lake (sha256): {'universe_prices.parquet': '5e6dab335d315f5b9fb67b5e9523ac36e04b476ce2191cc826c92dea1399af67', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': '5c14c757e2ca947023f3c0fac574557fded8b3ca96e6120113e9673afa8652f6', 'dividends.parquet': 'ddb203a598ef2754d9b92a175a468c26b299029f123fc17a0551951ee2785585', 'cdi_daily.parquet': '5c17a8b92f023799a768f34c02013af1e097035fc2d14621176c66ae4f22acb9', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': 'dc8657add995c554731a7cca82a17349cef510d7ab8074bc1e5d09422c6775c3'}
-Files (sha256): {'universe_prices.parquet': '5e6dab335d315f5b9fb67b5e9523ac36e04b476ce2191cc826c92dea1399af67', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': '5c14c757e2ca947023f3c0fac574557fded8b3ca96e6120113e9673afa8652f6', 'dividends.parquet': 'ddb203a598ef2754d9b92a175a468c26b299029f123fc17a0551951ee2785585', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'cdi_daily.parquet': '5c17a8b92f023799a768f34c02013af1e097035fc2d14621176c66ae4f22acb9'}; arm Composto-crescimento; DSR N 53
+DESCRIPTIVE live rerun of attempt 51's loop to 06/11/2026 (not a reading, not a trial; the gate lines below mean nothing here). Lake exports from b3lake (sha256): {'universe_prices.parquet': 'a3977ebb0dffe3404704923ef968b8d2e53af7a67059b3202a1d525e26f88bd2', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'e885d4af52d0e1700334fda98290dac507e8aaec382b2098cca5e1a5538cbb8c', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'cdi_daily.parquet': '25ac3301cc9c557bafc9f8993dbed76a65bb1ea02ed8a6d71acd78b29f1561f6', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': 'a12ad08a7957cacee38c7c1675edfaf3b0b8d96cd11a3a09bc37de3b0ee2645b'}
+Files (sha256): {'universe_prices.parquet': 'a3977ebb0dffe3404704923ef968b8d2e53af7a67059b3202a1d525e26f88bd2', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'e885d4af52d0e1700334fda98290dac507e8aaec382b2098cca5e1a5538cbb8c', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'cdi_daily.parquet': '25ac3301cc9c557bafc9f8993dbed76a65bb1ea02ed8a6d71acd78b29f1561f6'}; arm Composto-crescimento; DSR N 54
 
-=== Phase 0: 09/02/2010 to 29/10/2026; refusals 0 (Conservadora 0); annual turnover 2.95 (Conservadora 2.97) ===
+=== Phase 0: 09/02/2010 to 06/11/2026; refusals 0 (Conservadora 0); annual turnover 2.94 (Conservadora 2.96) ===
                                  Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
-Composto-crescimento              0.541 0.835         1.000  1.000 0.974          3.949 0.198 -0.415              0.961
-Conservadora (15, pesos iguais)   0.387 0.618         0.994  0.998 0.856          7.196 0.161 -0.407                NaN
-BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.060 -0.497                NaN
+Composto-crescimento              0.546 0.845         1.000  1.000 0.977          3.858 0.199 -0.415              0.959
+Conservadora (15, pesos iguais)   0.395 0.631         0.994  0.998 0.872          6.899 0.162 -0.407                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.059 -0.497                NaN
 Years beating BOVA11 and the Conservadora (reported, not a gate): 11 of 17 (65%)
       Composto-crescimento  Conservadora (15, pesos iguais)  BOVA11
 2010                 23.2%                            23.2%    6.8%
@@ -24,13 +24,13 @@ Years beating BOVA11 and the Conservadora (reported, not a gate): 11 of 17 (65%)
 2023                 33.6%                            22.9%   23.1%
 2024                  6.1%                            -7.7%  -10.1%
 2025                 44.1%                            31.5%   34.7%
-2026                -11.0%                            -8.7%    5.4%
-(phase 0 done in 44 s)
+2026                 -9.2%                            -6.2%    5.0%
+(phase 0 done in 108 s)
 
-=== Phase 21: 12/03/2010 to 29/10/2026; refusals 0 (Conservadora 0); annual turnover 3.06 (Conservadora 2.97) ===
+=== Phase 21: 12/03/2010 to 06/11/2026; refusals 0 (Conservadora 0); annual turnover 3.06 (Conservadora 2.97) ===
                                  Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
-Composto-crescimento              0.487 0.785         0.999  1.000 0.970          4.464 0.185 -0.422              0.957
-Conservadora (15, pesos iguais)   0.337 0.591         0.991  0.997 0.866          7.857 0.150 -0.416                NaN
+Composto-crescimento              0.487 0.788         0.999  1.000 0.971          4.432 0.185 -0.422              0.956
+Conservadora (15, pesos iguais)   0.337 0.595         0.992  0.997 0.870          7.762 0.150 -0.416                NaN
 BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.055 -0.497                NaN
 Years beating BOVA11 and the Conservadora (reported, not a gate): 7 of 17 (41%)
       Composto-crescimento  Conservadora (15, pesos iguais)  BOVA11
@@ -50,13 +50,13 @@ Years beating BOVA11 and the Conservadora (reported, not a gate): 7 of 17 (41%)
 2023                 32.3%                            15.7%   23.1%
 2024                  6.8%                            -3.3%  -10.1%
 2025                 24.7%                            27.5%   34.7%
-2026                 -5.6%                             3.6%    5.4%
-(phase 21 done in 88 s)
+2026                 -5.2%                             4.2%    5.0%
+(phase 21 done in 214 s)
 
-=== Phase 42: 13/04/2010 to 29/10/2026; refusals 0 (Conservadora 0); annual turnover 3.20 (Conservadora 3.03) ===
+=== Phase 42: 13/04/2010 to 06/11/2026; refusals 0 (Conservadora 0); annual turnover 3.19 (Conservadora 3.02) ===
                                  Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Conservadora]
-Composto-crescimento              0.447 0.751         0.999  0.999 0.988          4.853 0.177 -0.428              0.867
-Conservadora (15, pesos iguais)   0.362 0.637         0.995  0.998 0.965          6.769 0.156 -0.395                NaN
+Composto-crescimento              0.448 0.755         0.999  1.000 0.988          4.800 0.178 -0.428              0.873
+Conservadora (15, pesos iguais)   0.360 0.637         0.995  0.998 0.963          6.754 0.156 -0.395                NaN
 BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.054 -0.497                NaN
 Years beating BOVA11 and the Conservadora (reported, not a gate): 7 of 17 (41%)
       Composto-crescimento  Conservadora (15, pesos iguais)  BOVA11
@@ -76,8 +76,8 @@ Years beating BOVA11 and the Conservadora (reported, not a gate): 7 of 17 (41%)
 2023                 30.6%                            15.6%   23.1%
 2024                  4.5%                            -6.5%  -10.1%
 2025                 33.4%                            33.5%   34.7%
-2026                 -6.5%                             1.1%    5.4%
-(phase 42 done in 132 s)
+2026                 -5.8%                             1.1%    5.0%
+(phase 42 done in 327 s)
 
-Curves saved: curvas.parquet sha256 ab68c700645c625101a90088486634d823ce24546a4aa77eabeb370d087bac24
-Strategy gate: P[> Conservadora] [0.961, 0.957, 0.867], P[> BOVA11] [1.0, 0.999, 0.999], DSR [0.974, 0.97, 0.988] (all >= 0.95): not a candidate: the composite line is closed; the bench uses the Conservadora, BOVA11 and the CDI
+Curves saved: curvas.parquet sha256 4449e51669a81d7e341c3df962a2f7fd14787a4ffdac26d1bb7ebaeeb28eee6b
+Strategy gate: P[> Conservadora] [0.959, 0.956, 0.873], P[> BOVA11] [1.0, 0.999, 0.999], DSR [0.977, 0.971, 0.988] (all >= 0.95): not a candidate: the composite line is closed; the bench uses the Conservadora, BOVA11 and the CDI

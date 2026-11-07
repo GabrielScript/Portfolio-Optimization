@@ -164,3 +164,28 @@ def test_seeding_marks_every_current_item_seen_for_every_name_without_any_call(t
     assert rodada.rodar(_entrada([FATO, SELIC]), arquivos, _servicos(_deepseek({}, chamadas=chamadas))).chamadas == 0
     log = registro.ler_log(arquivos.log)
     assert list(log["etapa"]) == ["semeado"] and str(log["itens"].iloc[0]) == "3"
+
+
+def test_a_scan_asked_again_logs_its_first_answer_on_its_own_row_and_a_grave_still_acts(tmp_path):
+    # amendment 8: the first, discarded answer keeps its reason and cost; only the final one counts as the scan
+    arquivos = rodada.Arquivos(tmp_path)
+    vezes = {"varredura": 0}
+    normal = _deepseek({"PETR4": "grave"}, VENDER)
+
+    def post(url, json, timeout, headers):
+        primeira = json["messages"][0]["content"] == modelo.INSTRUCOES_VARREDURA and len(json["messages"]) == 2
+        if primeira and "Ação: PETR4." in json["messages"][1]["content"]:
+            vezes["varredura"] += 1
+            return _Resposta({"veredito": "grave", "citacoes": [{"id": "cvm-a", "trecho": "recuperação judicial"}],
+                              "resumo": "Pedido de recuperação judicial."})       # no ticker: discarded
+        return normal(url, json, timeout, headers)
+
+    emails = []
+    relatorio = rodada.rodar(_entrada([FATO]), arquivos, _servicos(post, emails))
+    log = registro.ler_log(arquivos.log)
+    petr = log[log["ticker"] == "PETR4"]
+    assert vezes["varredura"] == 1 and relatorio.graves == ["PETR4"] and len(emails) == 1
+    assert list(petr["etapa"][:2]) == ["varredura_descartada", "varredura"]
+    primeira = petr.iloc[0]
+    assert "sobre None" in primeira["descarte"] and primeira["custo_usd"] > 0
+    assert registro.usados_no_dia(log, AGORA.date())["varredura"] == 1              # one scan for the budget

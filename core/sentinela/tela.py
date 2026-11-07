@@ -21,7 +21,7 @@ class PainelSentinela:
     curvas: pd.DataFrame | None              # R$ per session: plain Composite, Composite + Sentinela, Selic
     alertas: pd.DataFrame                    # newest first
     acoes: pd.DataFrame                      # each action's latest state
-    chamadas: int                            # DeepSeek calls so far
+    chamadas: int                            # DeepSeek calls so far, first answers asked again included
     custo_usd: float
     descartadas: float | None                # share of scans discarded by the checks
     ultima_rodada: pd.Timestamp
@@ -47,7 +47,7 @@ def painel(arquivos: Arquivos, precos: pd.DataFrame, selic: pd.Series) -> Painel
         "Motivo": ultimas["motivo"]})
     ordens = conta.ler(arquivos.ordens)
     curvas = conta.curvas(ordens, precos, selic) if not ordens.empty and not precos.empty else None
-    pagas = log[log["etapa"].isin(registro.ETAPAS_PAGAS)]
+    pagas = log[log["etapa"].isin([*registro.ETAPAS_PAGAS, *(f"{etapa}_descartada" for etapa in registro.ETAPAS_PAGAS)])]
     descartadas = float(varreduras["descarte"].notna().mean()) if len(varreduras) else None
     notas = pd.read_csv(arquivos.pontuacao) if arquivos.pontuacao.exists() else pd.DataFrame()
     return PainelSentinela(curvas, alertas.reset_index(drop=True), tabela_acoes.reset_index(drop=True), len(pagas),

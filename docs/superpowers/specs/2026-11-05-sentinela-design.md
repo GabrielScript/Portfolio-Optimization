@@ -221,3 +221,15 @@ collapsed, and the first 3,000 characters appended to the item's text after "Tex
 the link's, so nothing seen comes back). Comunicados ao Mercado stay subject-only (results decks are long and
 routine). A failed download or an unreadable PDF keeps the subject line and is noted in the run's failures. Citations
 are checked against this longer text as before. Nothing else changes: prompts, verdicts, thresholds, judges.
+
+## Amendment 8 (2026-11-07, after amendment 7's first live run; DECISOES 304) — one correction for a discarded answer
+
+Of the 9 scans of 07/11, 3 were discarded by the code checks and became `sem_evento` with their items marked seen:
+"o número 2026 do resumo não está nas citações" twice (BBSE3 and PSSA3 re-read with their text) and "a resposta é
+sobre None" once (JHSF3, no ticker). A real `grave` lost to a format slip is never looked at again. From now on an
+answer the checks discard, or one that is not JSON or was cut, is asked again ONCE in the same conversation: the first
+answer as the assistant message, then the discard reason and "answer again, following the rules". The second answer
+goes through the same checks; if it fails too it stays a discarded `sem_evento` / `manter` as before. A network or
+HTTP failure (`falha_da_api`) is still never retried here (the items wait for the next run). Both stages. The first
+attempt gets its own log row (`varredura_descartada` / `decisao_descartada`, its reason in `descarte`, its tokens and
+cost), so the discard rate on screen keeps counting final answers only. The rules themselves do not change.

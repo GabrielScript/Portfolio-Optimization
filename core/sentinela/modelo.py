@@ -1,7 +1,8 @@
 """DeepSeek stages of the Sentinela (spec, "Stage 1" and "Stage 2"): one stock per call, the fixed instructions as the
 system message (the cached prefix, ``deepseek-cache-economy``), the pack as the user message, a JSON answer, no tools.
-Stage 1 scans at low effort; stage 2 decides at max effort, only for a ``grave`` that passed the checks. A failed
-call is a discarded answer (``sem_evento`` / ``manter``), never a retry loop.
+Stage 1 scans at low effort; stage 2 decides at max effort, only for a ``grave`` that passed the checks. A network
+or HTTP failure is a discarded answer (``sem_evento`` / ``manter``), never retried here; an answer the checks discard
+(or one that is not JSON or was cut) is asked again once in the same conversation, with the reason (amendment 8).
 """
 
 from __future__ import annotations
@@ -10,6 +11,7 @@ import json
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import TypeVar
 
 import requests
 
@@ -82,6 +84,8 @@ Answer with one JSON object only, text in Brazilian Portuguese:
 
 Post = Callable[..., requests.Response]
 
+CORRECAO = "Your answer was discarded by the code checks: {motivo}. Answer again with the JSON only, following every rule."
+
 
 @dataclass
 class Resposta:
@@ -90,13 +94,16 @@ class Resposta:
     uso: Uso
     erro: str | None = None
     falha_da_api: bool = False      # network or HTTP failure: the items are not marked seen and wait for the next run
+    descarte_anterior: str | None = None    # why the first answer was discarded, when this is the second (amendment 8)
+    uso_anterior: Uso | None = None         # the first answer's tokens and cost
 
 
 def perguntar(instrucoes: str, texto: str, esforco: str, max_tokens: int, chave: str, agora: datetime,
-              post: Post = requests.post) -> Resposta:
+              post: Post = requests.post, correcao: list[dict] | None = None) -> Resposta:
+    """One call; ``correcao`` follows the pack (the discarded answer and the reason, amendment 8)."""
     uso = Uso()
     corpo = {"model": MODELO, "messages": [{"role": "system", "content": instrucoes},
-                                           {"role": "user", "content": texto}],
+                                           {"role": "user", "content": texto}, *(correcao or [])],
              "thinking": {"type": "enabled"}, "reasoning_effort": esforco,
              "response_format": {"type": "json_object"}, "max_tokens": max_tokens}
     try:
@@ -113,12 +120,32 @@ def perguntar(instrucoes: str, texto: str, esforco: str, max_tokens: int, chave:
         return Resposta(None, uso, "a resposta não é JSON")
 
 
+Resultado = TypeVar("Resultado", Varredura, Decisao)
+
+
+def _com_correcao(instrucoes: str, texto: str, esforco: str, max_tokens: int, chave: str, agora: datetime,
+                  post: Post, validar: Callable[[object], Resultado],
+                  descartado: Callable[[str], Resultado]) -> tuple[Resultado, Resposta]:
+    """The checked answer; a discarded one is asked again once with its answer and the reason (amendment 8)."""
+    def checado(resposta: Resposta) -> Resultado:
+        return descartado(resposta.erro) if resposta.erro else validar(resposta.bruto)
+
+    resposta = perguntar(instrucoes, texto, esforco, max_tokens, chave, agora, post)
+    resultado = checado(resposta)
+    if resposta.falha_da_api or resultado.descarte is None:
+        return resultado, resposta
+    anterior = [] if resposta.bruto is None else [{"role": "assistant",
+                                                   "content": json.dumps(resposta.bruto, ensure_ascii=False)}]
+    segunda = perguntar(instrucoes, texto, esforco, max_tokens, chave, agora, post,
+                        anterior + [{"role": "user", "content": CORRECAO.format(motivo=resultado.descarte)}])
+    segunda.descarte_anterior, segunda.uso_anterior = resultado.descarte, resposta.uso
+    return checado(segunda), segunda
+
+
 def varrer(pacote: Pacote, chave: str, agora: datetime, post: Post = requests.post) -> tuple[Varredura, Resposta]:
-    resposta = perguntar(INSTRUCOES_VARREDURA, pacote.texto(), ESFORCO_VARREDURA, MAX_TOKENS_VARREDURA, chave, agora,
-                         post)
-    if resposta.erro:
-        return Varredura("sem_evento", descarte=resposta.erro), resposta
-    return validar_varredura(resposta.bruto, pacote), resposta
+    return _com_correcao(INSTRUCOES_VARREDURA, pacote.texto(), ESFORCO_VARREDURA, MAX_TOKENS_VARREDURA, chave, agora,
+                         post, lambda bruto: validar_varredura(bruto, pacote),
+                         lambda erro: Varredura("sem_evento", descarte=erro))
 
 
 def texto_da_decisao(pacote: Pacote, varredura: Varredura) -> str:
@@ -128,11 +155,9 @@ def texto_da_decisao(pacote: Pacote, varredura: Varredura) -> str:
 
 def decidir(pacote: Pacote, varredura: Varredura, chave: str, agora: datetime,
             post: Post = requests.post) -> tuple[Decisao, Resposta]:
-    resposta = perguntar(INSTRUCOES_DECISAO, texto_da_decisao(pacote, varredura), ESFORCO_DECISAO,
-                         MAX_TOKENS_DECISAO, chave, agora, post)
-    if resposta.erro:
-        return Decisao("manter", 0.0, descarte=resposta.erro), resposta
-    return validar_decisao(resposta.bruto, pacote), resposta
+    return _com_correcao(INSTRUCOES_DECISAO, texto_da_decisao(pacote, varredura), ESFORCO_DECISAO, MAX_TOKENS_DECISAO,
+                         chave, agora, post, lambda bruto: validar_decisao(bruto, pacote),
+                         lambda erro: Decisao("manter", 0.0, descarte=erro))
 
 
 @dataclass

@@ -125,3 +125,60 @@ def test_both_instructions_state_the_investors_profile_as_the_adviser_does():
     from core.sentinela.modelo import INSTRUCOES_DECISAO, INSTRUCOES_VARREDURA, PERFIL
     assert "extremamente arrojado" in PERFIL and "permanent loss of capital" in PERFIL
     assert PERFIL in INSTRUCOES_VARREDURA and PERFIL in INSTRUCOES_DECISAO
+
+
+def _em_sequencia(conteudos: list, corpos: list):
+    respostas = iter(conteudos)
+
+    def post(url, json, timeout, headers):
+        corpos.append(json)
+        return _Resposta(next(respostas))
+    return post
+
+
+NUMERO_SEM_CITACAO = {"ticker": "PETR4", "veredito": "atencao", "citacoes": [{"id": "cvm-a", "trecho":
+                      "recuperação judicial"}], "resumo": "Guidance de 2026 revisado."}
+
+
+def test_a_discarded_scan_is_asked_again_once_with_its_answer_and_the_reason():
+    # amendment 8: on 07/11 three of nine scans were lost to a format slip ("o número 2026 ...")
+    corpos = []
+    varredura, resposta = modelo.varrer(PACOTE, "c", AGORA, _em_sequencia([NUMERO_SEM_CITACAO, GRAVE], corpos))
+    assert len(corpos) == 2 and corpos[1]["messages"][:2] == corpos[0]["messages"]
+    assert corpos[1]["messages"][2] == {"role": "assistant", "content": json.dumps(NUMERO_SEM_CITACAO, ensure_ascii=False)}
+    correcao = corpos[1]["messages"][3]
+    assert correcao["role"] == "user" and "o número 2026 do resumo não está nas citações" in correcao["content"]
+    assert varredura.veredito == "grave" and varredura.descarte is None
+    assert "2026" in resposta.descarte_anterior and resposta.uso_anterior.requisicoes == 1
+    assert resposta.uso.requisicoes == 1                   # each attempt keeps its own tokens and cost
+
+
+def test_a_scan_discarded_twice_stays_a_discarded_sem_evento():
+    corpos = []
+    varredura, resposta = modelo.varrer(PACOTE, "c", AGORA, _em_sequencia([NUMERO_SEM_CITACAO] * 2, corpos))
+    assert len(corpos) == 2 and varredura.veredito == "sem_evento" and "2026" in varredura.descarte
+    assert "2026" in resposta.descarte_anterior
+
+
+def test_a_non_json_answer_is_asked_again_without_an_assistant_message():
+    corpos = []
+    varredura, _ = modelo.varrer(PACOTE, "c", AGORA, _em_sequencia(["isto não é json", GRAVE], corpos))
+    assert varredura.veredito == "grave" and [m["role"] for m in corpos[1]["messages"]] == ["system", "user", "user"]
+
+
+def test_an_api_failure_or_a_valid_answer_is_never_asked_again():
+    for post, chamadas in ((_post(GRAVE, corpos_401 := [], status=401), corpos_401),
+                           (_post(GRAVE, corpos_ok := []), corpos_ok)):
+        _, resposta = modelo.varrer(PACOTE, "c", AGORA, post)
+        assert len(chamadas) == 1 and resposta.descarte_anterior is None
+
+
+def test_a_discarded_decision_is_asked_again_once():
+    varredura = Varredura("grave", GRAVE["citacoes"], GRAVE["resumo"])
+    sem_ticker = {"acao": "vender", "confianca": 0.8, "citacoes": [{"id": "cvm-a", "trecho": "recuperação judicial"}],
+                  "motivo": "Ver itens."}
+    corpos = []
+    decisao, resposta = modelo.decidir(pacote_da_decisao(PACOTE, []), varredura, "c", AGORA,
+                                       _em_sequencia([sem_ticker, sem_ticker | {"ticker": "PETR4"}], corpos))
+    assert len(corpos) == 2 and corpos[1]["reasoning_effort"] == "max"
+    assert decisao.acao == "vender" and "sobre None" in resposta.descarte_anterior

@@ -51,3 +51,17 @@ def test_panel_has_both_curves_once_the_account_traded(tmp_path):
     conta.acrescentar(arquivos.ordens, ordens)
     painel = tela.painel(arquivos, precos, pd.Series(0.0, index=DIAS))
     assert set(painel.curvas.columns) == {conta.BASE, conta.CONTA, "Selic"}
+
+
+def test_a_first_answer_asked_again_counts_as_a_call_and_a_cost_but_not_as_a_scan(tmp_path):
+    # amendment 8: the discard share keeps counting final answers; the calls and the cost count both attempts
+    arquivos = Arquivos(tmp_path)
+    _log(arquivos)
+    registro.acrescentar_log(arquivos.log, [
+        {"hora": DIAS[2] + pd.Timedelta(hours=9), "ticker": "BBSE3", "etapa": "varredura_descartada",
+         "descarte": "o número 2026 do resumo não está nas citações", "custo_usd": 0.0004},
+        {"hora": DIAS[2] + pd.Timedelta(hours=9), "ticker": "BBSE3", "etapa": "varredura", "veredito": "atencao",
+         "texto": "Guidance revisado.", "custo_usd": 0.0004}])
+    painel = tela.painel(arquivos, pd.DataFrame(), pd.Series(dtype=float))
+    assert painel.chamadas == 6 and abs(painel.custo_usd - 0.0128) < 1e-9
+    assert abs(painel.descartadas - 1 / 4) < 1e-9 and list(painel.alertas["Ação"])[0] == "BBSE3"

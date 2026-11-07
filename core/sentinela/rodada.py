@@ -94,6 +94,16 @@ def _linha(agora: datetime, ticker: str, etapa: str, resposta: Resposta | None =
     return linha
 
 
+def _linha_descartada(agora: datetime, ticker: str, etapa: str, resposta: Resposta, itens: str) -> list[dict]:
+    """The first, discarded answer of a call asked again (amendment 8): its reason, tokens and cost on its own row."""
+    if resposta.descarte_anterior is None or resposta.uso_anterior is None:
+        return []
+    uso = resposta.uso_anterior
+    return [{"hora": agora, "ticker": ticker, "etapa": f"{etapa}_descartada", "itens": itens,
+             "descarte": resposta.descarte_anterior, "entrada": uso.entrada, "cache": uso.cache, "saida": uso.saida,
+             "custo_usd": round(uso.custo_usd, 8)}]
+
+
 def _citacoes(citacoes: list[dict]) -> str:
     return json.dumps(citacoes, ensure_ascii=False)
 
@@ -115,6 +125,8 @@ def _decidir(entrada: Entrada, servicos: Servicos, pacote, varredura: Varredura,
     decisao, resposta = decidir(decisao_pacote, varredura, servicos.chave_deepseek, entrada.agora,
                                 servicos.post_deepseek)
     relatorio.chamadas += 1
+    linhas += _linha_descartada(entrada.agora, ticker, "decisao", resposta,
+                                ";".join(item.id for item in decisao_pacote.itens))
     linhas.append(_linha(entrada.agora, ticker, "decisao", resposta, acao=decisao.acao, confianca=decisao.confianca,
                          itens=";".join(item.id for item in decisao_pacote.itens), descarte=decisao.descarte,
                          texto=decisao.motivo, citacoes=_citacoes(decisao.citacoes)))
@@ -169,6 +181,8 @@ def rodar(entrada: Entrada, arquivos: Arquivos, servicos: Servicos) -> Relatorio
             continue
         varredura, resposta = varrer(pacote, servicos.chave_deepseek, entrada.agora, servicos.post_deepseek)
         relatorio.chamadas += 1
+        linhas += _linha_descartada(entrada.agora, ticker, "varredura", resposta,
+                                    ";".join(item.id for item in pacote.itens))
         linhas.append(_linha(entrada.agora, ticker, "varredura", resposta, veredito=varredura.veredito,
                              itens=";".join(item.id for item in pacote.itens), descarte=varredura.descarte,
                              texto=varredura.resumo, citacoes=_citacoes(varredura.citacoes)))

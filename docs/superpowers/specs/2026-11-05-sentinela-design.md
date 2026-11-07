@@ -210,3 +210,14 @@ Macro items (`bcb`, `ibge`, `tesouro`) are shared by every name, but only on the
     digit, e.g. `00951-2` = 9512 in the lake), with links written as in the weekly open data so one filing keeps one id.
     Tesouro RTN: the monthly publication page's spreadsheet (its server answered "Falha na integração THOT/3PRO" on
     05/11), the same page rendered by Firecrawl, then CKAN (July 2026 only); apiapex answered HTTP 503.
+
+## Amendment 7 (2026-11-07, the user; DECISOES 303) — the stage-1 scan reads a Fato Relevante's text
+
+The 07/11 one-off run (DECISOES 301) marked BBSE3's and PSSA3's guidance changes `atencao` with "the sense is not
+in the item": the scan saw the subject line only, while the PDF says, for BBSE3, Brasilseg's 2026 premium guidance cut
+from -3%/+2% to -15%/-11%. From now on each NEW Fato Relevante of the Composite's names (category "Fato Relevante",
+id not yet in the seen store) is downloaded once from its RAD link, its text extracted with `pypdf`, whitespace
+collapsed, and the first 3,000 characters appended to the item's text after "Texto do documento:" (the item's id stays
+the link's, so nothing seen comes back). Comunicados ao Mercado stay subject-only (results decks are long and
+routine). A failed download or an unreadable PDF keeps the subject line and is noted in the run's failures. Citations
+are checked against this longer text as before. Nothing else changes: prompts, verdicts, thresholds, judges.

@@ -14,6 +14,8 @@ import pandas as pd
 
 MACRO = "macro"                    # the ticker of an item shared by every name (BCB, IBGE, Tesouro)
 CARACTERES = 600                   # an item's text at most
+CARACTERES_DO_CORPO = 3000         # a Fato Relevante's document text after its subject (amendment 7)
+ROTULO_DO_CORPO = " Texto do documento: "
 SIGMAS_DO_PRECO = 2.5              # a close move beyond this many daily sigmas of the last 63 sessions
 SESSOES_DO_DESVIO = 63
 VEZES_DA_MEDIANA = 3.0             # volume, shares lent or lending rate beyond 3x the last 21 sessions' median
@@ -48,7 +50,8 @@ def _publicado(valor: float) -> str:
 
 
 def itens_cvm(fatos: pd.DataFrame, tickers: Iterable[str]) -> list[Item]:
-    """One item per CVM filing (``fatos``: ticker, empresa, categoria, assunto, data, link) of ``tickers``."""
+    """One item per CVM filing (``fatos``: ticker, empresa, categoria, assunto, data, link, optionally corpo, the
+    document's text) of ``tickers``."""
     nomes = set(tickers)
     itens = []
     for _, fato in fatos[fatos["ticker"].isin(nomes)].iterrows():
@@ -56,7 +59,11 @@ def itens_cvm(fatos: pd.DataFrame, tickers: Iterable[str]) -> list[Item]:
         assunto = fato["assunto"] if isinstance(fato["assunto"], str) and fato["assunto"].strip() else "sem assunto"
         texto = f"{fato['empresa']} ({fato['ticker']}), {fato['categoria']} de {data:%d/%m/%Y}: {assunto.strip()}"
         chave = fato["link"] if isinstance(fato.get("link"), str) and fato["link"] else (fato["ticker"], data, assunto)
-        itens.append(Item(_id("cvm", chave), "cvm", f"{data:%Y-%m-%d}", fato["ticker"], texto[:CARACTERES]))
+        texto = texto[:CARACTERES]
+        corpo = fato.get("corpo")
+        if isinstance(corpo, str) and corpo.strip():
+            texto += ROTULO_DO_CORPO + corpo.strip()[:CARACTERES_DO_CORPO]
+        itens.append(Item(_id("cvm", chave), "cvm", f"{data:%Y-%m-%d}", fato["ticker"], texto))
     return itens
 
 

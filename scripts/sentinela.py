@@ -34,8 +34,9 @@ sys.path.insert(0, str(RAIZ))
 from core import alerta_email, bcb, cdi_lago, focus, macro_bcb, precos_do_app, simulador  # noqa: E402
 from core.rebalanceio import custo_com_liquidez  # noqa: E402
 from core.segredos import segredo  # noqa: E402
-from core.sentinela import calendario, cvm_diaria, fontes, pontuacao, registro, rodada  # noqa: E402
+from core.sentinela import calendario, cvm_diaria, documentos, fontes, pontuacao, registro, rodada  # noqa: E402
 from core.sentinela.itens import Item  # noqa: E402
+from core.sentinela.vistos import ler_vistos  # noqa: E402
 from scripts.manutencao import (ARQUIVO_ATIVOS, ARQUIVO_CALENDARIO, ARQUIVO_LIQUIDEZ, ARQUIVO_RECENTES,  # noqa: E402
                                 ARQUIVO_REGISTRO_V3, PASTA_DO_LAGO, PASTA_ESTADO, Bloqueio, commitar, conferir_checkout,
                                 git_em, pendentes, publicar)
@@ -70,8 +71,10 @@ def _empresas(raiz: Path, tickers: list[str]) -> dict[str, tuple[str, str]]:
                      str(ativos.at[ticker, "sector"]) if ticker in ativos.index else "") for ticker in tickers}
 
 
-def _cvm(raiz: Path, tickers: list[str], hoje: date, falhas: list[str]) -> tuple[list[Item], list[Item]]:
-    """(this run's CVM items, the names' recent filings for stage 2)."""
+def _cvm(raiz: Path, tickers: list[str], hoje: date, falhas: list[str],
+         vistos: Path | None = None) -> tuple[list[Item], list[Item]]:
+    """(this run's CVM items, the names' recent filings for stage 2); each new Fato Relevante of the names within the
+    week carries its document text (amendment 7)."""
     tabelas = []
     try:
         semanal = pd.read_parquet(raiz / ARQUIVO_FATOS)
@@ -86,9 +89,26 @@ def _cvm(raiz: Path, tickers: list[str], hoje: date, falhas: list[str]) -> tuple
     except Exception as erro:                   # noqa: BLE001
         falhas.append(f"CVM diária: {erro}" if isinstance(erro, cvm_diaria.ErroDaCvm) else
                       f"CVM diária: {type(erro).__name__}")
+    tabelas = _com_documentos(tabelas, tickers, hoje - timedelta(days=DIAS_DE_FATOS), vistos, falhas)
     novos = fontes.fatos_cvm(tabelas, tickers, hoje - timedelta(days=DIAS_DE_FATOS))
     recentes = fontes.fatos_cvm(tabelas, tickers, hoje - timedelta(days=DIAS_DO_PACOTE_2))
     return novos, recentes
+
+
+def _com_documentos(tabelas: list[pd.DataFrame], tickers: list[str], desde: date, vistos: Path | None,
+                    falhas: list[str], get=None) -> list[pd.DataFrame]:
+    """The tables as one, the names' unseen Fatos Relevantes since ``desde`` with their document text (one download a
+    filing even when both tables list it)."""
+    tabelas = [tabela for tabela in tabelas if tabela is not None and not tabela.empty]
+    if not tabelas:
+        return []
+    todas = pd.concat(tabelas, ignore_index=True)
+    todas = todas[~todas["link"].duplicated() | todas["link"].isna()] if "link" in todas else todas
+    janela = todas["ticker"].isin(tickers) & (pd.to_datetime(todas["data"]) >= pd.Timestamp(desde))
+    ja_vistos = {item_id for _, item_id in ler_vistos(vistos)} if vistos is not None else set()
+    com_texto, erros = documentos.com_corpos(todas[janela], ja_vistos, get or requests.Session().get)
+    falhas += erros
+    return [pd.concat([com_texto, todas[~janela]])]
 
 
 def _macro(hoje: date, falhas: list[str]) -> list[Item]:
@@ -196,7 +216,7 @@ def main(argv: list[str] | None = None) -> int:
     falhas: list[str] = []
     registro_v3, carteira, registrada = _composta(raiz)
     tickers = sorted(carteira)
-    cvm, fatos = _cvm(raiz, tickers, hoje, falhas)
+    cvm, fatos = _cvm(raiz, tickers, hoje, falhas, arquivos.vistos)
     mercado, erros, fechamentos = fontes.itens_de_mercado(_lago(raiz) / "daily_liquid_panel.parquet", _lago(raiz),
                                                           tickers)
     falhas += erros

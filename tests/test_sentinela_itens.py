@@ -27,6 +27,16 @@ def test_cvm_text_is_capped_at_600_characters():
     assert len(itens_cvm(_fatos(), ["ITUB4"])[0].texto) == 600
 
 
+
+def test_a_fato_relevantes_text_follows_its_subject_and_keeps_the_id():
+    # amendment 7: the scan reads the document, the seen store still knows the filing by its link
+    fatos = _fatos().assign(corpo=["A companhia revisou o guidance de -3% a +2% para -15% a -11%." + " y" * 2000, None, ""])
+    petr, itub = itens_cvm(fatos, ["PETR4", "ITUB4"])
+    assert petr.texto.startswith(itens_cvm(_fatos(), ["PETR4"])[0].texto + " Texto do documento: A companhia revisou")
+    assert "-15% a -11%" in petr.texto and len(petr.texto) <= 600 + len(" Texto do documento: ") + 3000
+    assert petr.id == itens_cvm(_fatos(), ["PETR4"])[0].id
+    assert itub.texto == itens_cvm(_fatos(), ["ITUB4"])[0].texto          # no text, the subject line only
+
 def test_item_line_is_id_source_date_text():
     item = Item("cvm-1", "cvm", "2026-11-04", "PETR4", "texto")
     assert item.linha() == "cvm-1 | cvm | 2026-11-04 | texto"

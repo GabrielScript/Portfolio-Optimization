@@ -14,3 +14,4 @@ scikit-learn>=1.5
 requests>=2.31
 pyarrow>=16            # lê lago/precos_diarios.parquet (já vem com o streamlit; aqui por ser uso direto)
 openpyxl>=3.1          # the Sentinela reads the Tesouro's monthly RTN spreadsheet (core.sentinela.fontes)
+pypdf>=7                # the Sentinela reads a new Fato Relevante's PDF (core.sentinela.documentos, amendment 7)

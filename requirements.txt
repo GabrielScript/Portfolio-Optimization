@@ -1,6 +1,6 @@
 # Gerado de requirements.in (ver o cabeçalho de lá). Python 3.12 = versões do .venv onde a suíte passou;
 # 3.11 = versões compatíveis, não testadas.
-# Streamlit Cloud reinstalls and restarts the app on any change to this file (fresh modules after a deploy; last: 2026-11-06 23:30).
+# Streamlit Cloud reinstalls and restarts the app on any change to this file (fresh modules after a deploy; last: 2026-11-07 16:40).
 altair==6.3.0
 anyio==4.15.1
 attrs==26.1.0
@@ -41,6 +41,7 @@ protobuf==7.36.2
 pyarrow==25.0.1
 pycparser==3.11 ; implementation_name != 'PyPy'
 pydeck==0.9.3
+pypdf==7.0.0
 python-dateutil==2.9.0.post0
 python-multipart==0.0.32
 pytz==2026.5

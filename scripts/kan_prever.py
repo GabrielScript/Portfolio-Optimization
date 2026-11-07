@@ -62,7 +62,7 @@ def main(argv: list[str]) -> int:
         estado = torch.load(pasta / "estado_KAN-1" / f"estado_{semente}.pt", map_location="cpu", weights_only=True)
         modelo.load_state_dict(estado["modelo"])
         tabelas.append(curvas(modelo).assign(semente=semente))
-    pd.concat(tabelas, ignore_index=True).to_parquet(pasta / "kan_curvas.parquet", index=False)
+    pd.concat(tabelas, ignore_index=True).to_csv(pasta / "kan_curvas.csv", index=False)   # no pyarrow in .venv-qpo
     print("curves written")
     return 0
 

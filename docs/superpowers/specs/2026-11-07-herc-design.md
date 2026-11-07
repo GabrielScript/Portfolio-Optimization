@@ -48,3 +48,14 @@ every branch's trials, **N = 102** (100 + 2).
 ## 5. Output
 
 `docs/herc-2026-11-07.txt` and a DECISOES entry. Nothing goes to the app.
+
+## Addendum (2026-11-07, before any arm's number): skfolio's HERC replaces section 2's
+
+The user asked to check skfolio; its `HierarchicalEqualRiskContribution` (1.12.2, the paper's algorithm) differs from
+section 2, and the reference implementation is the better contract, so section 2 is replaced by it before anything
+ran: Pearson distance sqrt((1 - rho)/2), Ward, the **number of clusters by the two-order difference to gap statistic**
+(skfolio's `compute_optimal_n_clusters`, at most max(8, sqrt(n))) for both arms, **inverse-risk weights inside each
+cluster**, a cluster's risk = the CDaR of its inverse-risk portfolio, and at each split from the root alpha = 1 -
+(sum of the left clusters' risks) / (sum of both sides'); **CDaR at 95%** (skfolio's default beta), uncompounded.
+Caps, check, arms, gate and N are unchanged. The code is held to skfolio's weights (before caps) by a test run in
+`../.venv-skfolio`, the test-only oracle of DECISOES 168.

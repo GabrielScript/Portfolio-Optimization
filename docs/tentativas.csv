@@ -62,3 +62,4 @@ data,script,configuracao
 2026-11-01,qml_avaliar.py,"Fourier-15: ridge on the circuit's 729 trigonometric features (its dequantized twin, lambda by GCV), same data and portfolio rule as VQC-15"
 2026-11-01,qml_avaliar.py,"QUBO-giro: Composite alpha, full universe, k=15, lambda 1, 4 per sector, turnover term tau = f c / k = 2.667e-4 with h = holdings, simulated annealing, equal weights, every 63 sessions"
 2026-11-01,qml_avaliar.py,"MV-continuo: the QUBO's continuous relaxation, max alpha'w - (1/2) w'Sigma w with Composite alpha, long-only, 20% per name, 30% per sector, 40% vol, one class per issuer, every 63 sessions"
+2026-11-07,kan_avaliar_b3.py,"KAN-15: KAN-1 forecast ([6,1] Kolmogorov-Arnold net, grid 5, cubic splines, 60 parameters, 3 seeds) on the six Composite angles, through the Composite rule: 15 names, 4 per sector, equal weights, every 63 sessions"

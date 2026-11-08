@@ -60,6 +60,19 @@ CLAUDE.md), kept for the user to review; the user's two ideas are DECISOES 191 (
   Rule 6 now also requires a closing bid > 0 and ask <= 2 x bid (else the next nearest strike), and a mark uses the
   mid only under the same condition, else the option's close. Nothing else was tuned on the dry run.
 
+## Amendments after the first cycle failed (2026-11-08, no cycle recorded yet)
+
+- **An ask of zero is no price.** The 06/11 22:30 upkeep failed (ZeroDivisionError): 45% of the chain's traded rows
+  have a bid and an ask of zero, and "ask <= 2 x bid" let them through. Rule 6 now needs bid > 0 and
+  bid <= ask <= 2 x bid (56af121).
+- **A band and the most traded strike, sized by the day's volume.** The fixed dry run of 06/11 then bought VAMO3's
+  call at a strike 22% away (3.26 against a 2.67 close; every nearer strike had a one-sided quote), R$ 498 of an
+  option that traded R$ 30 that day. Rule 6 becomes: the strike inside 0.92-0.98 (put) or 1.02-1.08 (call) x the
+  close; on the expiry nearest 21 business days among those candidates, the one with the largest traded volume that
+  day (ties: nearest the target, then the lower strike); the quantity never above that day's traded volume. Shared
+  with the deep account (`2026-11-08-opcoes-deep-otm-design.md`). The first cycle stays 06/11/2026: the upkeep trades
+  it with the 06/11 close data on its next run, as the catch-up of any missed cycle.
+
 ## Data
 
 The lake exports each night `option_chain_recent.parquet` to the app's `lago/`: the last 30 sessions' option rows

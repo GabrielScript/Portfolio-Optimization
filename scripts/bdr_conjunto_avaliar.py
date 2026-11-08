@@ -107,7 +107,9 @@ def main() -> int:
     cdi = daily_cdi(ANOS_DE_CDI, LAST_SESSION.date(), path=MACRO / "cdi_daily.parquet")
     precos_eua, volume_eua, sha256_eua = ler_eua()
     precos_br = dados.precos.loc[:LAST_SESSION]
-    juntos = precos_br.join(precos_eua.reindex(precos_br.index), how="left")
+    # IVVB11 is also in the engine's price file (a reference): the joint table keeps the engine's column
+    juntos = precos_br.join(precos_eua.drop(columns=[c for c in precos_eua.columns if c in precos_br.columns])
+                            .reindex(precos_br.index), how="left")
     setores = dict(dados.setores) | {papel: SETOR_EUA for papel in EUA}
     print(f"Files (sha256): {dados.sha256 | mensal.sha256 | sha256_cvm | sha256_cdi}; US slice {sha256_eua}; "
           f"US names in the lake {precos_eua.shape[1]} of {len(EUA)}; DSR N {N_DSR}")

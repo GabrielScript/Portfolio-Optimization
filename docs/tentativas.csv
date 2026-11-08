@@ -71,3 +71,5 @@ data,script,configuracao
 2026-11-07,mix_bdr_avaliar.py,"BDR-5: Composite with 10 names (4 per sector, equal weights) + the 5 US names (DECISOES 141 set) with the highest 12-1 momentum among the eligible, equal weights, sleeves reset to 10/15 and 5/15 every 63 sessions, 2021-01 to 2026-10"
 2026-11-07,herc_avaliar_b3.py,"HERC-CDaR: Ward on sqrt((1-rho)/2), 12 clusters, 1/N inside, capital across by CDaR 99% of equal-weight returns, whole eligible universe, caps 20%/30%, every 63 sessions"
 2026-11-07,herc_avaliar_b3.py,"HERC-CDaR-15: the Composite picks (15 names, 4 per sector) weighted by HERC-CDaR with 4 clusters, caps 20%/30%, every 63 sessions"
+2026-11-08,mars_avaliar_b3.py,"MARS-50: the AAAI-26 MARS method (10 DDPG safety-critic agents, theta 0.10-0.55, lambda 5.5-1.0, meta-adaptive controller, rule overlay 20% cap, 2% cash) trading daily the year's 50 most traded B3 names on price, MACD, RSI, CCI, ADX; 5y train, 1y validation, yearly walk-forward 2010-2026; 3 seeds, equal capital; 10 bps per side"
+2026-11-08,mars_avaliar_b3.py,"MARS-50+score: MARS-50 with the Composite's monthly score percentile as a sixth feature per asset"

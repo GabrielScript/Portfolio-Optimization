@@ -1,0 +1,33 @@
+errors: 0
+
+== all 60 ==
+                          n  acerto@0.5  Brier  log loss   AUC  falsos +  falsos -  p distintos
+juiz                                                                                           
+Drex Max             60.000       0.800  0.136     0.417 0.927    11.000     1.000       47.000
+d1.1 (Liquid direto) 60.000       0.933  0.079     0.288 0.951     1.000     3.000       46.000
+
+== clear only ==
+                          n  acerto@0.5  Brier  log loss   AUC  falsos +  falsos -  p distintos
+juiz                                                                                           
+Drex Max             38.000       0.921  0.060     0.196 1.000     3.000     0.000       31.000
+d1.1 (Liquid direto) 38.000       1.000  0.043     0.194 1.000     0.000     0.000       33.000
+
+== latency and cost ==
+                      mediana_s  p90_s  media_s  tokens  custo_por_1000
+juiz                                                                   
+Drex Max                  1.380  1.611    1.372 155.283           0.009
+d1.1 (Liquid direto)      0.941  1.267    1.018 104.550           0.002
+
+== calibration (share material by bin) ==
+                                     n  p_media  real
+juiz                 faixa                           
+Drex Max             (-0.001, 0.2]  31    0.048 0.032
+                     (0.2, 0.5]      4    0.357 0.000
+                     (0.5, 0.8]      8    0.649 0.125
+                     (0.8, 1.0]     17    0.923 0.765
+d1.1 (Liquid direto) (-0.001, 0.2]  29    0.088 0.034
+                     (0.2, 0.5]     18    0.314 0.111
+                     (0.5, 0.8]     11    0.683 0.909
+                     (0.8, 1.0]      2    0.839 1.000
+
+models: {'Drex Max': 'nace-ai/drex-max-20261016', 'd1.1 (Liquid direto)': 'd1.1'}

@@ -1,0 +1,120 @@
+{"id": "F00", "juiz": "Drex Max", "p": 0.006570140959669799, "s": 1.4517185000004247, "tokens": 144, "custo": 8.64e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F00", "juiz": "d1.1 (Liquid direto)", "p": 0.0657676351268117, "s": 1.3747290999745019, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F01", "juiz": "Drex Max", "p": 0.8247634399788034, "s": 1.5743127000168897, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F01", "juiz": "d1.1 (Liquid direto)", "p": 0.4081777560257861, "s": 0.9897155000362545, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "d1.1 (Liquid direto)", "p": 0.7327004411935709, "s": 1.029473299975507, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "Drex Max", "p": 0.9854164490146458, "s": 1.4990716999745928, "tokens": 152, "custo": 9.12e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F03", "juiz": "Drex Max", "p": 0.05796915649084443, "s": 2.0677865000325255, "tokens": 146, "custo": 8.76e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F03", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597711919736, "s": 1.0368692000047304, "tokens": 93, "custo": 1.86e-06, "modelo": "d1.1"}
+{"id": "F04", "juiz": "Drex Max", "p": 0.015501254332184092, "s": 1.3645064000156708, "tokens": 148, "custo": 8.88e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F04", "juiz": "d1.1 (Liquid direto)", "p": 0.05122436644968752, "s": 0.9003600000287406, "tokens": 96, "custo": 1.92e-06, "modelo": "d1.1"}
+{"id": "F05", "juiz": "Drex Max", "p": 0.012905826143068623, "s": 1.3500659000128508, "tokens": 151, "custo": 9.06e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F05", "juiz": "d1.1 (Liquid direto)", "p": 0.08407405003253489, "s": 0.9535183000261895, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F06", "juiz": "Drex Max", "p": 0.9180675627773474, "s": 1.0951674000243656, "tokens": 168, "custo": 1.008e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F06", "juiz": "d1.1 (Liquid direto)", "p": 0.641939352609987, "s": 3.004883699992206, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F07", "juiz": "Drex Max", "p": 0.05156141120234654, "s": 1.6033874999848194, "tokens": 159, "custo": 9.54e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F07", "juiz": "d1.1 (Liquid direto)", "p": 0.1690804596008979, "s": 1.2764433000120334, "tokens": 108, "custo": 2.16e-06, "modelo": "d1.1"}
+{"id": "F08", "juiz": "Drex Max", "p": 0.03835221065674486, "s": 1.3501388999866322, "tokens": 157, "custo": 9.42e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F08", "juiz": "d1.1 (Liquid direto)", "p": 0.05663569581166705, "s": 0.9252803000272252, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F09", "juiz": "d1.1 (Liquid direto)", "p": 0.1690804418239385, "s": 0.9152386000496335, "tokens": 124, "custo": 2.48e-06, "modelo": "d1.1"}
+{"id": "F09", "juiz": "Drex Max", "p": 0.5918817520141602, "s": 1.4715523000340909, "tokens": 174, "custo": 1.044e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F10", "juiz": "d1.1 (Liquid direto)", "p": 0.35806064739001287, "s": 0.9999874000204727, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F10", "juiz": "Drex Max", "p": 0.8247634399788034, "s": 1.331125000026077, "tokens": 161, "custo": 9.66e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F11", "juiz": "Drex Max", "p": 0.08193243722265259, "s": 1.147503299987875, "tokens": 148, "custo": 8.88e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F11", "juiz": "d1.1 (Liquid direto)", "p": 0.048705632673383535, "s": 1.022156700026244, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F12", "juiz": "d1.1 (Liquid direto)", "p": 0.16175461751890155, "s": 0.980970700038597, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F12", "juiz": "Drex Max", "p": 0.10261112451553345, "s": 1.0896685000043362, "tokens": 156, "custo": 9.36e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F13", "juiz": "d1.1 (Liquid direto)", "p": 0.2672995687190796, "s": 1.2664346999954432, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F13", "juiz": "Drex Max", "p": 0.03835221065674486, "s": 1.0439776999992318, "tokens": 159, "custo": 9.54e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F14", "juiz": "Drex Max", "p": 0.677760899066925, "s": 1.3110829999786802, "tokens": 156, "custo": 9.36e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F14", "juiz": "d1.1 (Liquid direto)", "p": 0.32234689315472603, "s": 0.9205330000258982, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F15", "juiz": "d1.1 (Liquid direto)", "p": 0.10689302169888124, "s": 0.8728288999991491, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F15", "juiz": "Drex Max", "p": 0.0867152605961694, "s": 1.4206223000073805, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F16", "juiz": "Drex Max", "p": 0.004828301127980712, "s": 1.1624346999451518, "tokens": 150, "custo": 9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F16", "juiz": "d1.1 (Liquid direto)", "p": 0.0725977614440097, "s": 0.9418341999989934, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F17", "juiz": "d1.1 (Liquid direto)", "p": 0.5265110869328326, "s": 1.3338798999902792, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F17", "juiz": "Drex Max", "p": 0.635903000831604, "s": 1.4301932000089437, "tokens": 161, "custo": 9.66e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F18", "juiz": "d1.1 (Liquid direto)", "p": 0.16175462095023527, "s": 0.8593480000272393, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F18", "juiz": "Drex Max", "p": 0.635903000831604, "s": 1.4117465000017546, "tokens": 166, "custo": 9.96e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F19", "juiz": "Drex Max", "p": 0.16646118214039232, "s": 1.1115133000421338, "tokens": 160, "custo": 9.6e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F19", "juiz": "d1.1 (Liquid direto)", "p": 0.22782125545461387, "s": 0.9913539999979548, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F20", "juiz": "Drex Max", "p": 0.1752365600211966, "s": 1.5384999999660067, "tokens": 166, "custo": 9.96e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F20", "juiz": "d1.1 (Liquid direto)", "p": 0.14131069836592608, "s": 1.0216538000386208, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F21", "juiz": "d1.1 (Liquid direto)", "p": 0.1230712872592913, "s": 1.092302400036715, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F21", "juiz": "Drex Max", "p": 0.007430444376104301, "s": 1.542421700025443, "tokens": 155, "custo": 9.3e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F22", "juiz": "Drex Max", "p": 0.015501254332184092, "s": 1.4326121999765746, "tokens": 161, "custo": 9.66e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F22", "juiz": "d1.1 (Liquid direto)", "p": 0.0882521377418836, "s": 1.4785033999942243, "tokens": 116, "custo": 2.32e-06, "modelo": "d1.1"}
+{"id": "F23", "juiz": "Drex Max", "p": 0.10845847930479469, "s": 1.6870333999977447, "tokens": 160, "custo": 9.6e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F23", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345815796616, "s": 1.089119899959769, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F24", "juiz": "Drex Max", "p": 0.006177859182721425, "s": 1.1181884999969043, "tokens": 163, "custo": 9.78e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F24", "juiz": "d1.1 (Liquid direto)", "p": 0.026367740404230882, "s": 1.0607510000118054, "tokens": 112, "custo": 2.24e-06, "modelo": "d1.1"}
+{"id": "F25", "juiz": "d1.1 (Liquid direto)", "p": 0.24703089057236824, "s": 0.9694493000279181, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F25", "juiz": "Drex Max", "p": 0.06899362391271449, "s": 1.1285349000245333, "tokens": 158, "custo": 9.48e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F26", "juiz": "Drex Max", "p": 0.07308126877127187, "s": 1.5950911000254564, "tokens": 153, "custo": 9.18e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F26", "juiz": "d1.1 (Liquid direto)", "p": 0.07625299726245313, "s": 0.9160377000225708, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F27", "juiz": "Drex Max", "p": 0.6067588148486968, "s": 1.4330008000251837, "tokens": 151, "custo": 9.06e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F27", "juiz": "d1.1 (Liquid direto)", "p": 0.38280778457056863, "s": 1.0639423000393435, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F28", "juiz": "Drex Max", "p": 0.012905826143068623, "s": 1.1749513000249863, "tokens": 147, "custo": 8.82e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F28", "juiz": "d1.1 (Liquid direto)", "p": 0.034107592494797945, "s": 1.0854288999689743, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F29", "juiz": "d1.1 (Liquid direto)", "p": 0.742965428085859, "s": 0.9075598999625072, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F29", "juiz": "Drex Max", "p": 0.9679446544926684, "s": 1.682119800010696, "tokens": 147, "custo": 8.82e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F30", "juiz": "d1.1 (Liquid direto)", "p": 0.7627078190724194, "s": 0.9632247000117786, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F30", "juiz": "Drex Max", "p": 0.9616477525295606, "s": 1.2375239999964833, "tokens": 147, "custo": 8.82e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F31", "juiz": "d1.1 (Liquid direto)", "p": 0.22782123764694118, "s": 0.9892037999816239, "tokens": 113, "custo": 2.26e-06, "modelo": "d1.1"}
+{"id": "F31", "juiz": "Drex Max", "p": 0.32223910093307495, "s": 2.4871914999675937, "tokens": 164, "custo": 9.84e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F32", "juiz": "Drex Max", "p": 0.9180675627773474, "s": 1.1541352000203915, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F32", "juiz": "d1.1 (Liquid direto)", "p": 0.6540440728119271, "s": 1.082157900033053, "tokens": 98, "custo": 1.96e-06, "modelo": "d1.1"}
+{"id": "F33", "juiz": "d1.1 (Liquid direto)", "p": 0.8073593910421449, "s": 0.9277057999861427, "tokens": 114, "custo": 2.28e-06, "modelo": "d1.1"}
+{"id": "F33", "juiz": "Drex Max", "p": 0.8722175359725952, "s": 1.5644166000420228, "tokens": 169, "custo": 1.014e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F34", "juiz": "Drex Max", "p": 0.05156141120234654, "s": 1.5547969000181183, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F34", "juiz": "d1.1 (Liquid direto)", "p": 0.09717443500659295, "s": 0.9857696000253782, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F35", "juiz": "Drex Max", "p": 0.42316560218231686, "s": 1.1452092000399716, "tokens": 165, "custo": 9.9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F35", "juiz": "d1.1 (Liquid direto)", "p": 0.39542237731881225, "s": 0.8503186999587342, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F36", "juiz": "d1.1 (Liquid direto)", "p": 0.5789419918426529, "s": 0.8689777000108734, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F36", "juiz": "Drex Max", "p": 0.9698123390030805, "s": 1.4116645999602042, "tokens": 145, "custo": 8.7e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F37", "juiz": "Drex Max", "p": 0.007430444376104301, "s": 1.0300163000356406, "tokens": 145, "custo": 8.7e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F37", "juiz": "d1.1 (Liquid direto)", "p": 0.11745713871310688, "s": 0.9626020000432618, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "d1.1 (Liquid direto)", "p": 0.7114061213382411, "s": 0.8542713000206277, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "Drex Max", "p": 0.9844987456678159, "s": 1.3843526000273414, "tokens": 146, "custo": 8.76e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F39", "juiz": "d1.1 (Liquid direto)", "p": 0.06258096475674631, "s": 0.8449795999913476, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F39", "juiz": "Drex Max", "p": 0.08193243722265259, "s": 1.0802352000027895, "tokens": 153, "custo": 9.18e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F40", "juiz": "d1.1 (Liquid direto)", "p": 0.334047455923751, "s": 0.90625259996159, "tokens": 105, "custo": 2.1e-06, "modelo": "d1.1"}
+{"id": "F40", "juiz": "Drex Max", "p": 0.5154848541174872, "s": 1.3783255000016652, "tokens": 158, "custo": 9.48e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F41", "juiz": "d1.1 (Liquid direto)", "p": 0.7327004411935709, "s": 0.8284560000174679, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F41", "juiz": "Drex Max", "p": 0.9029552869278543, "s": 1.8721881000092253, "tokens": 164, "custo": 9.84e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F42", "juiz": "d1.1 (Liquid direto)", "p": 0.3580606590236548, "s": 0.969226700020954, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F42", "juiz": "Drex Max", "p": 0.2585933804512024, "s": 1.4034371000016108, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F43", "juiz": "Drex Max", "p": 0.022325181302621264, "s": 1.1060528000234626, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F43", "juiz": "d1.1 (Liquid direto)", "p": 0.1174571360897926, "s": 0.8397158000152558, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "d1.1 (Liquid direto)", "p": 0.03410758082286232, "s": 0.8401691000326537, "tokens": 103, "custo": 2.06e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "Drex Max", "p": 0.012905826143068623, "s": 1.3868476999923587, "tokens": 155, "custo": 9.3e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F45", "juiz": "d1.1 (Liquid direto)", "p": 0.798970215876281, "s": 0.9031954000238329, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F45", "juiz": "Drex Max", "p": 0.9862805770272858, "s": 1.5339011000469327, "tokens": 150, "custo": 9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F46", "juiz": "Drex Max", "p": 0.007901630666076073, "s": 1.0309439999982715, "tokens": 150, "custo": 9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F46", "juiz": "d1.1 (Liquid direto)", "p": 0.039760195545196476, "s": 0.8448810999980196, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F47", "juiz": "Drex Max", "p": 0.42316560218231686, "s": 1.3491605000454001, "tokens": 169, "custo": 1.014e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F47", "juiz": "d1.1 (Liquid direto)", "p": 0.21861995272431786, "s": 0.9135992999654263, "tokens": 123, "custo": 2.46e-06, "modelo": "d1.1"}
+{"id": "F48", "juiz": "d1.1 (Liquid direto)", "p": 0.33404746718318484, "s": 1.2104139000293799, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F48", "juiz": "Drex Max", "p": 0.7531066873568306, "s": 1.4153265000204556, "tokens": 160, "custo": 9.6e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F49", "juiz": "Drex Max", "p": 0.0251961692287519, "s": 1.3811937000136822, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F49", "juiz": "d1.1 (Liquid direto)", "p": 0.04183668399279878, "s": 0.9368883000570349, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F50", "juiz": "Drex Max", "p": 0.8577580963228998, "s": 1.9490467999712564, "tokens": 148, "custo": 8.88e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F50", "juiz": "d1.1 (Liquid direto)", "p": 0.6296508985502555, "s": 0.8762268999707885, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "d1.1 (Liquid direto)", "p": 0.14131070450745079, "s": 0.8465099000022747, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "Drex Max", "p": 0.07739104215218064, "s": 1.1126994999940507, "tokens": 158, "custo": 9.48e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F52", "juiz": "Drex Max", "p": 0.9513857052143129, "s": 1.46500319999177, "tokens": 149, "custo": 8.94e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F52", "juiz": "d1.1 (Liquid direto)", "p": 0.3340474784426189, "s": 0.9289777000085451, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F53", "juiz": "d1.1 (Liquid direto)", "p": 0.29961096763318334, "s": 0.878530399990268, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F53", "juiz": "Drex Max", "p": 0.9748038525598127, "s": 1.0663524999981746, "tokens": 151, "custo": 9.06e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F54", "juiz": "Drex Max", "p": 0.8915415206952053, "s": 0.9983316999860108, "tokens": 150, "custo": 9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F54", "juiz": "d1.1 (Liquid direto)", "p": 0.3459559386403775, "s": 0.9408595000277273, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F55", "juiz": "Drex Max", "p": 0.7754190217516264, "s": 1.4815881999675184, "tokens": 146, "custo": 8.76e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F55", "juiz": "d1.1 (Liquid direto)", "p": 0.33404746718318484, "s": 1.2995974000077695, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F56", "juiz": "d1.1 (Liquid direto)", "p": 0.8710854223646011, "s": 0.8618450000067241, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F56", "juiz": "Drex Max", "p": 0.9029552869278543, "s": 1.3666871000314131, "tokens": 171, "custo": 1.026e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F57", "juiz": "Drex Max", "p": 0.008934711721242362, "s": 1.3417128999717534, "tokens": 150, "custo": 9e-06, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F57", "juiz": "d1.1 (Liquid direto)", "p": 0.0625809706951694, "s": 0.9032003000029363, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F58", "juiz": "Drex Max", "p": 0.04861429478568717, "s": 0.9939556000172161, "tokens": 172, "custo": 1.032e-05, "modelo": "nace-ai/drex-max-20261016"}
+{"id": "F58", "juiz": "d1.1 (Liquid direto)", "p": 0.0762530008275807, "s": 0.8475849999813363, "tokens": 118, "custo": 2.36e-06, "modelo": "d1.1"}
+{"id": "F59", "juiz": "d1.1 (Liquid direto)", "p": 0.07259775633251739, "s": 0.8939113999949768, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F59", "juiz": "Drex Max", "p": 0.010101485188416491, "s": 0.9958014999865554, "tokens": 162, "custo": 9.72e-06, "modelo": "nace-ai/drex-max-20261016"}

@@ -69,7 +69,8 @@ def contrato(cadeia: pd.DataFrame, ativo: str, tipo: str, fator: float) -> pd.Se
     """The option of ``ativo`` that traded with an ask, on the expiry nearest 21 business days within [10, 45] (ties:
     the earlier), at the strike nearest ``fator`` x the stock's close (ties: the lower strike)."""
     opcoes = cadeia[(cadeia["underlying"] == ativo) & (cadeia["option_type"] == tipo) & (cadeia["trades"] > 0)
-                    & (cadeia["best_bid"] > 0) & (cadeia["best_ask"] <= ASK_MAXIMO * cadeia["best_bid"])
+                    & (cadeia["best_bid"] > 0) & (cadeia["best_ask"] >= cadeia["best_bid"])
+                    & (cadeia["best_ask"] <= ASK_MAXIMO * cadeia["best_bid"])
                     & cadeia["du"].between(DU_MIN, DU_MAX)]
     if opcoes.empty:
         return None

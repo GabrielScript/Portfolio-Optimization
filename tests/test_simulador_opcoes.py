@@ -58,6 +58,15 @@ def test_a_lone_ask_with_no_real_bid_is_never_bought_and_the_next_strike_is_take
     assert so.contrato(cadeia, "VAMO3", "call", 1.05)["ticker"] == "VAMOK250"
 
 
+def test_a_bid_with_no_ask_is_never_bought():
+    # the 2026-11-06 cycle: 45% of the chain's traded rows carry a bid and an ask of zero, which divided the budget
+    # by a zero premium (ZeroDivisionError in the 22:30 upkeep)
+    cadeia = pd.DataFrame([
+        _linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.0),
+        _linha("ALTAW280", "ALTA3", "put", 28.0, "2026-12-04", 20, 0.40, 0.35, 0.42)])
+    assert so.contrato(cadeia, "ALTA3", "put", 0.95)["ticker"] == "ALTAW280"
+
+
 def test_a_cycle_spends_half_the_budget_per_idea_in_lots_of_100_or_records_why_not():
     cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55),
                            _linha("VOLAL315", "VOLA3", "call", 31.5, "2026-12-04", 20, 9.0, 8.0, 9.0)])

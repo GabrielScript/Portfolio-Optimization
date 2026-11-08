@@ -26,6 +26,7 @@ class PainelSentinela:
     descartadas: float | None                # share of scans discarded by the checks
     ultima_rodada: pd.Timestamp
     autonomia: pontuacao.Autonomia
+    curvas_12_3: pd.DataFrame | None = None   # R$ per session: 12/3 alone, 12/3 + Sentinela, Selic (2026-11-08)
 
 
 def painel(arquivos: Arquivos, precos: pd.DataFrame, selic: pd.Series) -> PainelSentinela | None:
@@ -47,9 +48,12 @@ def painel(arquivos: Arquivos, precos: pd.DataFrame, selic: pd.Series) -> Painel
         "Motivo": ultimas["motivo"]})
     ordens = conta.ler(arquivos.ordens)
     curvas = conta.curvas(ordens, precos, selic) if not ordens.empty and not precos.empty else None
+    ordens_12_3 = conta.ler(arquivos.ordens_12_3)
+    curvas_12_3 = (conta.curvas(ordens_12_3, precos, selic, nomes=(conta.BASE_12_3, conta.CONTA_12_3))
+                   if not ordens_12_3.empty and not precos.empty else None)
     pagas = log[log["etapa"].isin([*registro.ETAPAS_PAGAS, *(f"{etapa}_descartada" for etapa in registro.ETAPAS_PAGAS)])]
     descartadas = float(varreduras["descarte"].notna().mean()) if len(varreduras) else None
     notas = pd.read_csv(arquivos.pontuacao) if arquivos.pontuacao.exists() else pd.DataFrame()
     return PainelSentinela(curvas, alertas.reset_index(drop=True), tabela_acoes.reset_index(drop=True), len(pagas),
                            float(pd.to_numeric(log["custo_usd"], errors="coerce").sum()), descartadas,
-                           log["hora"].max(), pontuacao.autonomia(notas))
+                           log["hora"].max(), pontuacao.autonomia(notas), curvas_12_3)

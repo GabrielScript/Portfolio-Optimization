@@ -48,6 +48,14 @@ class Arquivos:
         return self.pasta / "sentinela_ordens.csv"
 
     @property
+    def ordens_12_3(self) -> Path:
+        return self.pasta / "sentinela_12_3_ordens.csv"
+
+    @property
+    def executadas_12_3(self) -> Path:
+        return self.pasta / "sentinela_12_3_executadas.csv"
+
+    @property
     def pontuacao(self) -> Path:
         return self.pasta / "sentinela_pontuacao.csv"
 
@@ -228,4 +236,24 @@ def atualizar_conta(arquivos: Arquivos, registro_composta: pd.DataFrame, precos:
     executadas = acoes[acoes["id"].isin(feitas) & (acoes["estado"] == "aceita")]
     registro.acrescentar_acoes(arquivos.acoes, [linha | {"estado": "executada", "motivo": None}
                                                 for linha in executadas.to_dict("records")])
+    return feitas
+
+
+def atualizar_conta_12_3(arquivos: Arquivos, registro_12_3: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series,
+                         custo: CustoDaOrdem, inicio: pd.Timestamp = conta.INICIO_12_3) -> list[str]:
+    """The "12/3 + Sentinela" account (the user, 2026-11-08): its own ledger on the 12/3 record, taking every
+    accepted action decided from ``inicio`` on (a name it does not hold changes nothing). Which actions it executed
+    is kept in its own file, so the Composite account's actions file is never written here."""
+    ja = (set(pd.read_csv(arquivos.executadas_12_3, dtype=str)["id"]) if arquivos.executadas_12_3.exists()
+          else set())
+    acoes = [acao for acao in registro.aceitas(registro.ler_acoes(arquivos.acoes))
+             if acao["id"] not in ja and pd.Timestamp(acao["decidida_em"]) >= inicio]
+    ordens = conta.ler(arquivos.ordens_12_3)
+    novas, feitas = conta.ordens_devidas(ordens, registro_12_3, acoes, precos, cdi, custo, inicio,
+                                         base=conta.BASE_12_3, nome=conta.CONTA_12_3)
+    if not novas.empty:
+        conta.acrescentar(arquivos.ordens_12_3, novas)
+    if feitas:
+        pd.DataFrame({"id": feitas}).to_csv(arquivos.executadas_12_3, mode="a", index=False, lineterminator="\n",
+                                            header=not arquivos.executadas_12_3.exists(), encoding="utf-8")
     return feitas

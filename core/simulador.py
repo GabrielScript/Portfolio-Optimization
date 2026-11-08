@@ -24,7 +24,7 @@ CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in
 CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3")
 # a gain on a BDR or a BR-listed ETF pays 15% with no R$ 20 mil exemption; a R$ 10,000 account never sells R$ 20 mil of
 # stocks in a month, so stocks stay exempt. Only the 12/3 holds them (the user, 2026-11-07: the ghost net of that tax)
-CARTEIRAS_COM_IR = ("12/3",)
+CARTEIRAS_COM_IR = ("12/3", "12/3 (base)", "12/3 + Sentinela")    # the last two: core.sentinela.conta (2026-11-08)
 IR = 0.15
 REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11 dropped, user 2026-11-03)
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app

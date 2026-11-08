@@ -27,6 +27,10 @@ from core.rebalanceio import CustoDaOrdem
 
 CONTA = "Composto + Sentinela"
 BASE = "Composto (base)"
+# the 12/3 + Sentinela account (the user, 2026-11-08): the 12/3 record with the same accepted sales, own ledger
+CONTA_12_3 = "12/3 + Sentinela"
+BASE_12_3 = "12/3 (base)"
+INICIO_12_3 = pd.Timestamp("2026-11-09")
 CAPITAL = 10_000.0
 LIMIAR = 0.70
 HORA_DE_CORTE = 17
@@ -67,7 +71,7 @@ def vazio() -> pd.DataFrame:
 
 
 def _vender(conta: pd.DataFrame, acao: Mapping, dia: pd.Timestamp, precos: pd.DataFrame, cdi: pd.Series,
-            custo: CustoDaOrdem, capital: float) -> pd.DataFrame:
+            custo: CustoDaOrdem, capital: float, nome: str = CONTA) -> pd.DataFrame:
     ate = precos.loc[:dia].ffill()
     trilha = simulador._trilha(conta, ate, simulador._fator_do_juro(cdi, ate.index), capital)
     quantidades = trilha.quantidades.astype("int64")
@@ -77,7 +81,7 @@ def _vender(conta: pd.DataFrame, acao: Mapping, dia: pd.Timestamp, precos: pd.Da
     if vende <= 0:
         return conta
     cotacoes = ate.iloc[-1].reindex(quantidades.index)
-    linhas = pd.DataFrame({"data": dia, "carteira": CONTA, "ticker": quantidades.index, "ordem": 0,
+    linhas = pd.DataFrame({"data": dia, "carteira": nome, "ticker": quantidades.index, "ordem": 0,
                            "preco": cotacoes.to_numpy(), "custo": 0.0}).set_index("ticker", drop=False)
     linhas.loc[ticker, "ordem"] = -vende
     linhas.loc[ticker, "custo"] = custo(ticker, vende * float(cotacoes[ticker]))
@@ -93,14 +97,15 @@ def _vender(conta: pd.DataFrame, acao: Mapping, dia: pd.Timestamp, precos: pd.Da
 
 def ordens_devidas(ordens: pd.DataFrame, registro: pd.DataFrame, acoes: Iterable[Mapping], precos: pd.DataFrame,
                    cdi: pd.Series, custo: CustoDaOrdem, inicio: pd.Timestamp,
-                   capital: float = CAPITAL) -> tuple[pd.DataFrame, list[str]]:
+                   capital: float = CAPITAL, base: str = BASE, nome: str = CONTA
+                   ) -> tuple[pd.DataFrame, list[str]]:
     """The ledger rows to append for both portfolios and the ids of the accepted actions executed now. ``acoes``:
     accepted, not yet executed (id, ticker, acao, decidida_em, executa_em); one whose close is not in ``precos`` yet
     waits. An action dated on or before the ledger's last written session executes at the next session in
-    ``precos`` (rows already written are never changed)."""
-    base = ordens[ordens["carteira"] == BASE]
-    novas = [simulador.ordens_devidas(base, {BASE: registro}, precos, cdi, custo, inicio, capital)]
-    conta = ordens[ordens["carteira"] == CONTA]
+    ``precos`` (rows already written are never changed). ``base`` and ``nome`` name the two portfolios."""
+    feitas_da_base = ordens[ordens["carteira"] == base]
+    novas = [simulador.ordens_devidas(feitas_da_base, {base: registro}, precos, cdi, custo, inicio, capital)]
+    conta = ordens[ordens["carteira"] == nome]
     escrito = conta["data"].max() if not conta.empty else pd.Timestamp.min
     feitas = []
     for acao in sorted(acoes, key=lambda acao: (pd.Timestamp(acao["executa_em"]), pd.Timestamp(acao["decidida_em"]))):
@@ -109,13 +114,13 @@ def ordens_devidas(ordens: pd.DataFrame, registro: pd.DataFrame, acoes: Iterable
         if not len(seguintes):
             continue
         dia = seguintes[0]
-        conta = pd.concat([conta, simulador.ordens_devidas(conta, {CONTA: registro}, precos.loc[:dia], cdi, custo,
+        conta = pd.concat([conta, simulador.ordens_devidas(conta, {nome: registro}, precos.loc[:dia], cdi, custo,
                                                            inicio, capital)], ignore_index=True)
         if conta.empty or conta["data"].min() > dia:
             continue
-        conta = _vender(conta, acao, dia, precos, cdi, custo, capital)
+        conta = _vender(conta, acao, dia, precos, cdi, custo, capital, nome)
         feitas.append(acao["id"])
-    conta = pd.concat([conta, simulador.ordens_devidas(conta, {CONTA: registro}, precos, cdi, custo, inicio, capital)],
+    conta = pd.concat([conta, simulador.ordens_devidas(conta, {nome: registro}, precos, cdi, custo, inicio, capital)],
                       ignore_index=True)
     novas.append(conta[conta["data"] > escrito])
     saida = pd.concat([quadro for quadro in novas if not quadro.empty], ignore_index=True) if any(
@@ -123,12 +128,13 @@ def ordens_devidas(ordens: pd.DataFrame, registro: pd.DataFrame, acoes: Iterable
     return saida.astype({"ordem": "int64"}), feitas
 
 
-def curvas(ordens: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series, capital: float = CAPITAL) -> pd.DataFrame:
+def curvas(ordens: pd.DataFrame, precos: pd.DataFrame, cdi: pd.Series, capital: float = CAPITAL,
+           nomes: tuple[str, str] = (BASE, CONTA)) -> pd.DataFrame:
     """R$ per session of both portfolios and of the Selic on the whole capital, from the first buy."""
     janela = precos.loc[ordens["data"].min():].ffill()
     fator = simulador._fator_do_juro(cdi, janela.index)
     colunas = {carteira: simulador._trilha(ordens[ordens["carteira"] == carteira], janela, fator, capital).valores
-               for carteira in (BASE, CONTA) if carteira in set(ordens["carteira"])}
+               for carteira in nomes if carteira in set(ordens["carteira"])}
     return pd.DataFrame(colunas | {simulador.JURO: capital * fator / fator.iloc[0]})
 
 

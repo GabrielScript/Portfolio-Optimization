@@ -246,7 +246,7 @@ def carregar_sentinela(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULAD
     from core.sentinela import conta, tela
     from core.sentinela.rodada import Arquivos
     arquivos = Arquivos(pasta)
-    ordens = conta.ler(arquivos.ordens)
+    ordens = pd.concat([conta.ler(arquivos.ordens), conta.ler(arquivos.ordens_12_3)], ignore_index=True)
     precos, selic = pd.DataFrame(), pd.Series(dtype=float)
     if not ordens.empty:
         papeis = sorted(ordens["ticker"].unique())

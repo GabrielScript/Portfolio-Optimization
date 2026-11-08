@@ -65,3 +65,18 @@ def test_a_first_answer_asked_again_counts_as_a_call_and_a_cost_but_not_as_a_sca
     painel = tela.painel(arquivos, pd.DataFrame(), pd.Series(dtype=float))
     assert painel.chamadas == 6 and abs(painel.custo_usd - 0.0128) < 1e-9
     assert abs(painel.descartadas - 1 / 4) < 1e-9 and list(painel.alertas["Ação"])[0] == "BBSE3"
+
+
+def test_panel_has_the_12_3_curves_from_its_own_ledger_and_none_before_it_trades(tmp_path):
+    arquivos = Arquivos(tmp_path)
+    _log(arquivos)
+    precos = pd.DataFrame({"PETR4": np.linspace(30, 28, 6), "MUTC34": np.linspace(600, 640, 6)}, index=DIAS)
+    selic = pd.Series(0.0, index=DIAS)
+    assert tela.painel(arquivos, precos, selic).curvas_12_3 is None
+    registro_12_3 = pd.DataFrame({"data": DIAS[1], "ticker": ["PETR4", "MUTC34"], "peso": [0.5, 0.5]})
+    ordens, _ = conta.ordens_devidas(conta.vazio(), registro_12_3, [], precos, selic, lambda ticker, valor: 0.0,
+                                     inicio=DIAS[1], base=conta.BASE_12_3, nome=conta.CONTA_12_3)
+    conta.acrescentar(arquivos.ordens_12_3, ordens)
+    painel = tela.painel(arquivos, precos, selic)
+    assert set(painel.curvas_12_3.columns) == {conta.BASE_12_3, conta.CONTA_12_3, "Selic"}
+    assert painel.curvas is None                                      # the Composite account has not traded here

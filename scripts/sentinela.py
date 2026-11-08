@@ -37,7 +37,7 @@ from core.segredos import segredo  # noqa: E402
 from core.sentinela import calendario, cvm_diaria, documentos, fontes, pontuacao, registro, rodada  # noqa: E402
 from core.sentinela.itens import Item  # noqa: E402
 from core.sentinela.vistos import ler_vistos  # noqa: E402
-from scripts.manutencao import (ARQUIVO_ATIVOS, ARQUIVO_CALENDARIO, ARQUIVO_LIQUIDEZ, ARQUIVO_RECENTES,  # noqa: E402
+from scripts.manutencao import (ARQUIVO_ATIVOS, ARQUIVO_CALENDARIO, ARQUIVO_LIQUIDEZ, ARQUIVO_MISTA, ARQUIVO_RECENTES,  # noqa: E402
                                 ARQUIVO_REGISTRO_V3, PASTA_DO_LAGO, PASTA_ESTADO, Bloqueio, commitar, conferir_checkout,
                                 git_em, pendentes, publicar)
 
@@ -156,6 +156,24 @@ def _conta(raiz: Path, arquivos: rodada.Arquivos, registro_v3: pd.DataFrame, hoj
                                   custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS), INICIO)
 
 
+def _conta_12_3(raiz: Path, arquivos: rodada.Arquivos, hoje: date) -> list[str]:
+    """The "12/3 + Sentinela" account (the user, 2026-11-08); nothing before the 12/3's first record."""
+    from core import top5
+    from core.sentinela import conta
+    registro_12_3 = top5.ler(raiz / ARQUIVO_MISTA)
+    if registro_12_3.empty:
+        return []
+    papeis = sorted(set(registro_12_3["ticker"]))
+    precos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], conta.INICIO_12_3.date(), hoje,
+                                           raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
+    precos = precos.rename(columns=lambda papel: papel.removesuffix(".SA"))
+    if precos.empty or precos.index[-1] < conta.INICIO_12_3:
+        return []
+    foto = pd.read_parquet(raiz / ARQUIVO_LIQUIDEZ) if (raiz / ARQUIVO_LIQUIDEZ).exists() else None
+    return rodada.atualizar_conta_12_3(arquivos, registro_12_3, precos, cdi_lago.daily_selic(1, hoje),
+                                       custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
+
+
 def _pontuacao(raiz: Path, arquivos: rodada.Arquivos, tickers: list[str]) -> None:
     log = registro.ler_log(arquivos.log)
     if log.empty:
@@ -173,7 +191,8 @@ def _publicar(raiz: Path, arquivos: rodada.Arquivos, agora: datetime) -> str:
     except Bloqueio as bloqueio:
         return f"git adiado: {bloqueio}"
     caminhos = [caminho.relative_to(raiz).as_posix() for caminho in
-                (arquivos.vistos, arquivos.log, arquivos.acoes, arquivos.ordens, arquivos.pontuacao)
+                (arquivos.vistos, arquivos.log, arquivos.acoes, arquivos.ordens, arquivos.pontuacao,
+                 arquivos.ordens_12_3, arquivos.executadas_12_3)
                 if caminho.exists()]
     if not pendentes(git, caminhos):
         return "git: nada novo"
@@ -238,6 +257,12 @@ def main(argv: list[str] | None = None) -> int:
     except Exception as erro:                   # noqa: BLE001 - the account waits for the next run
         executadas = []
         falhas.append(f"conta: {type(erro).__name__}: {erro}")
+    try:                                        # a failure here never stops the Composite account
+        executadas_12_3 = _conta_12_3(raiz, arquivos, hoje)
+        if executadas_12_3:
+            print(f"  12/3 + Sentinela: executadas {executadas_12_3}")
+    except Exception as erro:                   # noqa: BLE001 - the 12/3 account waits for the next run
+        falhas.append(f"conta 12/3: {type(erro).__name__}: {erro}")
     try:
         _pontuacao(raiz, arquivos, tickers)
     except Exception as erro:                   # noqa: BLE001

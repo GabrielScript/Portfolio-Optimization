@@ -65,6 +65,21 @@ def secao(painel: PainelSentinela | None) -> None:
         queda.altair_chart(graficos.quedas_em_percentual(quedas(curvas)))
     else:
         st.caption(f"A conta fictícia começa no primeiro fechamento com o agente no ar ({_reais(conta.CAPITAL)}).")
+    st.markdown("**Composto 12/3 + Sentinela (conta fictícia)**")
+    if painel.curvas_12_3 is not None:
+        curvas = painel.curvas_12_3
+        retornos = retornos_recentes(curvas)
+        metricas = st.columns(2)
+        for coluna, nome in zip(metricas, (conta.CONTA_12_3, conta.BASE_12_3)):
+            coluna.metric(nome, _reais(curvas[nome].iloc[-1]),
+                          f"{retornos.loc[nome, 'Desde o início']:+.2%}".replace(".", ","))
+        grafico, queda = st.columns(2)
+        grafico.altair_chart(graficos.curvas_em_reais(curvas))
+        queda.altair_chart(graficos.quedas_em_percentual(quedas(curvas)))
+    else:
+        st.caption(f"Começa no fechamento de {conta.INICIO_12_3:%d/%m/%Y} com {_reais(conta.CAPITAL)}: as 12 ações e os "
+                   "3 BDRs do 12/3, com as mesmas vendas da Sentinela nas ações que ela tiver; os BDRs pagam 15% de "
+                   "Imposto de Renda sobre o ganho.")
     st.markdown("**Alertas (grave e atenção)**")
     if painel.alertas.empty:
         st.caption("Nenhum alerta até agora.")

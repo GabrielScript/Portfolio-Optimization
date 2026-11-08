@@ -678,7 +678,7 @@ def test_the_us_stocks_screen_is_on_standby_while_the_b3_listed_us_assets_stay(a
 SECAO_OPCOES = "## Conta de opções (fictícia)"
 
 
-def _painel_de_opcoes():
+def _painel_de_opcoes(deep=False):
     from core import simulador_opcoes as so
     dias = pd.DatetimeIndex(["2026-11-06", "2026-11-09"])
     livro = pd.DataFrame([{"data": dias[0], "ideia": "A", "ticker": "PETRW285", "ativo": "PETR4", "tipo": "put",
@@ -688,7 +688,7 @@ def _painel_de_opcoes():
                            "strike": None, "vencimento": None, "quantidade": 0, "preco": None, "custo": 0.0,
                            "motivo": "nenhum ativo passou na regra"}])
     marcas = pd.DataFrame({"data": [dias[1]], "ticker": ["PETRW285"], "valor": [0.6], "vencida": [False]})
-    return so.painel(livro, marcas, pd.Series(0.0005, index=dias))
+    return so.painel(livro, marcas, pd.Series(0.0005, index=dias), conta=so.DEEP if deep else so.OPCOES)
 
 
 def test_the_options_account_shows_after_the_simulator_with_its_orders_and_open_options(monkeypatch):
@@ -711,6 +711,32 @@ def test_the_options_account_says_when_it_starts_before_its_first_cycle(monkeypa
     at.run()
     assert not at.exception
     assert any("06/11/2026" in nota.value for nota in at.caption)    # prose, not a blue box
+
+
+SECAO_DEEP = "## Conta de opções deep OTM (fictícia)"
+
+
+def test_the_deep_options_account_shows_under_the_first_one_with_its_own_curve(monkeypatch):
+    # the user, 2026-11-08: a second fictitious options account, deep out of the money
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_opcoes", lambda dia, versao: _painel_de_opcoes())
+    monkeypatch.setattr(servicos, "carregar_opcoes_deep", lambda dia, versao: _painel_de_opcoes(deep=True))
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    titulos = [m.value for m in at.markdown]
+    assert titulos.index(SECAO_OPCOES) < titulos.index(SECAO_DEEP)
+    assert any("Patrimônio da conta de opções deep OTM" in metrica.label for metrica in at.metric)
+
+
+def test_the_deep_options_account_says_when_it_starts_before_its_first_cycle(monkeypatch):
+    _servicos_sinteticos(monkeypatch)
+    monkeypatch.setattr(servicos, "carregar_opcoes", lambda dia, versao: None)
+    monkeypatch.setattr(servicos, "carregar_opcoes_deep", lambda dia, versao: None)
+    at = AppTest.from_file(str(APP), default_timeout=TIMEOUT_S)
+    at.run()
+    assert not at.exception
+    assert any("09/11/2026" in nota.value and "0,85" in nota.value for nota in at.caption)
 
 
 def test_every_table_has_its_filters(monkeypatch):

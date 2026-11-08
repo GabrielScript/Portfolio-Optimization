@@ -42,10 +42,14 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))     # run as a script, only scripts/ is on it
+
+if TYPE_CHECKING:
+    from core.simulador_opcoes import Conta
 
 Git = Callable[..., str]
 
@@ -63,6 +67,8 @@ ARQUIVO_MISTA = Path("simulador/mista_12_3.csv")       # the 12/3 account's reco
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious options account's ledger (DECISOES 259)
 ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
+ARQUIVOS_OPCOES = (ARQUIVO_OPCOES, ARQUIVO_MARCAS_OPCOES)
+ARQUIVOS_DEEP = (Path("simulador/opcoes_deep.csv"), Path("simulador/opcoes_deep_marcas.csv"))   # the deep OTM account
 ARQUIVO_CADEIA = Path("data/b3lake/option_chain_recent.parquet")   # the lake's recent option chains (outside git)
 PASTA_DEEPSEEK = Path("deepseek")                         # the DeepSeek portfolio's record and opinions (DECISOES 240)
 ARQUIVO_DEEPSEEK = PASTA_DEEPSEEK / "carteira.csv"
@@ -426,9 +432,10 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
                                     custo_com_liquidez(foto, simulador.CUSTOS, simulador.CUSTO_BPS))
 
 
-def opcoes_devidas(raiz: Path, hoje: date, livro: pd.DataFrame, marcas: pd.DataFrame
-                   ) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """The options account's cycles and marks due on the lake's recent chains (``core.simulador_opcoes``)."""
+def opcoes_devidas(raiz: Path, hoje: date, livro: pd.DataFrame, marcas: pd.DataFrame,
+                   conta: Conta | None = None) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """An options account's cycles and marks due on the lake's recent chains (``core.simulador_opcoes``; ``conta``
+    None: the first account, "Opções")."""
     from core import cdi_lago, precos_do_app, simulador_opcoes
     cadeia = pd.read_parquet(raiz / ARQUIVO_CADEIA)
     cadeia["date"], cadeia["expiry"] = pd.to_datetime(cadeia["date"]), pd.to_datetime(cadeia["expiry"])
@@ -440,28 +447,32 @@ def opcoes_devidas(raiz: Path, hoje: date, livro: pd.DataFrame, marcas: pd.DataF
                                                 raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
     fechamentos = fechamentos.rename(columns=lambda papel: papel.removesuffix(".SA"))
     selic = cdi_lago.daily_selic(2, hoje)
-    return simulador_opcoes.atualizacao(livro, marcas, cadeia, fechamentos, acoes, selic)
+    return simulador_opcoes.atualizacao(livro, marcas, cadeia, fechamentos, acoes, selic,
+                                        conta or simulador_opcoes.OPCOES)
 
 
 def atualizar_opcoes(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame, pd.DataFrame],
-                                                              tuple[pd.DataFrame, pd.DataFrame]]) -> str:
-    """Appends the options account's new orders and marks and commits both files (also rows a failed commit left)."""
+                                                              tuple[pd.DataFrame, pd.DataFrame]],
+                     arquivos: tuple[Path, Path] = ARQUIVOS_OPCOES, rotulo: str = "opções") -> str:
+    """Appends an options account's new orders and marks to its two ``arquivos`` (ledger, marks) and commits both
+    (also rows a failed commit left)."""
     from core.simulador_opcoes import COLUNAS, COLUNAS_MARCAS, acrescentar, ler
-    livro = ler(raiz / ARQUIVO_OPCOES, COLUNAS, ["data", "vencimento"])
-    marcas = ler(raiz / ARQUIVO_MARCAS_OPCOES, COLUNAS_MARCAS, ["data"])
+    arquivo_livro, arquivo_marcas = arquivos
+    livro = ler(raiz / arquivo_livro, COLUNAS, ["data", "vencimento"])
+    marcas = ler(raiz / arquivo_marcas, COLUNAS_MARCAS, ["data"])
     novas, novas_marcas = devidas(livro, marcas)
-    for arquivo, linhas in ((ARQUIVO_OPCOES, novas), (ARQUIVO_MARCAS_OPCOES, novas_marcas)):
+    for arquivo, linhas in ((arquivo_livro, novas), (arquivo_marcas, novas_marcas)):
         if not linhas.empty:
             acrescentar(raiz / arquivo, linhas)
-    caminhos = [ARQUIVO_OPCOES.as_posix(), ARQUIVO_MARCAS_OPCOES.as_posix()]
+    caminhos = [arquivo_livro.as_posix(), arquivo_marcas.as_posix()]
     if not pendentes(git, caminhos):
-        return "opções: em dia"
+        return f"{rotulo}: em dia"
     datas = [ler(raiz / arquivo, colunas, ["data"])["data"].max()
-             for arquivo, colunas in ((ARQUIVO_OPCOES, COLUNAS), (ARQUIVO_MARCAS_OPCOES, COLUNAS_MARCAS))]
+             for arquivo, colunas in ((arquivo_livro, COLUNAS), (arquivo_marcas, COLUNAS_MARCAS))]
     fim = f"{max(pd.Timestamp(data) for data in datas if pd.notna(data)):%d/%m/%Y}"
     commitar(git, [caminho for caminho in caminhos if (raiz / caminho).exists()],
-             f"data: conta de opções até {fim} (manutenção)")
-    return f"opções: até {fim}"
+             f"data: conta de {rotulo} até {fim} (manutenção)")
+    return f"{rotulo}: até {fim}"
 
 
 def atualizar_simulador(raiz: Path, git: Git, devidas: Callable[[pd.DataFrame], pd.DataFrame],
@@ -539,14 +550,16 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              parecer_deepseek: Callable[[], str] | None = None,
              opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
              top5: Callable[[pd.Timestamp], pd.Series] | None = None,
-             mista: Callable[[pd.Timestamp], pd.Series] | None = None) -> Resultado:
+             mista: Callable[[pd.Timestamp], pd.Series] | None = None,
+             opcoes_deep: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None
+             ) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
     the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step);
     ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step); ``simular``: the account's orders
     due for its ledger (None: no simulator step); ``top5``: the Top-5 weights of a Composite record's close (None: no
-    Top-5 record step)."""
+    Top-5 record step); ``opcoes`` / ``opcoes_deep``: the two options accounts' due rows (None: no such step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -575,6 +588,9 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
     if opcoes is not None:
         passos.append(("opções", lambda: atualizar_opcoes(raiz, git, opcoes)))
+    if opcoes_deep is not None:
+        passos.append(("opções deep OTM",
+                       lambda: atualizar_opcoes(raiz, git, opcoes_deep, ARQUIVOS_DEEP, "opções deep OTM")))
     if gerar_curvas is not None:
         passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
@@ -695,6 +711,11 @@ def _pesos_do_top5(data: pd.Timestamp) -> pd.Series:
     return top5.pesos_do_dia(data)
 
 
+def _conta_deep():
+    from core.simulador_opcoes import DEEP
+    return DEEP
+
+
 def _pesos_da_mista(data: pd.Timestamp) -> pd.Series:
     from core import mista
     return mista.pesos_do_dia(data)
@@ -711,6 +732,8 @@ def main() -> int:
                          simular=lambda ordens: ordens_do_simulador(RAIZ, agora.date(), ordens),
                          alertar=alertar_por_email, parecer_deepseek=rodar_parecer_deepseek,
                          opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas),
+                         opcoes_deep=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas,
+                                                                          _conta_deep()),
                          top5=_pesos_do_top5, mista=_pesos_da_mista)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)

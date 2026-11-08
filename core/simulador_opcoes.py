@@ -28,6 +28,22 @@ COLUNAS = ["data", "ideia", "ticker", "ativo", "tipo", "strike", "vencimento", "
            "motivo"]
 COLUNAS_MARCAS = ["data", "ticker", "valor", "vencida"]
 IDEIAS = {"A": ("put", 0.95), "B": ("call", 1.05)}
+BANDA = 0.03                                 # x the close around the target strike; outside it, never bought
+
+
+@dataclass(frozen=True)
+class Conta:
+    """One fictitious options account: its name on the screen, its first cycle, each idea's option type and target
+    strike (x the stock's close) and the band around the target (spec ``2026-11-08-opcoes-deep-otm-design.md``)."""
+
+    nome: str
+    inicio: pd.Timestamp
+    ideias: dict[str, tuple[str, float]]
+    banda: float
+
+
+OPCOES = Conta("Opções", INICIO, IDEIAS, BANDA)
+DEEP = Conta("Opções deep OTM", pd.Timestamp("2026-11-09"), {"A": ("put", 0.85), "B": ("call", 1.15)}, 0.05)
 
 
 def ciclos(pregoes: pd.DatetimeIndex, inicio: pd.Timestamp = INICIO) -> list[pd.Timestamp]:
@@ -65,47 +81,52 @@ def ideia_b(fechamentos: pd.DataFrame, candidatos: list[str]) -> str | None:
     return str(momento.idxmax())
 
 
-def contrato(cadeia: pd.DataFrame, ativo: str, tipo: str, fator: float) -> pd.Series | None:
-    """The option of ``ativo`` that traded with an ask, on the expiry nearest 21 business days within [10, 45] (ties:
-    the earlier), at the strike nearest ``fator`` x the stock's close (ties: the lower strike)."""
+def contrato(cadeia: pd.DataFrame, ativo: str, tipo: str, fator: float, banda: float = BANDA) -> pd.Series | None:
+    """The option of ``ativo`` that traded with a real two-sided quote and a strike within ``fator`` +- ``banda`` x
+    the stock's close, on the expiry nearest 21 business days within [10, 45] (ties: the earlier): the one with the
+    largest traded volume that day (ties: the strike nearest ``fator`` x the close, then the lower strike)."""
     opcoes = cadeia[(cadeia["underlying"] == ativo) & (cadeia["option_type"] == tipo) & (cadeia["trades"] > 0)
                     & (cadeia["best_bid"] > 0) & (cadeia["best_ask"] >= cadeia["best_bid"])
                     & (cadeia["best_ask"] <= ASK_MAXIMO * cadeia["best_bid"])
-                    & cadeia["du"].between(DU_MIN, DU_MAX)]
+                    & cadeia["du"].between(DU_MIN, DU_MAX)
+                    & cadeia["strike"].between((fator - banda) * cadeia["spot_close"],
+                                               (fator + banda) * cadeia["spot_close"])]
     if opcoes.empty:
         return None
     opcoes = opcoes.assign(dist_du=(opcoes["du"] - DU_ALVO).abs())
     vencimento = opcoes.sort_values(["dist_du", "expiry"])["expiry"].iloc[0]
     opcoes = opcoes[opcoes["expiry"] == vencimento]
     opcoes = opcoes.assign(dist_k=(opcoes["strike"] - fator * opcoes["spot_close"]).abs())
-    return opcoes.sort_values(["dist_k", "strike"]).iloc[0]
+    return opcoes.sort_values(["volume_brl", "dist_k", "strike"], ascending=[False, True, True]).iloc[0]
 
 
 def ordens_do_ciclo(data: pd.Timestamp, cadeia: pd.DataFrame, fechamentos: pd.DataFrame, acoes: list[str],
-                    patrimonio: float) -> pd.DataFrame:
+                    patrimonio: float, conta: Conta = OPCOES) -> pd.DataFrame:
     """One ledger row per idea for the cycle on ``data`` (``cadeia`` = that session's option rows, ``fechamentos`` =
     total-return closes up to ``data``, ``acoes`` = the universe's stocks): the order, or quantity 0 and the reason."""
     dia = cadeia[cadeia["date"] == data]
     liquidos = sorted(set(dia.loc[dia["underlying_volume_21"] >= VOLUME_MINIMO, "underlying"]) & set(acoes))
     escolhas = {"A": ideia_a(fechamentos.loc[:data], liquidos), "B": ideia_b(fechamentos.loc[:data], liquidos)}
-    verba = patrimonio * ORCAMENTO / len(IDEIAS)
+    verba = patrimonio * ORCAMENTO / len(conta.ideias)
     linhas = []
-    for ideia, (tipo, fator) in IDEIAS.items():
+    for ideia, (tipo, fator) in conta.ideias.items():
         linha = dict.fromkeys(COLUNAS, None) | {"data": data, "ideia": ideia, "tipo": tipo, "quantidade": 0,
                                                 "custo": 0.0, "motivo": ""}
         ativo = escolhas[ideia]
-        escolhido = None if ativo is None else contrato(dia, ativo, tipo, fator)
+        escolhido = None if ativo is None else contrato(dia, ativo, tipo, fator, conta.banda)
         if ativo is None:
             linha["motivo"] = "nenhum ativo passou na regra"
         elif escolhido is None:
             linha |= {"ativo": ativo, "motivo": "sem opção negociada no prazo"}
         else:
-            preco = float(escolhido["best_ask"])
-            quantidade = int(verba // (preco * LOTE)) * LOTE
+            preco, negociado = float(escolhido["best_ask"]), float(escolhido["volume_brl"])
+            quantidade = int(min(verba, negociado) // (preco * LOTE)) * LOTE     # never above the day's volume
+            lote = preco * LOTE
+            motivo = ("" if quantidade else f"um lote custa R$ {lote:,.2f}, acima da verba" if lote > verba
+                      else f"um lote custa R$ {lote:,.2f}, acima do volume negociado no dia (R$ {negociado:,.2f})")
             linha |= {"ticker": escolhido["ticker"], "ativo": ativo, "strike": float(escolhido["strike"]),
                       "vencimento": escolhido["expiry"], "preco": preco, "quantidade": quantidade,
-                      "custo": quantidade * preco * EMOLUMENTOS,
-                      "motivo": "" if quantidade else f"um lote custa R$ {preco * LOTE:,.2f}, acima da verba"}
+                      "custo": quantidade * preco * EMOLUMENTOS, "motivo": motivo}
         linhas.append(linha)
     return pd.DataFrame(linhas, columns=COLUNAS)
 
@@ -144,10 +165,11 @@ def marcas_devidas(livro: pd.DataFrame, cadeia: pd.DataFrame, feitas: pd.DataFra
 
 
 def atualizacao(livro: pd.DataFrame, marcas: pd.DataFrame, cadeia: pd.DataFrame, fechamentos: pd.DataFrame,
-                acoes: list[str], selic: pd.Series, inicio: pd.Timestamp = INICIO,
+                acoes: list[str], selic: pd.Series, conta: Conta = OPCOES,
                 capital: float = CAPITAL) -> tuple[pd.DataFrame, pd.DataFrame]:
-    """The ledger rows and marks to append: every cycle in ``cadeia``'s sessions after the last one traded (the
-    account's value that day sizes its budget), then the marks of everything bought."""
+    """The ledger rows and marks to append to ``conta``'s files: every cycle from its first one in ``cadeia``'s
+    sessions after the last one traded (the account's value that day sizes its budget), then the marks of everything
+    bought."""
     pregoes = pd.DatetimeIndex(sorted(pd.to_datetime(cadeia["date"].unique())))
     ultimo = pd.to_datetime(livro["data"]).max() if len(livro) else None
     novas_ordens, novas_marcas = [], []
@@ -157,7 +179,7 @@ def atualizacao(livro: pd.DataFrame, marcas: pd.DataFrame, cadeia: pd.DataFrame,
         feitas = pd.concat([marcas, *novas_marcas]) if novas_marcas else marcas
         novas_marcas.append(marcas_devidas(livro, trecho, feitas))
 
-    for dia in ciclos(pregoes, inicio):
+    for dia in ciclos(pregoes, conta.inicio):
         if ultimo is not None and dia <= ultimo:
             continue
         marcar(dia)
@@ -165,7 +187,7 @@ def atualizacao(livro: pd.DataFrame, marcas: pd.DataFrame, cadeia: pd.DataFrame,
         if len(livro):
             todas = pd.concat([marcas, *novas_marcas])
             patrimonio = float(curva(livro, todas, selic, pregoes[pregoes <= dia], capital).iloc[-1])
-        ordens = ordens_do_ciclo(dia, cadeia, fechamentos, acoes, patrimonio)
+        ordens = ordens_do_ciclo(dia, cadeia, fechamentos, acoes, patrimonio, conta)
         livro = ordens if livro.empty else pd.concat([livro, ordens], ignore_index=True)
         novas_ordens.append(ordens)
     marcar(None)
@@ -177,17 +199,18 @@ def atualizacao(livro: pd.DataFrame, marcas: pd.DataFrame, cadeia: pd.DataFrame,
 class PainelOpcoes:
     """What the screen shows."""
 
-    curvas: pd.DataFrame        # "Opções" and "Selic" in R$ per session from the first cycle
+    curvas: pd.DataFrame        # the account's name and "Selic" in R$ per session from the first cycle
     ordens: pd.DataFrame        # every cycle's row, with the reason when nothing was bought
     abertas: pd.DataFrame       # options not expired yet, at their last mark
 
 
-def painel(livro: pd.DataFrame, marcas: pd.DataFrame, selic: pd.Series, capital: float = CAPITAL) -> PainelOpcoes:
+def painel(livro: pd.DataFrame, marcas: pd.DataFrame, selic: pd.Series, capital: float = CAPITAL,
+           conta: Conta = OPCOES) -> PainelOpcoes:
     """The account on the Selic's sessions from its first cycle (the Selic is the account's cash and its reference)."""
     pregoes = selic.index[selic.index >= pd.to_datetime(livro["data"]).min()]
     contas = curva(livro, marcas, selic, pregoes, capital)
     fator = (1.0 + selic.reindex(pregoes).fillna(0.0)).cumprod()
-    curvas = pd.DataFrame({"Opções": contas, "Selic": capital * fator / fator.iloc[0]})
+    curvas = pd.DataFrame({conta.nome: contas, "Selic": capital * fator / fator.iloc[0]})
     ordens = livro.rename(columns={"data": "Data", "ideia": "Ideia", "ticker": "Opção", "ativo": "Ação",
                                    "tipo": "Tipo", "strike": "Strike", "vencimento": "Vencimento",
                                    "quantidade": "Qtd.", "preco": "Prêmio (R$)", "custo": "Custo (R$)",

@@ -623,6 +623,21 @@ def test_the_options_step_appends_orders_and_marks_commits_both_and_then_is_up_t
     assert vistos[0][0]["ticker"].tolist() == ["PETRW300"] and vistos[0][1]["valor"].tolist() == [0.6]
 
 
+def test_the_deep_options_step_writes_and_commits_its_own_two_files(app):
+    from core.simulador_opcoes import COLUNAS
+    from scripts.manutencao import ARQUIVOS_DEEP, ARQUIVO_OPCOES, atualizar_opcoes, git_em
+    git = git_em(app)
+    ordem = pd.DataFrame([dict.fromkeys(COLUNAS, None) | {"data": pd.Timestamp("2026-11-09"), "ideia": "A",
+                                                          "ticker": "PETRW250", "quantidade": 100, "preco": 0.05}])
+    marca = pd.DataFrame([{"data": pd.Timestamp("2026-11-10"), "ticker": "PETRW250", "valor": 0.04, "vencida": False}])
+    assert atualizar_opcoes(app, git, lambda _livro, _marcas: (ordem, marca), ARQUIVOS_DEEP, "opções deep OTM") == (
+        "opções deep OTM: até 10/11/2026")
+    assert git("log", "-1", "--format=%s") == "data: conta de opções deep OTM até 10/11/2026 (manutenção)"
+    assert sorted(git("show", "--name-only", "--format=", "HEAD").splitlines()) == sorted(
+        caminho.as_posix() for caminho in ARQUIVOS_DEEP)
+    assert not (app / ARQUIVO_OPCOES).exists()                              # the first account's ledger untouched
+
+
 def test_the_simulator_step_emails_the_new_orders_and_a_failed_email_keeps_the_commit(app):
     # DECISOES 240: every buy or sell of the fictitious account goes to the user's email
     from scripts.manutencao import atualizar_simulador, git_em
@@ -833,3 +848,14 @@ def test_a_run_with_the_12_3_step_records_it_before_the_simulator_trades(app):
                          pd.DataFrame(), mista=_doze_e_tres)
     assert resultado.desfecho == "ok" and vistos == [True]
     assert resultado.nota.index("12/3: registro de 27/10/2026") < resultado.nota.index("simulador:")
+
+
+def test_a_run_updates_the_deep_options_account_right_after_the_first_one(app):
+    from core.simulador_opcoes import COLUNAS, COLUNAS_MARCAS
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    nada = (pd.DataFrame(columns=COLUNAS), pd.DataFrame(columns=COLUNAS_MARCAS))
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 9, 22, 30), lambda: _saida(10),
+                         opcoes=lambda _livro, _marcas: nada, opcoes_deep=lambda _livro, _marcas: nada)
+    assert resultado.desfecho == "ok"
+    assert resultado.nota.index("opções: em dia") < resultado.nota.index("opções deep OTM: em dia")

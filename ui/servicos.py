@@ -203,19 +203,32 @@ def carregar_simulador(dia: date, versao_dados: int, arquivo: Path = ARQUIVO_SIM
                             carregar_selic_diaria(dia.year - simulador.INICIO.year + 1, dia))
 
 
+def _painel_de_opcoes(dia: date, pasta: Path, conta: simulador_opcoes.Conta, nome: str
+                      ) -> simulador_opcoes.PainelOpcoes | None:
+    """An options account from its ledger ``nome.csv`` and marks ``nome_marcas.csv``; None before its first cycle.
+    Without the Selic the cash shows no interest (business days stand in for its sessions)."""
+    livro = simulador_opcoes.ler(pasta / f"{nome}.csv", simulador_opcoes.COLUNAS, ["data", "vencimento"])
+    if livro.empty:
+        return None
+    marcas = simulador_opcoes.ler(pasta / f"{nome}_marcas.csv", simulador_opcoes.COLUNAS_MARCAS, ["data"])
+    selic = carregar_selic_diaria(dia.year - conta.inicio.year + 1, dia)
+    if selic.empty:
+        selic = pd.Series(0.0, index=pd.bdate_range(livro["data"].min(), pd.Timestamp(dia)))
+    return simulador_opcoes.painel(livro, marcas, selic, conta=conta)
+
+
 @st.cache_data(ttl=3600, show_spinner=False)
 def carregar_opcoes(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULADOR
                     ) -> simulador_opcoes.PainelOpcoes | None:
-    """The fictitious options account from its ledger and marks; None before its first cycle. Without the Selic the
-    cash shows no interest (business days stand in for its sessions)."""
-    livro = simulador_opcoes.ler(pasta / "opcoes.csv", simulador_opcoes.COLUNAS, ["data", "vencimento"])
-    if livro.empty:
-        return None
-    marcas = simulador_opcoes.ler(pasta / "opcoes_marcas.csv", simulador_opcoes.COLUNAS_MARCAS, ["data"])
-    selic = carregar_selic_diaria(dia.year - simulador_opcoes.INICIO.year + 1, dia)
-    if selic.empty:
-        selic = pd.Series(0.0, index=pd.bdate_range(livro["data"].min(), pd.Timestamp(dia)))
-    return simulador_opcoes.painel(livro, marcas, selic)
+    """The first fictitious options account ("Opções", DECISOES 259)."""
+    return _painel_de_opcoes(dia, pasta, simulador_opcoes.OPCOES, "opcoes")
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_opcoes_deep(dia: date, versao_dados: int, pasta: Path = PASTA_SIMULADOR
+                         ) -> simulador_opcoes.PainelOpcoes | None:
+    """The deep out-of-the-money options account (spec ``2026-11-08-opcoes-deep-otm-design.md``)."""
+    return _painel_de_opcoes(dia, pasta, simulador_opcoes.DEEP, "opcoes_deep")
 
 
 ARQUIVO_FORMULAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "formulas-testadas-b3.parquet"

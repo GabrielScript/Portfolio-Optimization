@@ -67,6 +67,23 @@ def test_a_bid_with_no_ask_is_never_bought():
     assert so.contrato(cadeia, "ALTA3", "put", 0.95)["ticker"] == "ALTAW280"
 
 
+def test_a_strike_outside_the_band_is_never_bought_however_near():
+    # the fixed 06/11 dry run: every near VAMO3 call was one-sided, and "nearest 1.05" took a strike 22% away
+    cadeia = pd.DataFrame([
+        _linha("VAMOK276", "VAMO3", "call", 2.76, "2026-11-19", 13, 0.13, 0.10, 0.0, spot=2.67),
+        _linha("VAMOK34", "VAMO3", "call", 3.26, "2026-11-19", 13, 0.03, 0.02, 0.03, spot=2.67)])
+    assert so.contrato(cadeia, "VAMO3", "call", 1.05) is None
+
+
+def test_inside_the_band_the_most_traded_strike_wins_then_the_nearest_the_target():
+    cadeia = pd.DataFrame([
+        _linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55) | {"volume_brl": 300.0},
+        _linha("ALTAW280", "ALTA3", "put", 28.0, "2026-12-04", 20, 0.40, 0.35, 0.42) | {"volume_brl": 9_000.0},
+        _linha("ALTAW288", "ALTA3", "put", 28.8, "2026-12-04", 20, 0.60, 0.55, 0.65) | {"volume_brl": 9_000.0}])
+    # 28.5 is the nearest but traded R$ 300; of the two most traded, 28.8 is nearer the target than 28.0
+    assert so.contrato(cadeia, "ALTA3", "put", 0.95)["ticker"] == "ALTAW288"
+
+
 def test_a_cycle_spends_half_the_budget_per_idea_in_lots_of_100_or_records_why_not():
     cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55),
                            _linha("VOLAL315", "VOLA3", "call", 31.5, "2026-12-04", 20, 9.0, 8.0, 9.0)])
@@ -76,6 +93,28 @@ def test_a_cycle_spends_half_the_budget_per_idea_in_lots_of_100_or_records_why_n
     assert put["custo"] == pytest.approx(900 * 0.55 * so.EMOLUMENTOS)
     call = ordens.set_index("ideia").loc["B"]
     assert call["quantidade"] == 0 and "lote" in call["motivo"]                  # one lot is R$ 900 > R$ 500
+
+
+def test_an_order_never_buys_more_than_the_option_traded_that_day():
+    cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55)
+                           | {"volume_brl": 200.0},
+                           _linha("VOLAL315", "VOLA3", "call", 31.5, "2026-12-04", 20, 0.05, 0.04, 0.05)
+                           | {"volume_brl": 4.0}])
+    ordens = so.ordens_do_ciclo(DIA, cadeia, _fechamentos(), ["ALTA3", "VOLA3", "CALM3"],
+                                patrimonio=10_000.0).set_index("ideia")
+    assert ordens.loc["A", "quantidade"] == 300                  # R$ 200 traded / R$ 55 a lot: 3 lots, not 9
+    assert ordens.loc["B", "quantidade"] == 0 and "volume" in ordens.loc["B", "motivo"]   # one lot is R$ 5 > R$ 4
+
+
+def test_the_deep_account_buys_the_same_names_at_strikes_near_0_85_and_1_15():
+    cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55),
+                           _linha("ALTAW255", "ALTA3", "put", 25.5, "2026-12-04", 20, 0.05, 0.04, 0.05),
+                           _linha("VOLAL315", "VOLA3", "call", 31.5, "2026-12-04", 20, 0.60, 0.55, 0.65),
+                           _linha("VOLAL345", "VOLA3", "call", 34.5, "2026-12-04", 20, 0.06, 0.05, 0.06)])
+    ordens = so.ordens_do_ciclo(DIA, cadeia, _fechamentos(), ["ALTA3", "VOLA3", "CALM3"], patrimonio=10_000.0,
+                                conta=so.DEEP).set_index("ideia")
+    assert list(ordens["ticker"]) == ["ALTAW255", "VOLAL345"]
+    assert so.DEEP.inicio == pd.Timestamp("2026-11-09") and so.OPCOES.inicio == so.INICIO
 
 
 def test_marks_follow_the_mid_then_the_intrinsic_value_on_expiry():
@@ -119,11 +158,23 @@ def test_an_update_trades_each_pending_cycle_once_and_marks_what_it_bought():
                                   data=proximo)])
     vazio = (pd.DataFrame(columns=so.COLUNAS), pd.DataFrame(columns=so.COLUNAS_MARCAS))
     selic = pd.Series(0.0, index=pd.DatetimeIndex([DIA, proximo]))
-    ordens, marcas = so.atualizacao(*vazio, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic, inicio=DIA)
+    ordens, marcas = so.atualizacao(*vazio, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic)
     assert ordens["data"].tolist() == [DIA, DIA] and ordens["quantidade"].tolist() == [900, 0]
     assert marcas["data"].tolist() == [proximo] and marcas["valor"].tolist() == [pytest.approx(0.60)]
-    ordens2, marcas2 = so.atualizacao(ordens, marcas, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic, inicio=DIA)
+    ordens2, marcas2 = so.atualizacao(ordens, marcas, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic)
     assert ordens2.empty and marcas2.empty                                                   # nothing twice
+
+
+def test_the_deep_account_s_update_starts_on_its_own_first_cycle_at_its_own_strikes():
+    proximo = pd.Timestamp("2026-11-09")
+    cadeia = pd.DataFrame([_linha("ALTAW255", "ALTA3", "put", 25.5, "2026-12-04", 20, 0.05, 0.04, 0.05),
+                           _linha("ALTAW255", "ALTA3", "put", 25.5, "2026-12-04", 19, 0.06, 0.05, 0.06,
+                                  data=proximo)])
+    vazio = (pd.DataFrame(columns=so.COLUNAS), pd.DataFrame(columns=so.COLUNAS_MARCAS))
+    selic = pd.Series(0.0, index=pd.DatetimeIndex([DIA, proximo]))
+    ordens, _ = so.atualizacao(*vazio, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic, conta=so.DEEP)
+    assert ordens["data"].tolist() == [proximo, proximo]                              # 06/11 is before its start
+    assert ordens.set_index("ideia").loc["A", "ticker"] == "ALTAW255"
 
 
 def test_the_panel_shows_the_curve_beside_the_selic_the_orders_and_the_open_options():
@@ -142,6 +193,8 @@ def test_the_panel_shows_the_curve_beside_the_selic_the_orders_and_the_open_opti
     assert painel.ordens["Motivo"].tolist() == ["", "nenhum ativo passou na regra"]
     aberta = painel.abertas.iloc[0]
     assert aberta["Opção"] == "X" and aberta["Valor (R$)"] == pytest.approx(70.0)
+    profundo = so.painel(livro, marcas, pd.Series(0.001, index=dias), capital=1_000.0, conta=so.DEEP)
+    assert profundo.curvas.columns.tolist() == ["Opções deep OTM", "Selic"]
 
 
 def test_a_loss_is_carried_and_offsets_the_next_gain_before_any_tax():

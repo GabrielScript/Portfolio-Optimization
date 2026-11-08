@@ -69,3 +69,12 @@ So a deep account at about R$ 500 per idea can fill most months on the chosen na
   reading says so. N of the research count does not change (a forward account, no historical selection).
 - Advisor review of the order logic (CLAUDE.md): the advisor was unavailable on 08/11 (the user turned it off after a
   usage error); to be asked when it is back, before the reading.
+
+## Dry run while building (2026-11-08, nothing recorded, nothing changed by it)
+
+- The plumbing ran on each of the chain's 30 sessions (2026-09-24 to 2026-11-06) as if each were a cycle: an order
+  in 29 of 60 ideas for "Opções" and 30 of 60 for the deep account (the chosen name often has no option with a real
+  two-sided quote inside the band). So about one idea in two will buy; a cycle with none stays in the Selic, and the
+  reading counts these cycles. No fallback to another name was added: the ideas stay the user's.
+- On 06/11 neither account would buy (ASAI3's puts and VAMO3's calls had no valid quote inside the bands); the
+  upkeep of 09/11 records that cycle for "Opções" with its reasons, and the deep account's first cycle is 09/11.

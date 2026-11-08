@@ -104,6 +104,7 @@ def main() -> None:
         ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
     with aparencia.painel("opcoes"):
         ui_opcoes.secao(servicos.carregar_opcoes(date.today(), precos_do_app.versao_dos_dados()))
+        ui_opcoes.secao_deep(servicos.carregar_opcoes_deep(date.today(), precos_do_app.versao_dos_dados()))
     with aparencia.painel("sentinela"):
         ui_sentinela.secao(servicos.carregar_sentinela(date.today(), precos_do_app.versao_dos_dados()))
     if MOSTRAR_ACOES_EUA:

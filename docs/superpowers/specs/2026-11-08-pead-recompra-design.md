@@ -108,3 +108,12 @@ m's universe, 2012-01 to 2026-09.
 - A signal that fails stage A: its arm is not run; the line is closed. No retuning of the windows, thresholds or
   text rules after a reading.
 - Output: `docs/pead-recompra-2026-11-08.txt` and DECISOES entries. Nothing goes to the app.
+
+## Addendum 1 (before any return of either signal was computed)
+
+Section 2 assumed one issuer per CVM code. The frozen fundamentals file gives 26 CVM codes two or three issuer roots,
+the lake's way of keeping a renamed company's old and new tickers (KROT/COGN, ESTC/YDUQ, VVAR/BHIA, BRDT/VBBR, BRTO/
+OIBR/TEPR, ...), each with the code's full history. Fixed: a filing belongs to **every** issuer of its CVM code; the
+event dating, the one-per-63-sessions rule and the event study run per issuer, and only a root with a class in the
+month's universe can enter (section 4), so a rename resolves itself. Found while freezing the rows, from the mapping
+alone; no price or return had been read.

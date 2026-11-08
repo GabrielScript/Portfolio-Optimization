@@ -9,7 +9,7 @@ The amount follows the user's rule of 2026-11-06 (DECISOES 283, ``valor_do_aport
 "Composto + Sentinela" account's last close (R$ 10,000 at the start): no buy below R$ 11,000; it also prints the alpha against "Composto (base)".
 
 Usage: python -X utf8 scripts/aporte_real.py [--saldo 12800] [--valor 500] [--dia 2026-12-19]
-The quotes are the last closes in the app's price files; run it on the day, before the auction (16:55-17:00).
+The quotes are the last closes in the app's price files; run it on the day, before the closing call (17:55-18:00).
 ``--saldo`` replaces the account's balance, ``--valor`` the rule's amount.
 """
 
@@ -32,6 +32,9 @@ from core.risco import LIMITES  # noqa: E402
 ARQUIVO_REGISTRO = Path("paper-v3/composto.csv")
 LOTE = 100
 ORDEM = "compra no leilão de fechamento"
+# B3's hours since 03/11/2026 (B3 page, checked 06/11, DECISOES 244): stocks and the fractional market trade until
+# 17:55, closing call 17:55-18:00. B3 moves its hours when the US changes clocks: check its page before each buy.
+LEILAO, ANTES_DO_LEILAO = "17h55-18h", "17h50"
 FAIXAS = ((13_000.0, 1_000.0), (12_500.0, 750.0), (11_000.0, 500.0))     # (balance from, amount): the user, 2026-11-06
 CONTA = "Composto + Sentinela"
 BASE = "Composto (base)"
@@ -95,11 +98,12 @@ def _markdown(dia: date, registrada: pd.Timestamp, ultimo: pd.Timestamp, tabela:
               orcamento: float) -> str:
     linhas = [f"# Aporte real de {dia:%d/%m/%Y}: R$ {_br(orcamento)} na Composite", "",
               f"Registro da Composite: {registrada:%d/%m/%Y}. Cotações de referência: fechamento de {ultimo:%d/%m/%Y}.",
-              "Todas as ordens no leilão de fechamento da B3 (16h55-17h), tipo \"ordem no fechamento\" na corretora; "
+              f"Todas as ordens no leilão de fechamento da B3 ({LEILAO}), tipo \"ordem no fechamento\" na corretora; "
               "lote de 100 no mercado padrão, o resto no fracionário (ticker com F). A quantidade é a de referência: se o "
               "preço do dia mudar muito, rode o script de novo antes do leilão.",
               "Confirme na corretora que o fracionário aceita \"ordem no fechamento\"; se não aceitar, use ordem "
-              "limitada ao último preço pouco antes das 16h55 (o preço fica perto do fechamento, mas não igual).", "",
+              f"limitada ao último preço por volta das {ANTES_DO_LEILAO} (o preço fica perto do fechamento, mas não "
+              "igual). Confira o horário do leilão no site da B3 no dia.", "",
               "| Ativo | Quantidade | Preço de referência (R$) | Valor (R$) |", "|---|---:|---:|---:|"]
     linhas += [f"| {linha['Ativo']} | {linha['Quantidade']} | {_br(linha['Preço de referência (R$)'])} | "
                f"{_br(linha['Valor (R$)'])} |" for _, linha in tabela.iterrows()]

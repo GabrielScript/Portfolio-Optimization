@@ -45,3 +45,15 @@ def test_before_the_sentinela_account_has_a_close_the_script_says_so_instead_of_
     for painel in (None, SimpleNamespace(curvas=None)):
         with pytest.raises(SystemExit, match="ainda não tem saldo"):
             saldo_da_conta(date(2026, 11, 6), carregar=lambda dia, versao, painel=painel: painel)
+
+
+def test_the_ticket_tells_the_closing_call_of_b3_s_hours_since_03_11_2026():
+    # B3's page, checked 06/11 (DECISOES 244, 271): stocks and the fractional market trade 10:00-17:55, closing call
+    # 17:55-18:00; the ticket said 16h55-17h, an hour early for the 19/12 buy
+    from datetime import date
+    pesos = pd.Series(1 / 3, index=["AAAA3", "BBBB4", "CCCC3"])
+    cotacoes = pd.Series({"AAAA3": 10.0, "BBBB4": 20.0, "CCCC3": 160.0})
+    tabela, plano = aporte_real.boleta(pesos, cotacoes, 500.0)
+    texto = aporte_real._markdown(date(2026, 12, 19), pd.Timestamp("2026-10-27"), pd.Timestamp("2026-12-18"), tabela,
+                                  plano, 500.0)
+    assert "17h55-18h" in texto and "16h55" not in texto

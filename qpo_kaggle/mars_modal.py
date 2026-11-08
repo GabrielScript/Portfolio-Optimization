@@ -22,7 +22,7 @@ PACOTE = RAIZ / "kan_run" / "mars" / "mars_pacote.npz"
 BRACOS = ("MARS-50", "MARS-50+score")
 SEMENTES = (42, 0, 1)
 ANOS = range(2010, 2027)
-GPU = "L4"
+GPU = "T4"
 
 imagem = (modal.Image.debian_slim(python_version="3.12")
           .pip_install("torch==2.14.1", "numpy==2.5.4")
@@ -64,18 +64,28 @@ def cronometrar_l4() -> dict[str, float]:
     return _cronometrar()
 
 
-@app.function(gpu=GPU, timeout=3 * 3600, volumes={"/vol": volume}, max_containers=10, retries=1)
-def treinar(braco: str, semente: int, ano: int) -> tuple[str, int, int, int, float, float]:
-    import numpy as np
+@app.function(gpu=GPU, cpu=8.0, timeout=4 * 3600, volumes={"/vol": volume}, max_containers=34, retries=1)
+def treinar(braco: str, ano: int) -> list[tuple[str, int, int, int, float, float]]:
+    """The three seeds of one (arm, year) as three processes sharing the GPU (one alone leaves it mostly idle)."""
+    import subprocess
+
     import torch
 
-    import mars
-    torch.set_num_threads(4)
-    pacote = np.load("/root/mars_pacote.npz")
-    episodio, nota, segundos = mars.treinar_e_guardar(pacote, braco, semente, ano, Path("/vol/estados"), mars.Treino(),
-                                                      torch.device("cuda"))
+    processos = {semente: subprocess.Popen(
+        ["python", "/root/mars.py", "treinar", "--pacote", "/root/mars_pacote.npz", "--braco", braco,
+         "--semente", str(semente), "--estados", "/vol/estados", "--anos", str(ano), "--threads", "2"],
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) for semente in SEMENTES}
+    saidas = {semente: processo.communicate()[0] for semente, processo in processos.items()}
+    falhas = {semente: saida[-2000:] for semente, saida in saidas.items() if processos[semente].returncode != 0}
+    if falhas:
+        raise RuntimeError(f"{braco} {ano}: seeds failed {falhas}")
     volume.commit()
-    return braco, semente, ano, episodio, nota, segundos
+    resultados = []
+    for semente in SEMENTES:
+        guardado = torch.load(f"/vol/estados/{braco.replace('+', '_')}_s{semente}_{ano}.pt", map_location="cpu",
+                              weights_only=True)
+        resultados.append((braco, semente, ano, guardado["episodio"], guardado["sharpe"], guardado["segundos"]))
+    return resultados
 
 
 @app.function(cpu=2, timeout=3600, volumes={"/vol": volume})
@@ -96,12 +106,12 @@ def main(etapa: str, saida: str = "kan_run/mars/saidas") -> None:
         for funcao in (cronometrar_t4, cronometrar_l4):
             print(funcao.remote())
     elif etapa == "treinar":
-        tarefas = list(itertools.product(BRACOS, SEMENTES, ANOS))
+        tarefas = list(itertools.product(BRACOS, ANOS))
         inicio = time.perf_counter()
-        for feito, resultado in enumerate(treinar.starmap(tarefas, order_outputs=False), start=1):
-            braco, semente, ano, episodio, nota, segundos = resultado
-            print(f"[{feito}/{len(tarefas)}, {time.perf_counter() - inicio:.0f} s] {braco} seed {semente} {ano}: "
-                  f"episode {episodio}, validation Sharpe {nota:.2f}, {segundos:.0f} s", flush=True)
+        for feito, resultados in enumerate(treinar.starmap(tarefas, order_outputs=False), start=1):
+            for braco, semente, ano, episodio, nota, segundos in resultados:
+                print(f"[{feito}/{len(tarefas)}, {time.perf_counter() - inicio:.0f} s] {braco} seed {semente} {ano}: "
+                      f"episode {episodio}, validation Sharpe {nota:.2f}, {segundos:.0f} s", flush=True)
     elif etapa == "encadear":
         pasta = RAIZ / saida
         pasta.mkdir(parents=True, exist_ok=True)

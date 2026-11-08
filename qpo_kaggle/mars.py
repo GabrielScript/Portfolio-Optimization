@@ -114,17 +114,34 @@ class Painel:
         self.retornos = np.where(self.listado & ~np.isnan(anterior), self.cheio / anterior - 1.0, 0.0)
         self.retornos = np.nan_to_num(self.retornos)
         self.retornos[0] = 0.0
+        self._covs = _covariancias_moveis(self.retornos, JANELA_COV)
 
     def sai_amanha(self, t: int) -> np.ndarray:
         return (self.ultima == t) & (self.ultima < len(self.precos) - 1)
 
     def cov(self, t: int) -> np.ndarray:
-        janela = self.retornos[max(0, t - JANELA_COV + 1):t + 1]
-        return np.cov(janela.T) if len(janela) > 2 else np.zeros((janela.shape[1],) * 2)
+        return self._covs[t]
 
     def estado(self, t: int, x: np.ndarray, caixa: float) -> np.ndarray:
         valor = caixa + float(x.sum())
         return np.concatenate([[caixa / valor], x / valor, self.caracteristicas[t].ravel()]).astype(np.float32)
+
+
+def _covariancias_moveis(retornos: np.ndarray, janela: int) -> np.ndarray:
+    """np.cov (ddof 1) of the last ``janela`` rows up to each t, from running sums; zeros with 2 rows or fewer."""
+    externos = np.cumsum(np.einsum("ti,tj->tij", retornos, retornos), axis=0)
+    somas = np.cumsum(retornos, axis=0)
+    zeros_d = np.zeros((1, retornos.shape[1]))
+    externos = np.concatenate([np.zeros((1, *externos.shape[1:])), externos])
+    somas = np.concatenate([zeros_d, somas])
+    fim = np.arange(1, len(retornos) + 1)
+    inicio = np.maximum(fim - janela, 0)
+    n = (fim - inicio)[:, None, None].astype(float)
+    s1 = somas[fim] - somas[inicio]
+    s2 = externos[fim] - externos[inicio]
+    covs = (s2 - np.einsum("ti,tj->tij", s1, s1) / n) / np.maximum(n - 1.0, 1.0)
+    covs[n[:, 0, 0] <= 2] = 0.0
+    return covs
 
 
 def _carregar_adiante(precos: np.ndarray) -> np.ndarray:
@@ -429,7 +446,8 @@ def treinar_e_guardar(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, an
     return episodio, nota, segundos
 
 
-def encadear(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, pasta: Path) -> dict[str, np.ndarray]:
+def encadear(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, pasta: Path, anos: list[int] | None = None
+             ) -> dict[str, np.ndarray]:
     """The test years in a row from the saved snapshots: holdings carry over, names leaving the 50 are sold; the
     same chain with uniform weights is MARS-Static. Decisions at each session's close, from the last session of
     the year before."""
@@ -437,7 +455,7 @@ def encadear(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, pasta: Path
     carteiras: dict[str, Carteira | None] = {"mac": None, "estatica": None}
     datas, valores, estaticos, pesos, resumo = [], [], [], [], []
     nomes_antes = None
-    for ano in (int(ano) for ano in pacote["anos"]):
+    for ano in anos or [int(ano) for ano in pacote["anos"]]:
         painel = carregar_painel(pacote, ano, com_nota=braco == "MARS-50+score")
         guardado = torch.load(pasta / nome_do_estado(braco, semente, ano), map_location="cpu", weights_only=True)
         estado = 1 + painel.caracteristicas.shape[1] * (1 + painel.caracteristicas.shape[2])
@@ -485,7 +503,7 @@ def main(argv: list[str] | None = None) -> int:
             treinar_e_guardar(pacote, args.braco, args.semente, ano, args.estados,
                               Treino(episodios=args.episodios), dispositivo)
         return 0
-    resultado = encadear(pacote, args.braco, args.semente, args.estados)
+    resultado = encadear(pacote, args.braco, args.semente, args.estados, args.anos)
     args.saida.mkdir(parents=True, exist_ok=True)
     destino = args.saida / f"mars_{args.braco.replace('+', '_')}_s{args.semente}.npz"
     np.savez_compressed(destino, **resultado)

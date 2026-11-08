@@ -42,3 +42,9 @@ def test_at_the_year_change_a_name_that_stays_keeps_its_value_and_one_that_leave
     nova = trocar_nomes(carteira, np.array(["A", "B"]), np.array(["B", "C"]), CFG)
     assert list(nova.x) == [0.2, 0.0]
     assert nova.caixa == pytest.approx(0.5 + 0.3 * (1 - CFG.custo))
+
+
+def test_the_precomputed_covariance_matches_numpys_over_the_last_60_sessions():
+    rng = np.random.default_rng(3)
+    painel = _painel(list(np.exp(np.cumsum(rng.normal(0, 0.02, (90, 3)), axis=0))))
+    assert np.allclose(painel.cov(80), np.cov(painel.retornos[21:81].T))

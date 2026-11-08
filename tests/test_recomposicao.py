@@ -1,4 +1,5 @@
 import pandas as pd
+import pytest
 
 from core import recomposicao as rc
 
@@ -84,3 +85,52 @@ def test_an_entrant_the_funds_bought_on_the_old_portfolio_s_last_session_still_c
         {"rebalanceamento": pd.Timestamp("2025-09-01"), "papel": "CEAB3", "tipo": "entrada"},
         {"rebalanceamento": pd.Timestamp("2025-09-01"), "papel": "CURY3", "tipo": "entrada"},
         {"rebalanceamento": pd.Timestamp("2025-09-01"), "papel": "SMTO3", "tipo": "saida"}]
+
+
+def test_the_new_portfolio_starts_on_the_first_session_from_the_first_monday_and_the_funds_trade_the_day_before():
+    pregoes = pd.bdate_range("2023-12-20", "2024-01-10").drop(pd.Timestamp("2024-01-01"))   # 01/01 is a holiday
+    assert rc.inicio_da_carteira(pd.Timestamp("2024-01-01"), pregoes) == pd.Timestamp("2024-01-02")
+    assert rc.ultimo_pregao_antigo(pd.Timestamp("2024-01-01"), pregoes) == pd.Timestamp("2023-12-29")
+    setembro = pd.bdate_range("2025-08-20", "2025-09-10")
+    assert rc.inicio_da_carteira(pd.Timestamp("2025-09-01"), setembro) == pd.Timestamp("2025-09-01")   # a Monday
+    assert rc.ultimo_pregao_antigo(pd.Timestamp("2025-09-01"), setembro) == pd.Timestamp("2025-08-29")
+    assert rc.data_da_terceira_previa(pd.Timestamp("2025-09-01"), setembro) == pd.Timestamp("2025-08-28")
+
+
+def test_an_event_s_abnormal_return_is_net_of_both_sides_costs_against_bova11_over_the_same_window():
+    dias = pd.bdate_range("2025-08-26", "2025-08-29")
+    papel = pd.Series([10.0, 10.0, 10.5, 11.0], index=dias)
+    bova = pd.Series([100.0, 100.0, 101.0, 102.0], index=dias)
+    evento = rc.resultado_do_evento(papel, bova, dias[1], dias[3], custo_por_lado=0.001)
+    assert evento["retorno"] == pytest.approx(1.1 * 0.999 / 1.001 - 1)
+    assert evento["retorno_bova"] == pytest.approx(0.02)
+    assert evento["anormal"] == pytest.approx(evento["retorno"] - 0.02)
+    assert rc.resultado_do_evento(papel.iloc[2:], bova, dias[1], dias[3], 0.001) is None   # no price on the entry day
+
+
+def test_the_summary_clusters_by_rebalance_date_and_reads_the_gate_and_the_three_blocks():
+    eventos = pd.DataFrame({"rebalanceamento": pd.to_datetime(["2010-01-01", "2010-01-01", "2016-05-01",
+                                                               "2022-09-01", "2023-01-01"]),
+                            "anormal": [0.02, 0.04, -0.01, 0.03, 0.01]})
+    resumo = rc.resumo(eventos)
+    por_data = [0.03, -0.01, 0.03, 0.01]                                        # equal weights inside a date
+    media = sum(por_data) / 4
+    desvio = pd.Series(por_data).std(ddof=1)
+    assert resumo["datas"] == 4 and resumo["eventos"] == 5
+    assert resumo["media"] == pytest.approx(media) and resumo["t"] == pytest.approx(media / (desvio / 2))
+    assert resumo["blocos"] == {"2009-2014": pytest.approx(0.03), "2015-2020": pytest.approx(-0.01),
+                                "2021-2026": pytest.approx(0.02)}
+    assert resumo["passa"] is False                                             # t = 1.57 < 2.24
+
+
+def test_the_entry_is_b3_s_rule_date_or_a_later_found_publication_never_an_earlier_or_impossible_one():
+    pregoes = pd.bdate_range("2025-07-25", "2025-09-10")
+    mes = pd.Timestamp("2025-09-01")
+    assert rc.data_da_primeira_previa(mes, pregoes) == pd.Timestamp("2025-08-01")
+    regra = rc.data_da_terceira_previa(mes, pregoes)                                      # 28/08
+    saida = rc.ultimo_pregao_antigo(mes, pregoes)                                         # 29/08
+    assert rc.data_de_entrada(regra, pd.NaT, saida, pregoes) == regra
+    assert rc.data_de_entrada(regra, pd.Timestamp("2025-08-20"), saida, pregoes) == regra       # earlier: the rule
+    assert rc.data_de_entrada(regra, pd.Timestamp("2025-09-02"), saida, pregoes) == regra       # after the exit
+    primeira = rc.data_da_primeira_previa(mes, pregoes)
+    assert rc.data_de_entrada(primeira, pd.Timestamp("2025-08-03"), saida, pregoes) == pd.Timestamp("2025-08-04")

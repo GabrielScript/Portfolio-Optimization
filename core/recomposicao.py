@@ -103,3 +103,77 @@ def concordancia(previas_: pd.DataFrame, eventos_: pd.DataFrame, previa: int = 3
         linhas.append({"rebalanceamento": linha.rebalanceamento, "ambas": tuple(sorted(da_previa & cvm)),
                        "so_previa": tuple(sorted(da_previa - cvm)), "so_cvm": tuple(sorted(cvm - da_previa))})
     return pd.DataFrame(linhas, columns=["rebalanceamento", "ambas", "so_previa", "so_cvm"])
+
+
+def inicio_da_carteira(mes: pd.Timestamp, pregoes: pd.DatetimeIndex) -> pd.Timestamp:
+    """The new portfolio's first session: the first B3 session on or after the month's first Monday."""
+    primeiro = mes.replace(day=1)
+    primeira_segunda = primeiro + pd.Timedelta(days=(7 - primeiro.weekday()) % 7)
+    return pregoes[pregoes >= primeira_segunda][0]
+
+
+def ultimo_pregao_antigo(mes: pd.Timestamp, pregoes: pd.DatetimeIndex) -> pd.Timestamp:
+    """The old portfolio's last session, whose closing call the index funds trade in."""
+    return pregoes[pregoes < inicio_da_carteira(mes, pregoes)][-1]
+
+
+def data_da_terceira_previa(mes: pd.Timestamp, pregoes: pd.DatetimeIndex) -> pd.Timestamp:
+    """B3's rule date of the 3rd preview: the old portfolio's penultimate session."""
+    return pregoes[pregoes < ultimo_pregao_antigo(mes, pregoes)][-1]
+
+
+def resultado_do_evento(precos: pd.Series, bova: pd.Series, entrada: pd.Timestamp, saida: pd.Timestamp,
+                        custo_por_lado: float) -> dict[str, float] | None:
+    """Total return from the entry close to the exit close, net of the cost of buying and of selling, BOVA11's over the
+    same closes and their difference; None without both prices."""
+    try:
+        compra, venda = float(precos.loc[entrada]), float(precos.loc[saida])
+        base, fim = float(bova.loc[entrada]), float(bova.loc[saida])
+    except KeyError:
+        return None
+    if not all(pd.notna(valor) and valor > 0 for valor in (compra, venda, base, fim)):
+        return None
+    retorno = venda / compra * (1.0 - custo_por_lado) / (1.0 + custo_por_lado) - 1.0
+    retorno_bova = fim / base - 1.0
+    return {"retorno": retorno, "retorno_bova": retorno_bova, "anormal": retorno - retorno_bova}
+
+
+T_MINIMO = 2.24                       # two rules, Bonferroni at 5% (spec, gate)
+BLOCOS = {"2009-2014": (2009, 2014), "2015-2020": (2015, 2020), "2021-2026": (2021, 2026)}
+
+
+def resumo(eventos_: pd.DataFrame, exige_blocos: bool = True) -> dict:
+    """The pre-registered reading: one equal-weight abnormal return per rebalance date, their mean and t across
+    dates (clustered by date), the mean of each block of years, and whether the gate passes (mean > 0, t >= 2.24 and,
+    for R1, a positive mean in at least two of the three blocks)."""
+    por_data = eventos_.groupby("rebalanceamento")["anormal"].mean()
+    media = float(por_data.mean()) if len(por_data) else float("nan")
+    desvio = float(por_data.std(ddof=1)) if len(por_data) > 1 else float("nan")
+    t = media / (desvio / len(por_data) ** 0.5) if desvio and desvio == desvio else float("nan")
+    anos = por_data.index.year
+    blocos = {nome: float(por_data[(anos >= ini) & (anos <= fim)].mean())
+              for nome, (ini, fim) in BLOCOS.items() if ((anos >= ini) & (anos <= fim)).any()}
+    positivos = sum(valor > 0 for valor in blocos.values())
+    passa = bool(media > 0 and t >= T_MINIMO and (positivos >= 2 or not exige_blocos))
+    return {"datas": len(por_data), "eventos": len(eventos_), "media": media, "t": t,
+            "mediana_eventos": float(eventos_["anormal"].median()) if len(eventos_) else float("nan"),
+            "acerto_eventos": float((eventos_["anormal"] > 0).mean()) if len(eventos_) else float("nan"),
+            "pior_evento": float(eventos_["anormal"].min()) if len(eventos_) else float("nan"),
+            "blocos": blocos, "passa": passa}
+
+
+def data_da_primeira_previa(mes: pd.Timestamp, pregoes: pd.DatetimeIndex) -> pd.Timestamp:
+    """B3's rule date of the 1st preview: the first session of the month before the rebalance month."""
+    return pregoes[pregoes >= mes.replace(day=1) - pd.offsets.MonthBegin(1)][0]
+
+
+def data_de_entrada(regra: pd.Timestamp, divulgacao: pd.Timestamp, saida: pd.Timestamp,
+                    pregoes: pd.DatetimeIndex) -> pd.Timestamp:
+    """The entry session: B3's rule date, or the found publication's session when it is later and still before the
+    exit (never earlier than the rule: no buying before the information exists)."""
+    if pd.isna(divulgacao):
+        return regra
+    sessao = pregoes[pregoes >= divulgacao]
+    if sessao.empty or sessao[0] >= saida or sessao[0] <= regra:
+        return regra
+    return sessao[0]

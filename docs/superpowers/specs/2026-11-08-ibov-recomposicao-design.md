@@ -78,3 +78,13 @@ See `docs/ibov-recomposicao-validacao-2026-11-08.md`: the composition before a r
 earlier (the funds buy on the old portfolio's last session, often a month-end); B3's own preview lists define the
 events wherever a preview was found (2015-01, 2019-09 onwards); elsewhere R1 uses CVM entrants that traded 252
 sessions before the rebalance, at the 3rd preview's rule date. Gate, measures and N unchanged.
+
+## Amendment 2 (2026-11-08, building the reading script, before any return)
+
+- Entry dates: B3's rule date (3rd preview: the old portfolio's penultimate session; 1st preview: the first session
+  of the month before the rebalance month), or a found publication's session when later and still before the exit;
+  never earlier. Some extracted publication dates were wrong (a final-portfolio page read as a preview).
+- The first-Monday start was checked on the CVM holdings: when the month's first Monday falls on day 5-7, the funds
+  mostly did not hold the entrants at the month-end before; on days 1-3 they did. The rule stands for 2009-2026.
+- R1 therefore holds one session (3rd preview close to the funds' closing call), R2 about 21. Events: R1 94 on 48
+  dates, R2 30 on 14 dates. Gate unchanged.

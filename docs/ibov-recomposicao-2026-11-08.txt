@@ -1,0 +1,26 @@
+Ibovespa rebalance flows: the one reading (2026-11-08). Spec 2026-11-08 + amendment 1.
+
+== R1 (3rd preview, 2009-2026) ==
+{"datas": 48, "eventos": 94, "media": -0.00299, "t": -0.72086, "mediana_eventos": -0.00358, "acerto_eventos": 0.44681, "pior_evento": -0.08141, "passa": false}
+blocks: {"2009-2014": -0.01276, "2015-2020": 0.00291, "2021-2026": 0.00284}
+
+== R1 on 2020+ only (no look-ahead years) ==
+{"datas": 19, "eventos": 45, "media": 0.00458, "t": 0.68129, "mediana_eventos": -0.00138, "acerto_eventos": 0.48889, "pior_evento": -0.0601, "passa": false}
+blocks: {"2015-2020": 0.01386, "2021-2026": 0.00284}
+
+== R2 (1st preview, 2019-2026) ==
+{"datas": 14, "eventos": 30, "media": 0.06285, "t": 1.50288, "mediana_eventos": 0.02026, "acerto_eventos": 0.53333, "pior_evento": -0.44012, "passa": false}
+blocks: {"2015-2020": 0.11946, "2021-2026": 0.04741}
+
+mean cost per side: {"R1": 0.00209, "R2": 0.00153}
+mean holding sessions: {"R1": 1.0, "R2": 21.7}
+dropped events: 0
+
+Reading (author, after the numbers; the decision follows the gate written before):
+- R1 fails: no effect on the old portfolio's last session (mean -0.30% per rebalance date, t -0.72; 45% of events
+  win). The 2009-2014 block is negative; the 2020+ subsample (no look-ahead) is +0.46%, t 0.68.
+- R2 fails the gate (t 1.50 < 2.24) though its mean is large: +6.3% per date over about 21 sessions, median event
+  +2.0%, 53% of events win, worst -44% (CASH3, 08/2021) and best +44% (IRBR3, 04/2023), both real moves (checked:
+  no split inside either window, largest daily moves 12.6% and 11.4%). 14 dates are too few for an effect this noisy.
+- As written before: R1 fails; R2 has too few events to pass unless the effect is large. Closed; another window,
+  threshold or a forward log of R2 would be a new counted trial.

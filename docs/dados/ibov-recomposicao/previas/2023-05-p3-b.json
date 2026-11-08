@@ -1,0 +1,113 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa abril 2023 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+     "title": "Terceira prévia do Ibovespa B3 tem saída de duas ações e ...",
+     "description": "# Terceira Prévia\n## Terceira prévia do Ibovespa B3 tem saída de duas ações e nenhuma entrada\n### Prévias das carteiras dos demais índices também foram divulgadas\nA prévia registra a saída da Positivo Tec ON (POSI3) e do IRB Brasil RE ON (IRBR3) e não registra entradas, totalizando 89 ativos de 86 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm",
+     "title": "3ª Prévia Ibovespa | B3",
+     "description": "# 3ª Prévia Ibovespa\n27/04/2023\n\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor a partir de maio conta com 86 ativos\n### A carteira definitiva será divulgada em 2 de maio. Além do Ibovespa, a Bolsa também divulga a prévia das novas carteiras dos demais índices, como ISE e IBRX-100.\n**São Paulo, 27 de abril de 2023 –** A B3 divulga hoje a terceira prévia da carteira do Ibovespa B3, principal indicador do desempenho das ações mais negociadas da Bolsa, que vai vigorar de 2/5/2023 a 1/9/2023.\n\nA prévia, com base no fechamento do pregão de 26/4/2023, conta com 86 papéis de 83 empresas brasileiras (ações ordinárias, ON, e preferenciais, PN, de uma mesma companhia também podem integrar o indicador) e registra a saída de três empresas, BPAN4 (BANCO PAN PN), ECOR3 (ECORODOVIAS ON) e QUAL3 (QUALICORP ON) e a entrada de IRBR3 (IRBBRASIL RE ON) em relação à carteira anterior.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/novas-carteiras-indices.htm",
+     "title": "Novas carteiras índices | B3",
+     "description": "# Novas carteiras índices\n## Nova carteira do Ibovespa B3 de janeiro a abril tem 87 papéis\n### B3 também anuncia nova carteira dos demais índices válidos de 2/1 a 3/5 Em 2023, a bolsa do Brasil lançou novos índices e se consolidou como a principal provedora de índices do país\nA composição da carteira que vai vigorar de 2/1/2024 a 3/5/2024, ponderada com base no fechamento do pregão de 28/12/2023, registra a entrada da TRAN PAULIST PN (TRPL4) e não registra nenhuma saída.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "B3 Voltar Índice Bovespa (Ibovespa. Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-937c-71d3-8fdd-f3bcb6abbf29"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2022-12-28",
+    "data_base_do_fechamento": "2022-12-27",
+    "mes_de_vigencia": "2023-01",
+    "entradas": [],
+    "saidas": [
+     "POSI3",
+     "IRBR3"
+    ],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-04-27",
+    "data_base_do_fechamento": "2023-04-26",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3",
+     "QUAL3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/novas-carteiras-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2024-01-02",
+    "data_base_do_fechamento": "2023-12-28",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  }
+ ]
+}

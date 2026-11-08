@@ -1,0 +1,115 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2024 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 76 ativos. Bolsa também divulga hoje a terceira prévia ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Ibovespa\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 84 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2F9ec%2F9ecde110f409838a044b5a833da831cf.xlsx&data=05%7C02%7Cjessica.correa%40b3.com.br%7C3b69721ecc204cf2e17708dde658219d%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C638919988587910148%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=HK%2By4%2BMoYkszYIT0gP5odXvgpLru%2BLoRJ3sDACRhiNY%3D&reserved=0)",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor em ...",
+     "description": "A prévia, com base no fechamento do pregão de 15/12/2023, registra a entrada da TRAN PAULIST PN (TRPL4) e não registra saídas. Os cinco ativos com maior peso na ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-88-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor em ...",
+     "description": "A prévia, com base no fechamento do pregão de 28/03/2024, registra a entrada das empresa Auren (AURE3) e Vivara(VIVA3), e não registrou saídas. Os cinco ativos ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Terceira Prévia\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 87 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir de janeiro; A carteira definitiva será divulgada no dia 2/1/2024\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3",
+     "description": "# Terceira prévia da carteira do Ibovespa B3\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em maio conta com 86 ativos\nA composição das carteiras do Ibovespa B3 e dos demais [índices de ações calculados pela bolsa do Brasil](https://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/market-data/cotacoes/indices.htm) é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbac-c4ab-7747-a12d-1ad2e726d6dc"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2023-12-18",
+    "data_base_do_fechamento": "2023-12-15",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-88-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2024-04-01",
+    "data_base_do_fechamento": "2024-03-28",
+    "mes_de_vigencia": "2024-05",
+    "entradas": [
+     "AURE3",
+     "VIVA3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 88
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-12-27",
+    "data_base_do_fechamento": "2023-12-26",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  }
+ ]
+}

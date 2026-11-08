@@ -1,0 +1,110 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa agosto 2021 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 11, 189,699.12, 183,969.35 ; 12, 163,150.35, 187,766.42, 179,284.49 ...",
+     "position": 1
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/ibovespa-alcanca-maior-patamar-intradiario-desde-agosto-de-2021/",
+     "title": "Ibovespa alcança maior patamar intradiário desde agosto de ...",
+     "description": "Ibovespa atinge a melhor pontuação em 2023, atingindo níveis semelhantes aos de agosto de 2021. Arrefecimento da inflação nos EUA sustenta alta.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/news/third-preview-for-ibovespa.htm",
+     "title": "Third Preview for Ibovespa - B3",
+     "description": "B3 hereby publishes the third preview for its Ibovespa index, which will be effective from September 6, 2021, to December 30, 2021, based on ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb0-615e-7586-b5c7-2baf5a6eb81a"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/ibovespa-alcanca-maior-patamar-intradiario-desde-agosto-de-2021/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-11-14",
+    "data_base_do_fechamento": "2023-11-14",
+    "mes_de_vigencia": "2023-12",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/news/third-preview-for-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2021-09-02",
+    "data_base_do_fechamento": "2021-09-01",
+    "mes_de_vigencia": "2021-09",
+    "entradas": [
+     "ALPA4",
+     "BIDI4",
+     "BPAN4",
+     "CASH3",
+     "RDOR3",
+     "DXCO3",
+     "PETZ3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 91
+   }
+  }
+ ]
+}

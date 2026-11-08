@@ -1,0 +1,113 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa abril 2022 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+     "title": "Terceira prévia do Ibovespa B3 tem saída de duas ações e ...",
+     "description": "# Terceira Prévia\n28/12/2022\n\n## Terceira prévia do Ibovespa B3 tem saída de duas ações e nenhuma entrada\n### Prévias das carteiras dos demais índices também foram divulgadas\n**São Paulo, 28 de dezembro de 2022**– A B3, a bolsa do Brasil, divulga hoje a terceira prévia do índice Ibovespa B3 que vai vigorar de 02 de janeiro de 2023 a 28 de abril de 2023, com base no fechamento do pregão de 27 de dezembro de 2022. A prévia registra a saída da Positivo Tec ON (POSI3) e do IRB Brasil RE ON (IRBR3) e não registra entradas, totalizando 89 ativos de 86 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "# Nova Carteira do Ibovespa\n03/01/2022",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+     "title": "Carteiras Teóricas - B3",
+     "description": "# Carteiras Teóricas\n## B3 divulga a terceira prévia do Ibovespa e demais índices\nA prévia registra a entrada da Positivo Tec ON (POSI3), CSN Mineração ON (CMIN3) e 3R Petroleum ON (RRRP3), totalizando 93 ativos de 90 empresas.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988. total do índice,",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-0771-742d-b441-50b09cb8e4cd"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2022-12-28",
+    "data_base_do_fechamento": "2022-12-27",
+    "mes_de_vigencia": "2023-01",
+    "entradas": [],
+    "saidas": [
+     "POSI3",
+     "IRBR3"
+    ],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2021-12-29",
+    "data_base_do_fechamento": "2021-12-28",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

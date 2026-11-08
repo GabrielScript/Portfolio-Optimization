@@ -71,3 +71,10 @@ author's calls (autonomous mode, CLAUDE.md), kept for the user to review._
 2. The previews scraper for 2020+ (Firecrawl), frozen to `docs/dados/ibov-recomposicao/`.
 3. The validation report (no returns).
 4. The event study, read once: `docs/ibov-recomposicao-<date>.txt`, and `docs/tentativas.csv` +2.
+
+## Amendment 1 (2026-11-08, after the validation, before any return)
+
+See `docs/ibov-recomposicao-validacao-2026-11-08.md`: the composition before a rebalance is the month-end two months
+earlier (the funds buy on the old portfolio's last session, often a month-end); B3's own preview lists define the
+events wherever a preview was found (2015-01, 2019-09 onwards); elsewhere R1 uses CVM entrants that traded 252
+sessions before the rebalance, at the 3rd preview's rule date. Gate, measures and N unchanged.

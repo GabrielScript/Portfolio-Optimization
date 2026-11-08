@@ -1,0 +1,121 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2021 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Ibovespa\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 84 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2F9ec%2F9ecde110f409838a044b5a833da831cf.xlsx&data=05%7C02%7Cjessica.correa%40b3.com.br%7C3b69721ecc204cf2e17708dde658219d%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C638919988587910148%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=HK%2By4%2BMoYkszYIT0gP5odXvgpLru%2BLoRJ3sDACRhiNY%3D&reserved=0)",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 76 ativos. Bolsa também divulga hoje a terceira prévia ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+     "title": "Índice Ibovespa - Ibovespa - Composição da carteira - B3",
+     "description": "# Índice Bovespa (Ibovespa B3)\n## Carteira do Dia - 09/11/26\n| Código | Ação | Tipo | Qtde. Teórica | Part. (%) |\n|-|-|-|-|-|\n| B3SA3 | B3 | ON NM | 4.985.893.391 | 3,042 |",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-de-ibovespa-b3-e-demais-indices.htm",
+     "title": "B3 divulga nova carteira de Ibovespa e demais índices",
+     "description": "São Paulo, 06 de setembro de 2021 - A B3 divulga a nova carteira do Índice Bovespa que vai vigorar de 6 de setembro de 2021 a 30 de dezembro ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-anuncia-nova-carteira-do-ibovespa-ate-dezembro.htm",
+     "title": "B3 anuncia nova carteira do Ibovespa até dezembro",
+     "description": "Esse foi o primeiro rebalanceamento do IDIVERSA B3, também vigente de 4 de setembro de 2023 até 29 de dezembro de 2023. Lançado em agosto, esse ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CDA023AA8301A08263E30959C0.htm",
+     "title": "Ibovespa | B3",
+     "description": "# Ibovespa\n## Nova carteira do Ibovespa B3 entra em vigor com 76 ativos\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbaa-ebf7-700a-b7d8-8b8165504553"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-11-09",
+    "data_base_do_fechamento": "2026-11-09",
+    "mes_de_vigencia": "2026-11",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-de-ibovespa-b3-e-demais-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2021-09-06",
+    "data_base_do_fechamento": "2021-09-03",
+    "mes_de_vigencia": "2021-09",
+    "entradas": [
+     "ALPA4",
+     "BIDI4",
+     "BPAN4",
+     "CASH3",
+     "RDOR3",
+     "DXCO3",
+     "PETZ3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 91
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-anuncia-nova-carteira-do-ibovespa-ate-dezembro.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2023-09-04",
+    "data_base_do_fechamento": "2023-09-01",
+    "mes_de_vigencia": "2023-09",
+    "entradas": [
+     "RECV3",
+     "VAMO3"
+    ],
+    "saidas": [
+     "CASH3"
+    ],
+    "total_de_ativos": 86
+   }
+  }
+ ]
+}

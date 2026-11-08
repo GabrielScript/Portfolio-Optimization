@@ -1,0 +1,115 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa dezembro 2022 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-ibovespa.htm",
+     "title": "Primeira Prévia Ibovespa | B3",
+     "description": "A prévia registra a entrada das empresas Arezzo&CO ON (ARZZ3), Raízen PN (RAIZ4), São Martinho ON (SMTO3) e saída da JHSF ON (JHSF3), totalizando 92 ativos de ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+     "title": "Primeira prévia do Ibovespa B3",
+     "description": "# Primeira prévia do Ibovespa B3\n## B3 divulga a primeira prévia do Ibovespa B3 e demais índices\nA prévia registra a entrada de Porto Seguro ON (PSSA3) e Positivo Tec ON (POSI3), totalizando 93 ativos de 89 empresas.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "# Nova Carteira do Ibovespa\n03/01/2022",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 10, 185,929.33 ; 11, 189,699.12 ; 12, 163,150.35, 187,766.42 ; 13, 161,973.05, 186,464.30 ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988. 187.952,91 172.197,46",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-563f-722b-a6db-f73f7aa2d826"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2022-08-01",
+    "data_base_do_fechamento": "2022-07-29",
+    "mes_de_vigencia": "2022-09",
+    "entradas": [
+     "ARZZ3",
+     "RAIZ4",
+     "SMTO3"
+    ],
+    "saidas": [
+     "JHSF3"
+    ],
+    "total_de_ativos": 92
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-12-01",
+    "data_base_do_fechamento": "2021-11-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "PSSA3",
+     "POSI3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

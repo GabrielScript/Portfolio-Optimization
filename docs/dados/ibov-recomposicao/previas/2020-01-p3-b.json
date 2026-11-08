@@ -1,0 +1,118 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa dezembro 2019 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/3-previa-do-ibovespa-8AA8D0CD95C8AFE301962AEF6310646B.htm",
+     "title": "3ª prévia do Ibovespa | B3",
+     "description": "A prévia do Ibovespa registra a entrada de Carrefour ON (CRFB3), Hapvida ON (HAPV3), SulAmérica UNT (SULA11), Cia Hering ON (HGTX3), Totvs (TOTS3), totalizando ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+     "title": "Prévia do Ibovespa | B3",
+     "description": "A prévia do Ibovespa registra a entrada de GNDI3 (INTERMEDICA ON) e BPAC11 totalizando 68 ativos de 65 empresas. e B3 ON (5,199%).",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/carteira-do-indice-bovespa-8AA8D0CD6E90DDD4016EC74389197DB0.htm",
+     "title": "Carteira do Índice Bovespa | B3",
+     "description": "# Carteira do Índice Bovespa\n02/12/2019\n\n## B3 divulga a primeira prévia do Ibovespa e demais índices\nA prévia do Ibovespa registra a entrada de CARREFOUR BR ON (CRFB3), HAPVIDA ON (HAPV3), SUL AMERICA UNT (SULA11), totalizando 71 ativos de 68 empresas.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC6CDF20DD016CF26A1A8E3217.htm",
+     "title": "Ibovespa | B3",
+     "description": "A nova carteira do Ibovespa registra a entrada de GNDI3 (INTERMEDICA ON) e BPAC11 totalizando 68 ativos de 65 empresas.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 3, 185,674.43 ; 4, 181,708.23 ; 5, 161,869.76, 182,127.25 ; 6, 163,663.88, 182,949.78 ...",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/b3-divulga-nova-previa-do-ibovespa-carteira-de-maio-conta-com-86-ativos/",
+     "title": "B3 divulga nova prévia do Ibovespa; Carteira de maio conta ...",
+     "description": "A B3 divulgou nesta quinta-feira, 27/04, a terceira e última prévia da carteira de ações que compõe o Ibovespa – principal índice da Bolsa ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbae-fea7-7797-bdd9-3099983906e0"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/3-previa-do-ibovespa-8AA8D0CD95C8AFE301962AEF6310646B.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2020-01-02",
+    "data_base_do_fechamento": "2019-12-30",
+    "mes_de_vigencia": "2020-01",
+    "entradas": [
+     "CRFB3",
+     "HAPV3",
+     "SULA11",
+     "HGTX3",
+     "TOTS3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 73
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2019-08-29",
+    "data_base_do_fechamento": "2019-08-28",
+    "mes_de_vigencia": "2019-09",
+    "entradas": [
+     "GNDI3",
+     "BPAC11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 68
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/carteira-do-indice-bovespa-8AA8D0CD6E90DDD4016EC74389197DB0.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2019-12-02",
+    "data_base_do_fechamento": "2019-11-29",
+    "mes_de_vigencia": "2020-01",
+    "entradas": [
+     "CRFB3",
+     "HAPV3",
+     "SULA11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 71
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC6CDF20DD016CF26A1A8E3217.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2019-09-02",
+    "data_base_do_fechamento": "2019-08-30",
+    "mes_de_vigencia": "2019-09",
+    "entradas": [
+     "GNDI3",
+     "BPAC11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 68
+   }
+  }
+ ]
+}

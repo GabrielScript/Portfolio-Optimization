@@ -1,0 +1,119 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em janeiro de 2023 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Primeira Prévia Ibovespa\n## Primeira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 86 ativos\n### Bolsa também divulga hoje a primeira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir de janeiro\nA prévia, com base no fechamento do pregão de 30/11/2023, registra a entrada da TRAN PAULIST PN (TRPL4) e a saída das Casas Bahia ON (BHIA3).\n\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n- **3ª prévia**: no penúltimo pregão do último mês de vigência da carteira (27/12/2023); e",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Terceira Prévia\n27/12/2023\n\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 87 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir de janeiro; A carteira definitiva será divulgada no dia 2/1/2024\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n- **3ª prévia**: no penúltimo pregão do último mês de vigência da carteira (27/12/2023); e",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm",
+     "title": "3ª Prévia Ibovespa | B3",
+     "description": "A B3 divulga hoje a terceira prévia da carteira do Ibovespa B3, que vai vigorar de 2/5/2023 a 1/9/2023.",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do [pregão](https://borainvestir.b3.com.br/glossario/pregao/) de 31/3/2023, registra a entrada do papel **IRB Brasil RE ON (IRBR3)** e a saída de duas ações, **BPAN4 (BANCO PAN PN)** e **ECOR3 (ECORODOVIAS ON)**, em relação à carteira anterior.\n\n## Prévia das carteiras dos índices B3\nA composição das carteiras do [Ibovespa](https://borainvestir.b3.com.br/glossario/ibovespa/) B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n– 3ª prévia: no penúltimo pregão do último mês de vigência da carteira (27/4/2023); e",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 30/8/2023, registra a entrada das empresas PetroReconcavo ON (RECV3) e do Grupo Vamos ON (VAMO3) e ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3-8AE490C995C8A43A01961E01C98E50C6.htm",
+     "title": "Ibovespa B3 | B3",
+     "description": "A prévia, com base no fechamento do pregão de 31/3/2023, registra a entrada de IRB Brasil RE ON (IRBR3) e a saída de duas empresas, BPAN4 (BANCO PAN PN) e ECOR3 ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbab-ded9-773d-8438-dac23f933c43"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-12-01",
+    "data_base_do_fechamento": "2023-11-30",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [
+     "BHIA3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-12-27",
+    "data_base_do_fechamento": "2023-12-26",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-04-27",
+    "data_base_do_fechamento": "2023-04-26",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3",
+     "QUAL3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-04-03",
+    "data_base_do_fechamento": "2023-03-31",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3"
+    ],
+    "total_de_ativos": 87
+   }
+  }
+ ]
+}

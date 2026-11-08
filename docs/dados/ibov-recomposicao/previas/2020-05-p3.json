@@ -1,0 +1,68 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em maio de 2020 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A B3 divulgou a primeira prévia da carteira do **[Ibovespa B3](https://borainvestir.b3.com.br/noticias/ibovespa-b3-como-e-calculado-e-o-que-significa-o-principal-indicador-do-mercado/)**, que entrará em vigor em maio.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "# Bovespa Index (Ibovespa)\n## Daily evolution\n#### IBovespa - 2026\n| Day | Jan | Feb | Mar | Apr | May | Jun |\n|-|-|-|-|-|-|-|\n| 3 |  | 185,674.43 | 183,104.87 |  |  | 170,330.63 |",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/news/b3-announces-new-portfolio-for-ibovespa-and-other-indices.htm",
+     "title": "New portfolio for Ibovespa | B3",
+     "description": "... (Ibovespa) portfolio, which will be effective from January 6, 2020 to April 30, 2020, based on the closing of the January 3, 2020 trading session ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Composição da carteira ... A tabela mostra também os valores máximos, médios e mínimos atingidos em cada mês. Ano. 2026, 2025, 2024, 2023, 2022, 2021, 2020 ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbaa-33b7-7574-b585-9072c2812e61"
+ },
+ "paginas": [
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-04-03",
+    "data_base_do_fechamento": "2023-03-31",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3"
+    ],
+    "total_de_ativos": 87
+   }
+  }
+ ]
+}

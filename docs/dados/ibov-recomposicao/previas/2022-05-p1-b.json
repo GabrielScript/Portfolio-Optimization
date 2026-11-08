@@ -1,0 +1,109 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa abril 2022 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+     "title": "Primeira prévia do Ibovespa B3",
+     "description": "# Primeira prévia do Ibovespa B3\n## B3 divulga a primeira prévia do Ibovespa B3 e demais índices\nA prévia registra a entrada de Porto Seguro ON (PSSA3) e Positivo Tec ON (POSI3), totalizando 93 ativos de 89 empresas.\n\n[Entradas e Saídas 1ªPrévia para Janeiro de 2022](https://www.b3.com.br/data/files/B2/F3/D2/94/F667D710EEBC50D7AC094EA8/bd6cd9c8-026b-417b-8d92-424886e116d5.xlsx)",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "# Nova Carteira do Ibovespa\n03/01/2022",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 11, 189,699.12, 183,969.35 ; 12, 163,150.35, 187,766.42, 179,284.49 ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "A tabela mostra também os valores máximos, médios e mínimos atingidos em cada mês. Ano. 2026, 2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015 ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indexes/broad-indexes/bovespa-b3-br-index-ibovespa-b3-br.htm",
+     "title": "Bovespa B3 BR+ Index (Ibovespa B3 BR+)",
+     "description": "The Bovespa B3 BR+ Index is composed of shares, units, and BDRs of Brazilian companies listed on B3 (see Methodology for more information). As for BDRs, it is ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-002e-72ed-ba2e-d61b039c5dc9"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-12-01",
+    "data_base_do_fechamento": "2021-11-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "PSSA3",
+     "POSI3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

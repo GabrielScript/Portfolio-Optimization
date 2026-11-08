@@ -1,0 +1,84 @@
+{
+ "consulta": "1ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2026 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C99FB04F9C019FC8E1A1CF1EBB.htm",
+     "title": "Índices | B3",
+     "description": "03/08/2026. Primeira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 78 ativos. Bolsa também divulga hoje a primeira prévia das ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "1ª prévia: no primeiro pregão do último mês de vigência da carteira (03/08/2026);; 2ª prévia: no pregão seguinte ao dia 15 do último mês de ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/carteira-do-ibovespa-b3-que-entra-em-vigor-hoje-conta-com-85-ativos-de-79-empresas.htm",
+     "title": "Carteira do Ibovespa B3 que entra em vigor hoje conta com 85 ...",
+     "description": "A carteira, com base no fechamento do pregão de 02/01/2026, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3).",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+     "title": "Com duas mudanças: confira a 1º prévia da carteira do ...",
+     "description": "A prévia, com base no fechamento do pregão de 30/07/2026, registra a saída da ação RECV3 (PETRORECSA ON) e a entrada da TEND3 (TENDA ON).\n\n## Prévia das carteiras dos índices B3\n– **1ª prévia**: no primeiro pregão do último mês de vigência da carteira (03/08/2026);\n\n## Clique nos arquivos abaixo e faça download\n- [Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2Face%2Face12eefc754c41536a96e44be15bc60.xlsx&data=05%7C02%7Cjoao.psantos%40b3.com.br%7Cace2e2af30874189b50608def1961a2c%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639213824179979135%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=oYpgw9zB7s1scmJMQNfnfqQRIxUwZrzISTUtuLl0hAM%3D&reserved=0)",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/",
+     "title": "Conheça os Índices do Mercado no Bora Investir | B³",
+     "description": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 78 ativos. 17/08/26 3 min de leitura.",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/glossario/ibrx-50-b3-indice-brasil-50/",
+     "title": "IBrX 50 B3 (Índice Brasil 50) - o que é, significado e definição",
+     "description": "Finalidade: o IBrX 50 B3 enfatiza liquidez e representatividade, enquanto o Ibovespa busca refletir o comportamento do mercado como um todo.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbad-9717-71bd-a3cb-e6ae35a2832a"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/carteira-do-ibovespa-b3-que-entra-em-vigor-hoje-conta-com-85-ativos-de-79-empresas.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2026-01-05",
+    "data_base_do_fechamento": "2026-01-02",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 85
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-07-31",
+    "data_base_do_fechamento": "2026-07-30",
+    "mes_de_vigencia": "2026-08",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3"
+    ],
+    "total_de_ativos": 78
+   }
+  }
+ ]
+}

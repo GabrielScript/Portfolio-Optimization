@@ -1,0 +1,116 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa dezembro 2023 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+     "title": "Terceira prévia do Ibovespa B3 tem saída de duas ações e ...",
+     "description": "# Terceira Prévia\n## Terceira prévia do Ibovespa B3 tem saída de duas ações e nenhuma entrada\n### Prévias das carteiras dos demais índices também foram divulgadas\nA prévia registra a saída da Positivo Tec ON (POSI3) e do IRB Brasil RE ON (IRBR3) e não registra entradas, totalizando 89 ativos de 86 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Terceira Prévia\n27/12/2023\n\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 87 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir de janeiro; A carteira definitiva será divulgada no dia 2/1/2024\n**São Paulo, 27 de dezembro de 2023** – A terceira prévia da nova carteira do Ibovespa B3, principal indicador do desempenho das ações mais negociadas da Bolsa, que vai vigorar de 2/1/2024 a 3/5/2024, conta com 87 papéis de 84 empresas brasileiras (ações ordinárias, ON, e preferenciais, PN, de uma mesma companhia também podem integrar o indicador). A prévia, com base no fechamento do pregão de 26/12/2023, registra a entrada da TRAN PAULIST PN (TRPL4) e não registra saídas.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Primeira Prévia Ibovespa\n01/12/2023",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-anuncia-nova-carteira-do-ibovespa-ate-dezembro.htm",
+     "title": "B3 anuncia nova carteira do Ibovespa até dezembro",
+     "description": "# Nova carteira Ibovespa\n04/09/2023\n\n## B3 anuncia nova carteira do Ibovespa até dezembro\n### Principal índice do mercado brasileiro serve de referência para investimentos como ETFs e fundos; bolsa também divulga hoje as novas carteiras dos demais índices, incluindo o recém-lançado IDIVERSA\nVálida de hoje, 4 de setembro de 2023, até 29 de dezembro de 2023, a composição com base no fechamento do pregão de 1 de setembro de 2023, registra a entrada das empresas PetroReconcavo ON (RECV3) e do Grupo Vamos ON (VAMO3) e a saída da Meliuz ON (CASH3).",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/novas-carteiras-indices.htm",
+     "title": "Novas carteiras índices | B3",
+     "description": "Nova carteira do Ibovespa. Ibovespa B3 são: Vale ON (14,1603%) Petrobras PN (7,4321%) Itaú Unibanco PN (7.1255%) Petrobras ON (4,40543%) ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-2146-734b-9ea8-246d23659252"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2022-12-28",
+    "data_base_do_fechamento": "2022-12-27",
+    "mes_de_vigencia": "2023-01",
+    "entradas": [],
+    "saidas": [
+     "POSI3",
+     "IRBR3"
+    ],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-12-27",
+    "data_base_do_fechamento": "2023-12-26",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-12-01",
+    "data_base_do_fechamento": "2023-11-30",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [
+     "BHIA3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-anuncia-nova-carteira-do-ibovespa-ate-dezembro.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2023-09-04",
+    "data_base_do_fechamento": "2023-09-01",
+    "mes_de_vigencia": "2023-09",
+    "entradas": [
+     "RECV3",
+     "VAMO3"
+    ],
+    "saidas": [
+     "CASH3"
+    ],
+    "total_de_ativos": 86
+   }
+  }
+ ]
+}

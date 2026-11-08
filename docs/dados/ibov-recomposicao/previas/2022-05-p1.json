@@ -1,0 +1,117 @@
+{
+ "consulta": "1ª prévia carteira Ibovespa B3 que entra em vigor em maio de 2022 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-82-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Prévia\n## Segunda prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 82 ativos\n### Bolsa também divulga hoje a segunda prévia das novas carteiras de 36 índices que vão vigorar a partir de janeiro\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fdocs.google.com%2Fspreadsheets%2Fd%2F1t-OdFOINYlpfpJnjRc0cs1TRcAlz8jQv%2Fedit%3Fgid%3D163454054%23gid%3D163454054&data=05%7C02%7Cjessica.correa%40b3.com.br%7C4faf82200a7a4bd1cfd808de3ca55ac6%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639014878060807449%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=5mgE5t97ugka6XKoxE%2FYzHdukkVPLICkOmDggJNDOUY%3D&reserved=0)",
+     "position": 1
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "– 1ª prévia: no primeiro pregão do último mês de vigência da carteira (01/04/2026);. – 2ª prévia: no pregão seguinte ao dia 15 do último mês de ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD963DF6FC019687B6BEF6358F.htm",
+     "title": "Prévia do Ibovespa - B3",
+     "description": "Ibovespa B3 que entra em vigor em maio conta com 87 ativos Bolsa também divulga hoje a prévia das novas carteiras de 34 índices que vão vigorar ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+     "title": "Índice Ibovespa - Ibovespa - Composição da carteira - B3",
+     "description": "r Índice Bovespa (Ibovespa B3) IBovespa válida para 05/11/26. Esta tabela considera as variações na participação de cada um dos papéis na composição total do í ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A B3 divulgou a primeira prévia da carteira do **[Ibovespa B3](https://borainvestir.b3.com.br/noticias/ibovespa-b3-como-e-calculado-e-o-que-significa-o-principal-indicador-do-mercado/)**, que entrará em vigor em maio.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa.htm",
+     "title": "Nova Carteira do Ibovespa - B3",
+     "description": "A B3 divulga regularmente três prévias das novas composições dos índices: a 1ª prévia, no primeiro pregão do último mês de vigência da carteira ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbab-5349-769c-b3e9-d5ffaec4a3e5"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-82-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2025-12-16",
+    "data_base_do_fechamento": "2025-12-12",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD963DF6FC019687B6BEF6358F.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-04-30",
+    "data_base_do_fechamento": "2025-04-29",
+    "mes_de_vigencia": "2025-05",
+    "entradas": [
+     "DIRR3",
+     "SMFT3"
+    ],
+    "saidas": [
+     "AMOB3",
+     "LWSA3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-11-09",
+    "data_base_do_fechamento": "2026-11-09",
+    "mes_de_vigencia": "2026-11",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

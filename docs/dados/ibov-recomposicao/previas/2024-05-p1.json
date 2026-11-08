@@ -1,0 +1,120 @@
+{
+ "consulta": "1ª prévia carteira Ibovespa B3 que entra em vigor em maio de 2024 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-88-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor em ...",
+     "description": "A prévia, com base no fechamento do pregão de 28/03/2024, registra a entrada das empresa Auren (AURE3) e Vivara(VIVA3), e não registrou saídas. Os cinco ativos ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-79-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "Bolsa também divulga hoje a segunda prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio.",
+     "position": 2
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio. Acesse no Bora Investir.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "Além da carteira oficial, a B3 divulga três prévias das carteiras, antes da divulgação da carteira definitiva, para que investidores e gestores ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A B3 divulgou a primeira prévia da carteira do **[Ibovespa B3](https://borainvestir.b3.com.br/noticias/ibovespa-b3-como-e-calculado-e-o-que-significa-o-principal-indicador-do-mercado/)**, que entrará em vigor em maio.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbac-8027-7140-8f0b-0ba3cccc65de"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-88-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2024-04-01",
+    "data_base_do_fechamento": "2024-03-28",
+    "mes_de_vigencia": "2024-05",
+    "entradas": [
+     "AURE3",
+     "VIVA3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 88
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-79-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2026-04-16",
+    "data_base_do_fechamento": "2026-04-14",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-04-03",
+    "data_base_do_fechamento": "2023-03-31",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3"
+    ],
+    "total_de_ativos": 87
+   }
+  }
+ ]
+}

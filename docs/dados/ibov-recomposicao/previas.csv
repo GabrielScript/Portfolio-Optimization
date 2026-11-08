@@ -1,0 +1,43 @@
+rebalanceamento,previa,divulgacao,entradas,saidas,fonte
+2015-01-01,3,2015-01-02,"('MULT3',)",(),https://www.b3.com.br/pt_br/noticias/3-previa-carteiras-teoricas.htm
+2019-09-01,1,2019-09-02,"('BPAC11', 'GNDI3')",(),https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC6CDF20DD016CF26A1A8E3217.htm
+2019-09-01,3,2019-08-29,"('BPAC11', 'GNDI3')",(),https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm
+2020-01-01,1,2019-12-02,"('CRFB3', 'HAPV3', 'SULA11')",(),https://www.b3.com.br/pt_br/noticias/carteira-do-indice-bovespa-8AA8D0CD6E90DDD4016EC74389197DB0.htm
+2020-01-01,3,2020-01-02,"('CRFB3', 'HAPV3', 'HGTX3', 'SULA11', 'TOTS3')",(),https://www.b3.com.br/pt_br/noticias/3-previa-do-ibovespa-8AA8D0CD95C8AFE301962AEF6310646B.htm
+2020-09-01,1,2020-08-03,"('EZTC3', 'PRIO3')",(),https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa.htm
+2020-09-01,3,2020-09-03,"('EZTC3', 'PRIO3')",(),https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490CA742C5522017454FE0AE42F8C.htm
+2021-05-01,1,2021-05-03,"('BIDI11', 'LWSA3')",(),https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices.htm
+2021-09-01,1,2021-08-02,"('ALPA4', 'BIDI4', 'BPAN4', 'CASH3', 'RDOR3')",(),https://www.b3.com.br/pt_br/noticias/b3-divulga-previa-do-ibovespa.htm
+2021-09-01,3,2021-09-02,"('ALPA4', 'AUAU3', 'BIDI4', 'BPAN4', 'CASH3', 'DXCO3', 'RDOR3')",(),https://www.b3.com.br/en_us/news/third-preview-for-ibovespa.htm
+2022-01-01,1,2021-12-01,"('POSI3', 'PSSA3')",(),https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm
+2022-01-01,3,2021-12-29,"('BRAV3', 'CMIN3', 'POSI3')",(),https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm
+2022-09-01,1,2022-08-01,"('AZZA3', 'RAIZ4', 'SMTO3')","('JHSF3',)",https://www.b3.com.br/pt_br/noticias/primeira-previa-ibovespa.htm
+2022-09-01,3,2022-09-01,"('AZZA3', 'RAIZ4', 'SMTO3')","('JHSF3',)",https://www.b3.com.br/pt_br/noticias/b3-divulga-a-terceira-previa-do-ibovespa-e-demais-indices.htm
+2023-01-01,3,2022-12-28,(),"('IRBR3', 'POSI3')",https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm
+2023-05-01,1,2023-04-03,"('IRBR3',)","('BPAN4', 'ECOR3')",https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/
+2023-05-01,2,2023-04-17,"('IRBR3',)","('BPAN4', 'ECOR3', 'QUAL3')",https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CD95C8AFE30196267139472767.htm
+2023-05-01,3,2023-04-27,"('IRBR3',)","('BPAN4', 'ECOR3', 'QUAL3')",https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm
+2023-09-01,1,2023-08-01,"('RECV3', 'VAMO3')","('CASH3',)",https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm
+2023-09-01,2,2023-08-16,"('RECV3', 'VAMO3')","('CASH3',)",https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm
+2023-09-01,3,2023-08-31,"('RECV3', 'VAMO3')","('CASH3',)",https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm
+2024-01-01,1,2023-12-01,"('ISAE4',)","('BHIA3',)",https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm
+2024-01-01,2,2023-12-18,"('ISAE4',)",(),https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm
+2024-01-01,3,2023-12-27,"('ISAE4',)",(),https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm
+2024-05-01,1,2024-04-01,"('AURE3', 'VIVA3')",(),https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-88-ativos.htm
+2024-05-01,3,2024-05-02,"('VIVA3',)",(),https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3.htm
+2024-09-01,1,2024-08-01,"('AURE3', 'CXSE3', 'STBP3')","('DXCO3', 'SOMA3')",https://www.b3.com.br/pt_br/noticias/ibovespa-b3.htm
+2024-09-01,3,2024-09-02,"('AURE3', 'CXSE3', 'STBP3')","('DXCO3', 'SOMA3')",https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC918A1DFC0191B31D3EB76924.htm
+2025-01-01,1,2024-12-02,"('POMO4',)","('ALPA4', 'EZTC3')",https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490C995C8A43A0196134545133AA7.htm
+2025-01-01,3,2025-01-02,"('POMO4', 'PSSA3')","('ALPA4', 'EZTC3')",https://www.b3.com.br/pt_br/noticias/previa-ibovespa-b3.htm
+2025-05-01,2,2025-04-16,"('DIRR3', 'SMFT3')","('AMOB3', 'LWSA3')",https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-smft3/
+2025-05-01,3,2025-04-30,"('DIRR3', 'SMFT3')","('AMOB3', 'LWSA3')",https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/acoes/3a-previa-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-e-direcional/
+2025-09-01,1,2025-08-01,(),(),https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CD9851B97401987B423B9D3F3B.htm
+2025-09-01,2,2025-08-18,(),(),https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-do-ibovespa-b3-que-entra-em-vigor-em-setembro-tem-entrada-da-cury-cury3-e-saida-da-sao-martinho-smto3/
+2025-09-01,3,2025-08-28,"('CEAB3', 'CURY3')","('AUAU3', 'SMTO3')",https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm
+2026-01-01,1,2025-12-01,"('CSMG3',)","('CVCB3',)",https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm
+2026-01-01,2,2025-12-16,"('CSMG3',)","('CVCB3',)",https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-82-ativos.htm
+2026-01-01,3,2025-12-23,"('CSMG3',)","('CVCB3',)",https://www.b3.com.br/pt_br/noticias/previa-ibovespa-8AA8D0CC9AEAA906019B4CC6D83A2724.htm
+2026-05-01,2,2026-04-16,(),"('AXIA7', 'CYRE4', 'IRBR3', 'RENT4')",https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-79-ativos.htm
+2026-05-01,3,2026-04-24,(),"('AXIA7', 'CYRE4', 'IRBR3', 'RENT4')",https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/
+2026-09-01,2,2026-08-17,"('TEND3',)","('RECV3',)",https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-78-ativos/
+2026-09-01,3,2026-08-31,"('TEND3',)","('RECV3', 'SLCE3')",https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-76-ativos/

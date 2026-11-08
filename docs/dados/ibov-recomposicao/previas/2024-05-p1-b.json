@@ -1,0 +1,107 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa abril 2024 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 10, 185,929.33 ; 11, 189,699.12 ; 12, 163,150.35, 187,766.42 ; 13, 161,973.05, 186,464.30 ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Índice Bovespa (Ibovespa B3) Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio. Acesse no Bora Investir.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indexes/broad-indexes/bovespa-b3-br-index-ibovespa-b3-br.htm",
+     "title": "Bovespa B3 BR+ Index (Ibovespa B3 BR+)",
+     "description": "The objective of the Bovespa B3 BR+ Index is to be the indicator of the average performance of the quotations of the most negotiable and representative assets.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/indexes/ibovespa-b3-family/",
+     "title": "Ibovespa B3 family",
+     "description": "Indices · Bovespa Index (Ibovespa) · Bovespa B3 BR+ Index (Ibovespa B3 BR+) · B3 BR+ CAP 5% Bovespa Index (Ibovespa B3 BR+ Cap 5%) · B3 BR+ Equal Weight Bovespa ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-32e6-76cf-a7de-a27d89034c97"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  }
+ ]
+}

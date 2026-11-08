@@ -1,0 +1,104 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2026 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "Bolsa também divulga hoje a terceira prévia das novas carteiras de 40 índices, que vão vigorar a partir de setembro · Vale ON (11,864%) · Itaú ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C99FB04F9C019FC8E1A1CF1EBB.htm",
+     "title": "Índices | B3",
+     "description": "Bolsa também divulga hoje a primeira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro · Composição da primeira ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Ibovespa\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 84 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2F9ec%2F9ecde110f409838a044b5a833da831cf.xlsx&data=05%7C02%7Cjessica.correa%40b3.com.br%7C3b69721ecc204cf2e17708dde658219d%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C638919988587910148%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=HK%2By4%2BMoYkszYIT0gP5odXvgpLru%2BLoRJ3sDACRhiNY%3D&reserved=0)",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-79-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 14/04/2026, registra as saídas das ações AXIA7 (AXIA ENERGIA PNC), CYRE4 (CYRELA REALT PN), IRBR3 ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+     "title": "Com duas mudanças: confira a 1º prévia da carteira do ...",
+     "description": "A prévia, com base no fechamento do pregão de 30/07/2026, registra a saída da ação RECV3 (PETRORECSA ON) e a entrada da TEND3 (TENDA ON).\n\n## Prévia das carteiras dos índices B3\n– **3ª prévia**: cinco dias antes da vigência da carteira anterior (31/08/2026);\n\n## Clique nos arquivos abaixo e faça download\n- [Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2Face%2Face12eefc754c41536a96e44be15bc60.xlsx&data=05%7C02%7Cjoao.psantos%40b3.com.br%7Cace2e2af30874189b50608def1961a2c%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639213824179979135%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=oYpgw9zB7s1scmJMQNfnfqQRIxUwZrzISTUtuLl0hAM%3D&reserved=0)",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbad-b2fa-723b-9727-dee0fbcc4f9a"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-79-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2026-04-16",
+    "data_base_do_fechamento": "2026-04-14",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-07-31",
+    "data_base_do_fechamento": "2026-07-30",
+    "mes_de_vigencia": "2026-08",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3"
+    ],
+    "total_de_ativos": 78
+   }
+  }
+ ]
+}

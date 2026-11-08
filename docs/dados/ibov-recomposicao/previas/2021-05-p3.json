@@ -1,0 +1,118 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em maio de 2021 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 27/08/2025, registra a entrada das empresas Cury (CURY3) e CEA Modas (CEAB3), e a saída da São ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+     "title": "Índice Ibovespa - Ibovespa - Composição da carteira - B3",
+     "description": "# Índice Bovespa (Ibovespa B3)\n## Carteira do Dia - 09/11/26\n| Código | Ação | Tipo | Qtde. Teórica | Part. (%) |\n|-|-|-|-|-|\n| B3SA3 | B3 | ON NM | 4.985.893.391 | 3,042 |",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CDA023AA8301A08263E30959C0.htm",
+     "title": "Ibovespa | B3",
+     "description": "# Ibovespa\n## Nova carteira do Ibovespa B3 entra em vigor com 76 ativos\n- Entradas e saídas [aqui](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2Fe87%2Fe87f97d524e8a7dd8d7d571b790d7d44.xlsx&data=05%7C02%7Cthais.ramos%40b3.com.br%7Cd560c49460684ba2609a08df0dd6885a%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639244887266292994%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=qn7fA7WfvmAbDR8zF3Vp7apaG%2Bn5FVBhpcEA3ij10SM%3D&reserved=0)",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/acoes/3a-previa-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-e-direcional/",
+     "title": "3ª prévia do Ibovespa B3, que entra em vigor em maio, inclui ...",
+     "description": "A carteira vai vigorar de 05/05/2025 a 31/08/2025 e conta com 87 papéis de 84 empresas brasileiras (ações ordinárias, ON, e preferenciais, PN, ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-de-janeiro-divulgada-confira-quem-entra-e-quem-sai/",
+     "title": "Nova carteira do Ibovespa B3 de janeiro divulgada",
+     "description": "A nova carteira do Ibovespa B3, principal indicador do desempenho das ações mais negociadas da Bolsa, que vai vigorar de 05/01/2026 a 30/04/ ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbaa-b209-7771-895e-78c3c093cd2e"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-11-09",
+    "data_base_do_fechamento": "2026-11-09",
+    "mes_de_vigencia": "2026-11",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/acoes/3a-previa-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-e-direcional/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-04-30",
+    "data_base_do_fechamento": "2025-04-29",
+    "mes_de_vigencia": "2025-05",
+    "entradas": [
+     "DIRR3",
+     "SMFT3"
+    ],
+    "saidas": [
+     "AMOB3",
+     "LWSA3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-de-janeiro-divulgada-confira-quem-entra-e-quem-sai/",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-01-05",
+    "data_base_do_fechamento": "2026-01-02",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 85
+   }
+  }
+ ]
+}

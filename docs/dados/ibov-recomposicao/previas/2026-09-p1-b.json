@@ -1,0 +1,118 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa agosto 2026 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C99FB04F9C019FC8E1A1CF1EBB.htm",
+     "title": "Índices | B3",
+     "description": "agosto de 2026 – A primeira prévia da nova carteira do Ibovespa B3, principal indicador do desempenho das ações ・ conta com 78 papéis ・ e a ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AA8D0CD9FDD6F6201A010B268E83F95.htm",
+     "title": "Índices | B3",
+     "description": "# Índices\n## Segunda prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 78 ativos\n### Bolsa do Brasil também divulga hoje a segunda prévia das novas carteiras de 40 índices\nA prévia, com base no fechamento do pregão de 13/08/2026, registra a saída da ação RECV3 (PETRORECSA ON) e entrada da TEND3 (TENDA ON).\n\n- [Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2F89d%2F89d29143e49747d0a54f45387d3fcade.xlsx&data=05%7C02%7Cguilherme.silima%40b3.com.br%7Cf8515afb6984489edfa408defc6dcb67%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639225746237093990%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=ohjv610qwo2wAzw2OLUtLCyzzEzL%2BnYdmFO%2Bn2GwxxE%3D&reserved=0)",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490C8981E28880198BE5ED0F53AC8.htm",
+     "title": "Ibovespa | B3",
+     "description": "A prévia, com base no fechamento do pregão de 15/08/2025, registra a entrada da empresa Cury (CURY) e a saída da São Martinho (SMTO). Os cinco ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+     "title": "Prévia do Ibovespa B3",
+     "description": "A prévia, com base no fechamento do pregão de 27/11/2025, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3). Os ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+     "title": "Com duas mudanças: confira a 1º prévia da carteira do ...",
+     "description": "A prévia, com base no fechamento do pregão de 30/07/2026, registra a saída da ação RECV3 (PETRORECSA ON) e a entrada da TEND3 (TENDA ON).",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-78-ativos/",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 13/08/2026, registra a saída da ação RECV3 (PETRORECSA ON) e entrada da TEND3 (TENDA ON). Os ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb3-be48-720a-8b4f-1a535a79f3be"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490C8981E28880198BE5ED0F53AC8.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2025-08-18",
+    "data_base_do_fechamento": "2025-08-15",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY"
+    ],
+    "saidas": [
+     "SMTO"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2025-12-01",
+    "data_base_do_fechamento": "2025-11-27",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/com-duas-acoes-de-fora-confira-a-1o-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-08-03",
+    "data_base_do_fechamento": "2026-07-30",
+    "mes_de_vigencia": "2026-08",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3"
+    ],
+    "total_de_ativos": 78
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-78-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2026-08-17",
+    "data_base_do_fechamento": "2026-08-13",
+    "mes_de_vigencia": "2026-09",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3"
+    ],
+    "total_de_ativos": 78
+   }
+  }
+ ]
+}

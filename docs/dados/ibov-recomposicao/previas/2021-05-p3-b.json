@@ -1,0 +1,115 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa abril 2021 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "# Índices\n03/05/2021\n\n## B3 divulga nova carteira do Ibovespa e demais índices\nA prévia do Ibovespa registra a entrada da LWSA3 (LOCAWEB ON) e BIDI11 (BANCO INTER UNT) totalizando 84 ativos de 81 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-a-primeira-previa-do-ibovespa-e-demais-indices.htm",
+     "title": "B3 divulga a primeira prévia do Ibovespa e demais índices | B3",
+     "description": "# Ibovespa\n01/04/2021",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+     "title": "Carteiras Teóricas - B3",
+     "description": "A prévia registra a entrada da Positivo Tec ON (POSI3), CSN Mineração ON (CMIN3) e 3R Petroleum ON (RRRP3), totalizando 93 ativos de 90 empresas ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "A B3 divulga regularmente três prévias das novas composições dos índices: a 1ª prévia, no primeiro pregão do último mês de vigência da carteira ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "IBovespa - 2026. Dia, Jan, Fev, Mar, Abr, Mai, Jun. 1, 187.952,91, 172.197,46. 2, 160.538,69, 182.793,40, 189.307,02, 188.052,02, 174.197,64. 3, 185.674,43 ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb0-3cdd-760a-9292-54b2716e8896"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-05-03",
+    "data_base_do_fechamento": "2021-04-30",
+    "mes_de_vigencia": "2021-05",
+    "entradas": [
+     "LWSA3",
+     "BIDI11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-a-primeira-previa-do-ibovespa-e-demais-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-04-01",
+    "data_base_do_fechamento": "2021-03-31",
+    "mes_de_vigencia": "2021-05",
+    "entradas": [
+     "LOCAWEB ON (LWSA3)"
+    ],
+    "saidas": [],
+    "total_de_ativos": 83
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2021-12-29",
+    "data_base_do_fechamento": "2021-12-28",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  }
+ ]
+}

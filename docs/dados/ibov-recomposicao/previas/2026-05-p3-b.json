@@ -1,0 +1,117 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa abril 2026 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AA8D0CD9DBEF3EB019DBFDFF2B25A6A.htm",
+     "title": "Índices | B3",
+     "description": "24 de abril de 2026 – A terceira prévia da nova carteira do Ibovespa B3, principal indicador do desempenho das ações mais negociadas da Bolsa, ...",
+     "position": 1
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 22/04/2026, registra as saídas das ações AXIA7 (AXIA ENERGIA PNC), CYRE4 (CYRELA REALT PN), IRBR3 (IRBBRASIL RE ON), RENT4 (LOCALIZA PN).\n\n## Prévia das carteiras dos índices B3\n- [Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fs2601.imxsnd16.com%2Flink.php%3Fcode%3DbDpfLTIwLV8lMkZ4JTJGMTIwOTQlMkY2NTMlMkY2NTMzNGJhM2M0MzRjMzk0MmJjMWY5MzVmNjE1OWI0Ni54bHN4OjEwNTE2NjQ0OTM6MzUxMDUwMzY2OjI2MTc6MTA0MjpiZTQ5OmUw&data=05%7C02%7Cjoao.psantos%40b3.com.br%7C8ee9b7f982094b7595d308dea1fa6275%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639126293993757432%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=Bh8hpMcIkGP7jNiOWAHY1WQ3qu0LHq5v8QKYSLnEBMI%3D&reserved=0)\n\n## Ibovespa B3\nA porta de entrada, que vai definir se um papel será incluído ou não no índice, é a liquidez, ou seja, a capacidade que essa ação tem de ser comprada ou vendida rapidamente pelos investidores.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C99FB04F9C019FC8E1A1CF1EBB.htm",
+     "title": "Índices | B3",
+     "description": "A prévia, com base no fechamento do pregão de 30/07/2026, registra a saída da ação RECV3 (PETRORECSA ON) e a entrada da TEND3 (TENDA ON). Os ...",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-76-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 27/08/2026, registra as saídas das ações **RECV3** (PETRORECSA ON), **SLCE3** (SLC AGRICOLA ON) e a entrada da ação **TEND3** (TENDA ON).\n\n## Ibovespa B3\nA porta de entrada, que vai definir se um papel será incluído ou não no índice, é a liquidez, ou seja, a capacidade que essa ação tem de ser comprada ou vendida rapidamente pelos investidores.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-entra-em-vigor-com-76-ativos-uma-acao-entra-e-duas-saem/",
+     "title": "Nova carteira do Ibovespa B3 entra em vigor com 76 ativos",
+     "description": "Definida com base no fechamento do pregão de 30/04/2026, a nova composição da carteira registra a entrada da ação da TEND3 (TENDA ON) e as ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb3-92f8-779c-a83e-9e2b8bd775b0"
+ },
+ "paginas": [
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-76-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-08-31",
+    "data_base_do_fechamento": "2026-08-27",
+    "mes_de_vigencia": "2026-08",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3",
+     "SLCE3"
+    ],
+    "total_de_ativos": 76
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-entra-em-vigor-com-76-ativos-uma-acao-entra-e-duas-saem/",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2026-07-01",
+    "data_base_do_fechamento": "2026-04-30",
+    "mes_de_vigencia": "2026-09",
+    "entradas": [
+     "TEND3"
+    ],
+    "saidas": [
+     "RECV3",
+     "SLCE3"
+    ],
+    "total_de_ativos": 76
+   }
+  }
+ ]
+}

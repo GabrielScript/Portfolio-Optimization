@@ -1,0 +1,118 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2023 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Terceira prévia\n31/08/2023\n\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 86 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir de setembro\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.\n\n- **3ª prévia**: no penúltimo pregão do último mês de vigência da carteira (31/8/2023); e",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C9A02182D301A05936A96D17DF.htm",
+     "title": "Índices | B3",
+     "description": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 76 ativos. Bolsa também divulga hoje a terceira prévia ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+     "title": "Prévia do Ibovespa B3",
+     "description": "A prévia, com base no fechamento do pregão de 27/11/2025, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3). Os ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Terceira Prévia\n27/12/2023",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 15/8/2023, registra a entrada das empresas PetroReconcavo ON (RECV3) e do Grupo Vamos ON (VAMO3) e ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/3-previa-ibovespa.htm",
+     "title": "3ª Prévia Ibovespa | B3",
+     "description": "# 3ª Prévia Ibovespa\n27/04/2023\n\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor a partir de maio conta com 86 ativos\n### A carteira definitiva será divulgada em 2 de maio. Além do Ibovespa, a Bolsa também divulga a prévia das novas carteiras dos demais índices, como ISE e IBRX-100.\nA composição das carteiras do Ibovespa B3 e dos demais índices de ações calculados pela bolsa do Brasil é revisada a cada quatro meses, em janeiro, maio e setembro, com a possibilidade de entrada e saída de empresas de acordo com a metodologia de cada índice.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbac-1bbc-75f0-b782-906488b4d6f1"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-08-31",
+    "data_base_do_fechamento": "2023-08-30",
+    "mes_de_vigencia": "2023-09",
+    "entradas": [
+     "RECV3",
+     "VAMO3"
+    ],
+    "saidas": [
+     "CASH3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2025-12-01",
+    "data_base_do_fechamento": "2025-11-27",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-87-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2023-12-27",
+    "data_base_do_fechamento": "2023-12-26",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2023-08-16",
+    "data_base_do_fechamento": "2023-08-15",
+    "mes_de_vigencia": "2023-09",
+    "entradas": [
+     "RECV3",
+     "VAMO3"
+    ],
+    "saidas": [
+     "CASH3"
+    ],
+    "total_de_ativos": 86
+   }
+  }
+ ]
+}

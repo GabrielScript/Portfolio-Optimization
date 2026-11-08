@@ -1,0 +1,114 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa dezembro 2020 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490CA742C5522017454FE0AE42F8C.htm",
+     "title": "Ibovespa | B3",
+     "description": "A carteira do Ibovespa registra a entrada de Eztec ON (EZTC3) e PetroRio ON (PRIO3), totalizando 77 ativos de 74 empresas. Os cinco ativos que apresentaram o ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/3-previa-do-ibovespa-8AA8D0CD95C8AFE301962AEF6310646B.htm",
+     "title": "3ª prévia do Ibovespa | B3",
+     "description": "# 3ª prévia do Ibovespa\n02/01/2020\n\n## A terceira prévia da nova carteira do Índice Bovespa\nA prévia do Ibovespa registra a entrada de Carrefour ON (CRFB3), Hapvida ON (HAPV3), SulAmérica UNT (SULA11), Cia Hering ON (HGTX3), Totvs (TOTS3), totalizando 73 ativos de 70 empresas.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+     "title": "Prévia do Ibovespa | B3",
+     "description": "# Prévia do Ibovespa\n## B3 divulga a terceira prévia do Ibovespa e demais índices\nA prévia do Ibovespa registra a entrada de GNDI3 (INTERMEDICA ON) e BPAC11 (BTGP BANCO UNT), totalizando 68 ativos de 65 empresas.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "Historic statistics | B3. IBovespa closing values for all trading sessions as of January 1998. The table also displays highest and lowest values for each month.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/news/b3-announces-new-portfolio-for-ibovespa-and-other-indices.htm",
+     "title": "New portfolio for Ibovespa | B3",
+     "description": "# New portfolio for Ibovespa\n01/07/2020",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbaf-eeac-75b2-8c02-28811a0be123"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490CA742C5522017454FE0AE42F8C.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2020-09-03",
+    "data_base_do_fechamento": "2020-09-02",
+    "mes_de_vigencia": "2020-09",
+    "entradas": [
+     "EZTC3",
+     "PRIO3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 77
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/3-previa-do-ibovespa-8AA8D0CD95C8AFE301962AEF6310646B.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2020-01-02",
+    "data_base_do_fechamento": "2019-12-30",
+    "mes_de_vigencia": "2020-01",
+    "entradas": [
+     "CRFB3",
+     "HAPV3",
+     "SULA11",
+     "HGTX3",
+     "TOTS3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 73
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2019-08-29",
+    "data_base_do_fechamento": "2019-08-28",
+    "mes_de_vigencia": "2019-09",
+    "entradas": [
+     "GNDI3",
+     "BPAC11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 68
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

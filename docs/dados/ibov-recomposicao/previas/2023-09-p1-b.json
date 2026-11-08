@@ -1,0 +1,110 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa agosto 2023 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 31/7/2023, registra a entrada das empresas PetroReconcavo ON (RECV3) e do Grupo Vamos ON (VAMO3) e ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa-b3-tem-89-papeis.htm",
+     "title": "Nova carteira do Ibovespa B3 tem 89 papéis",
+     "description": "Válida de hoje, 2 de janeiro de 2023, até 28 de abril de 2023, a composição registra a saída de duas empresas, Positivo Tec ON (POSI3) e IRB ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 11, 189,699.12, 183,969.35 ; 12, 163,150.35, 187,766.42, 179,284.49 ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Dia, Jan, Fev, Mar, Abr, Mai, Jun. 1, 187.952,91, 172.197,46. 2, 160.538,69, 182.793,40, 189.307,02, 188.052,02, 174.197,64. 3, 185.674,43, 183.104,87 ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/data-services/market-data/reports/daily-bulletin/chapters-of-the-daily-bulletin/",
+     "title": "Chapters of the daily bulletin - B3",
+     "description": "The bulletins published more than 20 days ago are available on the Acervo B3 page in PDF format. * Details about the table layouts are available in the ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-ba79-741a-8c0e-bf916311103e"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-08-01",
+    "data_base_do_fechamento": "2023-07-31",
+    "mes_de_vigencia": "2023-09",
+    "entradas": [
+     "RECV3",
+     "VAMO3"
+    ],
+    "saidas": [
+     "CASH3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa-b3-tem-89-papeis.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2023-01-02",
+    "data_base_do_fechamento": "2023-01-02",
+    "mes_de_vigencia": "2023-01",
+    "entradas": [],
+    "saidas": [
+     "POSI3",
+     "IRBR3"
+    ],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

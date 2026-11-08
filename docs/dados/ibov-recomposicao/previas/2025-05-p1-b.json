@@ -1,0 +1,112 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa abril 2025 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+     "title": "Prévia do Ibovespa B3",
+     "description": "# Prévia do Ibovespa B3\n01/12/2025\n\n## Primeira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 82 ativos\n### Bolsa também divulga hoje a primeira prévia das novas carteiras de 36 índices, que vão vigorar a partir de janeiro\nA prévia, com base no fechamento do pregão de 27/11/2025, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3).\n\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2Fca5%2Fca5b6255d2473cdc830d1771cce0c543.xlsx&data=05%7C02%7Cguilherme.silima%40b3.com.br%7C046795da487b4f767a4408de30d8f57c%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C639001905764536847%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=DCjnWi3AfBybS8p%2Fw4r95bGP7qk%2F3fMMKaDc4aOGCNs%3D&reserved=0)",
+     "position": 1
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-smft3/",
+     "title": "2ª prévia da carteira do Ibovespa B3, que entra em vigor em ...",
+     "description": "A prévia, com base no fechamento do pregão de 15 de abril, registra a entrada da empresa Direcional (DIRR3) e Smart Fit (SMFT3) a saída da ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa closing values for all trading sessions as of January 1998. The table also displays highest and lowest values for each month. Year 2026 2025 2024 2023",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/confira-as-mudancas-da-1a-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio/",
+     "title": "Confira as mudanças da 1ª prévia da carteira do Ibovespa B3 ...",
+     "description": "Bolsa também divulga hoje a primeira prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio. Acesse no Bora Investir.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-estatisticas-historicas.htm",
+     "title": "Índice Ibovespa - Ibovespa - Estatísticas históricas - B3",
+     "description": "Confira a pontuação de fechamento do IBovespa, em todos os pregões, desde janeiro de 1988. s. Ano 2026 2025 2024 2023. IBovespa -",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-bd3a-7521-8303-b4effa053fc3"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2025-12-01",
+    "data_base_do_fechamento": "2025-11-27",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-inclui-smart-fit-smft3/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2025-04-16",
+    "data_base_do_fechamento": "2025-04-15",
+    "mes_de_vigencia": "2025-05",
+    "entradas": [
+     "DIRR3",
+     "SMFT3"
+    ],
+    "saidas": [
+     "AMOB3",
+     "LWSA3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

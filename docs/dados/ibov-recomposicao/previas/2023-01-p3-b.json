@@ -1,0 +1,119 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa dezembro 2022 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+     "title": "Terceira prévia do Ibovespa B3 tem saída de duas ações e ...",
+     "description": "# Terceira Prévia\n28/12/2022\n\n## Terceira prévia do Ibovespa B3 tem saída de duas ações e nenhuma entrada\n### Prévias das carteiras dos demais índices também foram divulgadas\n**São Paulo, 28 de dezembro de 2022**– A B3, a bolsa do Brasil, divulga hoje a terceira prévia do índice Ibovespa B3 que vai vigorar de 02 de janeiro de 2023 a 28 de abril de 2023, com base no fechamento do pregão de 27 de dezembro de 2022. A prévia registra a saída da Positivo Tec ON (POSI3) e do IRB Brasil RE ON (IRBR3) e não registra entradas, totalizando 89 ativos de 86 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-a-terceira-previa-do-ibovespa-e-demais-indices.htm",
+     "title": "B3 divulga a terceira prévia do Ibovespa e demais índices",
+     "description": "# Terceira Prévia Ibovespa\n01/09/2022\n\n## B3 divulga a terceira prévia do Ibovespa e demais índices\nA prévia registra a entrada das empresas Arezzo&CO ON (ARZZ3), Raízen PN (RAIZ4), São Martinho ON (SMTO3) e saída da JHSF ON (JHSF3), totalizando 92 ativos de 89 empresas.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+     "title": "Carteiras Teóricas - B3",
+     "description": "# Carteiras Teóricas\n## B3 divulga a terceira prévia do Ibovespa e demais índices\nA prévia registra a entrada da Positivo Tec ON (POSI3), CSN Mineração ON (CMIN3) e 3R Petroleum ON (RRRP3), totalizando 93 ativos de 90 empresas.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "# Nova Carteira do Ibovespa\n03/01/2022",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-76-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 27/08/2026, registra as saídas das ações **RECV3** (PETRORECSA ON), **SLCE3** (SLC AGRICOLA ON) e a entrada da ação **TEND3** (TENDA ON).\n\n## Ibovespa B3\nA porta de entrada, que vai definir se um papel será incluído ou não no índice, é a liquidez, ou seja, a capacidade que essa ação tem de ser comprada ou vendida rapidamente pelos investidores.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb1-6db8-725d-bdbe-3d116da75b15"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-do-ibovespa-b3-tem-saida-de-duas-acoes-e-nenhuma-entrada.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2022-12-28",
+    "data_base_do_fechamento": "2022-12-27",
+    "mes_de_vigencia": "2023-01",
+    "entradas": [],
+    "saidas": [
+     "POSI3",
+     "IRBR3"
+    ],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-a-terceira-previa-do-ibovespa-e-demais-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2022-09-01",
+    "data_base_do_fechamento": "2022-08-31",
+    "mes_de_vigencia": "2022-09",
+    "entradas": [
+     "ARZZ3",
+     "RAIZ4",
+     "SMTO3"
+    ],
+    "saidas": [
+     "JHSF3"
+    ],
+    "total_de_ativos": 92
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/carteiras-teoricas-8AE490C97DB66D56017E07710611523C.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2021-12-29",
+    "data_base_do_fechamento": "2021-12-28",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  }
+ ]
+}

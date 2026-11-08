@@ -1,0 +1,116 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa agosto 2024 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC918A1DFC0191B31D3EB76924.htm",
+     "title": "Ibovespa - B3",
+     "description": "Com base no fechamento do pregão de 30/08/2024, registra a entrada das empresas Auren (AURE3), Caixa Seguridade (CXSE3) e Santos Brasil ...",
+     "position": 1
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio. Acesse no Bora Investir.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/novas-carteiras-indices.htm",
+     "title": "Novas carteiras índices | B3",
+     "description": "Além da carteira oficial, a B3 divulga três prévias das carteiras, antes da divulgação da carteira definitiva, para que investidores e gestores ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/ibovespa-tem-melhor-desempenho-de-2024-em-agosto-o-que-esperar-da-bolsa-ate-o-fim-do-ano/",
+     "title": "Ibovespa tem melhor desempenho de 2024 em agosto",
+     "description": "### Fechamentos mensais: alta do Ibovespa em agosto deve ser a maior para o ano\n|  |  |\n|-|-|\n| Janeiro | – 4,80% |\n| Março | – 0,71% |\n| Maio | + 3,04% |\n| Julho | + 3,02% |\n| Agosto | + 6,54% |",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-entra-em-vigor-com-76-ativos-uma-acao-entra-e-duas-saem/",
+     "title": "Nova carteira do Ibovespa B3 entra em vigor com 76 ativos",
+     "description": "A nova carteira do Ibovespa B3, a nova composição da carteira registra a entrada da ação da TEND3 (TENDA ON) a partir de janeiro de 2027 Vale ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-7e08-7646-bfd6-0183f446208a"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC918A1DFC0191B31D3EB76924.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2024-09-02",
+    "data_base_do_fechamento": "2024-08-30",
+    "mes_de_vigencia": "2024-09",
+    "entradas": [
+     "AURE3",
+     "CXSE3",
+     "STBP3"
+    ],
+    "saidas": [
+     "DXCO3",
+     "SOMA3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/novas-carteiras-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2024-01-02",
+    "data_base_do_fechamento": "2023-12-28",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

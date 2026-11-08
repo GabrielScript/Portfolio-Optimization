@@ -1,0 +1,117 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa agosto 2025 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CD9851B97401987B423B9D3F3B.htm",
+     "title": "Ibovespa | B3",
+     "description": "1° de agosto de 2025 – A primeira prévia da nova carteira do Ibovespa B3, principal indicador do ・ vigorar de 01/09/2025 a 02/01/2026, conta ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+     "title": "Prévia do Ibovespa B3",
+     "description": "A prévia, com base no fechamento do pregão de 27/11/2025, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3). Os ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AE490C99FB04F9C019FC8E1A1CF1EBB.htm",
+     "title": "Índices | B3",
+     "description": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 78 ativos. Bolsa também divulga hoje a primeira prévia das ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3.htm",
+     "title": "Ibovespa B3",
+     "description": "# Ibovespa B3\n## Primeira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 87 ativos\n### Bolsa também divulga hoje a primeira prévia das novas carteiras dos demais índices, como ISE e IBRX-100, que vão vigorar a partir do próximo mês\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2Feda%2Fedaa0a2c041c6636b50758c31447306d.xlsx&data=05%7C02%7Cguilherme.silima%40b3.com.br%7C250ddeed8902419a630808dcb2515b4b%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C638581310369543405%7CUnknown%7CTWFpbGZsb3d8eyJWIjoiMC4wLjAwMDAiLCJQIjoiV2luMzIiLCJBTiI6Ik1haWwiLCJXVCI6Mn0%3D%7C0%7C%7C%7C&sdata=mlVS4gm3dCYeKgV1hmLiciew8qnynWMIln%2FRZ8m6yZo%3D&reserved=0)\n\nA porta de entrada, que vai definir se um papel será incluído ou não no índice, é a liquidez, ou seja, a capacidade que essa ação tem de ser comprada ou vendida rapidamente pelos investidores.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indices-8AA8D0CD9FDD6F6201A010B268E83F95.htm",
+     "title": "Índices | B3",
+     "description": "- 1ª prévia: no primeiro pregão do último mês de vigência da carteira atual (03/08/2026);. - 2ª prévia: no pregão seguinte ao dia 15 do último ...",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3-encerra-2025-com-32-recordes-historicos-e-alta-acumulada-de-34.htm",
+     "title": "Ibovespa B3 encerra 2025 com 32 recordes históricos e alta ...",
+     "description": "Com uma valorização acumulada de 34% nos doze meses, o índice registrou seu melhor desempenho anual desde 2016, quando a performance foi de 39%.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb3-10a9-700d-bbe3-6fce962efaf5"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CD9851B97401987B423B9D3F3B.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2025-08-01",
+    "data_base_do_fechamento": "2025-07-31",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY"
+    ],
+    "saidas": [
+     "SMTO"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2025-12-01",
+    "data_base_do_fechamento": "2025-11-27",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2024-08-01",
+    "data_base_do_fechamento": "2024-07-31",
+    "mes_de_vigencia": "2024-09",
+    "entradas": [
+     "AURE3",
+     "CXSE3",
+     "STBP3"
+    ],
+    "saidas": [
+     "DXCO3",
+     "SOMA3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3-encerra-2025-com-32-recordes-historicos-e-alta-acumulada-de-34.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2026-01-02",
+    "data_base_do_fechamento": "2025-12-30",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 85
+   }
+  }
+ ]
+}

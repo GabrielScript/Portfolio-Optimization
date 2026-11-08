@@ -1,0 +1,118 @@
+{
+ "consulta": "1ª prévia carteira Ibovespa B3 que entra em vigor em janeiro de 2020 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-82-ativos.htm",
+     "title": "Segunda prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 12/12/2025, registra a entrada da empresa Copasa ON (CSMG3) e a saída da CVC Brasil ON (CVCB3). Os ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa-e-demais-indices.htm",
+     "title": "Nova Carteira do Ibovespa - B3",
+     "description": "A B3 divulga a nova carteira do Índice Bovespa que vai vigorar de 06 de janeiro de 2020 a 30 de abril de 2020, com base no fechamento do ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+     "title": "Índice Ibovespa - Ibovespa - Composição da carteira - B3",
+     "description": "r Índice Bovespa (Ibovespa B3) IBovespa válida para 05/11/26. Esta tabela considera as variações na participação de cada um dos papéis na composição total do í ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 27/08/2025, registra a entrada das empresas Cury (CURY3) e CEA Modas (CEAB3), e a saída da São ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/confira-as-mudancas-da-1a-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio/",
+     "title": "Confira as mudanças da 1ª prévia da carteira do Ibovespa B3 ...",
+     "description": "Bolsa também divulga hoje a primeira prévia das novas carteiras de 36 índices, que vão vigorar a partir de maio. Acesse no Bora Investir.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa-b3-tem-89-papeis.htm",
+     "title": "Nova carteira do Ibovespa B3 tem 89 papéis",
+     "description": "Válida de hoje, 2 de janeiro de 2023, até 28 de abril de 2023, a composição registra a saída de duas empresas, Positivo Tec ON (POSI3) e IRB ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bba9-9a99-763c-ba46-f96397ee4d53"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/segunda-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-82-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2025-12-16",
+    "data_base_do_fechamento": "2025-12-12",
+    "mes_de_vigencia": "2026-01",
+    "entradas": [
+     "CSMG3"
+    ],
+    "saidas": [
+     "CVCB3"
+    ],
+    "total_de_ativos": 82
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa-e-demais-indices.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2020-01-06",
+    "data_base_do_fechamento": "2020-01-03",
+    "mes_de_vigencia": "2020-01",
+    "entradas": [
+     "CRFB3",
+     "HAPV3",
+     "SULA11",
+     "HGTX3",
+     "TOTS3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 73
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/indice-ibovespa-ibovespa-composicao-da-carteira.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2026-11-09",
+    "data_base_do_fechamento": "2026-11-09",
+    "mes_de_vigencia": "2026-11",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  }
+ ]
+}

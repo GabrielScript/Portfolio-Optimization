@@ -1,0 +1,114 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa agosto 2024 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3.htm",
+     "title": "Ibovespa B3",
+     "description": "01/08/2024. Primeira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 87 ativos. Bolsa também divulga hoje a primeira ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 10, 185,929.33 ; 11, 189,699.12 ; 12, 163,150.35, 187,766.42 ; 13, 161,973.05, 186,464.30 ...",
+     "position": 2
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/ibovespa-tem-melhor-desempenho-de-2024-em-agosto-o-que-esperar-da-bolsa-ate-o-fim-do-ano/",
+     "title": "Ibovespa tem melhor desempenho de 2024 em agosto",
+     "description": "O Ibovespa fechou em leve queda de 0,03%, aos 136.004,01 pontos nesta sexta-feira (30). Já o dólar teve alta de 0,21%, cotado a R$ 5,63.",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "## Ibovespa B3\nA porta de entrada, que vai definir se um papel será incluído ou não no índice, é a liquidez, ou seja, a capacidade que essa ação tem de ser comprada ou vendida rapidamente pelos investidores.",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/market-data-e-indices/indices/indices-amplos/ibovespa.htm",
+     "title": "Ibovespa B3",
+     "description": "O Ibovespa é o principal indicador de desempenho das ações negociadas na B3 e reúne as empresas mais importantes do mercado de capitais brasileiro.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-4d2e-7103-a751-f8b64e38e820"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2024-08-01",
+    "data_base_do_fechamento": "2024-07-31",
+    "mes_de_vigencia": "2024-09",
+    "entradas": [
+     "AURE3",
+     "CXSE3",
+     "STBP3"
+    ],
+    "saidas": [
+     "DXCO3",
+     "SOMA3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/ibovespa-tem-melhor-desempenho-de-2024-em-agosto-o-que-esperar-da-bolsa-ate-o-fim-do-ano/",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2024-08-30",
+    "data_base_do_fechamento": "2024-08-30",
+    "mes_de_vigencia": "2024-09",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-tem-saida-de-ativos/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2026-04-24",
+    "data_base_do_fechamento": "2026-04-22",
+    "mes_de_vigencia": "2026-05",
+    "entradas": [],
+    "saidas": [
+     "AXIA7",
+     "CYRE4",
+     "IRBR3",
+     "RENT4"
+    ],
+    "total_de_ativos": 79
+   }
+  }
+ ]
+}

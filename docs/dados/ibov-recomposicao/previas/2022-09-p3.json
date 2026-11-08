@@ -1,0 +1,123 @@
+{
+ "consulta": "3ª prévia carteira Ibovespa B3 que entra em vigor em setembro de 2022 entrada saída",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+     "title": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "# Ibovespa\n## Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 84 ativos\n### Bolsa também divulga hoje a terceira prévia das novas carteiras de 36 índices, que vão vigorar a partir de setembro\n[Entradas e saídas](https://nam02.safelinks.protection.outlook.com/?url=https%3A%2F%2Fapp.i-maxpr.com%2Fx%2F12094%2F9ec%2F9ecde110f409838a044b5a833da831cf.xlsx&data=05%7C02%7Cjessica.correa%40b3.com.br%7C3b69721ecc204cf2e17708dde658219d%7Cf9cfd8cbc4a54677b65d3150dda310c9%7C0%7C0%7C638919988587910148%7CUnknown%7CTWFpbGZsb3d8eyJFbXB0eU1hcGkiOnRydWUsIlYiOiIwLjAuMDAwMCIsIlAiOiJXaW4zMiIsIkFOIjoiTWFpbCIsIldUIjoyfQ%3D%3D%7C0%7C%7C%7C&sdata=HK%2By4%2BMoYkszYIT0gP5odXvgpLru%2BLoRJ3sDACRhiNY%3D&reserved=0)",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa.htm",
+     "title": "Nova Carteira do Ibovespa - B3",
+     "description": "# Nova Carteira do Ibovespa\n05/09/2022",
+     "position": 2
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A prévia, com base no fechamento do pregão de 31/3/2023, registra a entrada do papel IRB Brasil RE ON (IRBR3) e a saída de duas ações, BPAN4 ( ...",
+     "position": 3
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-do-ibovespa-b3-que-entra-em-vigor-em-setembro-tem-entrada-da-cury-cury3-e-saida-da-sao-martinho-smto3/",
+     "title": "2ª prévia do Ibovespa B3, que entra em vigor em setembro, tem ...",
+     "description": "2ª prévia do Ibovespa B3, que entra em vigor em setembro, tem entrada da Cury (CURY3) e saída da São Martinho (SMTO3). Vale, Itaú, Petrobras e ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/nova-carteira-do-ibovespa-b3-entra-em-vigor-com-76-ativos-uma-acao-entra-e-duas-saem/",
+     "title": "Nova carteira do Ibovespa B3 entra em vigor com 76 ativos",
+     "description": "A nova carteira do Ibovespa B3, principal indicador do desempenho das ações mais negociadas da Bolsa, válida de 08/09/2026 a 31/12/2026, ...",
+     "position": 5
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/",
+     "title": "Conheça os Índices do Mercado no Bora Investir | B³",
+     "description": "Terceira prévia da carteira do Ibovespa B3 que entra em vigor em setembro conta com 76 ativos. 01/09/26 3 min de leitura.",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbab-8caa-728e-b66b-883d49452f4b"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/terceira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-setembro-conta-com-84-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2025-08-28",
+    "data_base_do_fechamento": "2025-08-27",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY3",
+     "CEAB3"
+    ],
+    "saidas": [
+     "SMTO3",
+     "PETZ3"
+    ],
+    "total_de_ativos": 84
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/nova-carteira-do-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-09-05",
+    "data_base_do_fechamento": "2022-09-02",
+    "mes_de_vigencia": "2022-09",
+    "entradas": [
+     "ARZZ3",
+     "RAIZ4",
+     "SMTO3"
+    ],
+    "saidas": [
+     "JHSF3"
+    ],
+    "total_de_ativos": 92
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-04-03",
+    "data_base_do_fechamento": "2023-03-31",
+    "mes_de_vigencia": "2023-05",
+    "entradas": [
+     "IRBR3"
+    ],
+    "saidas": [
+     "BPAN4",
+     "ECOR3"
+    ],
+    "total_de_ativos": 87
+   }
+  },
+  {
+   "url": "https://borainvestir.b3.com.br/tipos-de-investimentos/renda-variavel/indices/2a-previa-do-ibovespa-b3-que-entra-em-vigor-em-setembro-tem-entrada-da-cury-cury3-e-saida-da-sao-martinho-smto3/",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 2,
+    "data_de_divulgacao": "2025-08-18",
+    "data_base_do_fechamento": "2025-08-15",
+    "mes_de_vigencia": "2025-09",
+    "entradas": [
+     "CURY"
+    ],
+    "saidas": [
+     "SMTO"
+    ],
+    "total_de_ativos": 84
+   }
+  }
+ ]
+}

@@ -1,0 +1,111 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa dezembro 2024 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A primeira prévia da nova carteira do Ibovespa B3, principal indicador do desempenho das ações que vai vigorar de 2/1/2024 a 3/5/2024, conta ...",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490C995C8A43A0196134545133AA7.htm",
+     "title": "IBOVESPA | B3",
+     "description": "02/12/2024. Primeira prévia da carteira do Ibovespa B3 que entra em vigor em janeiro conta com 85 ativos. Bolsa também divulga hoje a primeira ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026 ; 10, 185,929.33 ; 11, 189,699.12 ; 12, 163,150.35, 187,766.42 ; 13, 161,973.05, 186,464.30 ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indexes/broad-indexes/bovespa-b3-br-index-ibovespa-b3-br.htm",
+     "title": "Bovespa B3 BR+ Index (Ibovespa B3 BR+)",
+     "description": "The objective of the Bovespa B3 BR+ Index is to be the indicator of the average performance of the quotations of the most negotiable and representative assets.",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/",
+     "title": "A Bolsa do Brasil - B3",
+     "description": "A Bolsa do Brasil | B3\n\nOK",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb2-957f-7095-80cd-da32a261a6dc"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-janeiro-conta-com-86-ativos.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2023-12-01",
+    "data_base_do_fechamento": "2023-11-30",
+    "mes_de_vigencia": "2024-01",
+    "entradas": [
+     "TRPL4"
+    ],
+    "saidas": [
+     "BHIA3"
+    ],
+    "total_de_ativos": 86
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AE490C995C8A43A0196134545133AA7.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2024-12-02",
+    "data_base_do_fechamento": "2024-11-29",
+    "mes_de_vigencia": "2025-01",
+    "entradas": [
+     "POMO4"
+    ],
+    "saidas": [
+     "ALPA4",
+     "EZTC3"
+    ],
+    "total_de_ativos": 85
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

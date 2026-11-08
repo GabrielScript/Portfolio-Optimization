@@ -1,0 +1,115 @@
+{
+ "consulta": "B3 divulga primeira prévia do Ibovespa dezembro 2021 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+     "title": "Primeira prévia do Ibovespa B3",
+     "description": "# Primeira prévia do Ibovespa B3\n01/12/2021\n\n## B3 divulga a primeira prévia do Ibovespa B3 e demais índices\nA prévia registra a entrada de Porto Seguro ON (PSSA3) e Positivo Tec ON (POSI3), totalizando 93 ativos de 89 empresas.",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-previa-do-ibovespa.htm",
+     "title": "B3 divulga prévia do Ibovespa | B3",
+     "description": "A prévia do Ibovespa registra a entrada da Alpargatas PN (ALPA4), Banco Inter PN (BIDI4), Banco Pan PN (BPAN4), Meliuz ON (CASH3) e Rede D'Or ON (RDOR3), ...",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/indice-bovespa-8AE490C8761BBCDB01761EB7BF4F144B.htm",
+     "title": "Índice Bovespa - B3",
+     "description": "A carteira do Ibovespa registra a entrada de Copel (CPLE6), Eneva (ENEV3), JHSF (JHSF3) e Unidas (LCAM3), totalizando 81 ativos de 78 empresas.",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+     "title": "B3 divulga nova carteira do Ibovespa e demais índices",
+     "description": "A nova carteira registra a entrada da Positivo Tec ON (POSI3), CSN Mineração ON (CMIN3) e 3R Petroleum ON (RRRP3), totalizando 93 ativos de 90 ...",
+     "position": 4
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+     "title": "Ibovespa | B3",
+     "description": "Ibovespa | B3\n\n# Bovespa Index (Ibovespa)\n- [Ibovespa](https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm)\n\n- [Ibovespa](https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm)",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "# Bovespa Index (Ibovespa)\n- [Ibovespa](https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm)",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbb0-cd9d-73ba-a11d-1350a4258b31"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/primeira-previa-do-ibovespa-b3.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-12-01",
+    "data_base_do_fechamento": "2021-11-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "PSSA3",
+     "POSI3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-previa-do-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2021-08-02",
+    "data_base_do_fechamento": "2021-07-30",
+    "mes_de_vigencia": "2021-09",
+    "entradas": [
+     "ALPA4",
+     "BIDI4",
+     "BPAN4",
+     "CASH3",
+     "RDOR3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 89
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/b3-divulga-nova-carteira-do-ibovespa-e-demais-indices-8AE490C87DB66C2F017E20F1B93A5E1E.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "2022-01-03",
+    "data_base_do_fechamento": "2021-12-30",
+    "mes_de_vigencia": "2022-01",
+    "entradas": [
+     "POSI3",
+     "CMIN3",
+     "RRRP3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 93
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  }
+ ]
+}

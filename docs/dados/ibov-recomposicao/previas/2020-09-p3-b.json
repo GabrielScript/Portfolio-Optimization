@@ -1,0 +1,111 @@
+{
+ "consulta": "B3 divulga terceira prévia do Ibovespa agosto 2020 registra a entrada",
+ "busca": {
+  "success": true,
+  "data": {
+   "web": [
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa.htm",
+     "title": "Prévia do Ibovespa - B3",
+     "description": "# Prévia do Ibovespa\n03/08/2020",
+     "position": 1
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+     "title": "Prévia do Ibovespa | B3",
+     "description": "# Prévia do Ibovespa\n## B3 divulga a terceira prévia do Ibovespa e demais índices\nA prévia do Ibovespa registra a entrada de GNDI3 (INTERMEDICA ON) e BPAC11 (BTGP BANCO UNT), totalizando 68 ativos de 65 empresas.",
+     "position": 2
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+     "title": "Índice Ibovespa - Ibovespa - Historic statistics - B3",
+     "description": "IBovespa - 2026. Day, Jan, Feb, Mar, Apr, May, Jun. 1, 187,952.91, 172,197.46. 2, 160,538.69, 182,793.40, 189,307.02, 188,052.02, 174,197.64. 3, 185,674.43 ...",
+     "position": 3
+    },
+    {
+     "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC6CDF20DD016CF26A1A8E3217.htm",
+     "title": "Ibovespa | B3",
+     "description": "A B3 divulga a nova carteira do Ibovespa, que vai vigorar de 2 de setembro de 2019 a 3 de janeiro de 2020, com base no fechamento do pregão ...",
+     "position": 4
+    },
+    {
+     "url": "https://borainvestir.b3.com.br/noticias/mercado/primeira-previa-da-carteira-do-ibovespa-b3-que-entra-em-vigor-em-maio-conta-com-3-alteracoes/",
+     "title": "Primeira prévia da carteira do Ibovespa B3 que entra em vigor ...",
+     "description": "A B3 divulgou a primeira prévia da carteira do Ibovespa B3, registra a entrada do papel IRB Brasil RE ON (IRBR3)",
+     "position": 5
+    },
+    {
+     "url": "https://www.b3.com.br/en_us/news/b3-announces-new-portfolio-for-ibovespa-and-other-indices.htm",
+     "title": "New portfolio for Ibovespa | B3",
+     "description": "B3 hereby announces the new Bovespa Index (Ibovespa) portfolio, which will be effective from January 6, 2020 to April 30, 2020, totaling 73 ...",
+     "position": 6
+    }
+   ]
+  },
+  "creditsUsed": 2,
+  "id": "01a1bbaf-e133-763a-8742-2ab7fd999947"
+ },
+ "paginas": [
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2020-08-03",
+    "data_base_do_fechamento": "2020-07-31",
+    "mes_de_vigencia": "2020-09",
+    "entradas": [
+     "EZTC3",
+     "PRIO3"
+    ],
+    "saidas": [],
+    "total_de_ativos": 77
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/previa-do-ibovespa-8AA8D0CD95C8AFE3019620CBFD767E97.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 3,
+    "data_de_divulgacao": "2019-08-29",
+    "data_base_do_fechamento": "2019-08-28",
+    "mes_de_vigencia": "2019-09",
+    "entradas": [
+     "GNDI3",
+     "BPAC11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 68
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/en_us/market-data-and-indices/indices/broad-indices/indice-ibovespa-ibovespa-historic-statistics.htm",
+   "json": {
+    "e_previa_do_ibovespa": false,
+    "numero_da_previa": 0,
+    "data_de_divulgacao": "",
+    "data_base_do_fechamento": "",
+    "mes_de_vigencia": "",
+    "entradas": [],
+    "saidas": [],
+    "total_de_ativos": 0
+   }
+  },
+  {
+   "url": "https://www.b3.com.br/pt_br/noticias/ibovespa-8AA8D0CC6CDF20DD016CF26A1A8E3217.htm",
+   "json": {
+    "e_previa_do_ibovespa": true,
+    "numero_da_previa": 1,
+    "data_de_divulgacao": "2019-09-02",
+    "data_base_do_fechamento": "2019-08-30",
+    "mes_de_vigencia": "2019-09",
+    "entradas": [
+     "GNDI3",
+     "BPAC11"
+    ],
+    "saidas": [],
+    "total_de_ativos": 68
+   }
+  }
+ ]
+}

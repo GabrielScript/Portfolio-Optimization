@@ -127,3 +127,19 @@ The outputs (daily values, MAC weights, validation picks) come back as one npz p
 
 `docs/mars-2026-11-08.txt` (tables per phase, year table, gate, descriptive extras) and one DECISOES entry. Nothing
 goes to the app unless an arm passes, and then only as a forward paper log after the user's go.
+
+## Addendum 1 (08/11, before any test number; the first Modal run was stopped and discarded)
+
+Two faults surfaced in the first training run's logs (validation diagnostics only; no test year was chained, no
+curve was read):
+
+- **Validation Sharpe.** Section 4 said "the best validation Sharpe" without saying over what. With cash earning
+  the CDI (a deviation of this spec, not the paper's), a policy that stays in cash has an almost constant daily
+  return, so its raw Sharpe exploded (135-391 in the logs) and the checkpoint picked "all cash". The validation
+  Sharpe is now the project's usual one: the daily excess over the CDI, annualized, and 0 when the excess does not
+  move. In the paper cash earns nothing, so "all cash" scores 0 there too: this restores the paper's intent.
+- **Overlay.** With cash already below the 2% buffer (holdings grew) and no buy, the pro-rata rule divided 0 by 0.
+  Buys now shrink only when there are buys.
+
+Both fixed test first (`tests/test_mars.py`). Every training is rerun from scratch; the first run's snapshots were
+deleted from the Volume.

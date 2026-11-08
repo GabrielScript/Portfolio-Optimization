@@ -44,7 +44,7 @@ def executar(x: np.ndarray, caixa: float, acao: np.ndarray, listado: np.ndarray,
     caixa_apos_vendas = caixa + float(vendas.sum()) * (1.0 - cfg.custo)
     custo_das_compras = float(compras.sum()) * (1.0 + cfg.custo)
     disponivel = caixa_apos_vendas - cfg.colchao * valor
-    if custo_das_compras > disponivel:
+    if custo_das_compras > 0.0 and custo_das_compras > disponivel:
         compras = compras * (max(disponivel, 0.0) / custo_das_compras)
     novo = x - vendas + compras
     custo = cfg.custo * float(vendas.sum() + compras.sum())
@@ -373,10 +373,13 @@ def rodar_deterministico(aprendiz: Aprendiz, painel: Painel, carteira: Carteira,
     return np.asarray(usados)
 
 
-def sharpe(valores: list[float]) -> float:
-    serie = np.asarray(valores)
-    retornos = serie[1:] / serie[:-1] - 1.0
-    return float(retornos.mean() / retornos.std() * np.sqrt(252.0)) if retornos.std() > 0 else 0.0
+def sharpe(valores: list[float] | np.ndarray, cdi: np.ndarray) -> float:
+    """Annualized Sharpe of the daily excess over the CDI (``cdi[k]`` is the rate earned from value k to k + 1);
+    0 when the excess does not move (all in cash), so a cash-only policy cannot win the validation."""
+    serie = np.asarray(valores, dtype=float)
+    excesso = serie[1:] / serie[:-1] - 1.0 - np.asarray(cdi, dtype=float)
+    desvio = float(excesso.std())
+    return float(excesso.mean() / desvio * np.sqrt(252.0)) if desvio > 1e-9 else 0.0
 
 
 # ---------------------------------------------------------------- the yearly walk-forward
@@ -407,7 +410,7 @@ def treinar_ano(painel: Painel, cfg: Treino, execucao: Execucao, semente: int, d
         aprendiz.episodio(painel, treino, validacao, execucao, gerador)
         carteira = Carteira.em_caixa(len(painel.nomes))
         rodar_deterministico(aprendiz, painel, carteira, validacao, teste, execucao)
-        nota = sharpe(carteira.valores)
+        nota = sharpe(carteira.valores, painel.cdi[validacao + 1:teste])
         if nota > sharpe_melhor:
             melhor, episodio_melhor, sharpe_melhor = copy.deepcopy(aprendiz.rede.state_dict()), episodio, nota
         print(f"  episode {episodio}: validation Sharpe {nota:.2f}, value {carteira.valor:.3f} "

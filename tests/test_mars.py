@@ -5,7 +5,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from qpo_kaggle.mars import Execucao, executar, penalidade, risco_env
+from qpo_kaggle.mars import Execucao, executar, penalidade, risco_env, sharpe
 
 CFG = Execucao(passo_maximo=0.10, teto=0.20, colchao=0.02, custo=0.001)
 
@@ -69,3 +69,22 @@ def test_the_risk_score_scales_volatility_by_half():
 
 def test_the_penalty_adds_half_the_volatility_and_twice_the_drawdown():
     assert penalidade(np.array([1.0, 1.1, 0.99])) == pytest.approx(0.5 * 0.1 + 2.0 * 0.1)
+
+
+def test_cash_below_the_buffer_with_no_buy_leaves_the_portfolio_as_it_is():
+    x = np.array([0.99])
+    novo, caixa, custo, _ = executar(x, 0.01, np.zeros(1), np.ones(1, bool), np.zeros(1, bool), CFG)
+    assert (novo[0], caixa, custo) == (0.99, 0.01, 0.0)
+
+
+def test_the_validation_sharpe_of_a_portfolio_that_only_earns_the_cdi_is_zero():
+    cdi = np.array([0.0004, 0.0005, 0.0004, 0.0006])
+    valores = np.cumprod(np.concatenate([[1.0], 1.0 + cdi]))
+    assert sharpe(valores, cdi) == 0.0
+
+
+def test_the_validation_sharpe_is_measured_over_the_cdi():
+    cdi = np.full(4, 0.001)
+    retornos = np.array([0.003, -0.001, 0.003, -0.001])         # excess +0.002, -0.002, ...: mean 0
+    valores = np.cumprod(np.concatenate([[1.0], 1.0 + retornos]))
+    assert sharpe(valores, cdi) == pytest.approx(0.0, abs=1e-9)

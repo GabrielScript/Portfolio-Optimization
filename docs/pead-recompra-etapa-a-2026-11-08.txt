@@ -1,0 +1,31 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64'}
+
+A1: SUE alone: monthly Spearman IC; names scored per month min 0, median 136, max 213
+                   meses  IC médio  desvio     t  meses com IC > 0
+2012-2026 (gate) 167.000     0.045   0.111 5.287             0.671
+2012–2016         50.000     0.039   0.135 2.049             0.720
+2017–2021         60.000     0.040   0.109 2.818             0.600
+2022–2026         57.000     0.057   0.088 4.871             0.702
+Gate (IC ≥ 0,02 e t ≥ 2): PASSED
+
+A2: SUE beyond the Composite (residual): monthly Spearman IC; names scored per month min 0, median 125, max 190
+                   meses  IC médio  desvio     t  meses com IC > 0
+2012-2026 (gate) 167.000     0.012   0.106 1.503             0.545
+2012–2016         50.000     0.007   0.111 0.470             0.500
+2017–2021         60.000     0.015   0.108 1.094             0.550
+2022–2026         57.000     0.014   0.102 1.015             0.579
+Gate (IC ≥ 0,02 e t ≥ 2): NOT passed
+Rank correlation of SUE with the Composite score: mean 0.368 over 167 months
+Rank correlation of SUE with the profit growth score: mean 0.485 over 167 months
+
+IPE buyback rows (sha256 75be6d0bdd9c): 3,673 row x issuer pairs, 177 without an issuer (out)
+Documents (issuer, reference date) 2,201; delivered > 30 days late 30; events kept from 03/01/2011 1,544; with a class in the month's universe and a full 63-session window 1,087
+63 sessions, monthly portfolio: months 184, mean +1.78%, Newey-West t +2.14; events: mean +1.68%, median -0.29%, positive 49%
+21 sessions (reported): months 186, mean +0.54%, Newey-West t +1.43
+  2011-2016: months 71, mean +2.42%, t +2.44
+  2017-2021: months 59, mean +0.26%, t +0.16
+  2022-2026: months 54, mean +2.60%, t +1.47
+Gate (mean >= +1.0% and t >= 2): PASSED
+
+Stage A: SUE A1 passed, A2 failed -> Composto+SUE-15 is not run (line closed); buybacks passed -> Composto+Recompra-15 RUNS
+(total 345 s)

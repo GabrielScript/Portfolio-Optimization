@@ -893,3 +893,19 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   (BBSE3, PSSA3 and LEVE3 `atencao`, no `grave`). It now reads each new Fato Relevante's text and asks a discarded
   answer again once (above). GPT-OSS-120B on Groq was checked on the 60 hand-labelled CVM filings: 67% right against
   d1.1's 93% and DeepSeek Flash's 82%, with the same latency as d1.1; it replaces nothing (`docs/juizes-2026-11-07.md`).
+
+## Session notes (2026-11-08)
+
+- Damodaran agent shelved before any build and out of Aleph Quant (DECISOES 307; branch `feat/damodaran` kept).
+- New ghost account "Opções deep OTM" from 09/11 beside "Opções" (DECISOES 308, spec
+  `docs/superpowers/specs/2026-11-08-opcoes-deep-otm-design.md`): puts at 85% and calls at 115% of spot, most traded
+  strike within a 5% band, size capped by the day's option volume. The first options account had never traded (zero-ask
+  division, then a strike too far and too large); both fixed test-first. Reading after the 12th cycle (about Oct 2027).
+- The real-buy ticket gave B3's closing call as 16h55; it is 17h55-18h since 03/11 (309). Drex Max fails the 60-filing
+  judges check, judges stay d1.1 and d1-ultra (310, `docs/juizes-2026-11-08.md`). No reranker for the Sentinela's packs (311).
+- Ibovespa rebalance flows (buy the entrants before index funds must): both pre-registered rules fail (312, N 104).
+  R1 mean -0.30% per date (t -0.72); R2 +6.3% per date but t 1.50 under the 2.24 gate on 14 dates. Closed; code and data
+  on `feat/ibov-recomposicao`, not merged.
+- Answers, no code: no verified quantum-finance alpha at 08/11/2026 (Lean, math-olympiad or Wolfram do not change that);
+  the app's game-theory piece is the Sentinela's proper scoring (DECISOES 271); what to add at R$30k+ is capacity
+  reading of the Composite and a monthly-sales < R$20k rule in the ticket (offered, not asked).

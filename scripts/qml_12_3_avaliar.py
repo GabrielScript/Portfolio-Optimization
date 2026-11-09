@@ -120,7 +120,8 @@ def main(argv: list[str]) -> int:
         precos12 = dados.precos.join(bdrs)
         retornos_qml = precos12.ffill(limit=5).pct_change().iloc[1:]
         acoes = _acoes(precos12).iloc[fase:]
-        print(f"12/3: {len(BDRS)} BDRs merged; engine starts at {acoes.index[0]:%d/%m/%Y}", flush=True)
+        print(f"12/3: {len(BDRS)} BDRs merged; first decision at "
+              f"{acoes.index[min(CFG_12_3.janela_treino, len(acoes) - 1)]:%d/%m/%Y}", flush=True)
         predictor = QMLPredictor(retornos_qml, QMLConfig(), log=print)
         fonte = ProbabilidadesCongeladas(_probabilidades(predictor, acoes, CFG_12_3, CACHE))
         cfg_ms = replace(CFG_MAX_SHARPE, taxa_livre_risco=float((1 + cdi.iloc[-1]) ** DIAS_UTEIS_ANO - 1))
@@ -151,7 +152,8 @@ def main(argv: list[str]) -> int:
         with SAIDA.open("w", encoding="utf-8", newline="\n") as saida, contextlib.redirect_stdout(saida):
             print(f"12/3 QML arm (descriptive, test branch). Lake exports sha256: {somas}")
             print(f"BDRs: {len(BDRS)} from the app's closes; the US sleeve is the 3 of highest 12-1 momentum. "
-                  f"Engine start {acoes.index[0]:%d/%m/%Y} (252 sessions of BDR history).")
+                  f"First decision {acoes.index[min(CFG_12_3.janela_treino, len(acoes) - 1)]:%d/%m/%Y} "
+                  f"(the price frame starts in 2005; the engine needs {CFG_12_3.janela_treino} training sessions).")
             print(tabela.to_string(float_format=lambda x: f"{x:.4f}"))
         tabela.to_csv(CURVAS_CSV, encoding="utf-8", lineterminator="\n")
         print(tabela.to_string(float_format=lambda x: f"{x:.4f}"))

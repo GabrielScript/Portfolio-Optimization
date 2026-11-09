@@ -62,8 +62,9 @@ def main(argv: list[str]) -> int:
             for fase in fases:
                 precos = dados.precos.loc[:ultima].iloc[fase:]
                 acoes = _acoes(precos)
-                print(f"\n=== Phase {fase}: {acoes.index[0]:%d/%m/%Y} to {acoes.index[-1]:%d/%m/%Y} ===",
-                      flush=True)
+                inicio_das_decisoes = acoes.index[min(CFG_BT.janela_treino, len(acoes) - 1)]
+                print(f"\n=== Phase {fase}: first decision {inicio_das_decisoes:%d/%m/%Y}, "
+                      f"last session {acoes.index[-1]:%d/%m/%Y} ===", flush=True)
                 qubo = selection_then_max_sharpe(
                     qubo_selector(dados.setores, FULL_UNIVERSE, K,
                                   anneal_solver(dados.setores, SECTOR_CAP, {}), {}),

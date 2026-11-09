@@ -252,17 +252,18 @@ def _ler_cache(cache: Path, config: QMLConfig) -> pd.DataFrame:
 def _gravar_cache(quadro: pd.DataFrame, cache: Path, config: QMLConfig) -> None:
     """Parquet first, sidecar last: an interrupted write leaves no valid sidecar next to a half file."""
     cache.parent.mkdir(parents=True, exist_ok=True)
-    quadro.to_parquet(cache)
+    limpo = quadro[~quadro.index.duplicated(keep="last")].sort_index()
+    limpo.to_parquet(cache)
     cache.with_suffix(".json").write_text(json.dumps(_impressao_da_config(config), sort_keys=True),
                                           encoding="utf-8")
 
 
 def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
                     cache: Path | None = None) -> pd.DataFrame:
-    """
-    P(up) on every marked rebalance (and the session after it, where a freeze can move the rebalance).
-    Cached so a rerun does not retrain the circuits; the model's training boundary keeps the cache causal.
-    ``cache`` resolves at call time, so a test can redirect it without touching the real cache.
+    """P(up) on every marked rebalance (and the session after it, where a freeze can move the rebalance), for the
+    exact dates of the phase being run: a shifted phase gets its own predictions, never a neighbour's. The file is a
+    memo over dates, so a rerun only fills the dates it lacks. ``cache`` resolves at call time, so a test can
+    redirect it without touching the real cache.
     """
     cache = CACHE if cache is None else cache
     datas: list[pd.Timestamp] = []
@@ -271,10 +272,6 @@ def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
         if posicao + 1 < len(acoes):
             datas.append(acoes.index[posicao + 1])
     quadro = _ler_cache(cache, predictor.config)
-    if len(quadro) >= 100:
-        # The phase-0 run already trained every block. A shifted phase (21/42 sessions) uses the prior cached
-        # session, at most one rebalance away: it never reads the future and it never retrains the circuits.
-        return quadro.sort_index()
     faltam = [data for data in datas if data not in quadro.index]
     if faltam:
         print(f"  QML: {len(faltam)} decision dates to predict (cache has {len(quadro.index)})", flush=True)
@@ -344,8 +341,9 @@ def main(argv: list[str]) -> int:
             for fase in fases:
                 precos = dados.precos.loc[:ultima].iloc[fase:]
                 acoes = _acoes(precos)
-                print(f"\n=== Phase {fase}: {acoes.index[0]:%d/%m/%Y} to {acoes.index[-1]:%d/%m/%Y} ===",
-                      flush=True)
+                inicio_das_decisoes = acoes.index[min(CFG_BT.janela_treino, len(acoes) - 1)]
+                print(f"\n=== Phase {fase}: first decision {inicio_das_decisoes:%d/%m/%Y}, "
+                      f"last session {acoes.index[-1]:%d/%m/%Y} ===", flush=True)
                 fonte = ProbabilidadesCongeladas(_probabilidades(predictor, acoes))
                 if so_probabilidades:
                     print(f"  QML: {len(fonte.quadro)} dates cached; stopping before the backtests", flush=True)

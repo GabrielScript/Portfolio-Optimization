@@ -1,20 +1,20 @@
 QUBO row of the QML table (descriptive, test branch). Lake exports sha256: {'universe_prices.parquet': 'a3977ebb0dffe3404704923ef968b8d2e53af7a67059b3202a1d525e26f88bd2', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'e885d4af52d0e1700334fda98290dac507e8aaec382b2098cca5e1a5538cbb8c', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'cdi_daily.parquet': '25ac3301cc9c557bafc9f8993dbed76a65bb1ea02ed8a6d71acd78b29f1561f6', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': 'a12ad08a7957cacee38c7c1675edfaf3b0b8d96cd11a3a09bc37de3b0ee2645b'}
 
-=== Phase 0: 03/01/2005 to 06/11/2026 ===
+=== Phase 0: first decision 09/02/2010, last session 06/11/2026 (price frame from 03/01/2005) ===
   Composite: 0 refusals, 0 failures, 61 s
   Quântica (QUBO): 0 refusals, 0 failures, 235 s
                  Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
 Composite           0  18.9404 0.1991  0.5466   0.7386     0.1117  4.0386 -0.4153 0.1930 15.0000            NaN              NaN         NaN                     NaN
 Quântica (QUBO)     0  12.4903 0.1710  0.4616   0.6302     0.0815  2.6010 -0.3943 0.1665 10.8182         0.0006           0.0248      0.1352                     inf
 
-=== Phase 21: 02/02/2005 to 06/11/2026 ===
+=== Phase 21: first decision 12/03/2010, last session 06/11/2026 (price frame from 03/01/2005) ===
   Composite: 0 refusals, 0 failures, 290 s
   Quântica (QUBO): 0 refusals, 0 failures, 430 s
                  Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
 Composite          21  15.2043 0.1851  0.4876   0.6593     0.1023  3.6956 -0.4216 0.1916 15.0000            NaN              NaN         NaN                     NaN
 Quântica (QUBO)    21   9.8200 0.1563  0.3915   0.5367     0.0699  2.3510 -0.4017 0.1617 10.8636        -0.0013          -0.0538      0.1350                     inf
 
-=== Phase 42: 07/03/2005 to 06/11/2026 ===
+=== Phase 42: first decision 13/04/2010, last session 06/11/2026 (price frame from 03/01/2005) ===
   Composite: 0 refusals, 0 failures, 472 s
   Quântica (QUBO): 0 refusals, 0 failures, 589 s
                  Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)

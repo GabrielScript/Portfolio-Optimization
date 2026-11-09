@@ -1,0 +1,39 @@
+Liquid gate (d1.1) - action: ESCALATE over 5 file(s)
+
+--- core/qml.py: REVIEW (20536 chars, 0 dropped)
+correto    0.5659533725088756
+defeito    0.3108648428013962
+espec      0.7813800386296426
+testes     0.8931069783011187
+producao   0.21861997001639716
+futuro     0.08407404613502324
+--- scripts/qml_12_3_avaliar.py: REVIEW (9357 chars, 0 dropped)
+correto    0.3580606590236548
+defeito    0.3108648428013962
+espec      0.40817774379918587
+testes     0.3108648536441879
+producao   0.20102977599436406
+futuro     0.35806067065729696
+--- scripts/qml_avaliar.py: REVIEW (25630 chars, 0 dropped)
+correto    0.6171922273876447
+defeito    0.2778212025618101
+espec      0.6891351680413954
+testes     0.5659533725088756
+producao   0.1766681350889596
+futuro     0.3223468931547261
+--- scripts/qml_qubo_linha.py: ESCALATE (5012 chars, 0 dropped)
+correto    0.25703457191414103
+defeito    0.3223468931547261
+espec      0.40817774379918587
+testes     0.13499258767990785
+producao   0.1068930168669814
+futuro     0.161754641538239
+--- tests/test_qml.py: REVIEW (8195 chars, 0 dropped)
+correto    0.7221788025156348
+defeito    0.19264060895785512
+espec      0.7721787579011408
+testes     0.8586892954925492
+producao   0.06910461439304594
+futuro     0.021432525833442934
+
+5 calls, 22980 input tokens, cost 0.000460, 4.9s. Thresholds: auto needs every clause at 80% of its wanted direction, per file; below 20% escalates, and the worst file decides the patch.

@@ -909,3 +909,21 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
 - Answers, no code: no verified quantum-finance alpha at 08/11/2026 (Lean, math-olympiad or Wolfram do not change that);
   the app's game-theory piece is the Sentinela's proper scoring (DECISOES 271); what to add at R$30k+ is capacity
   reading of the Composite and a monthly-sales < R$20k rule in the ticket (offered, not asked).
+
+## Session notes (2026-11-09)
+
+- **Quantum portfolio, second attempt (test branch).** The quantum work moved from slicing the cake (QUBO weights) to
+  finding the recipe: a PennyLane 6-qubit circuit predicts P(up) over 63 sessions and the existing CVXPY engine
+  allocates under the fixed rules (20% per name, 30% per sector, 40% ex-ante volatility, no leverage). Branch
+  `feat/qml-quantum-portfolio`, never merged (DECISOES 318-320).
+- Result on phases 0/21/42 (fresh predictions per phase, 2010-02-09 to 2026-11-06): QML-Composite (half-Kelly)
+  22.24 / 19.45 / 19.84% CAGR against the Composite's 19.91 / 18.51 / 17.76%, with higher Sharpe and Sortino in all
+  three; QUBO 17.10 / 15.63 / 14.93%. The arm clears the pre-registered letter of the gate and not the test against
+  the Composite itself (best t 1.81): candidate, not an approved strategy.
+- Two real defects were found by an adversarial audit and fixed: a vacuous no-look-ahead test and phases 21/42 replaying
+  phase-0 probabilities. The probability cache now carries a version+config sidecar and each phase predicts its own dates.
+- On the 12/3 book the QML weights make it worse: 14.93% and 12.59% against 17.31% for equal weights.
+- Review tooling: the Jev MCP was wired to the project's OpenRouter key (`JEV_PROVIDER=openrouter`,
+  `JEV_MCP_MODEL=typesafe/jev-1.14`), and `scripts/revisao_liquid.py` gives a cheap Liquid d1.1/d1-ultra second opinion
+  (triage only). `jev_gate` on the QML diff escalated with `incomplete_context`, so the review has to be split.
+- Nothing here changes live accounts, comparators or the 19/12 real buy, which stays on the Composite.

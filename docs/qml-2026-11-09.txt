@@ -1,0 +1,91 @@
+QML arm of the QPO (descriptive, test branch; not a pre-registered reading). Lake exports from b3lake (sha256): {'universe_prices.parquet': 'a3977ebb0dffe3404704923ef968b8d2e53af7a67059b3202a1d525e26f88bd2', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'e885d4af52d0e1700334fda98290dac507e8aaec382b2098cca5e1a5538cbb8c', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'cdi_daily.parquet': '25ac3301cc9c557bafc9f8993dbed76a65bb1ea02ed8a6d71acd78b29f1561f6', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': 'a12ad08a7957cacee38c7c1675edfaf3b0b8d96cd11a3a09bc37de3b0ee2645b'}
+Quantum model: 6 qubits, 2 layers, 30 epochs max, horizon 63 sessions; trained once per two-year block on labels realized before 1 January of the block.
+
+=== Phase 0: 03/01/2005 to 06/11/2026 ===
+  Composite: 0 refusals, 0 failures, 70 s
+  Conservadora (15, pesos iguais): 0 refusals, 0 failures, 84 s
+  QML-Composite (Máx. Sharpe): 0 refusals, 0 failures, 161 s
+  QML-Composite (Meio-Kelly): 0 refusals, 0 failures, 204 s
+  QML-Jorion-Composite (Meio-Kelly): 0 refusals, 0 failures, 248 s
+  QML+Composite (λ=0.5, Máx. Sharpe): 0 refusals, 0 failures, 292 s
+  QML-Jorion-Composite (Máx. Sharpe): 0 refusals, 0 failures, 339 s
+  QML-Ensemble (Meio-Kelly + Jorion): 0 refusals, 0 failures, 422 s
+  QML-Ensemble (60/40 Jorion): 0 refusals, 0 failures, 508 s
+  QML-Seleção-12 (Composite, pesos iguais): 0 refusals, 0 failures, 544 s
+  QML-Seleção-12 (Máx. Sharpe): 0 refusals, 0 failures, 584 s
+  Média-variância no Composite (Meio-Kelly): 0 refusals, 0 failures, 623 s
+                                           Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
+Composite                                     0  18.9404 0.1991  0.5466   0.7386     0.1117  4.0386 -0.4153 0.1930 15.0000            NaN              NaN         NaN                     NaN
+Conservadora (15, pesos iguais)               0  10.9263 0.1623  0.3948   0.5348     0.0784  3.1560 -0.4069 0.1832 15.0000        -0.0196          -1.0850      0.0408                     inf
+QML-Composite (Máx. Sharpe)                   0  21.4815 0.2079  0.5734   0.7939     0.1195  3.6740 -0.4223 0.1984  8.7273         0.0171           0.8500      0.6434                330.1503
+QML-Composite (Meio-Kelly)                    0  26.3725 0.2224  0.6760   0.9382     0.1274  3.9735 -0.3839 0.1809  9.4848         0.0338           1.8099      0.7866                 70.5821
+QML-Jorion-Composite (Meio-Kelly)             0  19.6106 0.2015  0.5504   0.7711     0.1133  3.1247 -0.3631 0.1961  8.5606         0.0129           0.5917      0.5426               3894.2710
+QML+Composite (λ=0.5, Máx. Sharpe)            0  18.9497 0.1992  0.5230   0.7166     0.1144  3.2535 -0.5171 0.2073  9.5606         0.0109           0.4115      0.5442               3616.9412
+QML-Jorion-Composite (Máx. Sharpe)            0  22.2615 0.2104  0.6164   0.8625     0.1178  3.4255 -0.3477 0.1829  9.8636         0.0235           1.1871      0.6321                391.5659
+QML-Ensemble (Meio-Kelly + Jorion)            0  24.4836 0.2171  0.6581   0.9150     0.1226  3.8028 -0.3658 0.1786 11.4091         0.0287           1.6464      0.7307                117.8874
+QML-Ensemble (60/40 Jorion)                   0  24.0657 0.2159  0.6516   0.9067     0.1216  3.7408 -0.3622 0.1789 11.4091         0.0276           1.5694      0.7134                140.5322
+QML-Seleção-12 (Composite, pesos iguais)      0  19.2651 0.2003  0.5584   0.7627     0.1118  4.2258 -0.4068 0.1892 12.0000         0.0056           0.4844      0.5058             213533.4644
+QML-Seleção-12 (Máx. Sharpe)                  0  22.2570 0.2104  0.5824   0.8075     0.1217  3.7431 -0.4223 0.1991  8.5152         0.0189           0.9408      0.6788                206.6868
+Média-variância no Composite (Meio-Kelly)     0  16.3302 0.1890  0.4986   0.6942     0.1025  2.8669 -0.3536 0.1949  8.4545         0.0022           0.1046      0.3548                     inf
+BOVA11                                        0   1.5864 0.0594 -0.0393  -0.0540     0.0000     NaN -0.4965 0.2362     NaN            NaN              NaN         NaN                     NaN
+(phase 0 done in 623 s)
+
+=== Phase 21: 02/02/2005 to 06/11/2026 ===
+  Composite: 0 refusals, 0 failures, 660 s
+  Conservadora (15, pesos iguais): 0 refusals, 0 failures, 667 s
+  QML-Composite (Máx. Sharpe): 0 refusals, 0 failures, 707 s
+  QML-Composite (Meio-Kelly): 0 refusals, 0 failures, 747 s
+  QML-Jorion-Composite (Meio-Kelly): 0 refusals, 0 failures, 793 s
+  QML+Composite (λ=0.5, Máx. Sharpe): 0 refusals, 0 failures, 838 s
+  QML-Jorion-Composite (Máx. Sharpe): 0 refusals, 0 failures, 879 s
+  QML-Ensemble (Meio-Kelly + Jorion): 0 refusals, 0 failures, 958 s
+  QML-Ensemble (60/40 Jorion): 0 refusals, 0 failures, 1034 s
+  QML-Seleção-12 (Composite, pesos iguais): 0 refusals, 0 failures, 1071 s
+  QML-Seleção-12 (Máx. Sharpe): 0 refusals, 0 failures, 1111 s
+  Média-variância no Composite (Meio-Kelly): 0 refusals, 0 failures, 1151 s
+                                           Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
+Composite                                    21  15.2043 0.1851  0.4876   0.6593     0.1023  3.6956 -0.4216 0.1916 15.0000            NaN              NaN         NaN                     NaN
+Conservadora (15, pesos iguais)              21   8.9470 0.1504  0.3374   0.4562     0.0710  2.9856 -0.4160 0.1843 15.0000        -0.0208          -1.2242      0.0437                     inf
+QML-Composite (Máx. Sharpe)                  21  13.1540 0.1754  0.4392   0.6088     0.0940  2.9956 -0.4021 0.1952  8.8939         0.0005           0.0263      0.3634                     inf
+QML-Composite (Meio-Kelly)                   21  13.6462 0.1779  0.4760   0.6550     0.0918  2.9913 -0.3737 0.1775  9.5455         0.0069           0.3801      0.3359                     inf
+QML-Jorion-Composite (Meio-Kelly)            21  13.8172 0.1787  0.4583   0.6332     0.0955  2.8965 -0.4323 0.1916  8.5303         0.0052           0.2486      0.4034                     inf
+QML+Composite (λ=0.5, Máx. Sharpe)           21  11.6099 0.1672  0.3994   0.5471     0.0879  2.6976 -0.4406 0.1990  9.6970        -0.0040          -0.1664      0.2936                     inf
+QML-Jorion-Composite (Máx. Sharpe)           21  16.0952 0.1890  0.5228   0.7249     0.1017  3.1660 -0.3789 0.1807  9.6515         0.0162           0.8358      0.5200              17575.8116
+QML-Ensemble (Meio-Kelly + Jorion)           21  14.9893 0.1842  0.5096   0.7014     0.0968  3.1857 -0.3763 0.1756 11.3485         0.0115           0.6821      0.4215                     inf
+QML-Ensemble (60/40 Jorion)                  21  15.2315 0.1853  0.5139   0.7079     0.0977  3.1982 -0.3768 0.1761 11.3485         0.0125           0.7276      0.4420                     inf
+QML-Seleção-12 (Composite, pesos iguais)     21  12.6609 0.1729  0.4363   0.5956     0.0912  3.4596 -0.4011 0.1888 12.0000        -0.0065          -0.5571      0.1877                     inf
+QML-Seleção-12 (Máx. Sharpe)                 21  13.1271 0.1753  0.4382   0.6076     0.0940  2.9949 -0.4022 0.1956  8.6667         0.0004           0.0188      0.3631                     inf
+Média-variância no Composite (Meio-Kelly)    21  12.9742 0.1745  0.4429   0.6119     0.0913  2.7727 -0.4222 0.1891  8.4848         0.0021           0.1012      0.3348                     inf
+BOVA11                                       21   1.4059 0.0550 -0.0566  -0.0778     0.0000     NaN -0.4965 0.2366     NaN            NaN              NaN         NaN                     NaN
+(phase 21 done in 1152 s)
+
+=== Phase 42: 07/03/2005 to 06/11/2026 ===
+  Composite: 0 refusals, 0 failures, 1189 s
+  Conservadora (15, pesos iguais): 0 refusals, 0 failures, 1195 s
+  QML-Composite (Máx. Sharpe): 0 refusals, 0 failures, 1239 s
+  QML-Composite (Meio-Kelly): 0 refusals, 0 failures, 1283 s
+  QML-Jorion-Composite (Meio-Kelly): 0 refusals, 0 failures, 1327 s
+  QML+Composite (λ=0.5, Máx. Sharpe): 0 refusals, 0 failures, 1374 s
+  QML-Jorion-Composite (Máx. Sharpe): 0 refusals, 0 failures, 1421 s
+  QML-Ensemble (Meio-Kelly + Jorion): 0 refusals, 0 failures, 1503 s
+  QML-Ensemble (60/40 Jorion): 0 refusals, 0 failures, 1581 s
+  QML-Seleção-12 (Composite, pesos iguais): 0 refusals, 0 failures, 1618 s
+  QML-Seleção-12 (Máx. Sharpe): 0 refusals, 0 failures, 1659 s
+  Média-variância no Composite (Meio-Kelly): 0 refusals, 0 failures, 1703 s
+                                           Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
+Composite                                    42  13.4014 0.1776  0.4479   0.6142     0.0974  3.4720 -0.4283 0.1958 15.0000            NaN              NaN         NaN                     NaN
+Conservadora (15, pesos iguais)              42   9.5830 0.1556  0.3605   0.4921     0.0762  3.1016 -0.3950 0.1851 15.0000        -0.0100          -0.5905      0.1271                     inf
+QML-Composite (Máx. Sharpe)                  42  12.4592 0.1728  0.4203   0.5823     0.0937  2.8162 -0.4437 0.2014  8.8485         0.0037           0.1697      0.4452                     inf
+QML-Composite (Meio-Kelly)                   42  14.8730 0.1847  0.4995   0.6882     0.0991  3.1324 -0.4034 0.1824  9.5606         0.0178           0.8958      0.5624               1787.1687
+QML-Jorion-Composite (Meio-Kelly)            42  13.5049 0.1781  0.4515   0.6331     0.0961  2.8000 -0.3815 0.1944  8.5000         0.0108           0.5101      0.5014            3626175.4439
+QML+Composite (λ=0.5, Máx. Sharpe)           42   8.8942 0.1508  0.3249   0.4442     0.0757  2.2483 -0.4593 0.2047  9.6667        -0.0127          -0.4996      0.2075                     inf
+QML-Jorion-Composite (Máx. Sharpe)           42  12.7407 0.1742  0.4482   0.6234     0.0905  2.7723 -0.3878 0.1841  9.8182         0.0087           0.4441      0.4054                     inf
+QML-Ensemble (Meio-Kelly + Jorion)           42  13.9532 0.1803  0.4836   0.6677     0.0949  3.0582 -0.3955 0.1797 11.3333         0.0134           0.7500      0.4843                     inf
+QML-Ensemble (60/40 Jorion)                  42  13.7328 0.1793  0.4780   0.6607     0.0940  3.0161 -0.3939 0.1801 11.3333         0.0124           0.6972      0.4671                     inf
+QML-Seleção-12 (Composite, pesos iguais)     42  13.4434 0.1778  0.4521   0.6225     0.0969  3.5301 -0.4251 0.1932 12.0000         0.0037           0.3043      0.4880                     inf
+QML-Seleção-12 (Máx. Sharpe)                 42  12.7931 0.1745  0.4273   0.5922     0.0953  2.8549 -0.4437 0.2018  8.6212         0.0052           0.2366      0.4737                     inf
+Média-variância no Composite (Meio-Kelly)    42   9.7093 0.1564  0.3573   0.4991     0.0771  2.2464 -0.3846 0.1926  8.4545        -0.0078          -0.3779      0.2033                     inf
+BOVA11                                       42   1.3596 0.0540 -0.0603  -0.0827     0.0000     NaN -0.4965 0.2370     NaN            NaN              NaN         NaN                     NaN
+(phase 42 done in 1704 s)
+
+Legend: Retorno = total; Alfa a.a./t alfa = CAPM against BOVA11 (Newey-West); Alfa vs Comp./t = same regression against the Composite; Nomes = mean names held.

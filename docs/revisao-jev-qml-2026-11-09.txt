@@ -1,0 +1,167 @@
+﻿initialize: ok
+ferramentas: jev_verify, jev_screen, jev_noul, jev_find, jev_classify, jev_decide, jev_rerank, jev_compare, jev_extract, jev_audit, jev_review, jev_gate
+{
+  "tool": "jev_gate",
+  "model": "typesafe/jev-1.14-20261014",
+  "provider": "openrouter",
+  "truncated": true,
+  "action": "escalate",
+  "reason_codes": [
+    "incomplete_context",
+    "confidence_below_review",
+    "safe_to_apply_below_review",
+    "review_escalated",
+    "claims_contradicted",
+    "claims_unsupported",
+    "claim_confidence_low",
+    "claim_confidence_below_auto_accept"
+  ],
+  "review": {
+    "safe_to_apply": 0.3,
+    "scores": {
+      "correctness": {
+        "score": 1.35,
+        "confidence": 0.26,
+        "probabilities": {
+          "0": 0.07,
+          "1": 0.51,
+          "2": 0.42
+        }
+      },
+      "spec_match": {
+        "score": 1.62,
+        "confidence": 0.43,
+        "probabilities": {
+          "0": 0.01,
+          "1": 0.36,
+          "2": 0.63
+        }
+      },
+      "test_gap": {
+        "score": 1.07,
+        "confidence": 0.44,
+        "probabilities": {
+          "0": 0.15,
+          "1": 0.63,
+          "2": 0.22
+        }
+      },
+      "blast_radius": {
+        "score": 1.13,
+        "confidence": 0.6,
+        "probabilities": {
+          "0": 0.07,
+          "1": 0.73,
+          "2": 0.2
+        }
+      }
+    },
+    "weights": {
+      "correctness": 0.4,
+      "spec_match": 0.3,
+      "test_gap": 0.15,
+      "blast_radius": 0.15
+    },
+    "thresholds": {
+      "auto_accept": 0.8,
+      "review_at": 0.5,
+      "composite_floor": 0.7
+    },
+    "action": "escalate",
+    "composite": 0.648,
+    "reason_codes": [
+      "confidence_below_review",
+      "safe_to_apply_below_review",
+      "incomplete_context"
+    ],
+    "limiting_rubrics": [
+      "correctness"
+    ]
+  },
+  "verification": {
+    "action": "escalate",
+    "summary": {
+      "verified": 4,
+      "contradicted": 1,
+      "unsupported": 1,
+      "needs_review": 6,
+      "invalid_response": 0
+    },
+    "thresholds": {
+      "auto_accept": 0.8,
+      "review_at": 0.5
+    },
+    "results": [
+      {
+        "claim": "qml_strategy turns P(up) into mu = rf + tilt*(2p-1)*sigma and calls core.optimization.otimizar with the sector groups, then core.risco.checar_carteira, raising CarteiraRecusada on any violation.",
+        "verdict": "verified",
+        "confidence": 0.5,
+        "probabilities": {
+          "verified": 0.67,
+          "contradicted": 0.03,
+          "unsupported": 0.3
+        },
+        "action": "review"
+      },
+      {
+        "claim": "No look-ahead: predict() slices self.retornos.loc[:date], and model_for(ano) trains the two-year block only on panel samples whose label_dates are before 1 January of the block.",
+        "verdict": "verified",
+        "confidence": 0.83,
+        "probabilities": {
+          "verified": 0.89,
+          "contradicted": 0.04,
+          "unsupported": 0.07
+        },
+        "action": "review"
+      },
+      {
+        "claim": "core/qml.py is imported only by the two evaluation scripts and the test file; the app never imports it.",
+        "verdict": "contradicted",
+        "confidence": 0.48,
+        "probabilities": {
+          "verified": 0.2,
+          "contradicted": 0.65,
+          "unsupported": 0.15
+        },
+        "action": "escalate"
+      },
+      {
+        "claim": "tests/test_qml.py passes 13 of 13, including a no-look-ahead test verified to fail against a broken predict().",
+        "verdict": "unsupported",
+        "confidence": 0.34,
+        "probabilities": {
+          "verified": 0.34,
+          "contradicted": 0.1,
+          "unsupported": 0.56
+        },
+        "action": "escalate"
+      },
+      {
+        "claim": "The P(up) cache carries a sidecar with the model version and the config and is rebuilt when they disagree.",
+        "verdict": "verified",
+        "confidence": 0.4,
+        "probabilities": {
+          "verified": 0.6,
+          "contradicted": 0.02,
+          "unsupported": 0.38
+        },
+        "action": "escalate"
+      },
+      {
+        "claim": "The work stayed on branch feat/qml-quantum-portfolio and never reached main.",
+        "verdict": "verified",
+        "confidence": 0.97,
+        "probabilities": {
+          "verified": 0.98,
+          "contradicted": 0.01,
+          "unsupported": 0.01
+        },
+        "action": "review"
+      }
+    ]
+  },
+  "usage": {
+    "input_tokens": 32172,
+    "output_tokens": 321
+  }
+}

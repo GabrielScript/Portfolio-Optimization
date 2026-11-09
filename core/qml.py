@@ -131,6 +131,19 @@ class Panel:
     label_dates: pd.DatetimeIndex
     decision_dates: pd.DatetimeIndex
 
+    def __post_init__(self) -> None:
+        """A malformed panel would mis-index the training mask instead of failing: check the shapes here."""
+        if self.x.ndim != 2 or self.x.shape[1] != N_FEATURES:
+            raise ValueError(f"x must be (n_samples, {N_FEATURES}): {self.x.shape}")
+        amostras = self.x.shape[0]
+        if not (len(self.y) == len(self.label_dates) == len(self.decision_dates) == amostras):
+            raise ValueError(f"panel lengths disagree: x {amostras}, y {len(self.y)}, "
+                             f"labels {len(self.label_dates)}, decisions {len(self.decision_dates)}")
+        if not np.isin(self.y, (0.0, 1.0)).all():
+            raise ValueError("y must be 0/1")
+        if not (self.label_dates > self.decision_dates).all():
+            raise ValueError("every label must be realized after its decision date")
+
     def __len__(self) -> int:
         return len(self.y)
 
@@ -206,7 +219,7 @@ class QuantumDirectionalModel(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Logits, shape ``(batch,)``; ``x`` is ``(batch, N_FEATURES)`` in float64."""
         expectativas = self.quantum(x)                      # (batch, n_qubits)
-        return self.scale * self.readout(expectativas).squeeze(-1) + self.bias
+        return self.scale * self.readout(expectativas).reshape(-1) + self.bias
 
     @torch.no_grad()
     def probability_up(self, x: np.ndarray) -> np.ndarray:

@@ -77,7 +77,7 @@ def universo_com_bdrs(universo: pd.DataFrame, precos: pd.DataFrame) -> pd.DataFr
 
 
 def seletor_12_3(nota, setores, bdrs: Sequence[str] = BDRS,
-                 nomes_br: int = NOMES_BR, por_setor: int = POR_SETOR):
+                 nomes_br: int = NOMES_BR, nomes_eua: int = NOMES_EUA, por_setor: int = POR_SETOR):
     """The Composite's 12 BR names plus the 3 BDRs of highest 12-1 momentum in the training window."""
     def _select(data: pd.Timestamp, treino: pd.DataFrame) -> list[str]:
         mes = data.to_period("M").to_timestamp()
@@ -85,7 +85,7 @@ def seletor_12_3(nota, setores, bdrs: Sequence[str] = BDRS,
         br = list(carteira_da_nota(nota(mes, b3).dropna(), setores, nomes_br, por_setor).index)
         janela = treino[[papel for papel in bdrs if papel in treino.columns]].iloc[-252:-21]
         momentum = (1.0 + janela).prod(min_count=231) - 1.0
-        eua = list(momentum.dropna().nlargest(NOMES_EUA).index)
+        eua = list(momentum.dropna().nlargest(nomes_eua).index)
         return br + eua
     return _select
 
@@ -101,6 +101,8 @@ def estrategia_pesos_iguais(selector):
 
 def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
+    if "--fase" in argv and argv.index("--fase") + 1 == len(argv):
+        raise ValueError("--fase needs a value, e.g. --fase 0")
     fase = int(argv[argv.index("--fase") + 1]) if "--fase" in argv else 0
     with tempfile.TemporaryDirectory(prefix="qml-12-3-") as temporaria:
         entradas = Path(temporaria)

@@ -33,7 +33,7 @@ from scripts import avaliar_conservadora, avaliar_robustez, qubo_universo_avalia
 from scripts.avaliar_robustez import _acoes, referencias  # noqa: E402
 from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT  # noqa: E402
 from scripts.curvas_ao_vivo import ARQUIVOS, LAGO, congelar  # noqa: E402
-from scripts.qml_avaliar import COMPOSITE, QUBO, _linha, _rodar, _tabela  # noqa: E402
+from scripts.qml_avaliar import COMPOSITE, QUBO, _rodar, _tabela  # noqa: E402
 
 SAIDA = RAIZ / "docs" / "qml-qubo-2026-11-09.txt"
 TABELA = RAIZ / "docs" / "dados" / "qml-qubo-linha.csv"
@@ -42,6 +42,8 @@ TABELA = RAIZ / "docs" / "dados" / "qml-qubo-linha.csv"
 def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
     fases = tuple(int(valor) for valor in argv[argv.index("--fases") + 1:]) if "--fases" in argv else (0,)
+    if not fases:
+        raise ValueError("--fases needs at least one phase, e.g. --fases 0 21 42")
     with tempfile.TemporaryDirectory(prefix="qml-qubo-") as temporaria:
         entradas = Path(temporaria)
         somas = congelar(LAGO, entradas, ARQUIVOS)

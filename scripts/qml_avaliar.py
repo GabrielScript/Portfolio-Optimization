@@ -22,11 +22,12 @@ Writes docs/qml-2026-11-09.txt and docs/dados/qml-comparacao.csv.
 from __future__ import annotations
 
 import contextlib
+import json
 import sys
 import tempfile
 import time
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
 
 import pandas as pd
@@ -220,6 +221,42 @@ class ProbabilidadesCongeladas:
         return self.quadro.iloc[posicao].dropna()
 
 
+def _impressao_da_config(config: QMLConfig) -> dict[str, object]:
+    """Everything that changes P(up): the model version plus every field of the config."""
+    return {"model_version": MODEL_VERSION, "config": asdict(config)}
+
+
+def _ler_cache(cache: Path, config: QMLConfig) -> pd.DataFrame:
+    """
+    The stored P(up), or an empty frame when it cannot be trusted: a corrupt file, a missing sidecar,
+    or a sidecar written by a different model version or configuration.
+    """
+    if not cache.exists():
+        return pd.DataFrame()
+    lado = cache.with_suffix(".json")
+    try:
+        guardado = json.loads(lado.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        print(f"  QML: cache {cache.name} has no readable sidecar; rebuilding it", flush=True)
+        return pd.DataFrame()
+    if guardado != _impressao_da_config(config):
+        print(f"  QML: cache {cache.name} came from another configuration; rebuilding it", flush=True)
+        return pd.DataFrame()
+    try:
+        return pd.read_parquet(cache)
+    except (OSError, ValueError) as erro:                       # a truncated write from an interrupted run
+        print(f"  QML: cache {cache.name} is unreadable ({type(erro).__name__}); rebuilding it", flush=True)
+        return pd.DataFrame()
+
+
+def _gravar_cache(quadro: pd.DataFrame, cache: Path, config: QMLConfig) -> None:
+    """Parquet first, sidecar last: an interrupted write leaves no valid sidecar next to a half file."""
+    cache.parent.mkdir(parents=True, exist_ok=True)
+    quadro.to_parquet(cache)
+    cache.with_suffix(".json").write_text(json.dumps(_impressao_da_config(config), sort_keys=True),
+                                          encoding="utf-8")
+
+
 def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
                     cache: Path | None = None) -> pd.DataFrame:
     """
@@ -233,7 +270,7 @@ def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
         datas.append(acoes.index[posicao])
         if posicao + 1 < len(acoes):
             datas.append(acoes.index[posicao + 1])
-    quadro = pd.read_parquet(cache) if cache.exists() else pd.DataFrame()
+    quadro = _ler_cache(cache, predictor.config)
     if len(quadro) >= 100:
         # The phase-0 run already trained every block. A shifted phase (21/42 sessions) uses the prior cached
         # session, at most one rebalance away: it never reads the future and it never retrains the circuits.
@@ -248,10 +285,10 @@ def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
             nova.index = pd.DatetimeIndex([data])
             quadro = pd.concat([quadro[quadro.index != data], nova])
         if indice % 10 == 0 or indice == len(faltam):
-            quadro.sort_index().to_parquet(cache)
+            _gravar_cache(quadro.sort_index(), cache, predictor.config)
             print(f"  QML: {indice}/{len(faltam)} new dates predicted", flush=True)
     quadro = quadro.sort_index()
-    quadro.to_parquet(cache)
+    _gravar_cache(quadro, cache, predictor.config)
     return quadro
 
 
@@ -265,7 +302,12 @@ def _armar(args: Sequence[str]) -> tuple[Path, bool, tuple[int, ...], bool, bool
     restantes = [a for a in args if a not in ("--sem-qubo", "--so-probabilidades", "--rapido")]
     if "--fases" in restantes:
         posicao = restantes.index("--fases")
-        fases = tuple(int(valor) for valor in restantes[posicao + 1:])
+        valores = restantes[posicao + 1:]
+        if not valores:
+            raise ValueError("--fases needs at least one phase, e.g. --fases 0 21 42")
+        fases = tuple(int(valor) for valor in valores)
+        if any(fase < 0 for fase in fases):
+            raise ValueError(f"phases must be >= 0: {fases}")
         restantes = restantes[:posicao]
     if restantes:
         lago = Path(restantes[0])

@@ -26,12 +26,18 @@ def test_features_have_the_declared_columns_and_no_nan() -> None:
     assert not feats.isna().any().any()
 
 
-def test_features_do_not_read_past_the_decision_row() -> None:
-    ret = _retornos()
-    base = features_at(ret.iloc[:600])
+def test_predict_does_not_read_rows_after_the_decision_date() -> None:
+    """The leakage surface is ``predict``: rewriting the future must not change a past call."""
+    ret = _retornos(n=1_500)
+    corte = ret.index[1_300]
+    config = QMLConfig(epochs=2, sample_every=63, horizon=21, seed=0)
+    torch.manual_seed(0)                                   # the circuit's initial weights, before _fit seeds it
+    base = QMLPredictor(ret, config).predict(corte)
     alterado = ret.copy()
-    alterado.iloc[600:] *= -5.0
-    assert features_at(alterado.iloc[:600]).equals(base)
+    alterado.loc[alterado.index > corte] *= -5.0
+    assert not base.empty
+    torch.manual_seed(0)
+    assert QMLPredictor(alterado, config).predict(corte).equals(base)
 
 
 def test_cross_sectional_z_handles_a_constant_column() -> None:
@@ -112,6 +118,8 @@ def test_probability_cache_keeps_the_ticker_columns(tmp_path, monkeypatch) -> No
             esperadas.append(acoes.index[posicao + 1])
 
     class _Predictor:
+        config = QMLConfig()
+
         def predict(self, _data: pd.Timestamp) -> pd.Series:
             return pd.Series(np.linspace(0.2, 0.8, len(ret.columns)), index=ret.columns)
 
@@ -128,3 +136,60 @@ def test_frozen_probabilities_use_the_prior_session() -> None:
     fonte = ProbabilidadesCongeladas(quadro)
     assert fonte.predict(pd.Timestamp("2010-03-01"))["A"] == 0.6
     assert fonte.predict(pd.Timestamp("2009-12-01")).empty
+
+
+def _acoes_de_teste(n: int = 1_500, k: int = 6) -> pd.DataFrame:
+    ret = _retornos(n=n, k=k)
+    return pd.DataFrame(index=ret.index, columns=ret.columns, dtype=float)
+
+
+def test_cache_from_another_configuration_is_rebuilt(tmp_path, monkeypatch) -> None:
+    """A stale P(up) file must never be paired with a new config: the sidecar decides."""
+    import json
+
+    import scripts.qml_avaliar as avaliar
+
+    cache = tmp_path / "cache.parquet"
+    pd.DataFrame({"A": [0.9, 0.9]}, index=pd.DatetimeIndex(["2010-01-05", "2010-02-05"])).to_parquet(cache)
+    outra = avaliar._impressao_da_config(QMLConfig())
+    outra["config"]["n_layers"] = 99
+    cache.with_suffix(".json").write_text(json.dumps(outra), encoding="utf-8")
+    chamadas: list[pd.Timestamp] = []
+
+    class _Predictor:
+        config = QMLConfig()
+
+        def predict(self, data: pd.Timestamp) -> pd.Series:
+            chamadas.append(data)
+            return pd.Series(np.linspace(0.2, 0.8, 6), index=list("ABCDEF"))
+
+    quadro = avaliar._probabilidades(_Predictor(), _acoes_de_teste(), cache=cache)
+    assert chamadas, "the cache of another configuration was used"
+    assert len(quadro) == len(chamadas)
+
+
+def test_corrupt_cache_is_rebuilt_instead_of_crashing(tmp_path) -> None:
+    import json
+
+    import scripts.qml_avaliar as avaliar
+
+    cache = tmp_path / "cache.parquet"
+    cache.write_bytes(b"PAR1truncated")
+    cache.with_suffix(".json").write_text(json.dumps(avaliar._impressao_da_config(QMLConfig())), encoding="utf-8")
+
+    class _Predictor:
+        config = QMLConfig()
+
+        def predict(self, _data: pd.Timestamp) -> pd.Series:
+            return pd.Series(np.linspace(0.2, 0.8, 6), index=list("ABCDEF"))
+
+    quadro = avaliar._probabilidades(_Predictor(), _acoes_de_teste(), cache=cache)
+    assert len(quadro) > 0
+    assert pd.read_parquet(cache).shape == quadro.shape
+
+
+def test_phases_flag_without_values_is_rejected() -> None:
+    import scripts.qml_avaliar as avaliar
+
+    with pytest.raises(ValueError):
+        avaliar._armar(["--fases"])

@@ -1,0 +1,3 @@
+data,ideia,ticker,ativo,tipo,strike,vencimento,quantidade,preco,custo,motivo
+2026-11-06,A,,ASAI3,put,,,0,,0.0,sem opção negociada no prazo
+2026-11-06,B,,VAMO3,call,,,0,,0.0,sem opção negociada no prazo

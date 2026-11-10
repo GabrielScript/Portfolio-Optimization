@@ -89,22 +89,31 @@ def rebalancear(cotas: pd.Series, alvo: pd.Series, precos: pd.Series,
 
 
 class Contexto:
-    """Frozen lake, prices and the arm's weight function."""
+    """Frozen lake, the return matrix the strategy expects, and the arm's weight function."""
 
-    def __init__(self, precos: pd.DataFrame, pesos_fn, cdi: pd.Series) -> None:
+    def __init__(self, precos: pd.DataFrame, retornos: pd.DataFrame, elegiveis: dict, pesos_fn,
+                 cdi: pd.Series, janela: int) -> None:
         self.precos = precos
+        self.retornos = retornos
+        self.elegiveis = elegiveis
         self.pesos = pesos_fn
         self.cdi = cdi
+        self.janela = janela
 
 
 def montar_contexto(lago: Path) -> Contexto:
-    """Load the lake exports, train the frozen model and return the weight function."""
+    """Load the lake exports, train the frozen model and return the weight function.
+
+    The strategy receives exactly what ``walk_forward_dinamico`` gives it: the return matrix of the
+    training window, restricted to the month's point-in-time universe, with columns that have a hole
+    dropped. Passing prices here is what made the estimator see NaN.
+    """
     import tempfile  # noqa: PLC0415
 
     from core.qml import QMLConfig, QMLPredictor, qml_strategy  # noqa: PLC0415
-    from scripts.avaliar_universo_dinamico import CFG_KELLY  # noqa: PLC0415
+    from scripts.avaliar_universo_dinamico import CFG_BT, CFG_KELLY  # noqa: PLC0415
     from scripts.curvas_ao_vivo import ARQUIVOS, congelar  # noqa: PLC0415
-    from scripts.qml_avaliar import ProbabilidadesCongeladas, seletor_do_composite  # noqa: PLC0415
+    from scripts.qml_avaliar import seletor_do_composite  # noqa: PLC0415
     from scripts.qml_g2_avaliar import _carregar  # noqa: PLC0415
 
     with tempfile.TemporaryDirectory(prefix="qml-holdout-") as temporaria:
@@ -113,18 +122,36 @@ def montar_contexto(lago: Path) -> Contexto:
         dados, _mensal, nota, _ultima, cdi = _carregar(entradas)
     setores = dict(dados.setores)
     retornos = dados.precos.ffill(limit=5).pct_change().iloc[1:]
+    meses = pd.to_datetime(dados.universo["month"])
+    elegiveis = dados.universo["security"].groupby(meses).apply(list).to_dict()
     predictor = QMLPredictor(retornos, QMLConfig(), log=print)
     seletor = seletor_do_composite(nota, setores)
+    janela = CFG_BT.janela_treino
 
     def pesos(data: pd.Timestamp) -> pd.Series:
-        linha = predictor.predict(data)
-        if linha.empty:
-            raise ValueError(f"{data:%d/%m/%Y}: the model returned no probability")
-        fonte = ProbabilidadesCongeladas(pd.DataFrame([linha], index=[data]))
-        estrategia = qml_strategy(fonte, CFG_KELLY, setores, cdi, selector=seletor, tilt=1.0)
-        return estrategia(dados.precos.loc[:data])
+        posicao = int(retornos.index.get_loc(data))
+        if posicao < janela:
+            raise ValueError(f"{data:%d/%m/%Y}: only {posicao} sessions of history, need {janela}")
+        mes = data.to_period("M").to_timestamp()
+        nomes = [papel for papel in elegiveis.get(mes, []) if papel in retornos.columns]
+        treino = retornos.iloc[posicao - janela:posicao][nomes].dropna(axis=1)
+        if treino.empty:
+            raise ValueError(f"{data:%d/%m/%Y}: no eligible name with a full training window")
+        estrategia = qml_strategy(_FonteDoPredictor(predictor), CFG_KELLY, setores, cdi,
+                                  selector=seletor, tilt=1.0)
+        return estrategia(treino)
 
-    return Contexto(dados.precos, pesos, cdi)
+    return Contexto(dados.precos, retornos, elegiveis, pesos, cdi, janela)
+
+
+class _FonteDoPredictor:
+    """Adapter: the strategy asks ``predict(date)``; the predictor trains causally and answers."""
+
+    def __init__(self, predictor) -> None:
+        self._predictor = predictor
+
+    def predict(self, data: pd.Timestamp) -> pd.Series:
+        return self._predictor.predict(data)
 
 
 # --- the ledger -----------------------------------------------------------------------------------------

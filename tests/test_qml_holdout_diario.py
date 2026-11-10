@@ -84,6 +84,24 @@ def test_a_future_start_date_waits_without_touching_the_lake(tmp_path) -> None:
     assert "01/12/2026" in resultados[0].mensagem
 
 
+def test_the_account_reaches_iniciar_as_a_keyword(tmp_path) -> None:
+    """``iniciar(lago, capital, conta)``: passing the account positionally would make it the capital."""
+    from scripts.qml_holdout import iniciar as iniciar_real
+
+    nova = _conta(tmp_path, "nova", com_estado=False)
+    recebidas: dict = {}
+
+    def fake_iniciar(lago, capital=10_000.0, conta=CONTA_PCA):
+        recebidas["capital"] = capital
+        recebidas["conta"] = conta
+
+    atualizar(Path("lago"), [nova], rodar=lambda *a: None, iniciar=fake_iniciar,
+              hoje=date(2026, 11, 10))
+
+    assert recebidas == {"capital": 10_000.0, "conta": nova}
+    assert iniciar_real.__defaults__[0] == 10_000.0
+
+
 def test_an_unstarted_window_waits_without_failing(tmp_path) -> None:
     """``SessionNotStarted`` means the lake has no session yet: "aguardando", not a failure."""
     nova = _conta(tmp_path, "nova", com_estado=False)

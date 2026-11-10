@@ -75,7 +75,7 @@ def atualizar(lago: Path, contas: Sequence[Conta], rodar: Callable[[Path, Conta]
                                         mensagem=f"starts on {conta.inicio:%d/%m/%Y}"))
             continue
         try:
-            iniciar(lago, conta)
+            iniciar(lago, conta=conta)
         except SessionNotStarted as erro:
             resultados.append(Resultado(conta, "aguardando", mensagem=str(erro)))
         else:

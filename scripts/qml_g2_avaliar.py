@@ -145,7 +145,7 @@ def main(argv: list[str]) -> int:
                 acoes, universo,
                 qml_strategy(fonte, CFG_KELLY, setores, cdi, selector=seletor_bdr, tilt=1.0),
                 "Composite Quantum + BDR", inicio, CFG_BT)
-        bova = referencias(precos, CFG_BT)["BOVA11"]
+        bova = referencias(precos.iloc[fase:], CFG_BT)["BOVA11"]     # the arms' phase: the curve starts with theirs
         rf = cdi.reindex(next(iter(curvas.values())).valores.index).fillna(0.0)
         tabela = _tabela(curvas, bova.valores, rf, curvas["Composite"].valores)
         tabela.loc["BOVA11"] = _linha(bova.valores, bova.valores, rf)

@@ -62,9 +62,11 @@ def table(celulas: dict[str, list[Cell]], panel: Panel, composite: pd.Series | N
     anos = set.intersection(*(set(cell.year for cell in grupo) for grupo in celulas.values()))
     if not anos:
         raise ValueError("the strategies of this run share no test year")
+    fim = None if composite is None else composite.index[-1]      # every row ends where the reference ends
     linhas, janela = {}, None
     for estrategia, grupo in celulas.items():
         curva, giro = stitch([cell for cell in grupo if cell.year in anos])
+        curva = curva if fim is None else curva.loc[:fim]
         janela = curva.index
         linhas[estrategia] = {**curve_metrics(curva, panel, giro), "years": len(anos),
                               "names": float(np.mean([cell.names for cell in grupo if cell.year in anos]))}

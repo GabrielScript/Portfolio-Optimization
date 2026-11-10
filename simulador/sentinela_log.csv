@@ -110,3 +110,6 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-10T15:20:35,PSSA3,varredura,sem_evento,,,,cvm-990a14b8bda0,,"O único item novo é um Comunicado ao Mercado de reporte setorial, divulgação periódica de rotina. Nada no pacote indica fraude, inadimplência, sanção ou outro evento que comprometa o valor da companhia.",[],899,640.0,161.0,0.00013737,
 2026-11-10T15:20:35,PSSA3,juiz:d1.1,,,,0.048705632673383535,cvm-990a14b8bda0,,p_nova=0.3109,,164,,,3.28e-06,
 2026-11-10T15:20:35,PSSA3,juiz:d1-ultra,,,,0.08552782318603236,cvm-990a14b8bda0,,p_nova=0.6878,,164,,,6.888e-06,
+2026-11-10T18:20:49,SAUD3,varredura,sem_evento,,,,cvm-bfef731ee2f8,,"O único item novo é um Comunicado ao Mercado sobre a criação de uma rede de clínicas oncológicas por Atlântica Hospitais e Fleury, notícia de cunho comercial e sem efeito negativo sobre o valor da companhia. Nada compromete o valor intrínseco da SAUD3.",[],765,512.0,251.0,0.00019009,
+2026-11-10T18:20:49,SAUD3,juiz:d1.1,,,,0.7327004312809203,cvm-bfef731ee2f8,,p_nova=0.8521,,174,,,3.48e-06,
+2026-11-10T18:20:49,SAUD3,juiz:d1-ultra,,,,0.6551469000827255,cvm-bfef731ee2f8,,p_nova=0.8292,,174,,,7.308e-06,

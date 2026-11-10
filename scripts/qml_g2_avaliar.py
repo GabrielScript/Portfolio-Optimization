@@ -109,12 +109,13 @@ def main(argv: list[str]) -> int:
     diario = "--diario" in argv
     bdr = "--bdr" in argv
     fase = int(argv[argv.index("--fases") + 1]) if "--fases" in argv else 0
+    lago = Path(argv[argv.index("--lago") + 1]) if "--lago" in argv else LAGO
     modo = "diario" if diario else ("bdr" if bdr else "base")
-    saida_txt = RAIZ / "docs" / f"qml-g2-{modo}-2026-11-09.txt"
-    saida_csv = RAIZ / "docs" / "dados" / f"qml-g2-{modo}.csv"
+    saida_txt = RAIZ / "docs" / f"qml-g2-{modo}-2026-11-09-f{fase}.txt"
+    saida_csv = RAIZ / "docs" / "dados" / f"qml-g2-{modo}-f{fase}.csv"
     with tempfile.TemporaryDirectory(prefix="qml-g2-") as temporaria:
         entradas = Path(temporaria)
-        somas = congelar(LAGO, entradas, ARQUIVOS)
+        somas = congelar(lago, entradas, ARQUIVOS)
         dados, mensal, nota, ultima, cdi = _carregar(entradas)
         if bdr:
             bdrs = precos_das_bdrs(ultima.date()).reindex(dados.precos.index)

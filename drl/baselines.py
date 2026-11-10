@@ -1,88 +1,85 @@
-"""The comparators every agent is measured against, on the same tape and with the same turnover cost: equal weights,
-minimum variance and a Ledoit-Wolf mean-variance portfolio maximising the Sharpe ratio. The papers' own benchmarks
-(P1's 60-session sample means + shrinkage MVO, P2's mean-variance and equal weights) map onto these three, so one table
-puts the agents, the classical optimisers and the Composite side by side.
+"""The classical rules the agents are measured against, as policies of the same environment: equal weights, long-only
+minimum variance and long-only maximum Sharpe, the last two on a Ledoit-Wolf covariance (P1's comparator).
 
-Numpy only: the projection onto the simplex keeps every solution long-only and fully invested, exactly as the papers
-constrain their agents, and there is no solver to converge differently on different machines."""
+The first version ran these in a separate loop: rebalanced every session while the agents traded monthly, charged no
+cost for bringing drifted weights back, skipped the return across each year end, and called a fixed 10% diagonal blend
+"Ledoit-Wolf". As policies of ``PortfolioEnv`` they now share the agents' timing, cost, drift and eligibility.
+"""
 
 from __future__ import annotations
 
 import numpy as np
-import pandas as pd
+from scipy.optimize import minimize
+from sklearn.covariance import LedoitWolf
 
-JANELA = 252          # sessions of history a baseline needs before it can hold a view
-ENCOLHIMENTO = 0.1    # Ledoit-Wolf's idea, fixed: 10% of the average variance on the diagonal
+from drl.ambiente import Policy, PortfolioEnv
 
-
-def _simplex(v: np.ndarray) -> np.ndarray:
-    """Euclidean projection of ``v`` onto {w >= 0, sum w = 1} (sort-based, no solver)."""
-    u = np.sort(v)[::-1]
-    c = np.cumsum(u) - 1.0
-    rho = np.nonzero(u - c / np.arange(1, len(u) + 1) > 0)[0][-1]
-    theta = c[rho] / (rho + 1.0)
-    return np.maximum(v - theta, 0.0)
+WINDOW = 252                     # sessions of returns behind a covariance (P1 uses 60 for 11 assets; we hold ~150)
+MIN_WINDOW = 60                  # fewer realized sessions than this: equal weights
 
 
-def _retornos(fechamentos: pd.DataFrame, ate: int, janela: int = JANELA) -> np.ndarray:
-    """The window of simple returns ending at row ``ate`` (the session's own return included): n x sessions."""
-    bloco = fechamentos.iloc[max(0, ate - janela + 1): ate + 1]
-    return np.nan_to_num(bloco.pct_change(fill_method=None).to_numpy(dtype=float), nan=0.0)
+def _with_cash(pesos: np.ndarray, tradeable: np.ndarray) -> np.ndarray:
+    """Weights of the tradeable names spread back over all names, cash last (zero unless nothing is tradeable)."""
+    completo = np.zeros(len(tradeable) + 1)
+    if tradeable.any():
+        completo[:-1][tradeable] = pesos
+    else:
+        completo[-1] = 1.0
+    return completo
 
 
-def covariancia_encolhida(ret: np.ndarray) -> np.ndarray:
-    """Ledoit-Wolf-style shrinkage: the sample covariance pulled ``ENCOLHIMENTO`` of the way to a diagonal of the same
-    average variance. Keeps the matrix invertible when the window is short or a name never moved."""
-    s = np.cov(ret, rowvar=False)
-    s = np.atleast_2d(s)
-    media = float(np.trace(s) / s.shape[0])
-    return (1.0 - ENCOLHIMENTO) * s + ENCOLHIMENTO * media * np.eye(s.shape[0])
+def equal_weight(env: PortfolioEnv) -> np.ndarray:
+    tradeable = env.tradeable()
+    return _with_cash(np.full(int(tradeable.sum()), 1.0 / max(int(tradeable.sum()), 1)), tradeable)
 
 
-def pesos_iguais(n: int) -> np.ndarray:
-    return np.full(n, 1.0 / n) if n else np.zeros(0)
+def ledoit_wolf(returns: np.ndarray) -> np.ndarray:
+    """Ledoit and Wolf's (2004) shrinkage covariance of ``returns`` (sessions x names)."""
+    return LedoitWolf().fit(returns).covariance_
 
 
-def pesos_min_variancia(ret: np.ndarray, passos: int = 400) -> np.ndarray:
-    """Long-only minimum variance by projected gradient descent: deterministic and convex."""
-    n = ret.shape[1]
-    if n == 0:
-        return np.zeros(0)
-    cov = covariancia_encolhida(ret)
-    escala = float(np.trace(cov)) or 1.0
-    w = pesos_iguais(n)
-    for _ in range(passos):
-        w = _simplex(w - 0.5 * (2.0 * cov @ w) / escala)
-    return w
+def _on_simplex(objective, gradient, n: int) -> np.ndarray:
+    resultado = minimize(objective, np.full(n, 1.0 / n), jac=gradient, method="SLSQP", bounds=[(0.0, 1.0)] * n,
+                         constraints=[{"type": "eq", "fun": lambda w: w.sum() - 1.0, "jac": lambda w: np.ones(n)}],
+                         options={"maxiter": 500, "ftol": 1e-12})
+    pesos = np.clip(resultado.x, 0.0, None)
+    return pesos / pesos.sum()
 
 
-def pesos_sharpe(ret: np.ndarray, passos: int = 800, taxa: float = 0.0, passo: float = 1.0) -> np.ndarray:
-    """Long-only mean-variance maximising the Sharpe ratio, by exponentiated-gradient ascent: the weights stay on the
-    simplex by construction, so no step can jump a corner and park the portfolio on the wrong name."""
-    n = ret.shape[1]
-    if n == 0:
-        return np.zeros(0)
-    mu, cov = ret.mean(axis=0) - taxa, covariancia_encolhida(ret)
-    w = pesos_iguais(n)
-    for _ in range(passos):
-        vol = float(np.sqrt(max(w @ cov @ w, 1e-18)))
-        grad = mu / vol - float(w @ mu) * (cov @ w) / vol ** 3
-        maior = float(np.abs(grad).max())
-        if maior <= 0.0:
-            break
-        w = w * np.exp(passo * grad / maior)
-        w = w / w.sum()
-    return w
+def min_variance_weights(cov: np.ndarray) -> np.ndarray:
+    """argmin w' S w on the simplex. The objective is scaled so the solver's tolerance means the same on any tape."""
+    escala = float(np.trace(cov)) / len(cov)
+    return _on_simplex(lambda w: float(w @ cov @ w) / escala, lambda w: 2.0 * (cov @ w) / escala, len(cov))
 
 
-def curva(pesos: list[np.ndarray], retornos: np.ndarray, custo_bps: float = 0.0) -> np.ndarray:
-    """The value of a weight path applied to ``retornos`` (t x n, the returns each choice earns), net of the turnover
-    cost. Starts at 1.0."""
-    valor, anterior = 1.0, np.zeros(pesos[0].shape[0]) if pesos else np.zeros(0)
-    saida = [valor]
-    for w, r in zip(pesos, retornos):
-        giro = float(np.abs(w - anterior).sum())
-        valor *= 1.0 + float(w @ r) - custo_bps / 1e4 * giro
-        anterior = w
-        saida.append(valor)
-    return np.array(saida)
+def max_sharpe_weights(mu: np.ndarray, cov: np.ndarray) -> np.ndarray:
+    """argmax (w' mu) / sqrt(w' S w) on the simplex; ``mu`` is already in excess of the risk-free rate. When no name
+    has a positive excess mean the ratio has no sensible maximum and the minimum-variance book is returned."""
+    if not (mu > 0).any():
+        return min_variance_weights(cov)
+
+    def negativo(w: np.ndarray) -> float:
+        return -float(w @ mu) / float(np.sqrt(w @ cov @ w))
+
+    def gradiente(w: np.ndarray) -> np.ndarray:
+        vol = float(np.sqrt(w @ cov @ w))
+        return -(mu / vol - float(w @ mu) * (cov @ w) / vol ** 3)
+
+    return _on_simplex(negativo, gradiente, len(cov))
+
+
+def _optimized(build) -> Policy:
+    def policy(env: PortfolioEnv) -> np.ndarray:
+        tradeable = env.tradeable()
+        retornos = env.past_returns(WINDOW)[:, tradeable]
+        if retornos.shape[1] < 2 or retornos.shape[0] < MIN_WINDOW:
+            return equal_weight(env)
+        return _with_cash(build(retornos), tradeable)
+    return policy
+
+
+min_variance: Policy = _optimized(lambda retornos: min_variance_weights(ledoit_wolf(retornos)))
+max_sharpe: Policy = _optimized(lambda retornos: max_sharpe_weights(retornos.mean(axis=0), ledoit_wolf(retornos)))
+"""Sample means as P1's MVO uses them, with no risk-free adjustment: the comparator of the paper, not a house method."""
+
+RULES: dict[str, Policy] = {"equal_weight": equal_weight, "min_variance": min_variance, "max_sharpe": max_sharpe}

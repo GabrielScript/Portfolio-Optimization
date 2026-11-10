@@ -1,173 +1,209 @@
-"""The portfolio environment the three papers run in, as a Gymnasium ``Env`` over our own close panel: the agent picks
-weights on the eligible names plus cash, and the next session's returns turn them into the portfolio's return. Three
-rewards reproduce the papers (``valor``: change in portfolio value, P2; ``dsr``: Moody-Saffell differential Sharpe, P1;
-``dsr_drawdown``: the same plus the drawdown penalty of P3), and ``custo_bps`` charges B3's round trip on the turnover
-the action implies (all three papers assume zero cost; ours must show both).
+"""The portfolio environment of the three papers on our tape, and the one simulator everything is measured in: an
+agent's action and a classical rule's weights go through the same ``apply`` (same timing, cost, drift, eligibility and
+cash), so a difference between two curves is a difference between two strategies and nothing else.
 
-No look-ahead: at row ``t`` the observation is built from closes up to and including ``t``, and the weights chosen there
-earn the close-to-close return of ``t+1``. A name that stops trading is settled at its last close into cash and never
-breaks a return again."""
+Papers: P1 = Sood et al., "Deep RL for optimal portfolio allocation: a comparative study with mean-variance
+optimization" (PPO, differential Sharpe reward, the ``(n + 1) x lookback`` observation); P2 = Sattar et al., "RMS-driven
+deep RL" (A2C / DDPG / PPO, drawdown-based reward); P3 = Rezaei and Nezamabadi-Pour's review (A2C, DDPG, PPO, SAC, TD3).
+
+Timing. A decision at the close of session ``t`` sees returns realized up to that close, trades at it, and earns the
+return from ``t`` to ``t + 1``. With ``hold = h`` one step is one decision: the book is bought, then drifts untouched for
+``h`` sessions, and the step's reward is the sum of the ``h`` session rewards. (The first version kept daily steps and
+silently replaced 20 of every 21 actions by "hold", while still crediting those ignored actions with rewards.)
+
+Cash earns the CDI. The first version paid it nothing, which on B3 hands every strategy that holds cash a penalty of
+ten points a year or more.
+"""
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from typing import ClassVar
 
 import numpy as np
-import pandas as pd
 from gymnasium import Env, spaces
 
-ETA = 1.0 / 252.0            # the DSR's exponential time scale (P1: about one year of sessions)
-PENALIDADE_MDD = 1.0         # weight of the drawdown term in ``dsr_drawdown`` (P3 gives no value; documented choice)
-RECOMPENSAS = ("valor", "dsr", "dsr_drawdown")
-LOGIT_MAX = 10.0             # the bounded raw action SB3 requires; softmax needs far less range than this
+from drl.dados import Panel
+
+ETA = 1.0 / 252.0                # the differential Sharpe ratio's time scale (P1: about a year of sessions)
+REWARDS = ("value", "dsr", "dsr_drawdown")
+OBSERVATIONS = ("matrix", "compact")
+COMPACT_WIDTH = 6
+LOGIT_BOUND = 10.0               # SB3 needs a bounded box; a softmax needs far less range than this
 
 
-def softmax(x: np.ndarray) -> np.ndarray:
-    """The paper's projection of the raw policy output onto the simplex (P1 enforces its constraints this way)."""
-    z = x - np.max(x)
-    e = np.exp(z)
-    return e / e.sum()
+@dataclass(frozen=True)
+class EnvConfig:
+    """What the environment does besides replaying the tape; one frozen object per run, recorded with its result."""
+
+    reward: str = "dsr"
+    cost_bps: float = 10.0               # per unit of notional traded, each side (the house engine's convention)
+    hold: int = 21                       # sessions between decisions
+    lookback: int = 60                   # P1's T
+    observation: str = "matrix"
+    cash_earns_cdi: bool = True
+    drawdown_weight: float = 1.0         # P2 gives no value for its drawdown term; fixed here, never scanned
+
+    def __post_init__(self) -> None:
+        if self.reward not in REWARDS:
+            raise ValueError(f"reward must be one of {REWARDS}: {self.reward!r}")
+        if self.observation not in OBSERVATIONS:
+            raise ValueError(f"observation must be one of {OBSERVATIONS}: {self.observation!r}")
+        if self.hold < 1 or self.lookback < 2 or self.cost_bps < 0:
+            raise ValueError("hold >= 1, lookback >= 2 and cost_bps >= 0 are required")
 
 
-def dsr(retorno: float, a: float, b: float) -> tuple[float, float, float]:
-    """One step of Moody-Saffell's differential Sharpe ratio and the updated ``(A, B)``. The first steps, before the
-    variance is positive, return 0: the denominator has no meaning yet and the reward must not be an infinity."""
-    da = retorno - a
-    db = retorno * retorno - b
+def softmax(logits: np.ndarray) -> np.ndarray:
+    """P1's projection of the raw action onto the simplex; ``-inf`` entries get exactly zero."""
+    deslocado = logits - np.max(logits)
+    expoente = np.exp(deslocado)
+    return expoente / expoente.sum()
+
+
+def differential_sharpe(retorno: float, a: float, b: float) -> tuple[float, float, float]:
+    """One step of Moody and Saffell's differential Sharpe ratio and the updated ``(A, B)``. While the variance
+    estimate is not positive the ratio is undefined and the reward is 0."""
+    delta_a, delta_b = retorno - a, retorno * retorno - b
     variancia = b - a * a
-    if variancia <= 1e-12:
-        return 0.0, a + ETA * da, b + ETA * db
-    d = (b * da - 0.5 * a * db) / variancia ** 1.5
-    return float(d), a + ETA * da, b + ETA * db
+    valor = 0.0 if variancia <= 1e-12 else (b * delta_a - 0.5 * a * delta_b) / variancia ** 1.5
+    return float(valor), a + ETA * delta_a, b + ETA * delta_b
 
 
-class AmbienteAcoes(Env):
-    """One walk-forward window of the panel. ``fechamentos``: wide closes; ``elegiveis``: the point-in-time mask from
-    ``dados.elegiveis``; ``inicio``/``fim``: the row range the episode walks. ``modo`` ``"matriz"`` reproduces P1's
-    ``(N+1) x lookback`` observation (use it with few names); ``"compacto"`` gives six numbers per name so the full
-    universe stays trainable on a CPU."""
+class PortfolioEnv(Env):
+    """
+    One stretch of the tape: decisions at rows ``start, start + hold, ...`` while the row is below ``stop``; the last
+    return earned is the one from ``stop - 1`` to ``stop``. ``columns`` are the panel positions of the names this
+    environment may hold (fixed for its life, so the action vector never changes shape); the last weight is cash.
+    """
 
     metadata: ClassVar[dict] = {"render_modes": []}
 
-    def __init__(self, fechamentos: pd.DataFrame, elegiveis: pd.DataFrame, inicio: int, fim: int, *,
-                 recompensa: str = "dsr", custo_bps: float = 0.0, lookback: int = 60, modo: str = "matriz",
-                 rebalancear_a_cada: int = 1,
-                 vol_mercado: pd.Series | None = None, capital: float = 1_000_000.0):
+    def __init__(self, panel: Panel, columns: np.ndarray, start: int, stop: int, config: EnvConfig) -> None:
         super().__init__()
-        if recompensa not in RECOMPENSAS:
-            raise ValueError(f"recompensa must be one of {RECOMPENSAS}")
-        if modo not in ("matriz", "compacto"):
-            raise ValueError("modo must be 'matriz' or 'compacto'")
-        self.fechamentos, self.elegiveis = fechamentos, elegiveis.astype(bool)
-        self.inicio = int(inicio)
-        self.fim = min(int(fim), len(fechamentos) - 1)      # the last session earns no return: nothing to step
-        self.recompensa, self.custo_bps, self.lookback, self.modo = recompensa, custo_bps, lookback, modo
-        self.rebalancear_a_cada = max(1, int(rebalancear_a_cada))
-        self.capital = capital
-        self.nomes = list(fechamentos.columns)
-        self.transacoes = self.fechamentos[self.nomes].to_numpy(dtype=float)
-        self.mascara = self.elegiveis[self.nomes].to_numpy(dtype=bool)
-        self.ret = self.transacoes[1:] / self.transacoes[:-1] - 1.0
-        self.log_ret = np.nan_to_num(np.log1p(self.ret), nan=0.0, posinf=0.0, neginf=0.0).T   # (n, sessions-1)
-        self.vol_mercado = (vol_mercado.reindex(fechamentos.index).to_numpy(dtype=float) if vol_mercado is not None
-                            else np.zeros(len(fechamentos)))
-        n = len(self.nomes)
-        self.action_space = spaces.Box(-LOGIT_MAX, LOGIT_MAX, shape=(n + 1,), dtype=np.float32)
-        largura = lookback if modo == "matriz" else 6
-        self.observation_space = spaces.Box(-np.inf, np.inf, shape=((n + 1) * largura,), dtype=np.float32)
-        self.reiniciar_estado()
+        ultimo = len(panel.sessions) - 1
+        if not 0 <= start < stop <= ultimo:
+            raise ValueError(f"need 0 <= start < stop <= {ultimo}: start {start}, stop {stop}")
+        self.config = config
+        self.start, self.stop = int(start), int(stop)
+        self._forward = panel.forward[:, columns]                    # (sessions - 1, n)
+        self._eligible = panel.eligible[:, columns]
+        self._cdi = panel.cdi if config.cash_earns_cdi else np.zeros_like(panel.cdi)
+        self._market = panel.market
+        self._log = np.log1p(self._forward)
+        self._cumulative = np.vstack([np.zeros(len(columns)), np.cumsum(self._log, axis=0)])   # row t: sum up to t
+        self.n = len(columns)
+        largura = config.lookback if config.observation == "matrix" else COMPACT_WIDTH
+        self.action_space = spaces.Box(-LOGIT_BOUND, LOGIT_BOUND, shape=(self.n + 1,), dtype=np.float32)
+        self.observation_space = spaces.Box(-np.inf, np.inf, shape=((self.n + 1) * largura,), dtype=np.float32)
+        self._restart()
 
-    # ------------------------------------------------------------------ the episode
-    def reiniciar_estado(self) -> None:
-        self.t = self.inicio
-        self.valor = self.capital
-        self.pico = self.capital
-        self.pesos = np.zeros(len(self.nomes) + 1)
-        self.pesos[-1] = 1.0                     # starts in cash, as P1's backtests do
-        self.a = self.b = 0.0
-        self.curva: list[float] = []
-        self.historico_pesos: list[np.ndarray] = []
-        self.giro: list[float] = []
+    # ------------------------------------------------------------------ state
+    def _restart(self) -> None:
+        self.t = self.start
+        self.value = 1.0
+        self.peak = 1.0
+        self.weights = np.zeros(self.n + 1)
+        self.weights[-1] = 1.0                       # every backtest starts in cash, as P1's do
+        self._a = self._b = 0.0
+        self.values: list[float] = [1.0]             # one point per session, the first at ``start``
+        self.turnover: list[float] = []              # one number per decision
+        self.decisions: list[np.ndarray] = []        # the weights bought at each decision
 
     def reset(self, *, seed: int | None = None, options: dict | None = None):
         super().reset(seed=seed)
-        self.reiniciar_estado()
-        return self._observacao(), {}
+        self._restart()
+        return self.observe(), {}
 
-    def _observacao(self) -> np.ndarray:
-        if self.modo == "matriz":
-            inicio = max(0, self.t - self.lookback + 1)
-            log = np.zeros((len(self.nomes), self.lookback))
-            bloco = self.log_ret[:, inicio: self.t]     # exclusive: column t is the return the choice at t earns
-            if bloco.shape[1] >= 1:                    # the tape's first sessions have no full window yet
-                log[:, -bloco.shape[1]:] = bloco
-            bloco = np.zeros((len(self.nomes) + 1, self.lookback))
-            bloco[:-1, 1:] = log[:, 1:]                                               # columns 2..T: the returns
-            bloco[:-1, 0] = self.pesos[:-1]                                           # column 1: current allocation
-            bloco[-1, 0] = self.pesos[-1]                                             # cash row: its weight, then
-            bloco[-1, 1] = self.vol_mercado[self.t] if np.isfinite(self.vol_mercado[self.t]) else 0.0
-            bloco[-1, 2] = self.a                                                     # ... the DSR state (P1 has VIX)
-            bloco[-1, 3] = self.b
-            return np.nan_to_num(bloco, nan=0.0, posinf=0.0, neginf=0.0).ravel().astype(np.float32)
-        return self._compacto()
+    @property
+    def done(self) -> bool:
+        return self.t >= self.stop
 
-    def _compacto(self) -> np.ndarray:
-        fechado = self.transacoes
-        t = self.t
-        janela = fechado[max(0, t - 252): t + 1]
-        with np.errstate(invalid="ignore", divide="ignore"):
-            rel252 = np.nan_to_num(janela[-1] / janela[0] - 1.0) if len(janela) > 1 else np.zeros(len(self.nomes))
-            r1 = np.nan_to_num(self.ret[t - 1]) if t >= 1 else np.zeros(len(self.nomes))
-            r5 = np.nan_to_num(janela[-1] / janela[-6] - 1.0) if len(janela) > 6 else np.zeros(len(self.nomes))
-            r21 = np.nan_to_num(janela[-1] / janela[-22] - 1.0) if len(janela) > 22 else np.zeros(len(self.nomes))
-        janela_r = self.ret[max(0, t - 63): t]
-        vol = np.nan_to_num(np.nanstd(janela_r, axis=0)) if len(janela_r) else np.zeros(len(self.nomes))
-        por_ativo = np.stack([self.pesos[:-1], r1, r5, r21, rel252, vol], axis=1)
-        linha_caixa = np.array([[self.pesos[-1], self.vol_mercado[t] if np.isfinite(self.vol_mercado[t]) else 0.0,
-                                 self.a, self.b, 0.0, 0.0]])
-        saida = np.vstack([por_ativo, linha_caixa])
-        return np.nan_to_num(saida, nan=0.0, posinf=0.0, neginf=0.0).ravel().astype(np.float32)
+    def tradeable(self) -> np.ndarray:
+        """Which of the names may be bought at the current row (cash always may)."""
+        return self._eligible[self.t]
+
+    def past_returns(self, sessions: int) -> np.ndarray:
+        """The last ``sessions`` holder returns realized by the current close: (rows, n), oldest first."""
+        return self._forward[max(0, self.t - sessions):self.t]
+
+    # ------------------------------------------------------------------ observation
+    def observe(self) -> np.ndarray:
+        """Built from rows strictly before ``t`` of the forward returns: nothing the next action will earn."""
+        t = min(self.t, len(self._market) - 1)
+        if self.config.observation == "matrix":
+            quadro = np.zeros((self.n + 1, self.config.lookback))
+            recentes = self._log[max(0, t - self.config.lookback + 1):t][::-1]         # r(t-1), r(t-2), ...
+            quadro[:-1, 1:1 + len(recentes)] = recentes.T
+        else:
+            quadro = np.zeros((self.n + 1, COMPACT_WIDTH))
+            for coluna, janela in enumerate((1, 5, 21, 252), start=1):
+                quadro[:-1, coluna] = np.expm1(self._cumulative[t] - self._cumulative[max(0, t - janela)])
+            trecho = self._log[max(0, t - 63):t]
+            quadro[:-1, 5] = trecho.std(axis=0) if len(trecho) > 1 else 0.0
+        quadro[:, 0] = self.weights
+        quadro[-1, 1:3] = self._market[t]
+        return quadro.ravel().astype(np.float32)
+
+    # ------------------------------------------------------------------ dynamics
+    def project(self, action: np.ndarray) -> np.ndarray:
+        """Raw action -> weights: softmax over the tradeable names and cash."""
+        logits = np.clip(np.asarray(action, dtype=float).ravel(), -LOGIT_BOUND, LOGIT_BOUND)
+        return softmax(np.where(np.append(self.tradeable(), True), logits, -np.inf))
+
+    def apply(self, target: np.ndarray) -> float:
+        """
+        Trade to ``target`` (n names + cash, on the simplex) at the current close, hold for ``hold`` sessions and
+        return the summed reward. The cost is charged on the notional traded against the drifted book and comes out of
+        the first session's return.
+        """
+        if self.done:
+            raise RuntimeError("the episode is over: reset the environment")
+        target = np.asarray(target, dtype=float)
+        if target.shape != (self.n + 1,) or (target < -1e-9).any() or abs(target.sum() - 1.0) > 1e-6:
+            raise ValueError("target must be n + 1 non-negative weights summing to 1")
+        if (target[:-1][~self.tradeable()] > 1e-9).any():
+            raise ValueError("target puts weight on a name that is not tradeable at this session")
+        giro = float(np.abs(target[:-1] - self.weights[:-1]).sum())
+        custo = self.config.cost_bps / 1e4 * giro
+        self.turnover.append(giro)
+        self.decisions.append(target.copy())
+        recompensa, livro = 0.0, target
+        for _ in range(self.config.hold):
+            if self.done:
+                break
+            crescido = livro * np.append(1.0 + self._forward[self.t], 1.0 + self._cdi[self.t])
+            retorno = float(crescido.sum()) - 1.0 - custo
+            custo = 0.0
+            self.value *= 1.0 + retorno
+            self.peak = max(self.peak, self.value)
+            self.values.append(self.value)
+            recompensa += self._reward(retorno)
+            livro = crescido / crescido.sum()
+            self.t += 1
+        self.weights = livro
+        return recompensa
+
+    def _reward(self, retorno: float) -> float:
+        if self.config.reward == "value":
+            return float(np.log1p(retorno))
+        valor, self._a, self._b = differential_sharpe(retorno, self._a, self._b)
+        if self.config.reward == "dsr":
+            return valor
+        return valor - self.config.drawdown_weight * (1.0 - self.value / self.peak)
 
     def step(self, action):
-        a = np.clip(np.asarray(action, dtype=float).ravel(), -LOGIT_MAX, LOGIT_MAX)
-        if (self.t - self.inicio) % self.rebalancear_a_cada:      # the paper's monthly rule: hold between decisions
-            a = np.log(np.maximum(self._deriva(), 1e-12))       # hold the positions: they drift with prices
-        livres = np.append(self.mascara[self.t], True)            # cash is always available, ineligible names never
-        brutos = np.where(livres, a, -np.inf)
-        pesos = softmax(brutos)
+        recompensa = self.apply(self.project(action))
+        return self.observe(), float(recompensa), self.done, False, {"value": self.value}
 
-        deriva = self._deriva()
-        giro = float(np.abs(pesos[:-1] - deriva[:-1]).sum())      # the notional traded; cash costs nothing to move
-        custo = self.custo_bps / 1e4 * giro
-        retorno_ativo = float(np.dot(pesos[:-1], np.nan_to_num(self.ret[self.t])))
-        retorno = retorno_ativo - custo
-        self.pesos = pesos
-        self.valor *= 1.0 + retorno
-        self.pico = max(self.pico, self.valor)
-        self.curva.append(self.valor)
-        self.historico_pesos.append(pesos.copy())
-        self.giro.append(giro)
 
-        if self.recompensa == "valor":
-            recompensa = retorno
-        elif self.recompensa == "dsr":
-            recompensa, self.a, self.b = dsr(retorno, self.a, self.b)
-        else:
-            d, self.a, self.b = dsr(retorno, self.a, self.b)
-            recompensa = d - PENALIDADE_MDD * (1.0 - self.valor / self.pico)
+Policy = Callable[[PortfolioEnv], np.ndarray]
+"""A rule: the environment at a decision -> the n + 1 weights to hold."""
 
-        self.t += 1
-        terminou = self.t >= self.fim
-        return self._observacao(), float(recompensa), terminou, False, {
-            "valor": self.valor, "giro": giro, "custo": custo, "retorno": retorno}
 
-    def _deriva(self) -> np.ndarray:
-        """The weights the positions drift to after the session they were bought for: what the next action trades from.
-        The cash leg does not drift (it earns nothing here), so it keeps its share."""
-        if self.t <= self.inicio or not self.historico_pesos:
-            return self.pesos.copy()
-        anterior = self.historico_pesos[-1]
-        ret = np.nan_to_num(self.ret[self.t - 1]) if self.t >= 1 else np.zeros(len(self.nomes))
-        valorizado = anterior[:-1] * (1.0 + ret)
-        total = valorizado.sum() + anterior[-1]
-        return np.append(valorizado / total, anterior[-1] / total) if total > 0 else anterior.copy()
+def simulate(env: PortfolioEnv, policy: Policy) -> PortfolioEnv:
+    """Run ``policy`` over one episode of ``env`` and return the environment with its curve, weights and turnover."""
+    env.reset()
+    while not env.done:
+        env.apply(policy(env))
+    return env

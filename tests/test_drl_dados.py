@@ -1,64 +1,68 @@
+"""The DRL tape: holder returns across gaps, point-in-time eligibility, causal market features."""
+
 from __future__ import annotations
 
 import numpy as np
 import pandas as pd
 import pytest
 
-from drl import dados
+from drl.dados import build_panel, expanding_z, market_features, unbroken_run
+from tests.drl_fixtures import panel_of, random_prices, universe_of
 
 
-def _painel(sessoes: int = 300) -> pd.DataFrame:
-    """Two names, ``sessoes`` business days: A trades every session, B stops after session 100."""
-    datas = pd.bdate_range("2020-01-02", periods=sessoes)
-    a = np.linspace(10.0, 20.0, sessoes)
-    b = np.linspace(30.0, 31.0, sessoes)
-    b[100:] = np.nan
-    c = np.full(sessoes, np.nan)
-    return pd.DataFrame({"A": a, "B": b, "C": c}, index=datas)
+def test_the_move_across_a_gap_lands_on_the_session_the_name_trades_again() -> None:
+    datas = pd.bdate_range("2020-01-01", periods=6)
+    precos = pd.DataFrame({"A": [10.0, 10.0, np.nan, np.nan, 7.0, 7.0], "B": 5.0}, index=datas)
+    forward = panel_of(precos).forward[:, 0]
+    assert forward == pytest.approx([0.0, 0.0, 0.0, -0.3, 0.0])
 
 
-def test_the_panel_keeps_the_names_that_die_and_drops_the_empty_ones(tmp_path):
-    arquivo = tmp_path / "precos.parquet"
-    _painel().to_parquet(arquivo)
-    p = dados.painel(arquivo)
-    assert list(p.columns) == ["A", "B"]          # C never traded: no column
-    assert p.index.is_monotonic_increasing
+def test_a_delisted_name_stays_at_its_last_close() -> None:
+    datas = pd.bdate_range("2020-01-01", periods=5)
+    precos = pd.DataFrame({"A": [10.0, 11.0, np.nan, np.nan, np.nan], "B": 5.0}, index=datas)
+    assert panel_of(precos).forward[:, 0] == pytest.approx([0.1, 0.0, 0.0, 0.0])
 
 
-def test_the_panel_cuts_the_sessions_and_never_the_columns(tmp_path):
-    arquivo = tmp_path / "precos.parquet"
-    _painel().to_parquet(arquivo)
-    p = dados.painel(arquivo, inicio="2020-06-01", fim="2020-12-31")
-    assert p.index.min() >= pd.Timestamp("2020-06-01")
-    assert p.index.max() <= pd.Timestamp("2020-12-31")
-    assert "B" in p.columns                          # B died inside the window and stays
+def test_a_name_is_eligible_only_while_listed_trading_and_with_an_unbroken_history() -> None:
+    precos = random_prices(sessions=80, names=3)
+    precos.iloc[40, 1] = np.nan                                    # N01 misses one session
+    painel = build_panel(precos, universe_of(precos, ["N00", "N01"]), pd.Series(0.0, index=precos.index), history=10)
+    assert not painel.eligible[:, 2].any()                         # N02 is never on the lake's list
+    assert not painel.eligible[:9, 0].any() and painel.eligible[9:, 0].all()
+    assert not painel.eligible[40:50, 1].any() and painel.eligible[50, 1]
 
 
-def test_a_return_after_a_gap_is_not_invented():
-    p = _painel()
-    r = dados.retornos(p)
-    assert np.isnan(r["A"].iloc[0])                  # the first session has no previous close
-    assert r["B"].iloc[100] is np.nan or np.isnan(r["B"].iloc[100])
-    assert r["A"].iloc[1] == pytest.approx(p["A"].iloc[1] / p["A"].iloc[0] - 1.0)
+def test_the_list_read_is_the_one_of_the_month_the_return_is_earned_in() -> None:
+    datas = pd.DatetimeIndex(["2020-01-30", "2020-01-31", "2020-02-03", "2020-02-04"])
+    precos = pd.DataFrame({"A": 1.0, "B": 1.0}, index=datas)
+    universo = pd.DataFrame({"month": [pd.Timestamp("2020-01-01"), pd.Timestamp("2020-02-01")], "security": ["A", "B"]})
+    painel = build_panel(precos, universo, pd.Series(0.0, index=datas), history=1)
+    assert painel.eligible[:, 0].tolist() == [True, False, False, False]     # 31/01 already trades for February
+    assert painel.eligible[:, 1].tolist() == [False, True, True, True]       # 04/02 earns on 05/02: still February
 
 
-def test_a_name_becomes_eligible_only_after_252_valid_closes():
-    p = _painel()
-    e = dados.elegiveis(p)
-    assert not e["A"].iloc[250]
-    assert e["A"].iloc[251]                          # the 252nd valid close is the session it becomes tradeable on
-    assert not e["B"].iloc[251]                      # B stopped at session 100
+def test_cash_accrues_the_rate_dated_on_the_session_the_return_ends() -> None:
+    datas = pd.bdate_range("2020-01-01", periods=3)
+    precos = pd.DataFrame({"A": 1.0, "B": 1.0}, index=datas)
+    painel = build_panel(precos, universe_of(precos), pd.Series([0.01, 0.02, 0.03], index=datas), history=1)
+    assert painel.cdi == pytest.approx([0.02, 0.03])
 
 
-def test_a_name_that_stops_trading_is_not_offered_again():
-    p = _painel()
-    e = dados.elegiveis(p)
-    assert not e["B"].iloc[101:].any()
+def test_unbroken_run_restarts_after_a_hole() -> None:
+    valido = np.array([[True], [True], [False], [True]])
+    assert unbroken_run(valido)[:, 0].tolist() == [1, 2, 0, 1]
 
 
-def test_the_return_window_has_one_row_per_name_and_zero_fills_gaps():
-    p = _painel()
-    j = dados.janela_retornos(dados.retornos(p), ate=260, tamanho=60)
-    assert j.shape == (p.shape[1], 60)
-    assert np.isfinite(j).all()                      # a dead name's gap is 0, not a NaN that poisons the policy
-    assert j[0, -1] == pytest.approx(np.log(1 + (p["A"].iloc[260] / p["A"].iloc[259] - 1)))
+def test_expanding_z_uses_only_the_values_up_to_each_point() -> None:
+    serie = np.array([1.0, 2.0, 3.0, 10.0])
+    mexida = np.array([1.0, 2.0, 3.0, -50.0])
+    assert expanding_z(serie)[:3] == pytest.approx(expanding_z(mexida)[:3])
+    assert expanding_z(serie)[2] == pytest.approx((3.0 - 2.0) / np.std([1.0, 2.0, 3.0]))
+
+
+def test_market_features_at_a_row_ignore_later_returns() -> None:
+    painel = panel_of(random_prices(sessions=200, names=6))
+    mexido = painel.forward.copy()
+    mexido[120:] *= 3.0
+    assert market_features(mexido, painel.eligible)[:121] == pytest.approx(painel.market[:121])
+    assert not np.allclose(market_features(mexido, painel.eligible)[140:], painel.market[140:])

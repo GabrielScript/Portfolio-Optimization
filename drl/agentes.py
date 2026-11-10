@@ -1,78 +1,125 @@
-"""The agents, straight from Stable-Baselines3 with the papers' networks (P1: [64, 64] with tanh, log_std_init -1;
-P2: the FinRL defaults of their Table 5). SB3 is imported inside the functions so the rest of the package — the data,
-the environment, the baselines and their tests — runs without torch installed."""
+"""The agents: Stable-Baselines3 with the papers' networks and, for PPO, P1's Table 1 hyperparameters.
+
+What the first version got wrong, fixed here:
+* PPO ran on SB3's defaults (gamma 0.99, GAE 0.95, clip 0.2, batch 64, 10 epochs, constant rate), not on P1's table.
+* SAC could never run: it was given the on-policy ``vf`` head and the default one-million-transition replay buffer.
+* The validation year of the protocol was never used. ``select`` trains one agent per seed and keeps the one with the
+  highest validation reward, which is P1's rule; the test year is touched once, by the agent chosen.
+
+SB3 and Torch are imported inside the functions, so the tape, the environment and the baselines run without them.
+"""
 
 from __future__ import annotations
 
+from collections.abc import Callable, Sequence
+from dataclasses import dataclass
 from typing import Any
 
-ALGORITMOS = ("ppo", "a2c", "ddpg", "td3", "sac")
-REDE = [64, 64]
-ATIVACAO = "tanh"
-LOG_STD_INIT = -1.0
+import numpy as np
+
+from drl.ambiente import PortfolioEnv
+
+ON_POLICY = ("ppo", "a2c")
+OFF_POLICY = ("ddpg", "td3", "sac")
+ALGORITHMS = ON_POLICY + OFF_POLICY
+HIDDEN = (64, 64)                # P1: two layers of 64, tanh
+LOG_STD_INIT = -1.0              # P1
+REPLAY_BUFFER = 50_000           # SB3's default of 1,000,000 does not fit this observation in RAM
 
 
-DETERMINISTICOS = ("ddpg", "td3")
-BUFFER_OFF_POLICY = 50_000    # P2's Table 5 value; SB3's default of 1,000,000 cannot fit this observation in RAM
+@dataclass(frozen=True)
+class PPOParams:
+    """P1, Table 1. ``n_envs`` is the paper's 10 where the machine allows; the rollout stays 756 steps per copy."""
+
+    n_steps: int = 756
+    batch_size: int = 1260
+    n_epochs: int = 16
+    gamma: float = 0.9
+    gae_lambda: float = 0.9
+    clip_range: float = 0.25
+    learning_rate_start: float = 3e-4
+    learning_rate_end: float = 1e-5
 
 
-def politica(nome: str = "ppo") -> dict[str, Any]:
-    """The MLP the five algorithms share: two hidden layers of 64 with tanh, the papers' shape.
-
-    The kwargs are not the same for all five. PPO, A2C and SAC are stochastic: their actor emits a Gaussian and takes
-    ``log_std_init`` plus a value head. DDPG and TD3 are deterministic — no standard deviation to initialise, and the
-    critic head is ``qf``, not ``vf``; passing the stochastic kwargs makes SB3 raise ``TypeError``."""
-    if nome not in ALGORITMOS:
-        raise ValueError(f"algoritmo must be one of {ALGORITMOS}")
-    if nome in DETERMINISTICOS:
-        return {"net_arch": {"pi": REDE, "qf": REDE}, "activation_fn": _tanh()}
-    return {"net_arch": {"pi": REDE, "vf": REDE}, "log_std_init": LOG_STD_INIT,
-            "activation_fn": _tanh()}
+def annealed(start: float, end: float) -> Callable[[float], float]:
+    """SB3 schedule: ``progress`` runs from 1 (first update) to 0 (last); the rate goes linearly from start to end."""
+    return lambda progress: end + (start - end) * progress
 
 
-def _tanh():
-    from torch import nn
+def policy_kwargs(algorithm: str) -> dict[str, Any]:
+    """Network arguments by family: on-policy agents have a value head and a Gaussian to initialise; off-policy ones
+    have a Q head, and only they would reject the other family's arguments."""
+    from torch import nn  # noqa: PLC0415
 
-    return nn.Tanh
+    if algorithm not in ALGORITHMS:
+        raise ValueError(f"algorithm must be one of {ALGORITHMS}: {algorithm!r}")
+    if algorithm in ON_POLICY:
+        return {"net_arch": {"pi": list(HIDDEN), "vf": list(HIDDEN)}, "activation_fn": nn.Tanh,
+                "log_std_init": LOG_STD_INIT}
+    return {"net_arch": {"pi": list(HIDDEN), "qf": list(HIDDEN)}, "activation_fn": nn.Tanh}
 
 
-def treinar(nome: str, env, total_timesteps: int = 200_000, seed: int = 0, n_envs: int = 1,
-            verbose: int = 0):
-    """Train one agent on ``env``. On-policy algorithms (PPO, A2C) accept several parallel copies of the environment,
-    which is the only cheap parallelism on a four-core CPU: the policy network itself gains nothing from more cores."""
-    from stable_baselines3 import A2C, DDPG, PPO, SAC, TD3
-    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv
+def algorithm_kwargs(algorithm: str, rollout_cap: int, ppo: PPOParams = PPOParams()) -> dict[str, Any]:
+    """Constructor arguments besides the policy. ``rollout_cap``: transitions one environment copy can give before
+    the run ends, so a short smoke run still performs an update."""
+    if algorithm == "ppo":
+        return {"n_steps": max(2, min(ppo.n_steps, rollout_cap)), "batch_size": ppo.batch_size,
+                "n_epochs": ppo.n_epochs, "gamma": ppo.gamma, "gae_lambda": ppo.gae_lambda,
+                "clip_range": ppo.clip_range,
+                "learning_rate": annealed(ppo.learning_rate_start, ppo.learning_rate_end)}
+    if algorithm == "a2c":
+        return {}
+    return {"buffer_size": REPLAY_BUFFER}
+
+
+def train(algorithm: str, make_env: Callable[[], PortfolioEnv], timesteps: int, seed: int, n_envs: int = 1):
+    """One trained agent. ``make_env`` builds a fresh training environment; on-policy agents get ``n_envs`` copies in
+    subprocesses (rollout collection is the only part that parallelises on a small CPU), off-policy agents get one."""
+    from stable_baselines3 import A2C, DDPG, PPO, SAC, TD3  # noqa: PLC0415
+    from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv  # noqa: PLC0415
 
     classes = {"ppo": PPO, "a2c": A2C, "ddpg": DDPG, "td3": TD3, "sac": SAC}
-    if nome not in classes:
-        raise ValueError(f"algoritmo must be one of {ALGORITMOS}")
-    if n_envs > 1 and nome in ("ppo", "a2c"):
-        venv = SubprocVecEnv([lambda: env for _ in range(n_envs)])
-        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(nome), seed=seed, verbose=verbose,
-                               n_steps=756 if nome == "ppo" else 5)
-    else:
-        venv = DummyVecEnv([lambda: env])
-        extra = {}
-        if nome in DETERMINISTICOS:                      # off-policy: the replay buffer is the memory constraint
-            extra["buffer_size"] = BUFFER_OFF_POLICY
-        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(nome), seed=seed, verbose=verbose, **extra)
-    modelo.learn(total_timesteps=total_timesteps)
-    return modelo, venv
+    if algorithm not in classes:
+        raise ValueError(f"algorithm must be one of {ALGORITHMS}: {algorithm!r}")
+    copias = n_envs if algorithm in ON_POLICY else 1
+    venv = (SubprocVecEnv([make_env] * copias) if copias > 1 else DummyVecEnv([make_env]))
+    try:
+        modelo = classes[algorithm]("MlpPolicy", venv, policy_kwargs=policy_kwargs(algorithm), seed=seed, verbose=0,
+                                    **algorithm_kwargs(algorithm, max(2, timesteps // copias)))
+        modelo.learn(total_timesteps=timesteps)
+    finally:
+        venv.close()
+    return modelo
 
 
-def avaliar(modelo, env) -> dict[str, list]:
-    """Run the trained policy deterministically over one full episode and return its value curve, the weights it held
-    and the turnover it generated (the report's inputs)."""
-    import numpy as np
+def evaluate(model, env: PortfolioEnv) -> tuple[PortfolioEnv, float]:
+    """The deterministic policy over one episode of ``env``: the environment (curve, weights, turnover) and the
+    episode's total reward."""
+    observacao, _ = env.reset()
+    total = 0.0
+    while not env.done:
+        acao, _ = model.predict(observacao, deterministic=True)
+        observacao, recompensa, _, _, _ = env.step(acao)
+        total += recompensa
+    return env, total
 
-    obs, _ = env.reset()
-    curva, giros, pesos, valores = [env.valor], [], [], []
-    terminou = False
-    while not terminou:
-        acao, _ = modelo.predict(obs, deterministic=True)
-        obs, _, terminou, _, info = env.step(acao)
-        curva.append(info["valor"])
-        giros.append(info["giro"])
-        valores.append(info["retorno"])
-        pesos.append(env.historico_pesos[-1])
-    return {"curva": np.array(curva), "giros": np.array(giros), "retornos": np.array(valores), "pesos": pesos}
+
+@dataclass(frozen=True)
+class Selection:
+    """The agent kept for the test year and the validation reward of every seed tried."""
+
+    model: Any
+    seed: int
+    validation_rewards: dict[int, float]
+
+
+def select(seeds: Sequence[int], fit: Callable[[int], Any], validation_reward: Callable[[Any], float]) -> Selection:
+    """P1's rule: one agent per seed, keep the highest validation reward (the lowest seed wins a tie)."""
+    if not seeds:
+        raise ValueError("at least one seed is required")
+    modelos = {seed: fit(seed) for seed in seeds}
+    recompensas = {seed: float(validation_reward(modelo)) for seed, modelo in modelos.items()}
+    if not all(np.isfinite(valor) for valor in recompensas.values()):
+        raise ValueError(f"a validation reward is not finite: {recompensas}")
+    melhor = max(sorted(recompensas), key=lambda seed: recompensas[seed])
+    return Selection(modelos[melhor], melhor, recompensas)

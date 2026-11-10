@@ -1,55 +1,98 @@
-"""The reading: one table per era, zero-cost against costed, agents against the classical baselines. Nothing here
-averages across a protocol change — each row is one (agent, reward, cost, window, seed) cell as it was run."""
+"""The reading of a run: each strategy's test years stitched into one out-of-sample curve and measured over the CDI.
+
+    .venv-drl/Scripts/python -m drl.leitura --lago <lake exports> --run <name> [--composite <curves.parquet>]
+
+A strategy enters the table only with every year of the run present and adjoining: a missing cell is an error, never
+a shorter curve. ``--composite`` adds the house engine's Composite curve (``docs/dados/comparacao-estrategias.parquet``)
+cut to the same sessions and measured by the same function. It is a reference from another simulator (quarterly
+rebalance, five-year eligibility window, the fixed rules), which the table says in the row's name; the first version
+pasted its numbers from another report, with a different risk-free rate and a drawdown measured on yearly points.
+"""
 
 from __future__ import annotations
 
+import argparse
+from collections.abc import Sequence
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-RAIZ = Path(__file__).resolve().parent.parent
-ARQUIVO = RAIZ / "drl" / "saidas" / "resultados.csv"
-COLUNAS = ["algoritmo", "recompensa", "custo_bps", "ano_teste", "semente", "retorno_anual", "vol_anual", "sharpe",
-           "mdd", "calmar", "giro_anual", "total"]
+from drl.dados import Panel, load_panel
+from drl.executar import LAGO, SAIDAS, Cell, read_cell
+from drl.periodo import emendar
+from drl.relatorio import FIELDS, metrics
 
 
-def tabela(arquivo: Path = ARQUIVO) -> pd.DataFrame:
-    """The runs, longest first, with a column saying how many names the run traded."""
-    d = pd.read_csv(arquivo)
-    return d[[c for c in COLUNAS + ["nomes"] if c in d.columns]].sort_values(["ano_teste", "custo_bps", "sharpe"],
-                                                                             ascending=[True, True, False])
+def stitch(cells: Sequence[Cell]) -> tuple[pd.Series, np.ndarray]:
+    """One curve (indexed by session) and the turnover of every decision, from the cells of one strategy. Each cell
+    must start on the session the previous one ended on."""
+    ordenadas = sorted(cells, key=lambda cell: cell.year)
+    for anterior, seguinte in zip(ordenadas, ordenadas[1:]):
+        if seguinte.sessions[0] != anterior.sessions[-1]:
+            raise ValueError(f"{anterior.strategy}: {seguinte.year} starts on {seguinte.sessions[0]}, but "
+                             f"{anterior.year} ended on {anterior.sessions[-1]} (a year is missing)")
+    sessoes = list(ordenadas[0].sessions) + [s for cell in ordenadas[1:] for s in cell.sessions[1:]]
+    valores = emendar([np.asarray(cell.values) for cell in ordenadas])
+    return (pd.Series(valores, index=pd.DatetimeIndex(sessoes)),
+            np.concatenate([np.asarray(cell.turnover) for cell in ordenadas]))
 
 
-def comparacao(d: pd.DataFrame, ano: int, custo: float) -> pd.DataFrame:
-    """One window's table: every run of that window at that cost, the baselines included, ranked by Sharpe."""
-    recorte = d[(d["ano_teste"] == ano) & (d["custo_bps"] == custo)]
-    return recorte.sort_values("sharpe", ascending=False)
+def curve_metrics(curva: pd.Series, panel: Panel, turnover: np.ndarray | None = None) -> dict[str, float]:
+    """``curva`` on consecutive sessions of the panel, over the CDI of those sessions."""
+    inicio = int(panel.sessions.get_loc(curva.index[0]))
+    esperado = panel.sessions[inicio:inicio + len(curva)]
+    if not curva.index.equals(esperado):
+        raise ValueError("the curve must cover consecutive sessions of the panel")
+    return metrics(curva.to_numpy(), panel.cdi[inicio:inicio + len(curva) - 1], turnover)
 
 
-def resumo(d: pd.DataFrame) -> pd.DataFrame:
-    """The agent cells that beat equal weight on the same window and cost: the only ones worth a second seed."""
-    linhas = []
-    for (ano, custo), grupo in d.groupby(["ano_teste", "custo_bps"]):
-        base = grupo[grupo["algoritmo"] == "iguais"]
-        if base.empty:
-            continue
-        melhor = base["sharpe"].max()
-        for r in grupo[(grupo["algoritmo"] != "iguais") & (grupo["sharpe"] > melhor)].itertuples():
-            linhas.append({"ano_teste": ano, "custo_bps": custo, "agente": f"{r.algoritmo}/{r.recompensa}",
-                           "sharpe": r.sharpe, "sharpe_iguais": melhor, "mdd": r.mdd, "giro": r.giro_anual})
-    return pd.DataFrame(linhas)
+def read_run(pasta: Path) -> dict[str, list[Cell]]:
+    celulas: dict[str, list[Cell]] = {}
+    for arquivo in sorted(pasta.glob("*.json")):
+        cell = read_cell(arquivo)
+        celulas.setdefault(cell.strategy, []).append(cell)
+    if not celulas:
+        raise SystemExit(f"no cell under {pasta}")
+    return celulas
 
 
-def main() -> int:
-    d = tabela()
-    for custo in sorted(d["custo_bps"].unique()):
-        print(f"\n=== custo {custo:.0f} bps ===")
-        for ano in sorted(d["ano_teste"].unique()):
-            print(f"\n-- {ano} --")
-            print(comparacao(d, ano, custo).to_string(index=False))
-    vencedores = resumo(d)
-    print("\n=== cells that beat equal weight ===")
-    print(vencedores.to_string(index=False) if not vencedores.empty else "none")
+def table(celulas: dict[str, list[Cell]], panel: Panel, composite: pd.Series | None = None) -> pd.DataFrame:
+    """One row per strategy over the years every strategy of the run has; the Composite reference on the same dates."""
+    anos = set.intersection(*(set(cell.year for cell in grupo) for grupo in celulas.values()))
+    if not anos:
+        raise ValueError("the strategies of this run share no test year")
+    linhas, janela = {}, None
+    for estrategia, grupo in celulas.items():
+        curva, giro = stitch([cell for cell in grupo if cell.year in anos])
+        janela = curva.index
+        linhas[estrategia] = {**curve_metrics(curva, panel, giro), "years": len(anos),
+                              "names": float(np.mean([cell.names for cell in grupo if cell.year in anos]))}
+    if composite is not None and janela is not None:
+        recorte = composite.reindex(janela)
+        if recorte.isna().any():
+            raise ValueError("the Composite curve does not cover every session of the run")
+        linhas["Composite (house engine, reference)"] = {**curve_metrics(recorte, panel), "years": len(anos),
+                                                         "names": 15.0}
+    return pd.DataFrame(linhas).T[[*FIELDS, "years", "names"]].sort_values("sharpe", ascending=False)
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    p.add_argument("--lago", type=Path, default=LAGO)
+    p.add_argument("--run", required=True)
+    p.add_argument("--composite", type=Path, default=None)
+    p.add_argument("--last-session", default=None)
+    args = p.parse_args(argv)
+    panel = load_panel(args.lago, args.last_session)
+    composite = None
+    if args.composite is not None:
+        composite = pd.read_parquet(args.composite).set_index("date")["Composite"].dropna()
+        composite.index = pd.DatetimeIndex(pd.to_datetime(composite.index))
+    tabela = table(read_run(SAIDAS / args.run), panel, composite)
+    texto = tabela.to_string(float_format=lambda x: f"{x:.4f}")
+    (SAIDAS / args.run / "leitura.txt").write_text(texto + "\n", encoding="utf-8", newline="\n")
+    print(texto)
     return 0
 
 

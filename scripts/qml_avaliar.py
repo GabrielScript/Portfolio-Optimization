@@ -263,6 +263,31 @@ def _gravar_cache(quadro: pd.DataFrame, cache: Path, config: QMLConfig) -> None:
                                           encoding="utf-8")
 
 
+def memoizar_previsoes(predictor: QMLPredictor, datas: Sequence[pd.Timestamp], cache: Path, *,
+                       gravar_a_cada: int, rotulo: str, unidade: str) -> pd.DataFrame:
+    """
+    P(up) on ``datas``, read from ``cache`` where it is already there and predicted (causally, by the
+    predictor) where it is not. The file is a memo over dates: it is rewritten every ``gravar_a_cada`` new
+    dates, so an interrupted run resumes instead of starting over.
+    """
+    quadro = _ler_cache(cache, predictor.config)
+    faltam = [data for data in datas if data not in quadro.index]
+    if faltam:
+        print(f"  {rotulo}: {len(faltam)} {unidade} to predict (cache has {len(quadro.index)})", flush=True)
+    for indice, data in enumerate(faltam, start=1):
+        linha = predictor.predict(data)
+        if not linha.empty:
+            nova = linha.to_frame().T
+            nova.index = pd.DatetimeIndex([data])
+            quadro = pd.concat([quadro[quadro.index != data], nova])
+        if indice % gravar_a_cada == 0 or indice == len(faltam):
+            _gravar_cache(quadro.sort_index(), cache, predictor.config)
+            print(f"  {rotulo}: {indice}/{len(faltam)} {unidade} predicted", flush=True)
+    quadro = quadro.sort_index()
+    _gravar_cache(quadro, cache, predictor.config)
+    return quadro
+
+
 def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
                     cache: Path | None = None) -> pd.DataFrame:
     """P(up) on every marked rebalance (and the session after it, where a freeze can move the rebalance), for the
@@ -276,22 +301,7 @@ def _probabilidades(predictor: QMLPredictor, acoes: pd.DataFrame, cfg_bt=CFG_BT,
         datas.append(acoes.index[posicao])
         if posicao + 1 < len(acoes):
             datas.append(acoes.index[posicao + 1])
-    quadro = _ler_cache(cache, predictor.config)
-    faltam = [data for data in datas if data not in quadro.index]
-    if faltam:
-        print(f"  QML: {len(faltam)} decision dates to predict (cache has {len(quadro.index)})", flush=True)
-    for indice, data in enumerate(faltam, start=1):
-        linha = predictor.predict(data)
-        if not linha.empty:
-            nova = linha.to_frame().T
-            nova.index = pd.DatetimeIndex([data])
-            quadro = pd.concat([quadro[quadro.index != data], nova])
-        if indice % 10 == 0 or indice == len(faltam):
-            _gravar_cache(quadro.sort_index(), cache, predictor.config)
-            print(f"  QML: {indice}/{len(faltam)} new dates predicted", flush=True)
-    quadro = quadro.sort_index()
-    _gravar_cache(quadro, cache, predictor.config)
-    return quadro
+    return memoizar_previsoes(predictor, datas, cache, gravar_a_cada=10, rotulo="QML", unidade="decision dates")
 
 
 def _armar(args: Sequence[str]) -> tuple[Path, bool, tuple[int, ...], bool, bool]:

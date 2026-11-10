@@ -43,8 +43,8 @@ from scripts.avaliar_robustez import _acoes, referencias  # noqa: E402
 from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT, CFG_KELLY  # noqa: E402
 from scripts.curvas_ao_vivo import ARQUIVOS, LAGO, congelar  # noqa: E402
 from scripts.qml_12_3_avaliar import BDRS, precos_das_bdrs, universo_com_bdrs  # noqa: E402
-from scripts.qml_avaliar import (ProbabilidadesCongeladas, _gravar_cache, _ler_cache, _linha,  # noqa: E402
-                                 _probabilidades, _rodar, _tabela, seletor_do_composite)
+from scripts.qml_avaliar import (ProbabilidadesCongeladas, _linha, _probabilidades, _rodar,  # noqa: E402
+                                 _tabela, memoizar_previsoes, seletor_do_composite)
 
 CACHE_DIARIO = RAIZ / "docs" / "dados" / "qml-probabilidades-g2-diario.parquet"
 CACHE_BDR = RAIZ / "docs" / "dados" / "qml-probabilidades-g2-bdr.parquet"
@@ -59,22 +59,8 @@ def probabilidades_de_todas_as_sessoes(predictor: QMLPredictor, acoes: pd.DataFr
     never up to 62 sessions stale. Only the dates from ``janela`` on are predicted (nothing before the
     first decision), and the cache is date-keyed like the original one.
     """
-    datas = list(acoes.index[janela:])
-    quadro = _ler_cache(cache, predictor.config)
-    faltam = [data for data in datas if data not in quadro.index]
-    if faltam:
-        print(f"  QML-G2: {len(faltam)} sessions to predict (cache has {len(quadro.index)})", flush=True)
-    for indice, data in enumerate(faltam, start=1):
-        linha = predictor.predict(data)
-        if not linha.empty:
-            nova = linha.to_frame().T
-            nova.index = pd.DatetimeIndex([data])
-            quadro = pd.concat([quadro[quadro.index != data], nova])
-        if indice % 100 == 0 or indice == len(faltam):
-            _gravar_cache(quadro.sort_index(), cache, predictor.config)
-            print(f"  QML-G2: {indice}/{len(faltam)} sessions predicted", flush=True)
-    _gravar_cache(quadro.sort_index(), cache, predictor.config)
-    return quadro.sort_index()
+    return memoizar_previsoes(predictor, list(acoes.index[janela:]), cache, gravar_a_cada=100,
+                              rotulo="QML-G2", unidade="sessions")
 
 
 def seletor_composite_mais_bdr(nota, setores: Mapping[str, str], bdrs: Sequence[str] = BDRS,

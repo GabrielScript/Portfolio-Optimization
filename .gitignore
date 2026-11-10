@@ -155,3 +155,6 @@ docs/dados/*-anbima/*.xls
 
 # Streamlit secrets (the headlines token, DECISOES 134): never in the public repo
 .streamlit/secrets.toml
+
+# Run logs of the daily routines (the QML holdout run writes here)
+/logs/

@@ -106,3 +106,7 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-10T10:20:07,CXSE3,varredura,sem_evento,,,,cvm-4186fe03b1e0,,"O único item novo é um comunicado ao mercado sobre a apresentação de resultados trimestrais, divulgação routineira. Nada compromete o valor da ação.",[],886,640.0,140.0,0.00012282,
 2026-11-10T10:20:07,CXSE3,juiz:d1.1,,,,0.07259775122102542,cvm-4186fe03b1e0,,p_nova=0.3109,,171,,,3.42e-06,
 2026-11-10T10:20:07,CXSE3,juiz:d1-ultra,,,,0.1779490014614336,cvm-4186fe03b1e0,,p_nova=0.5370,,171,,,7.182e-06,
+2026-11-10T15:20:35,PSSA3,varredura_descartada,,,,,cvm-990a14b8bda0,o número 26 do resumo não está nas citações,,,766,512.0,128.0,0.00011644,
+2026-11-10T15:20:35,PSSA3,varredura,sem_evento,,,,cvm-990a14b8bda0,,"O único item novo é um Comunicado ao Mercado de reporte setorial, divulgação periódica de rotina. Nada no pacote indica fraude, inadimplência, sanção ou outro evento que comprometa o valor da companhia.",[],899,640.0,161.0,0.00013737,
+2026-11-10T15:20:35,PSSA3,juiz:d1.1,,,,0.048705632673383535,cvm-990a14b8bda0,,p_nova=0.3109,,164,,,3.28e-06,
+2026-11-10T15:20:35,PSSA3,juiz:d1-ultra,,,,0.08552782318603236,cvm-990a14b8bda0,,p_nova=0.6878,,164,,,6.888e-06,

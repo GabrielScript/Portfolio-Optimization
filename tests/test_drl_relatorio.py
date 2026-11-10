@@ -49,3 +49,13 @@ def test_the_turnover_is_annualised_from_the_session_average():
 def test_an_empty_curve_returns_zeros_instead_of_raising():
     m = relatorio.metricas(np.array([100.0]))
     assert m["sharpe"] == 0.0 and m["mdd"] == 0.0
+
+
+def test_the_sortino_only_punishes_the_downside():
+    rng = np.random.default_rng(5)
+    r = rng.normal(0.0008, 0.01, 2520)
+    curva = 100.0 * np.cumprod(np.append(1.0, 1.0 + r))
+    m = relatorio.metricas(curva)
+    esperado = r.mean() / np.sqrt(np.mean(np.minimum(r, 0.0) ** 2)) * np.sqrt(252)
+    assert m["sortino"] == pytest.approx(esperado, rel=1e-9)
+    assert m["sortino"] != pytest.approx(m["sharpe"])

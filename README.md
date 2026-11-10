@@ -909,3 +909,64 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
 - Answers, no code: no verified quantum-finance alpha at 08/11/2026 (Lean, math-olympiad or Wolfram do not change that);
   the app's game-theory piece is the Sentinela's proper scoring (DECISOES 271); what to add at R$30k+ is capacity
   reading of the Composite and a monthly-sales < R$20k rule in the ticket (offered, not asked).
+
+## Session notes (2026-11-09/10)
+
+- Jev (TypeSafe) is back in-session with no config change, answering `typesafe/jev-1.14-20261014` through the
+  OpenRouter key. The owed gate of DECISOES 320 was re-run: per file it was 7/7 `escalate` with 0 contradicted, and the
+  no-look-ahead claim read "unsupported" only because each file was judged alone; the whole change in ONE `files` call
+  (7 code files, ~82k chars, no truncation) gave composite 0.645, `safe_to_apply` 0.20, `escalate`, limiting rubric
+  `test_gap`, and both claims verified (no look-ahead at 0.61, 18 tests at 1.0), 0 contradicted (DECISOES 321).
+- BDR facts corrected (DECISOES 322): `ativos_eua.ATIVOS_EUA` has **32** curated US BDRs; the app panel
+  (`lago/precos_diarios.parquet`) has **923** BDR columns; the research export `data/b3lake/universe_prices.parquet`
+  (used by the QML arm) has **none**. B3 BDR prices exist from **03/09/2013** for 16 of the 32; all 32 only from
+  21/06/2022. The earlier "no BDRs" answer was true of one file and false of the project's data.
+- G2 "Composite Quantum" was pre-registered and committed before any number (`87d19bc`), then run (`f198310`;
+  DECISOES 323). Gate: t(alpha vs Composite) >= 2 and the 95% interval above zero in all three phases.
+  Daily signal lookup: t **1.84 / 0.87 / 0.94** (gains 1.4% in phase 0, loses in 21/42 - the staleness hypothesis is
+  dead). BDR carrier: t **1.76 / 1.48 / 1.58**; best risk profile measured (MDD -33 to -35% vs -42%, vol 16.3-16.7% vs
+  19.2-19.6%) and it beats the Composite on CAGR and Sharpe in all three phases, but no significance. Both fail.
+- Why t is hard: t = IR x sqrt(years). At 16.7 years, t = 2 needs IR >= 0.49 against 0.44 / 0.26 / 0.37 today;
+  MinTRL is 65-1,215 years. Reducing volatility does not move t (alpha and its standard error scale together), and
+  rebalancing frequency does not either (the alpha regression already uses daily returns). Only a better information
+  ratio or more time does.
+- The Stage-2 forward holdout is **open**: R$ 10,000 fictitious, rules frozen, 63-session rebalance, 9 names bought at
+  the 09/11 close, mark R$ 9,990.00 after cost (DECISOES 324; `simulador/qml_holdout/`). Ledger helpers tested
+  (7 tests); the bug that blocked it - prices passed where the engine hands the strategy a filtered **return** window -
+  is fixed. Judgement in 12 months, or earlier only if the drawdown leaves the -38% envelope.
+- On the 09/11 rise: 06/11 R$ 9,978.59 -> 09/11 R$ 10,131.62 (+1.53%) is the **Composite alone**. "Composto (base)" and
+  "Composto + Sentinela" are identical because no Sentinela sale has been accepted yet.
+- Tooling, for the next session: the QML tests and runs need `ai-hedge-fund/.venv-qpo` (torch 2.14.1+cpu,
+  pennylane 0.45.1); the project `.venv` has no torch. Work in `../po-qml` (the `data/` folder is gitignored and absent
+  there, so pass `--lago <main repo>/data/b3lake`). No GPU is needed: the circuit is 6 qubits and 45 parameters, and the
+  daily run took 879 s on the CPU.
+
+## Session notes (2026-11-10)
+
+- **The DRL replication is closed, and it loses to the Composite** (DECISOES 330-335). Three papers split by method and
+  weighted 40/40/20 after the user's revision; PPO/A2C/DDPG/TD3/SAC run on the full eligible B3 universe, 2010-2026,
+  monthly, 10 bps. PPO + Differential Sharpe Ratio: CAGR 8.15%, Sharpe 0.43. PPO + DSR + drawdown term: 8.05%, 0.43.
+  Equal weight over the whole universe: 9.75%, 0.52. Minimum variance: 9.51%, **0.91**, MDD -34.4%. The Composite:
+  20.57%, 1.20. **The universe was never the constraint - the signal is.** The drawdown-penalty term changed nothing,
+  and the only remaining DRL role (a construction layer over an existing signal) dies on the same ~200-decision
+  arithmetic that closed the QML line.
+- **A look-ahead bug was found and fixed** (DECISOES 335). `drl/ambiente.py` matrix mode fed the observation the return
+  the next action earns (`[:, inicio: t + 1]` instead of `[:, inicio: t]`), caught by a DDPG cell at Sharpe 4.11 with
+  300x turnover. Fixed, with a test that pins it. Two other bugs on the way: DDPG/TD3 rejected `log_std_init`
+  (deterministic policies have a `qf` head), and the baselines were reset to 1.0 every January - a sawtooth that
+  fabricated a crash each new year and produced the absurd MVO -59% / equal-weight -67% figures, which were retracted.
+- **Volatility targeting is the one genuine improvement** (DECISOES 336). New `core/vol_target.py`, 10 tests. Exposure
+  = target / realised 21-session volatility, measured to the previous session, capped at 1 (never levered), idle capital
+  in the CDI, 10 bps on what moves. Target 20%: **CAGR 20.30%, Sharpe 1.20, MDD -21.4%** against the plain Composite's
+  19.91% / 1.04 / -41.5%, at 96% mean exposure. Monotone across three targets and two windows. **Not live**: it was
+  measured on the saved curve assuming daily adjustment, with no tax; the engine run with real rebalancing and a FIFO
+  cost basis is owed, and it is an order-generation change, so it needs the advisor review.
+- **LLM signal layer planned, not built** (DECISOES 338). `LLM-SIGNAL-LAYER-PLAN.md` and
+  `docs/superpowers/plans/2026-11-10-llm-signal-layer.md`: reranker as triage, extraction as typed events, a
+  pre-registered veto gate (drop a ticker with a `material` + `baixa` event at confidence >= 0.7 in the last 20
+  sessions). Zero cost, free tiers only. Research correction: the free OpenRouter model is Nemotron **3** Ultra
+  550B-A55B; there is no "Nemotron 3.5 Ultra".
+- **A local 9B was benchmarked and discarded** (DECISOES 337). Qwen3.5-9B Q4_K_M on this laptop: **1.66 tokens/s** at 4
+  threads, 0.84 at 8 (hyperthreading halves it). The same extraction takes 2 min 35 s locally against 1.3-2.2 s on the
+  DeepSeek API - about **90x**. The model was deleted; the `llama.cpp` runtime stays in `D:\modelos` for future tests.
+  This BIOS has no UMA frame buffer setting: the 2.1 GB reserved for the iGPU cannot be recovered.

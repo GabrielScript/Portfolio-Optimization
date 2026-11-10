@@ -6,7 +6,7 @@
 
 **Architecture:** Three stages. A cheap 8B reranker screens the day's filings and news per ticker (one forward pass per query-document pair, no generation). A large model reads only the handful of documents that survived, and returns strict JSON: event type, direction, magnitude bucket, confidence, and the passage it came from. The Composite stays untouched; the extracted feature enters as a veto/boost that is measured against the existing gate, never as a replacement for the scoring model.
 
-**Tech Stack:** Python 3.12, the project's own CVM/Fato Relevante pipeline, NVIDIA NIM endpoints (`ai.api.nvidia.com`), the reranker via HTTP, `httpx`, `pydantic` for the JSON contract, and the existing `core/backtest` for measurement.
+**Tech Stack:** Python 3.12, the project's own CVM/Fato Relevante pipeline, the **NVIDIA NIM API** (`ai.api.nvidia.com`) as the default provider with **OpenRouter's free rerank endpoint** as the fallback, `httpx`, `pydantic` for the JSON contract, and the existing `core/backtest` for measurement.
 
 **Spec:** this file is the design; the research it rests on is summarised in the Sources section.
 
@@ -46,6 +46,25 @@ Three facts decide the design:
 2. **Bolt 74B-A9B does not fit this laptop.** NVIDIA describes the 74B-A9B checkpoint as a 24 GB model; the machine has 20 GB of RAM, no NVIDIA GPU, and the integrated Vega 8 has no ROCm. Quantized to IQ2 it would fit in memory but run at a handful of tokens per second.
 3. **Free tier is not free of terms.** OpenRouter's `:free` generative models charge $0 but around 20 requests/minute and 50 requests/day, and the provider may log prompts. NVIDIA's own trial API is more generous (40 RPM, 10k RPD reported) but has its own trial terms. The reranker's licence (OpenMDW-1.1) permits commercial use, so self-hosting it carries no legal question.
 
+## Which API, and why the plan uses both
+
+|  | NVIDIA NIM (build.nvidia.com) | OpenRouter `:free` |
+|---|---|---|
+| reranker endpoint | `POST https://ai.api.nvidia.com/v1/retrieval/nvidia/nemotron-3.5-rerank-8b/reranking` | `POST https://openrouter.ai/api/v1/rerank` |
+| key | `NVIDIA_API_KEY` (`nvapi-…`), obtained at build.nvidia.com | `OPENROUTER_API_KEY` (`sk-or-…`) |
+| price | free trial credits, then metered | $0 in / $0 out |
+| limits reported | ~40 RPM, 10k requests/day | ~20 RPM and 50 requests/day on the generative free tier; the rerank endpoint is separate |
+| prompt handling | NVIDIA API Trial Terms | OpenRouter terms; the provider may log prompts |
+| generative models | Bolt / Ultra per NVIDIA's catalogue | the only place the free `nemotron-3-ultra-550b-a55b:free` is reachable |
+
+**Decision:** NIM is the default, because it is NVIDIA's own service, its ceiling is the most generous, and the key lives
+in the project's existing `.env` beside the other data keys. OpenRouter is the fallback, used when NIM answers 402 or 429,
+and it is the only route to the free Ultra model. The generative calls are capped by arithmetic, not by preference: at
+50 requests/day on the free tier, only the documents that survive triage can be sent, which is exactly what Task 4 does.
+
+Keys go in `ai-hedge-fund/.env` and are never committed. A missing key must raise at construction time, not degrade to an
+empty score list — the failure this plan is most afraid of is a silent "no relevant documents" that looks like a finding.
+
 ## The brainstorm, including what was rejected
 
 - **LLM predicts returns.** Rejected. No point-in-time feature archive, no way to distinguish learning from memorisation, and the project's own experience says the signal, not the solver, is what pays.
@@ -74,9 +93,16 @@ def test_a_failed_request_raises_instead_of_returning_empty_scores():
 
 - [ ] **Step 2: Run test to verify it fails** — `pytest tests/test_nvidia_rerank.py -v`, expect ImportError.
 
-- [ ] **Step 3: Implement** `POST https://ai.api.nvidia.com/v1/retrieval/nvidia/nemotron-3.5-rerank-8b/reranking` with `Authorization: Bearer <NVIDIA_API_KEY>`, returning one float per document in input order; raise `RerankError` on any non-200 so a rate limit is never mistaken for "no relevant documents".
+- [ ] **Step 3: Implement** the NIM call first — `POST https://ai.api.nvidia.com/v1/retrieval/nvidia/nemotron-3.5-rerank-8b/reranking`
+  with `Authorization: Bearer $NVIDIA_API_KEY`, returning one float per document in input order. On 402 or 429, retry once
+  against `POST https://openrouter.ai/api/v1/rerank` with `Authorization: Bearer $OPENROUTER_API_KEY`. Raise `RerankError`
+  on any other non-200, and raise `ConfiguracaoAusente` at construction when neither key is set, so a rate limit is never
+  mistaken for "no relevant documents".
 
-- [ ] **Step 4: Run test to verify it passes.**
+- [ ] **Step 3b: Test the fallback** — a client built with only `OPENROUTER_API_KEY` must skip NIM entirely; a client with
+  neither key must fail before any HTTP call.
+
+- [ ] **Step 4: Run tests to verify they pass.**
 
 - [ ] **Step 5: Commit** — `feat(llm): reranker client`
 

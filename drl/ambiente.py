@@ -98,7 +98,7 @@ class AmbienteAcoes(Env):
         if self.modo == "matriz":
             inicio = max(0, self.t - self.lookback + 1)
             log = np.zeros((len(self.nomes), self.lookback))
-            bloco = self.log_ret[:, inicio: self.t + 1]
+            bloco = self.log_ret[:, inicio: self.t]     # exclusive: column t is the return the choice at t earns
             if bloco.shape[1] >= 1:                    # the tape's first sessions have no full window yet
                 log[:, -bloco.shape[1]:] = bloco
             bloco = np.zeros((len(self.nomes) + 1, self.lookback))

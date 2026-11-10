@@ -379,30 +379,40 @@ def _universo_do_seletor(selector: UniverseSelector | None, treino: pd.DataFrame
 
 def qml_strategy(predictor: ProbabilitySource, cfg: ConfigOtimizacao, setores: Mapping[str, str],
                  rf_diaria: pd.Series | None = None, selector: UniverseSelector | None = None,
-                 tilt: float = 1.0, base: str = "rf", limites: Limites = LIMITES) -> Estrategia:
+                 tilt: float = 1.0, base: str = "rf", limites: Limites = LIMITES,
+                 covariance: Callable[[pd.DataFrame], pd.DataFrame] | None = None) -> Estrategia:
     """
     The hybrid arm: QML P(up) -> expected-return tilt, then ``otimizar`` with the fixed caps (the
     sector groups come from ``limites``). ``selector`` narrows the candidates (the Composite's book,
     the Kelly book, ...). ``base`` is the prior the tilt is added to: ``rf`` (the quantum signal is
     the only expected return) or ``jorion`` (Jorion-shrunk sample means plus the quantum tilt, a
     Black-Litterman-lite view that keeps the classical information).
+
+    ``covariance`` is an estimator of the DAILY covariance (e.g. ``core.multivariate.pca_covariance``)
+    fitted on every eligible name of the training window and then cut to the candidates, so a factor
+    model sees the whole cross-section. None keeps the frozen arm's path: Ledoit-Wolf on the candidates.
     """
     if tilt <= 0:
         raise ValueError(f"tilt must be > 0: {tilt}")
     if base not in ("rf", "jorion"):
         raise ValueError(f"base must be 'rf' or 'jorion': {base!r}")
+    if covariance is not None and base != "rf":
+        raise ValueError("a covariance estimator is only defined for base='rf'")
 
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
         nomes = _universo_do_seletor(selector, treino, setores)
         if len(nomes) < 2:
             raise ValueError(f"{treino.index[-1]:%Y-%m-%d}: fewer than 2 eligible names ({len(nomes)})")
+        janela_elegivel = treino[[papel for papel in treino.columns if setores.get(papel)]]
         treino = treino[nomes]
         data = treino.index[-1]
         if base == "jorion":
             momentos = estimar_momentos(treino, shrink_mu=True)
             cov, mu_prior = momentos.cov, momentos.mu
-        else:
+        elif covariance is None:
             cov, mu_prior = covariancia_ledoit_wolf(treino) * DIAS_UTEIS_ANO, None
+        else:
+            cov, mu_prior = covariance(janela_elegivel).loc[nomes, nomes] * DIAS_UTEIS_ANO, None
         probabilidades = predictor.predict(data).reindex(nomes).dropna()
         if len(probabilidades) < 2:
             raise ValueError(f"{data:%Y-%m-%d}: QML produced fewer than 2 probabilities")

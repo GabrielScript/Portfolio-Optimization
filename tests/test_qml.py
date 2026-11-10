@@ -233,3 +233,47 @@ def test_default_config_keeps_the_fingerprint_of_the_stored_caches() -> None:
         pytest.skip("no stored cache in this checkout")
     assert json.loads(lado.read_text(encoding="utf-8")) == avaliar._impressao_da_config(QMLConfig())
     assert "init_seed" in avaliar._impressao_da_config(QMLConfig(init_seed=3))["config"]
+
+
+def test_covariance_estimator_is_fitted_on_every_eligible_name_then_cut_to_the_candidates() -> None:
+    from core.estimation import covariancia_ledoit_wolf
+
+    ret = _retornos(n=400, k=8)
+    setores = {papel: ("Financeiro", "Energia", "Saúde", "Indústria")[i % 4] for i, papel in enumerate(ret.columns)}
+    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.20, n_ativos_max=None, vol_maxima=0.40,
+                           aversao_risco=2.0)
+    vistos: list[list[str]] = []
+
+    def espiao(janela: pd.DataFrame) -> pd.DataFrame:
+        vistos.append(list(janela.columns))
+        return covariancia_ledoit_wolf(janela)
+
+    candidatos = list(ret.columns[:6])
+    pesos = qml_strategy(_PredictorFixo(list(ret.columns)), cfg, setores, None, selector=lambda *_: candidatos,
+                         covariance=espiao)(ret)
+    assert vistos == [list(ret.columns)]                       # the whole eligible window, not the 6 candidates
+    assert set(pesos.index) <= set(candidatos)
+    assert abs(float(pesos.sum()) - 1.0) < 1e-6 and float(pesos.max()) <= 0.20 + 1e-6
+
+
+def test_explicit_ledoit_wolf_on_the_full_universe_matches_the_default_path() -> None:
+    """Without a selector the window and the candidates coincide: the hook must reproduce the frozen path."""
+    from core.estimation import covariancia_ledoit_wolf
+
+    ret = _retornos(n=400, k=8)
+    setores = {papel: ("Financeiro", "Energia", "Saúde", "Indústria")[i % 4] for i, papel in enumerate(ret.columns)}
+    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.20, n_ativos_max=None, vol_maxima=0.40,
+                           aversao_risco=2.0)
+    fonte = _PredictorFixo(list(ret.columns))
+    padrao = qml_strategy(fonte, cfg, setores, None)(ret)
+    explicito = qml_strategy(fonte, cfg, setores, None, covariance=covariancia_ledoit_wolf)(ret)
+    pd.testing.assert_series_equal(padrao, explicito)
+
+
+def test_covariance_estimator_is_refused_with_the_jorion_prior() -> None:
+    from core.multivariate import pca_covariance
+
+    cfg = ConfigOtimizacao(objetivo=Objetivo.KELLY, peso_maximo=0.20, n_ativos_max=None, vol_maxima=0.40)
+    with pytest.raises(ValueError):
+        qml_strategy(_PredictorFixo(["A00"]), cfg, {"A00": "Energia"}, None, base="jorion",
+                     covariance=pca_covariance)

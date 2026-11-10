@@ -1,0 +1,6 @@
+[submodule "FinRL-Meta"]
+	path = FinRL-Meta
+	url = https://github.com/GabrielScript/FinRL-Meta.git
+[submodule "FinRL-Trading"]
+	path = FinRL-Trading
+	url = https://github.com/GabrielScript/FinRL-Trading.git

@@ -1,0 +1,18 @@
+G4 items 2-3, phase 42 (spec docs/superpowers/specs/2026-11-10-qml-g4-design.md). Lake exports sha256: {'universe_prices.parquet': '88cd4d2202a56167ae12675ba8b7bc2fd6278562b092408ee00a067faa7f77ea', 'universe_monthly.parquet': '045b671c1ccfc2843f72e6d87d7e10715b28b479b0a113045aa8913411ce5618', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': '9fb795685f4b88f791d93c80987008c1fa4d43d6d1b71fbe64bdac719aca1c08', 'dividends.parquet': '95541696b238c746fa0ff1054e44147b2dba0997301eb6417b9feeb792cc6fd0', 'cdi_daily.parquet': 'c1ab1a3e646fba94866aaad89733f99162d33f670ff42294aa2cb33301fce748', 'fundamentals.parquet': '8a26f009ff1ebb85bcba8126d1a13b22fcca55e3f65207f30b9ad55a31ff9dc5', 'market_caps.parquet': '27f4b744361dd25d11ef8e85c74a3def96b9d97388f2397853b936679628f0e0', 'manifest.json': '15474f4af347cabda74a2a1e520d0df39c7af8e0337a3a1e0cebf0025b6c0954'}
+First decision 13/04/2010; last session 06/11/2026; refusals + failures {'Composite': 0, 'A1 QML-Composite (Meio-Kelly), Ledoit-Wolf': 0, 'A2 QML-Composite (Meio-Kelly), PCA': 0, 'A3 No signal, Ledoit-Wolf': 0, 'A4 No signal, PCA': 0, 'A5 Logistic (Meio-Kelly), Ledoit-Wolf': 0}.
+PCA factors kept by Marchenko-Pastur per decision (A2): mean 5.00, min 2, max 6, over 66 decisions.
+                                            Fase  Retorno   CAGR  Sharpe  Sortino  Alfa a.a.  t alfa     MDD    Vol   Nomes  Alfa vs Comp.  t alfa vs Comp.  P[> Comp.]  MinTRL vs Comp. (anos)
+Composite                                     42  13.4014 0.1776  0.4478   0.6140     0.0974  3.4716 -0.4283 0.1958 15.0000            NaN              NaN         NaN                     NaN
+A1 QML-Composite (Meio-Kelly), Ledoit-Wolf    42  18.1556 0.1984  0.5611   0.7805     0.1108  3.4966 -0.3766 0.1830  9.3333         0.0286           1.5043      0.7642                 85.1211
+A2 QML-Composite (Meio-Kelly), PCA            42  19.6813 0.2040  0.5866   0.8172     0.1155  3.6377 -0.3783 0.1830  9.2273         0.0334           1.7435      0.8265                 49.8942
+A3 No signal, Ledoit-Wolf                     42  16.5342 0.1919  0.5531   0.7639     0.1029  3.3447 -0.3788 0.1724  9.9091         0.0258           1.4517      0.6427                329.9526
+A4 No signal, PCA                             42  17.3183 0.1951  0.5682   0.7861     0.1055  3.3999 -0.3826 0.1726  9.8333         0.0286           1.5853      0.6876                184.5136
+A5 Logistic (Meio-Kelly), Ledoit-Wolf         42  14.7794 0.1842  0.5177   0.7153     0.0960  3.0604 -0.3971 0.1713  9.2424         0.0216           1.0503      0.5172              23853.2611
+BOVA11                                        42   1.3596 0.0540 -0.0604  -0.0829     0.0000     NaN -0.4965 0.2370     NaN            NaN              NaN         NaN                     NaN
+
+Covariance's own contribution (alpha regression of one arm on the other, Newey-West):
+  A2 QML-Composite (Meio-Kelly), PCA against A1 QML-Composite (Meio-Kelly), Ledoit-Wolf: alpha +0.0048 a year, t 1.91, P[>] 0.968
+  A4 No signal, PCA against A3 No signal, Ledoit-Wolf: alpha +0.0028 a year, t 1.19, P[>] 0.836
+
+GRS, the five arms against the Composite (daily excess over CDI, T=4111): F = 1.247, p = 0.2844; daily alphas annualized: A1 +0.0286, A2 +0.0334, A3 +0.0258, A4 +0.0286, A5 +0.0216
+Caveat: GRS assumes iid normal errors; daily returns have fat tails and autocorrelation.

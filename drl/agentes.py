@@ -12,8 +12,20 @@ ATIVACAO = "tanh"
 LOG_STD_INIT = -1.0
 
 
-def politica() -> dict[str, Any]:
-    """The MLP the five algorithms share: two hidden layers of 64 with tanh, the papers' shape."""
+DETERMINISTICOS = ("ddpg", "td3")
+BUFFER_OFF_POLICY = 50_000    # P2's Table 5 value; SB3's default of 1,000,000 cannot fit this observation in RAM
+
+
+def politica(nome: str = "ppo") -> dict[str, Any]:
+    """The MLP the five algorithms share: two hidden layers of 64 with tanh, the papers' shape.
+
+    The kwargs are not the same for all five. PPO, A2C and SAC are stochastic: their actor emits a Gaussian and takes
+    ``log_std_init`` plus a value head. DDPG and TD3 are deterministic — no standard deviation to initialise, and the
+    critic head is ``qf``, not ``vf``; passing the stochastic kwargs makes SB3 raise ``TypeError``."""
+    if nome not in ALGORITMOS:
+        raise ValueError(f"algoritmo must be one of {ALGORITMOS}")
+    if nome in DETERMINISTICOS:
+        return {"net_arch": {"pi": REDE, "qf": REDE}, "activation_fn": _tanh()}
     return {"net_arch": {"pi": REDE, "vf": REDE}, "log_std_init": LOG_STD_INIT,
             "activation_fn": _tanh()}
 
@@ -36,11 +48,14 @@ def treinar(nome: str, env, total_timesteps: int = 200_000, seed: int = 0, n_env
         raise ValueError(f"algoritmo must be one of {ALGORITMOS}")
     if n_envs > 1 and nome in ("ppo", "a2c"):
         venv = SubprocVecEnv([lambda: env for _ in range(n_envs)])
-        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(), seed=seed, verbose=verbose,
+        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(nome), seed=seed, verbose=verbose,
                                n_steps=756 if nome == "ppo" else 5)
     else:
         venv = DummyVecEnv([lambda: env])
-        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(), seed=seed, verbose=verbose)
+        extra = {}
+        if nome in DETERMINISTICOS:                      # off-policy: the replay buffer is the memory constraint
+            extra["buffer_size"] = BUFFER_OFF_POLICY
+        modelo = classes[nome]("MlpPolicy", venv, policy_kwargs=politica(nome), seed=seed, verbose=verbose, **extra)
     modelo.learn(total_timesteps=total_timesteps)
     return modelo, venv
 

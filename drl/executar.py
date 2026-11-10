@@ -24,7 +24,7 @@ def nomes_elegiveis(elegiveis: pd.DataFrame, linha: int, quantos: int) -> list[s
 
 
 def corrida(fechamentos: pd.DataFrame, elegiveis: pd.DataFrame, janela: protocolo.Janela, nomes: list[str], *,
-            algoritmo: str, recompensa: str, custo_bps: float, timesteps: int, seed: int,
+            algoritmo: str, recompensa: str, custo_bps: float, timesteps: int, seed: int, n_envs: int = 1,
             modo: str = "matriz", lookback: int = 60) -> dict:
     """Train on the window's training range and evaluate on its untouched test year."""
     treino_fim = janela.treino.stop
@@ -34,7 +34,7 @@ def corrida(fechamentos: pd.DataFrame, elegiveis: pd.DataFrame, janela: protocol
     inicio_teste = max(janela.teste.start, treino_fim + 1)
     env_teste = ambiente.AmbienteAcoes(fechamentos[nomes], elegiveis[nomes], inicio_teste, janela.teste.stop,
                                        recompensa=recompensa, custo_bps=custo_bps, lookback=lookback, modo=modo)
-    modelo, venv = agentes.treinar(algoritmo, env_treino, total_timesteps=timesteps, seed=seed)
+    modelo, venv = agentes.treinar(algoritmo, env_treino, total_timesteps=timesteps, seed=seed, n_envs=n_envs)
     try:
         resultado = agentes.avaliar(modelo, env_teste)
     finally:
@@ -52,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--nomes", type=int, default=30)
     p.add_argument("--timesteps", type=int, default=200_000)
     p.add_argument("--semente", type=int, default=0)
+    p.add_argument("--n-envs", type=int, default=1)
     p.add_argument("--ano-teste", type=int, default=2026)
     p.add_argument("--modo", default="matriz", choices=("matriz", "compacto"))
     args = p.parse_args(argv)
@@ -64,7 +65,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"no complete window for {args.ano_teste}")
     nomes = nomes_elegiveis(elegiveis, janela.teste.start, args.nomes)
     linha = corrida(fechamentos, elegiveis, janela, nomes, algoritmo=args.algoritmo, recompensa=args.recompensa,
-                    custo_bps=args.custo_bps, timesteps=args.timesteps, semente=args.semente, modo=args.modo)
+                    custo_bps=args.custo_bps, timesteps=args.timesteps, seed=args.semente, n_envs=args.n_envs, modo=args.modo)
     SAIDAS.mkdir(parents=True, exist_ok=True)
     arquivo = SAIDAS / "resultados.csv"
     pd.DataFrame([linha]).to_csv(arquivo, mode="a", header=not arquivo.exists(), index=False)

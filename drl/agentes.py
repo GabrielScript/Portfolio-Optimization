@@ -19,7 +19,7 @@ def politica() -> dict[str, Any]:
 
 
 def _tanh():
-    import torch.nn as nn
+    from torch import nn
 
     return nn.Tanh
 

@@ -62,3 +62,28 @@ def medir(retornos: pd.Series) -> dict[str, float]:
     sharpe = float(np.mean(r) / desvio * np.sqrt(SESSOES)) if desvio > 0 else 0.0
     mdd = float((curva / np.maximum.accumulate(curva) - 1.0).min())
     return {"retorno_anual": anual, "sharpe": sharpe, "mdd": mdd}
+
+
+def sobrepor(valores: pd.Series, cdi: pd.Series, alvo: float, janela: int = 21,
+             custo_bps: float = 10.0) -> tuple[pd.Series, pd.Series]:
+    """Apply the overlay to a value curve produced by the engine (``ResultadoBacktest.valores``).
+
+    Returns the scaled curve and the exposure path. The engine's curve already carries its own rebalancing costs and its
+    own turnover, so this adds only what the overlay itself costs: the notional that moves in and out of cash."""
+    retornos = valores.pct_change().dropna()
+    e = exposicao(retornos, alvo, janela)
+    com = aplicar(retornos, cdi, alvo, janela, custo_bps, caminho=e)
+    escala = float(valores.iloc[0])
+    curva = pd.Series(escala * np.cumprod(1.0 + com.to_numpy()), index=retornos.index)
+    return pd.concat([pd.Series([escala], index=valores.index[:1]), curva]), e
+
+
+def imposto_de_estimativa(valores: pd.Series, exposicao_: pd.Series, aliquota: float = 0.15) -> float:
+    """An upper bound on the income tax the overlay creates, for the report only.
+
+    Every de-levering sells part of every position. This takes the notional sold — the drops in exposure times the
+    portfolio value — and charges the full rate on the whole of it, which overstates the bill whenever a sale realizes a
+    loss or the monthly stock-sale exemption (R$ 20 thousand) applies. It is a ceiling, not a forecast."""
+    quedas = (-exposicao_.diff().fillna(0.0)).clip(lower=0.0)
+    valor = valores.reindex(quedas.index).ffill().fillna(float(valores.iloc[0]))
+    return float((quedas * valor).sum() * aliquota)

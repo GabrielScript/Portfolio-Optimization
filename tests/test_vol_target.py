@@ -69,3 +69,17 @@ def test_changing_the_exposure_costs_turnover():
 def test_a_target_above_half_a_percent_a_year_is_required():
     with pytest.raises(ValueError):
         vol_target.exposicao(_retornos([0.01] * 10), alvo=0.0, janela=5)
+
+
+def test_the_overlay_on_an_engine_curve_keeps_the_curve_when_the_market_is_calm():
+    valores = pd.Series([100.0, 100.1, 100.2, 100.3, 100.4], index=pd.bdate_range("2020-01-02", periods=5))
+    cdi = pd.Series(0.0003, index=valores.index)
+    curva, _ = vol_target.sobrepor(valores, cdi, alvo=5.0, janela=2)
+    assert curva.iloc[0] == pytest.approx(100.0)
+    assert curva.iloc[-1] == pytest.approx(100.4, rel=1e-9)
+
+
+def test_the_tax_ceiling_only_charges_the_de_levering():
+    e = pd.Series([1.0, 1.0, 0.5, 0.5], index=pd.bdate_range("2020-01-02", periods=4))
+    valores = pd.Series([100.0, 100.0, 100.0, 100.0], index=e.index)
+    assert vol_target.imposto_de_estimativa(valores, e) == pytest.approx(0.5 * 100.0 * 0.15)

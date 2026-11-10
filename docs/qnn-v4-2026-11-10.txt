@@ -1,0 +1,105 @@
+QNN v4 screened into every classical method - phases [0, 21, 42] (spec docs/superpowers/specs/2026-11-10-qnn-v4-design.md)
+
+CAGR by phase (0 / 21 / 42). t = alpha of X + QNN regressed on X (Newey-West); signal gate needs t >= 2.87 in every phase.
+
+Composite
+  alone        19.91% / 18.51% / 17.76%   Sharpe  0.55 /  0.49 /  0.45   MDD -41.53% / -42.16% / -42.83%
+  + QNN        16.55% / 16.08% / 16.68%   Sharpe  0.41 /  0.38 /  0.40   MDD -43.44% / -40.14% / -43.14%   t vs X -1.15 / -0.69 / -0.11   t vs Composite -1.15 / -0.69 / -0.11
+  + logistic   17.33% / 17.39% / 15.24%   Sharpe  0.44 /  0.45 /  0.34   MDD -45.35% / -38.55% / -42.59%
+  + shuffled   10.93% / 14.60% / 14.78%   Sharpe  0.15 /  0.31 /  0.31   MDD -46.46% / -46.91% / -44.65%
+  + anti        9.83% / 11.06% /  8.58%   Sharpe  0.12 /  0.16 /  0.08   MDD -46.97% / -50.96% / -54.37%
+  signal gate: fails; quantum gate: fails
+
+Reamostrada (Michaud)
+  alone         9.98% / 10.70% /  9.49%   Sharpe  0.10 /  0.14 /  0.08   MDD -51.13% / -51.48% / -53.00%
+  + QNN        13.21% / 13.03% / 15.28%   Sharpe  0.25 /  0.24 /  0.35   MDD -49.68% / -47.44% / -50.33%   t vs X +1.48 / +0.93 / +2.35   t vs Composite -1.27 / -0.98 / -0.09
+  signal gate: fails; quantum gate: fails
+
+Conservadora
+  alone        16.23% / 15.04% / 15.56%   Sharpe  0.39 /  0.34 /  0.36   MDD -40.69% / -41.60% / -39.50%
+  + QNN        14.67% / 13.12% / 13.50%   Sharpe  0.33 /  0.25 /  0.27   MDD -41.65% / -37.70% / -36.77%   t vs X -0.41 / -0.72 / -0.73   t vs Composite -1.32 / -1.55 / -1.07
+  + logistic   15.27% / 14.00% / 12.78%   Sharpe  0.36 /  0.30 /  0.23   MDD -37.79% / -37.53% / -36.77%
+  + shuffled   10.87% / 12.69% / 13.52%   Sharpe  0.14 /  0.22 /  0.26   MDD -42.06% / -48.03% / -38.36%
+  + anti        9.26% /  9.68% /  9.41%   Sharpe  0.09 /  0.10 /  0.09   MDD -52.01% / -50.31% / -50.26%
+  signal gate: fails; quantum gate: fails
+
+Markowitz (média-variância)
+  alone         9.95% / 10.48% / 10.29%   Sharpe  0.11 /  0.14 /  0.13   MDD -52.56% / -53.04% / -55.13%
+  + QNN        11.64% / 10.92% / 13.90%   Sharpe  0.18 /  0.14 /  0.28   MDD -53.61% / -49.58% / -51.44%   t vs X +0.77 / +0.20 / +1.31   t vs Composite -1.61 / -1.49 / -0.48
+  + logistic   13.23% / 13.58% / 13.32%   Sharpe  0.25 /  0.26 /  0.25   MDD -53.60% / -51.93% / -51.45%
+  + shuffled   11.90% / 13.51% /  8.78%   Sharpe  0.19 /  0.25 /  0.06   MDD -49.06% / -50.22% / -50.34%
+  + anti        6.87% /  6.94% / -0.04%   Sharpe  0.02 /  0.04 / -0.23   MDD -61.54% / -68.91% / -63.78%
+  signal gate: fails; quantum gate: fails
+
+Bayes-Stein (Jorion)
+  alone        10.37% / 11.47% / 10.40%   Sharpe  0.12 /  0.17 /  0.12   MDD -49.18% / -49.90% / -50.35%
+  + QNN        13.11% / 12.86% / 14.79%   Sharpe  0.24 /  0.23 /  0.32   MDD -47.97% / -45.12% / -48.55%   t vs X +1.41 / +0.70 / +1.96   t vs Composite -1.22 / -0.98 / -0.20
+  + logistic   13.49% / 14.28% / 13.67%   Sharpe  0.26 /  0.30 /  0.27   MDD -48.18% / -45.14% / -48.20%
+  + shuffled   12.52% / 13.54% / 10.18%   Sharpe  0.22 /  0.26 /  0.11   MDD -43.39% / -44.94% / -46.58%
+  + anti        7.14% / 10.31% /  3.05%   Sharpe  0.02 /  0.14 / -0.13   MDD -58.74% / -57.93% / -61.42%
+  signal gate: fails; quantum gate: fails
+
+Mínima variância
+  alone        17.19% / 15.57% / 15.80%   Sharpe  0.49 /  0.40 /  0.42   MDD -38.93% / -39.21% / -42.37%
+  + QNN        15.49% / 15.40% / 16.05%   Sharpe  0.39 /  0.40 /  0.43   MDD -40.52% / -38.33% / -43.73%   t vs X -1.05 / +0.22 / +0.41   t vs Composite -0.20 / +0.11 / +0.46
+  + logistic   16.99% / 16.60% / 15.43%   Sharpe  0.48 /  0.47 /  0.40   MDD -37.29% / -35.73% / -40.44%
+  + shuffled   12.89% / 14.23% / 13.96%   Sharpe  0.25 /  0.32 /  0.31   MDD -39.53% / -35.04% / -38.45%
+  + anti        6.62% /  8.44% /  9.36%   Sharpe -0.06 /  0.03 /  0.07   MDD -42.49% / -45.60% / -41.27%
+  signal gate: fails; quantum gate: fails
+
+Kelly (λ = 2)
+  alone        10.18% / 11.76% / 11.56%   Sharpe  0.14 /  0.20 /  0.18   MDD -61.86% / -62.78% / -61.94%
+  + QNN         9.99% / 10.94% / 12.95%   Sharpe  0.12 /  0.15 /  0.23   MDD -61.78% / -58.40% / -58.31%   t vs X -0.02 / -0.12 / +0.55   t vs Composite -1.92 / -1.37 / -0.72
+  + logistic   12.44% / 13.72% / 13.19%   Sharpe  0.21 /  0.26 /  0.24   MDD -61.84% / -61.88% / -58.19%
+  + shuffled   10.74% / 12.74% /  8.61%   Sharpe  0.15 /  0.23 /  0.06   MDD -61.12% / -60.10% / -58.41%
+  + anti        7.74% /  4.70% /  1.26%   Sharpe  0.05 / -0.03 / -0.17   MDD -59.74% / -66.72% / -62.58%
+  signal gate: fails; quantum gate: fails
+
+Paridade de risco (ERC)
+  alone         8.94% /  8.63% /  9.41%   Sharpe  0.05 /  0.04 /  0.08   MDD -48.93% / -48.35% / -49.46%
+  + QNN        13.94% / 13.19% / 14.27%   Sharpe  0.29 /  0.25 /  0.31   MDD -48.13% / -43.47% / -43.93%   t vs X +3.45 / +3.15 / +3.64   t vs Composite -1.75 / -1.69 / -0.87
+  + logistic   13.63% / 13.14% / 13.05%   Sharpe  0.28 /  0.25 /  0.25   MDD -46.08% / -44.52% / -43.60%
+  + shuffled    7.93% /  8.48% /  9.19%   Sharpe  0.01 /  0.04 /  0.07   MDD -48.76% / -47.91% / -46.19%
+  + anti        2.36% /  2.37% /  2.97%   Sharpe -0.17 / -0.16 / -0.14   MDD -60.97% / -61.69% / -60.23%
+  signal gate: PASSES; quantum gate: PASSES
+
+HRP
+  alone        10.41% / 10.11% / 10.74%   Sharpe  0.12 /  0.10 /  0.13   MDD -46.78% / -45.84% / -47.33%
+  + QNN        14.24% / 13.54% / 14.71%   Sharpe  0.31 /  0.28 /  0.33   MDD -46.15% / -40.60% / -42.13%   t vs X +3.25 / +2.99 / +3.63   t vs Composite -1.51 / -1.44 / -0.58
+  + logistic   14.28% / 13.66% / 13.45%   Sharpe  0.31 /  0.28 /  0.27   MDD -44.11% / -42.10% / -41.27%
+  + shuffled    9.39% /  9.76% / 11.16%   Sharpe  0.07 /  0.08 /  0.15   MDD -45.94% / -44.59% / -43.83%
+  + anti        3.68% /  4.32% /  4.77%   Sharpe -0.14 / -0.11 / -0.09   MDD -57.27% / -56.25% / -54.18%
+  signal gate: PASSES; quantum gate: fails
+
+HRP em árvore (grafo)
+  alone        10.90% / 10.87% / 11.12%   Sharpe  0.14 /  0.14 /  0.15   MDD -47.83% / -46.33% / -48.89%
+  + QNN        14.85% / 12.53% / 14.84%   Sharpe  0.34 /  0.22 /  0.34   MDD -48.62% / -42.59% / -43.61%   t vs X +2.40 / +0.98 / +2.48   t vs Composite -1.11 / -1.84 / -0.46
+  + logistic   15.29% / 13.26% / 12.67%   Sharpe  0.37 /  0.26 /  0.23   MDD -44.59% / -39.92% / -45.37%
+  + shuffled    9.10% / 10.49% / 12.04%   Sharpe  0.05 /  0.12 /  0.19   MDD -46.94% / -45.90% / -39.00%
+  + anti        3.39% /  2.89% /  4.39%   Sharpe -0.15 / -0.16 / -0.10   MDD -59.56% / -66.44% / -58.29%
+  signal gate: fails; quantum gate: fails
+
+1/N
+  alone         7.44% /  7.13% /  8.01%   Sharpe  0.01 / -0.00 /  0.03   MDD -50.87% / -50.61% / -51.09%
+  + QNN        13.15% / 12.42% / 13.80%   Sharpe  0.25 /  0.21 /  0.28   MDD -50.30% / -45.30% / -44.82%   t vs X +3.14 / +2.98 / +3.52   t vs Composite -2.15 / -2.04 / -1.16
+  + logistic   12.84% / 12.41% / 12.49%   Sharpe  0.23 /  0.21 /  0.21   MDD -48.12% / -46.76% / -44.67%
+  + shuffled    6.60% /  6.95% /  6.86%   Sharpe -0.03 / -0.01 / -0.01   MDD -50.99% / -50.39% / -50.61%
+  + anti        1.27% /  1.03% /  1.26%   Sharpe -0.17 / -0.18 / -0.17   MDD -65.17% / -66.40% / -66.10%
+  signal gate: PASSES; quantum gate: PASSES
+
+HRP (distância do paper)
+  alone        10.39% / 10.08% / 10.80%   Sharpe  0.11 /  0.10 /  0.13   MDD -47.03% / -46.20% / -47.27%
+  + QNN        14.40% / 13.60% / 14.62%   Sharpe  0.32 /  0.28 /  0.33   MDD -45.52% / -41.49% / -42.43%   t vs X +3.42 / +3.05 / +3.45   t vs Composite -1.48 / -1.44 / -0.63
+  + logistic   14.54% / 13.64% / 13.67%   Sharpe  0.33 /  0.28 /  0.28   MDD -43.91% / -42.06% / -41.89%
+  + shuffled    9.41% /  9.69% / 11.24%   Sharpe  0.07 /  0.08 /  0.16   MDD -47.02% / -45.22% / -43.03%
+  + anti        3.57% /  4.03% /  4.65%   Sharpe -0.15 / -0.12 / -0.10   MDD -58.27% / -57.25% / -53.76%
+  signal gate: PASSES; quantum gate: fails
+
+Tilt re-test (signal as an expected-return tilt inside the Composite's 15 names, Meio-Kelly):
+  Tilt QNN v4 (Composite 15, Meio-Kelly)           21.25% / 18.44% / 17.69%   Sharpe  0.63 /  0.51 /  0.46   t vs Composite +1.30 / +0.70 / +0.56
+  Tilt QML v3 stored (Composite 15, Meio-Kelly)    22.24% / 19.45% / 19.84%   Sharpe  0.68 /  0.55 /  0.56   t vs Composite +1.81 / +1.06 / +1.50
+  Tilt no signal (Composite 15, Meio-Kelly)        20.53% / 18.07% / 19.19%   Sharpe  0.62 /  0.51 /  0.55   t vs Composite +1.24 / +0.68 / +1.45
+  Tilt logistic (Composite 15, Meio-Kelly)         21.32% / 19.30% / 18.67%   Sharpe  0.65 /  0.57 /  0.53   t vs Composite +1.46 / +1.24 / +1.15
+  Tilt shuffled (Composite 15, Meio-Kelly)         22.95% / 15.67% / 18.82%   Sharpe  0.70 /  0.37 /  0.49   t vs Composite +1.97 / -0.63 / +0.90
+
+Arms with refused or failed rebalances (the engine kept the book), summed over phases: {}

@@ -59,3 +59,27 @@ def test_rebalancing_charges_only_on_the_turnover() -> None:
     novas, giro = rebalancear(cotas, alvo, precos, custo_bps=10.0)
     assert giro == pytest.approx(1.0)                       # half sold, half bought
     assert valorizar(novas, precos) == pytest.approx(1_000.0 * (1 - 10 / 10_000))
+
+
+def test_holdings_between_rebalances_do_not_depend_on_how_often_the_ledger_runs() -> None:
+    """Shares come from the last rebalance; rebuilding them at the latest mark would rebalance for free."""
+    from scripts.qml_holdout import cotas_em_carteira
+
+    datas = pd.bdate_range("2026-11-09", periods=3)
+    precos = pd.DataFrame({"AAAA3": [10.0, 20.0, 20.0], "BBBB3": [10.0, 10.0, 5.0]}, index=datas)
+    ordens = pd.DataFrame({"data": datas[0], "ticker": ["AAAA3", "BBBB3"], "peso": [0.5, 0.5]})
+    um_dia = pd.DataFrame({"data": datas[:1], "valor": [1_000.0]})
+    dois_dias = pd.DataFrame({"data": datas[:2], "valor": [1_000.0, 1_500.0]})
+    esperado = pd.Series({"AAAA3": 50.0, "BBBB3": 50.0})
+    pd.testing.assert_series_equal(cotas_em_carteira(ordens, um_dia, precos), esperado, check_names=False)
+    pd.testing.assert_series_equal(cotas_em_carteira(ordens, dois_dias, precos), esperado, check_names=False)
+    assert valorizar(cotas_em_carteira(ordens, dois_dias, precos), precos.loc[datas[2]]) == pytest.approx(1_250.0)
+
+
+def test_marking_refuses_a_holding_without_a_price() -> None:
+    """A session with no trade must not count the position as zero."""
+    cotas = pd.Series({"AAAA3": 10.0, "BBBB3": 10.0})
+    with pytest.raises(ValueError):
+        valorizar(cotas, pd.Series({"AAAA3": 10.0, "BBBB3": float("nan")}))
+    with pytest.raises(ValueError):
+        valorizar(cotas, pd.Series({"AAAA3": 10.0}))

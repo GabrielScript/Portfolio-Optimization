@@ -27,6 +27,7 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
+from typing import Protocol
 
 import numpy as np
 import pandas as pd
@@ -65,6 +66,7 @@ class QMLConfig:
     min_history: int = MIN_HISTORY
     seed: int = 0
     device: str = "default.qubit"
+    init_seed: int | None = None   # None = legacy (see QMLPredictor.model_for); set it to pin the initial weights
 
     def __post_init__(self) -> None:
         if self.n_qubits != N_FEATURES:
@@ -297,6 +299,11 @@ class QMLPredictor:
         chave = ano - ano % 2                     # one circuit per two-year block: the labels stay causal for both years
         if chave not in self._models:
             linhas = self._training_rows(chave)
+            if self.config.init_seed is not None:
+                # Legacy (None): the circuit is built before ``_fit`` seeds Torch, so its initial weights
+                # depend on which blocks this process trained before. The frozen holdout arm keeps that;
+                # any new arm should pin the start so a block trains the same in every process.
+                torch.manual_seed(self.config.init_seed + chave)
             self._log(f"  QML: training block {chave}-{chave + 1} on {len(linhas)} samples "
                       f"(labels realized before 01/01/{chave})")
             modelo = QuantumDirectionalModel(self.config)
@@ -320,6 +327,39 @@ class QMLPredictor:
 UniverseSelector = Callable[[pd.Timestamp, pd.DataFrame], Sequence[str]]
 
 
+class ProbabilitySource(Protocol):
+    """Anything that answers P(up) per ticker as of a decision date: the live predictor or a frozen cache."""
+
+    def predict(self, date: pd.Timestamp) -> pd.Series: ...
+
+
+def expected_returns(probabilities: pd.Series, sigma: np.ndarray, prior: pd.Series | float,
+                     tilt: float = 1.0) -> pd.Series:
+    """
+    ``prior + tilt * (2p - 1) * sigma``: the conviction in [-1, 1] scaled by each name's own annualized
+    volatility, on top of a flat rate or of a per-name prior. The cross-sectional spread of ``2p - 1`` is
+    about 0.10 for the trained circuit, so ``tilt = 1`` moves a 35%-vol name by about 3.5 points a year:
+    the same order as the variance term of the half-Kelly objective. With p = 0.5 everywhere the result
+    is flat and the fully invested Kelly book is the minimum-variance book of the candidates.
+    """
+    conviccao = 2.0 * probabilities.to_numpy(dtype=float) - 1.0
+    base = prior.reindex(probabilities.index).to_numpy(dtype=float) if isinstance(prior, pd.Series) else prior
+    return pd.Series(base + tilt * conviccao * sigma, index=probabilities.index)
+
+
+def _alocar(mu: pd.Series, cov: pd.DataFrame, cfg: ConfigOtimizacao, rf: float,
+            setores: Mapping[str, str], limites: Limites) -> pd.Series:
+    """The classical muscle: ``otimizar`` under the fixed rules, re-checked by ``checar_carteira``."""
+    configuracao = replace(cfg, taxa_livre_risco=rf,
+                           grupos=limites_por_setor({papel: setores[papel] for papel in mu.index},
+                                                     limites.teto_setor))
+    pesos = otimizar(mu, cov, configuracao).pesos
+    violacoes = checar_carteira(pesos, setores, cov, limites)
+    if violacoes:
+        raise CarteiraRecusada(violacoes)
+    return pesos[pesos > 1e-8]
+
+
 def _rf_na_data(cfg: ConfigOtimizacao, rf_diaria: pd.Series | None, data: pd.Timestamp) -> float:
     if rf_diaria is None or rf_diaria.empty:
         return cfg.taxa_livre_risco
@@ -337,7 +377,7 @@ def _universo_do_seletor(selector: UniverseSelector | None, treino: pd.DataFrame
     return escolhidos
 
 
-def qml_strategy(predictor: QMLPredictor, cfg: ConfigOtimizacao, setores: Mapping[str, str],
+def qml_strategy(predictor: ProbabilitySource, cfg: ConfigOtimizacao, setores: Mapping[str, str],
                  rf_diaria: pd.Series | None = None, selector: UniverseSelector | None = None,
                  tilt: float = 1.0, base: str = "rf", limites: Limites = LIMITES) -> Estrategia:
     """
@@ -369,19 +409,8 @@ def qml_strategy(predictor: QMLPredictor, cfg: ConfigOtimizacao, setores: Mappin
         cov = cov.loc[probabilidades.index, probabilidades.index]
         sigma = np.sqrt(np.diag(cov.to_numpy(dtype=float)))
         rf = _rf_na_data(cfg, rf_diaria, data)
-        if mu_prior is None:
-            mu = pd.Series(rf + tilt * (2.0 * probabilidades.to_numpy() - 1.0) * sigma,
-                           index=probabilidades.index)
-        else:
-            mu = mu_prior.reindex(probabilidades.index) + tilt * (2.0 * probabilidades.to_numpy() - 1.0) * sigma
-        configuracao = replace(cfg, taxa_livre_risco=rf,
-                               grupos=limites_por_setor({papel: setores[papel] for papel in mu.index},
-                                                         limites.teto_setor))
-        pesos = otimizar(mu, cov, configuracao).pesos
-        violacoes = checar_carteira(pesos, setores, cov, limites)
-        if violacoes:
-            raise CarteiraRecusada(violacoes)
-        return pesos[pesos > 1e-8]
+        mu = expected_returns(probabilidades, sigma, rf if mu_prior is None else mu_prior, tilt)
+        return _alocar(mu, cov, cfg, rf, setores, limites)
 
     return _estrategia
 
@@ -402,13 +431,6 @@ def estrategia_media_variancia_no_universo(cfg: ConfigOtimizacao, setores: Mappi
         treino = treino[nomes]
         momentos = estimar_momentos(treino, shrink_mu=True)
         rf = _rf_na_data(cfg, rf_diaria, treino.index[-1])
-        configuracao = replace(cfg, taxa_livre_risco=rf,
-                               grupos=limites_por_setor({papel: setores[papel] for papel in treino.columns},
-                                                         limites.teto_setor))
-        pesos = otimizar(momentos.mu, momentos.cov, configuracao).pesos
-        violacoes = checar_carteira(pesos, setores, momentos.cov, limites)
-        if violacoes:
-            raise CarteiraRecusada(violacoes)
-        return pesos[pesos > 1e-8]
+        return _alocar(momentos.mu, momentos.cov, cfg, rf, setores, limites)
 
     return _estrategia

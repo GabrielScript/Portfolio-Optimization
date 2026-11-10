@@ -44,9 +44,8 @@ from core.metrics import comparar_benchmark, momentos_sharpe, resumo_desempenho,
 from core.optimization import otimizar  # noqa: E402
 from core.qml import (MODEL_VERSION, QMLConfig, QMLPredictor, estrategia_media_variancia_no_universo,  # noqa: E402
                       qml_strategy)
-from core.qpo import CFG_MAX_SHARPE, K  # noqa: E402
+from core.qpo import CFG_MAX_SHARPE, K, qubo_selector, selection_then_max_sharpe  # noqa: E402
 from core.qubo_universo import FULL_UNIVERSE, SECTOR_CAP, anneal_solver  # noqa: E402
-from core.qpo import qubo_selector, selection_then_max_sharpe  # noqa: E402
 from core.robustez import anos_minimos_para_psr, psr_da_diferenca  # noqa: E402
 from core.sinais import NOMES, POR_SETOR, carteira_da_nota, estrategia_conservadora  # noqa: E402
 from scripts import avaliar_conservadora, avaliar_robustez, qubo_universo_avaliar  # noqa: E402
@@ -163,7 +162,8 @@ def seletor_qml_12(fonte, setores: Mapping[str, str], selector: Callable,
     return _select
 
 
-def _linha(valores: pd.Series, bova: pd.Series, rf: pd.Series,           composite: pd.Series | None = None) -> dict[str, float]:
+def _linha(valores: pd.Series, bova: pd.Series, rf: pd.Series,
+           composite: pd.Series | None = None) -> dict[str, float]:
     """One table row: the user's metrics plus the volatility and the number of names held."""
     resumo = resumo_desempenho(valores, rf)
     capm = comparar_benchmark(valores, bova, rf)
@@ -222,8 +222,13 @@ class ProbabilidadesCongeladas:
 
 
 def _impressao_da_config(config: QMLConfig) -> dict[str, object]:
-    """Everything that changes P(up): the model version plus every field of the config."""
-    return {"model_version": MODEL_VERSION, "config": asdict(config)}
+    """Everything that changes P(up): the model version plus every field of the config.
+
+    A field left at ``None`` is an option that is switched off; it stays out, so the caches written
+    before the option existed remain valid.
+    """
+    campos = {chave: valor for chave, valor in asdict(config).items() if valor is not None}
+    return {"model_version": MODEL_VERSION, "config": campos}
 
 
 def _ler_cache(cache: Path, config: QMLConfig) -> pd.DataFrame:

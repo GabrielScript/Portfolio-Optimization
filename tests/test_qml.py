@@ -193,3 +193,43 @@ def test_phases_flag_without_values_is_rejected() -> None:
 
     with pytest.raises(ValueError):
         avaliar._armar(["--fases"])
+
+
+def test_expected_returns_is_flat_without_conviction_and_scales_with_volatility() -> None:
+    from core.qml import expected_returns
+
+    sigma = np.array([0.20, 0.40, 0.40])
+    neutro = expected_returns(pd.Series(0.5, index=list("ABC")), sigma, 0.10)
+    assert np.allclose(neutro.to_numpy(), 0.10)
+    mu = expected_returns(pd.Series({"A": 0.6, "B": 0.6, "C": 0.4}), sigma, 0.10, tilt=2.0)
+    assert mu.to_dict() == pytest.approx({"A": 0.10 + 2 * 0.2 * 0.20, "B": 0.10 + 2 * 0.2 * 0.40,
+                                          "C": 0.10 - 2 * 0.2 * 0.40})
+    prior = pd.Series({"C": 0.30, "A": 0.10, "B": 0.20})                 # a per-name prior is aligned by ticker
+    com_prior = expected_returns(pd.Series({"A": 0.5, "B": 0.5, "C": 0.5}), sigma, prior)
+    assert com_prior.to_dict() == pytest.approx({"A": 0.10, "B": 0.20, "C": 0.30})
+
+
+def test_init_seed_makes_a_block_independent_of_the_blocks_trained_before() -> None:
+    """With ``init_seed`` the 2024 model is the same whether or not 2022 was trained first in the process."""
+    ret = _retornos(n=2_100)
+    config = QMLConfig(epochs=1, sample_every=63, horizon=21, seed=0, init_seed=7)
+    data = ret.index[1_700]
+    assert data.year == 2024
+    sozinho = QMLPredictor(ret, config).predict(data)
+    depois_de_outro = QMLPredictor(ret, config)
+    depois_de_outro.model_for(2022)
+    pd.testing.assert_series_equal(depois_de_outro.predict(data), sozinho)
+
+
+def test_default_config_keeps_the_fingerprint_of_the_stored_caches() -> None:
+    """A new optional field must not orphan the P(up) files of the frozen arm."""
+    import json
+    from pathlib import Path
+
+    import scripts.qml_avaliar as avaliar
+
+    lado = Path(avaliar.CACHE).with_suffix(".json")
+    if not lado.exists():
+        pytest.skip("no stored cache in this checkout")
+    assert json.loads(lado.read_text(encoding="utf-8")) == avaliar._impressao_da_config(QMLConfig())
+    assert "init_seed" in avaliar._impressao_da_config(QMLConfig(init_seed=3))["config"]

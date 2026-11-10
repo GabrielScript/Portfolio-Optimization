@@ -63,8 +63,25 @@ def comprar(pesos: pd.Series, precos: pd.Series, capital: float, custo_bps: floa
 
 
 def valorizar(cotas: pd.Series, precos: pd.Series) -> float:
-    """Mark-to-market value of a holding."""
-    return float((cotas * precos.reindex(cotas.index)).sum())
+    """Mark-to-market value of a holding; a held name without a price is an error, never a silent zero."""
+    alinhados = precos.reindex(cotas.index)
+    sem_preco = list(alinhados[alinhados.isna() & (cotas != 0)].index)
+    if sem_preco:
+        raise ValueError(f"no price to mark {sem_preco}")
+    return float((cotas * alinhados.fillna(0.0)).sum())
+
+
+def cotas_em_carteira(ordens: pd.DataFrame, marcas: pd.DataFrame, precos: pd.DataFrame) -> pd.Series:
+    """
+    The shares held since the last rebalance: its target weights, the account value marked on that
+    session (already net of the trade's cost) and that session's prices. Between rebalances the book
+    drifts with the prices, so the shares must not be rebuilt from a later mark: that would bring the
+    weights back to the target for free every time the ledger runs.
+    """
+    dia = ordens["data"].max()
+    alvo = ordens[ordens["data"] == ordens["data"].max()].set_index("ticker")["peso"]
+    valor = float(marcas.loc[marcas["data"] == dia, "valor"].iloc[-1])
+    return comprar(alvo, precos.loc[dia], valor, 0.0)
 
 
 def pesos_do_rebalanceio(cotas: pd.Series, precos: pd.Series) -> pd.Series:
@@ -191,11 +208,11 @@ def rodar(lago: Path) -> dict:
     novas = ctx.precos.index[ctx.precos.index > ultima_marca]
     if len(novas) == 0:
         return estado
-    alvo_anterior = ordens[ordens["data"] == ordens["data"].max()].set_index("ticker")["peso"]
-    cotas = comprar(alvo_anterior, ctx.precos.loc[ultima_marca], float(marcas["valor"].iloc[-1]), 0.0)
+    precos = ctx.precos.ffill()               # a session without a trade keeps the last close
+    cotas = cotas_em_carteira(ordens, marcas, precos)
     ultimo_reb = pd.Timestamp(estado["ultimo_rebalanceio"])
     for dia in novas:
-        preco = ctx.precos.loc[dia]
+        preco = precos.loc[dia]
         if rebalanceio_devido(ctx.precos.index, dia, ultimo_reb, int(estado["passo"])):
             alvo = ctx.pesos(dia)
             cotas, giro = rebalancear(cotas, alvo, preco)

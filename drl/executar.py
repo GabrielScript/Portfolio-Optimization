@@ -25,15 +25,16 @@ def nomes_elegiveis(elegiveis: pd.DataFrame, linha: int, quantos: int) -> list[s
 
 def corrida(fechamentos: pd.DataFrame, elegiveis: pd.DataFrame, janela: protocolo.Janela, nomes: list[str], *,
             algoritmo: str, recompensa: str, custo_bps: float, timesteps: int, seed: int, n_envs: int = 1,
-            modo: str = "matriz", lookback: int = 60) -> dict:
+            modo: str = "matriz", lookback: int = 60, rebalancear_a_cada: int = 1) -> dict:
     """Train on the window's training range and evaluate on its untouched test year."""
     treino_fim = janela.treino.stop
     env_treino = ambiente.AmbienteAcoes(fechamentos[nomes], elegiveis[nomes], max(janela.treino.start, lookback + 1),
                                         treino_fim + 1, recompensa=recompensa, custo_bps=custo_bps,
-                                        lookback=lookback, modo=modo)
+                                        lookback=lookback, modo=modo, rebalancear_a_cada=rebalancear_a_cada)
     inicio_teste = max(janela.teste.start, treino_fim + 1)
     env_teste = ambiente.AmbienteAcoes(fechamentos[nomes], elegiveis[nomes], inicio_teste, janela.teste.stop,
-                                       recompensa=recompensa, custo_bps=custo_bps, lookback=lookback, modo=modo)
+                                       recompensa=recompensa, custo_bps=custo_bps, lookback=lookback,
+                                       modo=modo, rebalancear_a_cada=rebalancear_a_cada)
     modelo, venv = agentes.treinar(algoritmo, env_treino, total_timesteps=timesteps, seed=seed, n_envs=n_envs)
     try:
         resultado = agentes.avaliar(modelo, env_teste)
@@ -55,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--n-envs", type=int, default=1)
     p.add_argument("--ano-teste", type=int, default=2026)
     p.add_argument("--modo", default="matriz", choices=("matriz", "compacto"))
+    p.add_argument("--rebalancear-a-cada", type=int, default=1)
+    p.add_argument("--saida", default="resultados.csv")
     args = p.parse_args(argv)
 
     fechamentos = dados.painel()
@@ -65,9 +68,10 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"no complete window for {args.ano_teste}")
     nomes = nomes_elegiveis(elegiveis, janela.teste.start, args.nomes)
     linha = corrida(fechamentos, elegiveis, janela, nomes, algoritmo=args.algoritmo, recompensa=args.recompensa,
-                    custo_bps=args.custo_bps, timesteps=args.timesteps, seed=args.semente, n_envs=args.n_envs, modo=args.modo)
+                    custo_bps=args.custo_bps, timesteps=args.timesteps, seed=args.semente, n_envs=args.n_envs, modo=args.modo,
+                    rebalancear_a_cada=args.rebalancear_a_cada)
     SAIDAS.mkdir(parents=True, exist_ok=True)
-    arquivo = SAIDAS / "resultados.csv"
+    arquivo = SAIDAS / args.saida
     pd.DataFrame([linha]).to_csv(arquivo, mode="a", header=not arquivo.exists(), index=False)
     print({k: (round(v, 4) if isinstance(v, float) else v) for k, v in linha.items()})
     return 0

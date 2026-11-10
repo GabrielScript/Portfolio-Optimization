@@ -51,6 +51,7 @@ class AmbienteAcoes(Env):
 
     def __init__(self, fechamentos: pd.DataFrame, elegiveis: pd.DataFrame, inicio: int, fim: int, *,
                  recompensa: str = "dsr", custo_bps: float = 0.0, lookback: int = 60, modo: str = "matriz",
+                 rebalancear_a_cada: int = 1,
                  vol_mercado: pd.Series | None = None, capital: float = 1_000_000.0):
         super().__init__()
         if recompensa not in RECOMPENSAS:
@@ -61,6 +62,7 @@ class AmbienteAcoes(Env):
         self.inicio = int(inicio)
         self.fim = min(int(fim), len(fechamentos) - 1)      # the last session earns no return: nothing to step
         self.recompensa, self.custo_bps, self.lookback, self.modo = recompensa, custo_bps, lookback, modo
+        self.rebalancear_a_cada = max(1, int(rebalancear_a_cada))
         self.capital = capital
         self.nomes = list(fechamentos.columns)
         self.transacoes = self.fechamentos[self.nomes].to_numpy(dtype=float)
@@ -128,6 +130,8 @@ class AmbienteAcoes(Env):
 
     def step(self, action):
         a = np.clip(np.asarray(action, dtype=float).ravel(), -LOGIT_MAX, LOGIT_MAX)
+        if (self.t - self.inicio) % self.rebalancear_a_cada:      # the paper's monthly rule: hold between decisions
+            a = np.log(np.maximum(self._deriva(), 1e-12))       # hold the positions: they drift with prices
         livres = np.append(self.mascara[self.t], True)            # cash is always available, ineligible names never
         brutos = np.where(livres, a, -np.inf)
         pesos = softmax(brutos)

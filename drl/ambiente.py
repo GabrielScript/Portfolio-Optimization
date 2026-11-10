@@ -16,8 +16,6 @@ import numpy as np
 import pandas as pd
 from gymnasium import Env, spaces
 
-from drl import dados
-
 ETA = 1.0 / 252.0            # the DSR's exponential time scale (P1: about one year of sessions)
 PENALIDADE_MDD = 1.0         # weight of the drawdown term in ``dsr_drawdown`` (P3 gives no value; documented choice)
 RECOMPENSAS = ("valor", "dsr", "dsr_drawdown")
@@ -68,13 +66,13 @@ class AmbienteAcoes(Env):
         self.transacoes = self.fechamentos[self.nomes].to_numpy(dtype=float)
         self.mascara = self.elegiveis[self.nomes].to_numpy(dtype=bool)
         self.ret = self.transacoes[1:] / self.transacoes[:-1] - 1.0
+        self.log_ret = np.nan_to_num(np.log1p(self.ret), nan=0.0, posinf=0.0, neginf=0.0).T   # (n, sessions-1)
         self.vol_mercado = (vol_mercado.reindex(fechamentos.index).to_numpy(dtype=float) if vol_mercado is not None
                             else np.zeros(len(fechamentos)))
         n = len(self.nomes)
         self.action_space = spaces.Box(-LOGIT_MAX, LOGIT_MAX, shape=(n + 1,), dtype=np.float32)
         largura = lookback if modo == "matriz" else 6
         self.observation_space = spaces.Box(-np.inf, np.inf, shape=((n + 1) * largura,), dtype=np.float32)
-        self._ordem = np.arange(n)
         self.reiniciar_estado()
 
     # ------------------------------------------------------------------ the episode
@@ -96,7 +94,11 @@ class AmbienteAcoes(Env):
 
     def _observacao(self) -> np.ndarray:
         if self.modo == "matriz":
-            log = dados.janela_retornos(self.transacoes_pd(), self.t, self.lookback)     # (N, lookback)
+            inicio = max(0, self.t - self.lookback + 1)
+            log = np.zeros((len(self.nomes), self.lookback))
+            bloco = self.log_ret[:, inicio: self.t + 1]
+            if bloco.shape[1] >= 1:                    # the tape's first sessions have no full window yet
+                log[:, -bloco.shape[1]:] = bloco
             bloco = np.zeros((len(self.nomes) + 1, self.lookback))
             bloco[:-1, 1:] = log[:, 1:]                                               # columns 2..T: the returns
             bloco[:-1, 0] = self.pesos[:-1]                                           # column 1: current allocation
@@ -107,11 +109,8 @@ class AmbienteAcoes(Env):
             return np.nan_to_num(bloco, nan=0.0, posinf=0.0, neginf=0.0).ravel().astype(np.float32)
         return self._compacto()
 
-    def transacoes_pd(self) -> pd.DataFrame:
-        return pd.DataFrame(self.transacoes, index=self.fechamentos.index, columns=self.nomes)
-
     def _compacto(self) -> np.ndarray:
-        fechado = self.fechamentos.to_numpy(dtype=float)
+        fechado = self.transacoes
         t = self.t
         janela = fechado[max(0, t - 252): t + 1]
         with np.errstate(invalid="ignore", divide="ignore"):

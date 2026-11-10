@@ -443,7 +443,8 @@ def opcoes_devidas(raiz: Path, hoje: date, livro: pd.DataFrame, marcas: pd.DataF
     acoes = sorted(set(nomes.loc[nomes["asset_type"].isin(simulador_opcoes.TIPOS_DE_ACAO), "security"])
                    & set(cadeia["underlying"]))
     inicio = (pd.Timestamp(hoje) - pd.DateOffset(years=2)).date()          # 252 sessions back from any cycle
-    fechamentos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in acoes], inicio, hoje,
+    papeis = simulador_opcoes.papeis_do_painel(acoes, livro)               # the book still expires if a name leaves
+    fechamentos = precos_do_app.ler_fechamentos([f"{papel}.SA" for papel in papeis], inicio, hoje,
                                                 raiz / ARQUIVO_CALENDARIO, raiz / ARQUIVO_RECENTES)
     fechamentos = fechamentos.rename(columns=lambda papel: papel.removesuffix(".SA"))
     selic = cdi_lago.daily_selic(2, hoje)

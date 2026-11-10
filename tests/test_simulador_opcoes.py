@@ -19,8 +19,13 @@ def test_the_first_cycle_is_the_first_session_from_the_start_then_each_month_s_f
                                                               pd.Timestamp("2027-01-04")]
 
 
-def _fechamentos():
-    dias = pd.bdate_range(end=DIA, periods=260)
+def _compra(data, ticker, quantidade, preco, vencimento, ativo="ALTA3", tipo="put", strike=28.5, custo=0.0):
+    return {"data": data, "ideia": "A", "ticker": ticker, "ativo": ativo, "tipo": tipo, "strike": strike,
+            "vencimento": vencimento, "quantidade": quantidade, "preco": preco, "custo": custo, "motivo": ""}
+
+
+def _fechamentos(fim=DIA):
+    dias = pd.bdate_range(end=fim, periods=260)
     passo = np.arange(260)
     return pd.DataFrame({
         "ALTA3": 10 * 1.004 ** passo,                                   # steady winner, at its high
@@ -125,10 +130,35 @@ def test_marks_follow_the_mid_then_the_intrinsic_value_on_expiry():
         _linha("ALTAW285", "ALTA3", "put", 28.5, "2026-11-10", 1, 0.70, 0.60, 0.80, data=pd.Timestamp("2026-11-09")),
         _linha("ALTAW300", "ALTA3", "put", 30.0, "2026-11-10", 0, 3.10, 3.0, 3.2, spot=26.0,
                data=pd.Timestamp("2026-11-10"))])
-    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS))
+    fechamentos = pd.DataFrame({"ALTA3": [30.0, 27.0, 26.0]},
+                               index=pd.DatetimeIndex(["2026-11-06", "2026-11-09", "2026-11-10"]))
+    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS), fechamentos)
     assert marcas["valor"].tolist() == [pytest.approx(0.70), pytest.approx(2.5)]               # mid, then 28.5 - 26
     assert marcas["vencida"].tolist() == [False, True]
-    assert so.marcas_devidas(livro, cadeia, marcas).empty                                     # nothing marked twice
+    assert so.marcas_devidas(livro, cadeia, marcas, fechamentos).empty                        # nothing marked twice
+
+
+def test_an_underlying_that_leaves_the_chain_still_expires_on_its_date():
+    # the chain has the purchase session only (volume dried up): the expiry comes from ``vencimento`` and the calendar
+    dias = pd.DatetimeIndex(["2026-11-06", "2026-11-09", "2026-11-10"])
+    livro = pd.DataFrame([_compra(dias[0], "ALTAW285", 100, 0.55, dias[2])])
+    cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, dias[2], 2, 0.80, 0.70, 0.90, data=dias[0])])
+    fechamentos = pd.DataFrame({"ALTA3": [30.0, 29.0, 26.5]}, index=dias)
+    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS), fechamentos)
+    assert marcas["data"].tolist() == [dias[2]]
+    assert marcas["vencida"].tolist() == [True]
+    assert marcas["valor"].tolist() == [pytest.approx(28.5 - 26.5)]
+
+
+def test_the_intrinsic_never_uses_a_close_after_the_expiry_session():
+    # the reproduced defect: a put credited 8.5 on 10/12 from a 20.0 spot of a later session
+    dias = pd.DatetimeIndex(["2026-11-06", "2026-11-10", "2026-11-11"])
+    livro = pd.DataFrame([_compra(dias[0], "ALTAW285", 100, 0.55, dias[1])])
+    cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, dias[1], 0, 0.50, 0.45, 0.55, data=dias[0])])
+    fechamentos = pd.DataFrame({"ALTA3": [30.0, 26.0, 20.0]}, index=dias)
+    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS), fechamentos)
+    assert marcas["data"].tolist() == [dias[1]]
+    assert marcas["valor"].tolist() == [pytest.approx(2.5)]                    # 28.5 - 26.0, never 28.5 - 20.0
 
 
 def test_a_mark_ignores_a_lone_ask_and_takes_the_last_trade():
@@ -151,6 +181,43 @@ def test_the_curve_pays_the_premium_values_the_option_and_taxes_the_month_s_net_
                               pytest.approx(depois)]
 
 
+def test_the_same_ticker_bought_in_two_cycles_is_two_positions():
+    dias = pd.DatetimeIndex(["2026-11-06", "2026-11-09", "2026-11-10"])
+    livro = pd.DataFrame([_compra(dias[0], "ALTAW285", 100, 0.5, dias[2]),
+                          _compra(dias[1], "ALTAW285", 200, 0.6, dias[2])])
+    cadeia = pd.DataFrame([
+        _linha("ALTAW285", "ALTA3", "put", 28.5, dias[2], 2, 2.40, 2.30, 2.50, data=dias[1]),
+        _linha("ALTAW285", "ALTA3", "put", 28.5, dias[2], 1, 2.50, 2.40, 2.60, spot=26.0, data=dias[2])])
+    fechamentos = pd.DataFrame({"ALTA3": [30.0, 26.5, 26.0]}, index=dias)
+    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS), fechamentos)
+    curva = so.curva(livro, marcas, pd.Series(0.0, index=dias), dias, capital=1_000.0)
+    # 100 @0.5 + 200 @0.6 paid, 300 @2.5 received at expiry, 15% on the net gain
+    ganho = 300 * 2.5 - (100 * 0.5 + 200 * 0.6)
+    assert curva.iloc[-1] == pytest.approx(1_000.0 + ganho * (1 - so.IR))
+
+
+def test_marks_for_the_same_ticker_are_not_duplicated():
+    dias = pd.DatetimeIndex(["2026-11-06", "2026-11-09", "2026-11-10"])
+    livro = pd.DataFrame([_compra(dias[0], "ALTAW285", 100, 0.5, dias[2]),
+                          _compra(dias[1], "ALTAW285", 200, 0.6, dias[2])])
+    cadeia = pd.DataFrame([
+        _linha("ALTAW285", "ALTA3", "put", 28.5, dias[2], 2, 0.70, 0.60, 0.80, data=dias[1]),
+        _linha("ALTAW285", "ALTA3", "put", 28.5, dias[2], 1, 0.90, 0.80, 1.00, spot=26.0, data=dias[2])])
+    fechamentos = pd.DataFrame({"ALTA3": [30.0, 26.5, 26.0]}, index=dias)
+    marcas = so.marcas_devidas(livro, cadeia, pd.DataFrame(columns=so.COLUNAS_MARCAS), fechamentos)
+    assert not marcas.duplicated(["data", "ticker"]).any()
+    assert marcas["data"].tolist() == [dias[1], dias[2]]
+    assert marcas["valor"].tolist() == [pytest.approx(0.70), pytest.approx(2.5)]      # the mid, then 28.5 - 26.0
+    assert marcas["vencida"].tolist() == [False, True]
+
+
+def test_an_empty_ledger_does_not_break_the_panel():
+    selic = pd.Series(0.001, index=pd.DatetimeIndex(["2026-11-06", "2026-11-09"]))
+    painel = so.painel(pd.DataFrame(columns=so.COLUNAS), pd.DataFrame(columns=so.COLUNAS_MARCAS), selic,
+                       capital=1_000.0)
+    assert painel.curvas.empty and painel.ordens.empty and painel.abertas.empty
+
+
 def test_an_update_trades_each_pending_cycle_once_and_marks_what_it_bought():
     proximo = pd.Timestamp("2026-11-09")
     cadeia = pd.DataFrame([_linha("ALTAW285", "ALTA3", "put", 28.5, "2026-12-04", 20, 0.50, 0.45, 0.55),
@@ -158,10 +225,10 @@ def test_an_update_trades_each_pending_cycle_once_and_marks_what_it_bought():
                                   data=proximo)])
     vazio = (pd.DataFrame(columns=so.COLUNAS), pd.DataFrame(columns=so.COLUNAS_MARCAS))
     selic = pd.Series(0.0, index=pd.DatetimeIndex([DIA, proximo]))
-    ordens, marcas = so.atualizacao(*vazio, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic)
+    ordens, marcas = so.atualizacao(*vazio, cadeia, _fechamentos(proximo), ["ALTA3", "CALM3"], selic)
     assert ordens["data"].tolist() == [DIA, DIA] and ordens["quantidade"].tolist() == [900, 0]
     assert marcas["data"].tolist() == [proximo] and marcas["valor"].tolist() == [pytest.approx(0.60)]
-    ordens2, marcas2 = so.atualizacao(ordens, marcas, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic)
+    ordens2, marcas2 = so.atualizacao(ordens, marcas, cadeia, _fechamentos(proximo), ["ALTA3", "CALM3"], selic)
     assert ordens2.empty and marcas2.empty                                                   # nothing twice
 
 
@@ -175,6 +242,31 @@ def test_the_deep_account_s_update_starts_on_its_own_first_cycle_at_its_own_stri
     ordens, _ = so.atualizacao(*vazio, cadeia, _fechamentos(), ["ALTA3", "CALM3"], selic, conta=so.DEEP)
     assert ordens["data"].tolist() == [proximo, proximo]                              # 06/11 is before its start
     assert ordens.set_index("ideia").loc["A", "ticker"] == "ALTAW255"
+
+
+def _calendario_b3(inicio, fim):
+    """B3's sessions between two dates (weekdays minus the national holidays)."""
+    from core.sentinela.calendario import pregoes
+    return pregoes(pd.Timestamp(inicio).date(), pd.Timestamp(fim).date())
+
+
+def test_the_rule_counts_b3_sessions_so_ten_calendar_days_can_be_under_ten_sessions():
+    # on 09/11 the 19/11 expiry has du=10 calendar days but 8 B3 sessions, which the frozen rule forbids
+    calendario = _calendario_b3("2026-11-06", "2026-12-18")
+    cadeia = pd.DataFrame([
+        _linha("CURTA", "ALTA3", "put", 28.5, "2026-11-19", 13, 0.5, 0.45, 0.55),       # 9 sessions
+        _linha("LONGA", "ALTA3", "put", 28.5, "2026-12-18", 42, 0.6, 0.55, 0.65)])      # 30 sessions
+    assert so.contrato(cadeia, "ALTA3", "put", 0.95)["ticker"] == "CURTA"     # calendar days: 13 is nearest 21
+    assert so.contrato(cadeia, "ALTA3", "put", 0.95, calendario=calendario)["ticker"] == "LONGA"
+
+
+def test_a_cycle_chooses_on_the_b3_sessions_of_the_price_calendar():
+    cadeia = pd.DataFrame([
+        _linha("ALTAW285", "ALTA3", "put", 28.5, "2026-11-19", 13, 0.50, 0.45, 0.55),
+        _linha("ALTAX285", "ALTA3", "put", 28.5, "2026-12-18", 42, 0.60, 0.55, 0.65)])
+    ordens = so.ordens_do_ciclo(DIA, cadeia, _fechamentos(), ["ALTA3", "CALM3"],
+                                patrimonio=10_000.0).set_index("ideia")
+    assert ordens.loc["A", "ticker"] == "ALTAX285"      # the 9-session expiry is out; the 29-session one wins
 
 
 def test_the_panel_shows_the_curve_beside_the_selic_the_orders_and_the_open_options():
@@ -209,3 +301,10 @@ def test_a_loss_is_carried_and_offsets_the_next_gain_before_any_tax():
     curva = so.curva(livro, marcas, pd.Series(0.0, index=dias), dias, capital=1_000.0)
     # -100 then +150: tax only on the 50 above the carried loss
     assert curva.iloc[-1] == pytest.approx(1_000 - 100 + 150 - so.IR * 50)
+
+
+def test_the_price_panel_covers_the_book_even_when_the_asset_left_the_universe():
+    """F3 in production: a held underlying that left the app universe still needs its closes to expire."""
+    livro = pd.DataFrame([{"ativo": "SAIU3"}, {"ativo": "ALTA3"}])
+    assert so.papeis_do_painel(["ALTA3", "CALM3"], livro) == ["ALTA3", "CALM3", "SAIU3"]
+    assert so.papeis_do_painel(["ALTA3"], pd.DataFrame(columns=so.COLUNAS)) == ["ALTA3"]

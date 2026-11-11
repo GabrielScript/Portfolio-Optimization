@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import subprocess
 import sys
+import time
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -91,8 +92,27 @@ def _a_enviar(git: Callable[..., subprocess.CompletedProcess]) -> int:
         return 1
 
 
+PUSH_TENTATIVAS = 3
+PUSH_ESPERA_S = 60.0          # doubled after each failed push: 60 s, then 120 s
+
+
+def _push(git: Callable[..., subprocess.CompletedProcess], espera: Callable[[float], None]) -> None:
+    """``git push`` with retries; when every try fails, raise with what git printed (the exit code alone says
+    nothing: the 2026-11-10 23:00 run logged only "exit status 128" and a manual push a minute later worked)."""
+    for tentativa in range(1, PUSH_TENTATIVAS + 1):
+        try:
+            git("push")
+            return
+        except subprocess.CalledProcessError as erro:
+            if tentativa == PUSH_TENTATIVAS:
+                detalhe = (erro.stderr or erro.stdout or "").strip() or f"exit status {erro.returncode}"
+                raise RuntimeError(f"git push failed {PUSH_TENTATIVAS} times: {detalhe}") from erro
+            espera(PUSH_ESPERA_S * 2 ** (tentativa - 1))
+
+
 def publicar(raiz: Path, mensagem: str, sem_push: bool = False,
-             executar: Callable[..., subprocess.CompletedProcess] = subprocess.run) -> bool:
+             executar: Callable[..., subprocess.CompletedProcess] = subprocess.run,
+             espera: Callable[[float], None] = time.sleep) -> bool:
     """Stage the ledgers that exist, commit them with ``mensagem`` and push unless ``sem_push``.
 
     A day with no new marks still pushes commits left behind by an earlier failed push. Returns False when the
@@ -110,7 +130,7 @@ def publicar(raiz: Path, mensagem: str, sem_push: bool = False,
         git("commit", "-q", "-m", mensagem, "--", *caminhos)
     if sem_push or not _a_enviar(git):
         return mudou
-    git("push")
+    _push(git, espera)
     return True
 
 

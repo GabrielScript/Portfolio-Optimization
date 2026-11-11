@@ -210,6 +210,41 @@ def test_publicar_adds_commits_and_pushes_in_that_order(tmp_path) -> None:
     assert "qml holdout 2026-11-10" in commit
 
 
+class _PushFalha(_Executar):
+    """Like ``_Executar``, but the first ``falhas`` pushes fail as git does when the network drops."""
+
+    def __init__(self, status: str, falhas: int) -> None:
+        super().__init__(status)
+        self._falhas = falhas
+
+    def __call__(self, argumentos, **kwargs):
+        if argumentos[1] == "push" and self._falhas:
+            self._falhas -= 1
+            self.chamadas.append(list(argumentos))
+            raise subprocess.CalledProcessError(128, argumentos, stderr="fatal: unable to access 'https://...': "
+                                                                         "Could not resolve host: github.com\n")
+        return super().__call__(argumentos, **kwargs)
+
+
+def test_publicar_retries_a_push_that_fails_once(tmp_path) -> None:
+    """The 2026-11-10 23:00 run lost its push to a one-off failure; a manual push a minute later worked."""
+    (tmp_path / "simulador" / "qml_holdout").mkdir(parents=True)
+    executar = _PushFalha("A  simulador/qml_holdout/marcas.csv\n", falhas=1)
+
+    assert publicar(tmp_path, "msg", executar=executar, espera=lambda segundos: None) is True
+
+    assert [c[1] for c in executar.chamadas].count("push") == 2
+
+
+def test_publicar_reports_what_git_said_when_every_push_fails(tmp_path) -> None:
+    """The log must say why: 'returned non-zero exit status 128' alone cannot be diagnosed."""
+    (tmp_path / "simulador" / "qml_holdout").mkdir(parents=True)
+    executar = _PushFalha("A  simulador/qml_holdout/marcas.csv\n", falhas=5)
+
+    with pytest.raises(RuntimeError, match="Could not resolve host"):
+        publicar(tmp_path, "msg", executar=executar, espera=lambda segundos: None)
+
+
 def test_publicar_sem_push_does_not_push(tmp_path) -> None:
     (tmp_path / "simulador" / "qml_holdout").mkdir(parents=True)
     executar = _Executar("A  simulador/qml_holdout/marcas.csv\n")

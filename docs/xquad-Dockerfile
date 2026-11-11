@@ -1,0 +1,3 @@
+FROM python:3.13-slim
+RUN pip install --no-cache-dir "xquad[quip]==0.5.2" numpy==2.3.* pandas pyarrow
+WORKDIR /lab

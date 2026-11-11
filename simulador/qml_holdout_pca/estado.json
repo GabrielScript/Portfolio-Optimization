@@ -1,0 +1,8 @@
+{
+  "inicio": "2026-11-10",
+  "capital": 10000.0,
+  "ultimo_rebalanceio": "2026-11-10",
+  "custo_bps": 10.0,
+  "passo": 63,
+  "estrategia": "QML-Composite (Meio-Kelly), PCA covariance"
+}

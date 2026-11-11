@@ -54,3 +54,26 @@ Nezamabadi-Pour, A2C/DDPG/PPO/SAC/TD3 review) and the PyTorch and Python pattern
 
 The first version reported minimum variance at Sharpe 0.91 and equal weight at 9.75% CAGR: zero risk-free rate,
 another tape and daily rebalancing. The agents' rerun is in `drl/saidas/` under its own run name when it exists.
+
+## DRL v2 reading (spec `docs/superpowers/specs/2026-11-10-drl-v2-design.md`, 90 cells on Modal, free credit)
+
+Stitched 2012-2026 test years, 10 bps, Sharpe over the CDI; the Composite is the house engine's curve on the same
+sessions (`drl/saidas/2026-11-10-v2/leitura.txt`).
+
+| strategy | CAGR | Sharpe | MDD | turnover/yr |
+|---|---|---|---|---|
+| Composite (reference) | 20.6% | 0.57 | -41.5% | - |
+| max Sharpe rule | 14.9% | 0.32 | -49.8% | 7.2 |
+| SAC, value reward (P3) | 6.2% | 0.00 | -53.4% | 14.0 |
+| PPO, differential Sharpe (P1) | 6.1% | -0.03 | -51.3% | 2.1 |
+| equal weight | 5.9% | -0.04 | -51.7% | 2.0 |
+| PPO, drawdown reward (P2) | 5.9% | -0.04 | -51.5% | 2.1 |
+| DDPG, drawdown reward (P2) | 5.3% | -0.06 | -51.6% | 10.2 |
+| TD3, value reward (P3) | 5.3% | -0.06 | -52.4% | 11.4 |
+| A2C, drawdown reward (P2) | 5.0% | 0.00 | -72.3% | 9.4 |
+| minimum variance rule | 7.7% | -0.07 | -38.1% | 4.4 |
+
+All six agents fail the pre-registered gate (above the best rule and the Composite). Both PPO agents end with
+near-equal logits: their yearly returns match equal weight's. The off-policy agents trade five to seven times as much
+for the same or a worse curve. Off-policy agents ran with 3 seeds and 30,000 decisions (cost limit stated before the
+run). Verdict unchanged from DECISOES 334, now on a simulator that measures agents and rules alike.

@@ -95,9 +95,9 @@ gains. 2 to 6 exposure orders a year. Approved at R$ 10 thousand; R$ 100 thousan
 
 ## Tasks
 
-- [ ] 1. `ExposureOverlay` in `refazer`: share of 1 is the plain replay; cash at a rebalance earns the rate; an
+- [x] 1. `ExposureOverlay` in `refazer`: share of 1 is the plain replay; cash at a rebalance earns the rate; an
       exposure order between rebalances scales every position and is taxed by average price; band; freeze; order cost;
       `zona` + overlay refused; missing session in `exposure` refused.
-- [ ] 2. Liquidity export 2009-11 to 2026-10 with `SHA256SUMS` and `LEIAME.md`.
-- [ ] 3. Gate function and the evaluation script with the three anchors.
-- [ ] 4. One run; output committed; DECISOES entry; `docs/tentativas.csv` row; `graphify update .`.
+- [x] 2. Liquidity export 2009-11 to 2026-10 with `SHA256SUMS` and `LEIAME.md`.
+- [x] 3. Gate function and the evaluation script with the three anchors.
+- [x] 4. One run; output committed; DECISOES entry; `docs/tentativas.csv` row; `graphify update .`.

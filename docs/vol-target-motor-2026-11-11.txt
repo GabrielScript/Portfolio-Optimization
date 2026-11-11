@@ -1,0 +1,123 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90', 'liquidez.parquet': '1866cee5b7f3feb7ada0c2facbe279d02189a205f5bd328810c5bf3de624aa23'}
+DSR N before this test: 54; costs Custos(emolumentos=0.0003, impacto=1.0); cash at the CDI net of 22.5%; window 21
+
+=== Phase 0: 09/02/2010 to 16/10/2026; three anchors checked (82 s) ===
+
+--- R$ 10.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI  exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                   
+Composite (plain)           19.72%  -40.3%       0.57  192,255   0.70%     12,726         3,389              100%                0.0        nan    nan
+Composite + 20% vol target  19.57%  -20.4%       0.62  188,421   0.83%     12,145         2,630               96%                4.5      0.355  0.465
+target 16%                  18.51%  -19.8%       0.60  162,643   0.91%      9,002         1,640               90%                9.1      0.179  0.280
+target 24%                  20.23%  -21.4%       0.64  206,020   0.76%     14,232         3,164               98%                1.6      0.539  0.632
+band 0.05                   19.51%  -20.1%       0.62  186,662   0.88%     12,462         2,482               96%               10.7      0.344  0.451
+band 0.20                   19.31%  -21.4%       0.61  181,708   0.75%     10,802         2,751               96%                1.5      0.297  0.404
+cash at 0%                  19.31%  -20.6%       0.61  181,653   0.82%     11,894         2,538               96%                4.5      0.299  0.403
+
+--- R$ 100.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI    exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                     
+Composite (plain)           18.68%  -40.3%       0.53  1,666,350   0.94%    139,816        29,360              100%                0.0        nan    nan
+Composite + 20% vol target  18.40%  -20.6%       0.57  1,602,502   1.06%    140,778        22,352               96%                4.5      0.324  0.432
+target 16%                  17.25%  -18.5%       0.54  1,364,159   1.13%    122,954        13,738               90%                9.1      0.150  0.244
+target 24%                  19.15%  -21.6%       0.60  1,777,270   1.00%    155,427        27,268               98%                1.6      0.529  0.624
+band 0.05                   18.41%  -20.3%       0.58  1,605,582   1.12%    142,860        21,326               96%               10.7      0.333  0.439
+band 0.20                   18.14%  -21.4%       0.56  1,544,681   0.98%    132,639        23,374               96%                1.5      0.267  0.371
+cash at 0%                  18.14%  -20.7%       0.56  1,545,129   1.06%    138,245        21,570               96%                4.5      0.270  0.372
+
+--- R$ 1.000.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI     exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                      
+Composite (plain)           17.96%  -40.3%       0.50  15,068,821   1.65%  1,322,280       265,164              100%                0.0        nan    nan
+Composite + 20% vol target  17.68%  -20.7%       0.53  14,489,299   1.79%  1,332,073       201,550               96%                4.5      0.324  0.432
+target 16%                  16.57%  -18.7%       0.50  12,400,644   1.81%  1,164,741       124,405               90%                9.1      0.154  0.249
+target 24%                  18.42%  -22.2%       0.56  16,071,230   1.74%  1,470,634       245,952               98%                1.6      0.529  0.624
+band 0.05                   17.67%  -20.8%       0.53  14,467,602   1.86%  1,352,559       191,524               96%               10.7      0.327  0.433
+band 0.20                   17.45%  -21.5%       0.52  14,047,176   1.66%  1,257,718       212,157               96%                1.5      0.275  0.380
+cash at 0%                  17.42%  -21.3%       0.52  13,982,031   1.78%  1,308,743       194,673               96%                4.5      0.271  0.373
+(phase 0 done in 461 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; three anchors checked (559 s) ===
+
+--- R$ 10.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI  exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                   
+Composite (plain)           18.52%  -41.2%       0.52  160,658   0.74%      7,774         3,521              100%                0.0        nan    nan
+Composite + 20% vol target  18.24%  -21.6%       0.55  154,596   0.86%      8,683         2,775               96%                4.4      0.328  0.433
+target 16%                  17.09%  -17.3%       0.51  131,665   0.90%      5,779         2,023               90%                9.5      0.153  0.244
+target 24%                  19.10%  -22.4%       0.58  173,941   0.79%      9,159         3,563               98%                1.6      0.559  0.656
+band 0.05                   18.38%  -19.5%       0.56  157,661   0.91%      8,118         2,693               96%                9.3      0.365  0.468
+band 0.20                   18.58%  -21.7%       0.57  161,953   0.80%      8,485         3,256               96%                1.4      0.404  0.515
+cash at 0%                  18.00%  -21.7%       0.54  149,488   0.86%      8,165         2,690               96%                4.4      0.279  0.377
+
+--- R$ 100.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI    exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                     
+Composite (plain)           17.35%  -41.2%       0.47  1,365,209   0.98%    103,118        29,960              100%                0.0        nan    nan
+Composite + 20% vol target  17.17%  -21.6%       0.50  1,331,809   1.09%    107,276        23,904               96%                4.4      0.348  0.456
+target 16%                  15.94%  -17.3%       0.46  1,121,130   1.11%     88,132        17,467               90%                9.5      0.150  0.242
+target 24%                  17.90%  -22.4%       0.53  1,474,033   1.04%    116,847        30,199               98%                1.6      0.556  0.653
+band 0.05                   17.24%  -19.5%       0.51  1,344,571   1.14%    110,372        22,967               96%                9.3      0.369  0.474
+band 0.20                   17.42%  -21.8%       0.51  1,378,449   1.03%    108,807        27,716               96%                1.4      0.407  0.518
+cash at 0%                  16.92%  -21.7%       0.49  1,285,830   1.09%    105,264        23,133               96%                4.4      0.292  0.395
+
+--- R$ 1.000.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI     exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                      
+Composite (plain)           16.66%  -41.2%       0.43  12,403,204   1.70%    984,744       273,352              100%                0.0        nan    nan
+Composite + 20% vol target  16.47%  -21.7%       0.46  12,077,610   1.82%  1,022,052       216,721               96%                4.4      0.344  0.452
+target 16%                  15.29%  -17.4%       0.42  10,222,488   1.74%    843,610       159,268               90%                9.5      0.153  0.246
+target 24%                  17.19%  -22.5%       0.49  13,363,954   1.79%  1,114,583       273,914               98%                1.6      0.552  0.649
+band 0.05                   16.51%  -19.6%       0.46  12,154,273   1.88%  1,050,836       207,512               96%                9.3      0.360  0.465
+band 0.20                   16.72%  -21.9%       0.47  12,515,441   1.76%  1,037,288       251,708               96%                1.4      0.406  0.517
+cash at 0%                  16.21%  -21.8%       0.45  11,651,520   1.81%  1,003,821       209,568               96%                4.4      0.288  0.391
+(phase 21 done in 1018 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; three anchors checked (1113 s) ===
+
+--- R$ 10.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI  exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                   
+Composite (plain)           17.75%  -41.2%       0.46  142,368   0.74%      8,421           882              100%                0.0        nan    nan
+Composite + 20% vol target  17.06%  -20.1%       0.48  129,416   0.80%      5,689           599               96%                4.5      0.254  0.360
+target 16%                  16.14%  -19.4%       0.45  113,840   0.91%      3,795           630               90%               10.3      0.142  0.238
+target 24%                  17.86%  -21.6%       0.51  144,691   0.75%      7,848           915               98%                1.6      0.420  0.527
+band 0.05                   17.39%  -20.4%       0.49  135,480   0.86%      6,284           623               96%               10.3      0.317  0.428
+band 0.20                   17.34%  -20.4%       0.49  134,662   0.75%      6,161           867               96%                1.5      0.307  0.418
+cash at 0%                  16.78%  -20.7%       0.46  124,536   0.80%      5,564           576               96%                4.6      0.210  0.310
+
+--- R$ 100.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI    exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                     
+Composite (plain)           16.57%  -41.3%       0.42  1,209,307   0.96%    108,414         7,496              100%                0.0        nan    nan
+Composite + 20% vol target  15.78%  -20.5%       0.42  1,082,564   1.00%     95,403         5,011               96%                4.5      0.237  0.339
+target 16%                  14.83%  -19.7%       0.38    946,984   1.09%     80,016         5,240               90%               10.3      0.128  0.218
+target 24%                  16.62%  -21.7%       0.45  1,217,925   0.96%    108,545         7,705               98%                1.6      0.405  0.512
+band 0.05                   16.06%  -20.6%       0.43  1,126,363   1.06%    101,198         5,179               96%               10.3      0.290  0.398
+band 0.20                   16.02%  -20.9%       0.43  1,119,288   0.95%     97,987         7,210               96%                1.5      0.279  0.387
+cash at 0%                  15.50%  -21.0%       0.40  1,040,330   0.99%     93,838         4,806               96%                4.6      0.194  0.288
+
+--- R$ 1.000.000 (exit values; sensitivity arms decide nothing) ---
+                              CAGR     MDD Sharpe/CDI     exit R$ cost/yr IR paid R$ IR at exit R$ mean target share exposure orders/yr P[> plain]  P log
+arm                                                                                                                                                      
+Composite (plain)           15.91%  -41.3%       0.38  11,024,285   1.64%  1,026,030        68,476              100%                0.0        nan    nan
+Composite + 20% vol target  15.14%  -20.8%       0.38   9,900,052   1.60%    907,489        45,749               96%                4.5      0.240  0.343
+target 16%                  14.22%  -19.9%       0.34   8,683,118   1.65%    765,263        47,932               90%               10.3      0.131  0.223
+target 24%                  15.97%  -22.0%       0.42  11,113,872   1.60%  1,029,805        70,346               98%                1.6      0.407  0.513
+band 0.05                   15.41%  -21.0%       0.39  10,276,396   1.69%    961,989        47,128               96%               10.3      0.291  0.399
+band 0.20                   15.39%  -20.9%       0.39  10,253,358   1.55%    931,207        66,057               96%                1.5      0.285  0.394
+cash at 0%                  14.87%  -21.3%       0.36   9,529,304   1.59%    892,184        43,953               96%                4.6      0.198  0.294
+(phase 42 done in 1462 s)
+
+Gate (R$ 10 and 100 thousand, every phase: MDD >= plain + 10 points and CAGR >= plain - 1 point):
+  R$    10,000 phase  0: MDD -20.4% vs -40.3%, CAGR 19.57% vs 19.72%
+  R$    10,000 phase 21: MDD -21.6% vs -41.2%, CAGR 18.24% vs 18.52%
+  R$    10,000 phase 42: MDD -20.1% vs -41.2%, CAGR 17.06% vs 17.75%
+  R$   100,000 phase  0: MDD -20.6% vs -40.3%, CAGR 18.40% vs 18.68%
+  R$   100,000 phase 21: MDD -21.6% vs -41.2%, CAGR 17.17% vs 17.35%
+  R$   100,000 phase 42: MDD -20.5% vs -41.3%, CAGR 15.78% vs 16.57%
+  R$ 1,000,000 phase  0: MDD -20.7% vs -40.3%, CAGR 17.68% vs 17.96%
+  R$ 1,000,000 phase 21: MDD -21.7% vs -41.2%, CAGR 16.47% vs 16.66%
+  R$ 1,000,000 phase 42: MDD -20.8% vs -41.3%, CAGR 15.14% vs 15.91%
+APPROVED: candidate for a fictitious account; advisor review before any real order
+(total 1462 s)

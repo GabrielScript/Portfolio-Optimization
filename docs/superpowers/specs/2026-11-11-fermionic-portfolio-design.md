@@ -86,3 +86,17 @@ different theta would be a new pre-registration and a new row.
 ## Non-goals
 
 No quantum hardware or simulator, no GPU, no change to the app, the paper logs or the 19/12 buy.
+
+## Amendment 1 (2026-11-11, before any number of the arm was read)
+
+The first run stopped at the anchor (phase 0, 7.2e-3 off) and printed nothing of the arm. Cause, checked decision by
+decision: 2 of 66 decisions hold an exact tie of the Composite score at the 15th place (ISAE4 = LIGT3 on
+09/02/2010, ITSA4 = SLED4 on 15/02/2011). The Composite breaks a tie by list order; theta -> infinity breaks it by
+the determinant. Statement 3 holds as "the same total score", not "the same names". The anchor becomes:
+
+1. `core.composto.estrategia_por_nota` run by this script reproduces the published curve (largest relative
+   difference below 1e-9): the plumbing.
+2. At every decision the theta = 1e6 picks are the Composite's, or differ from them with the same total z-score
+   (difference at most 1e-9); the number of such tie decisions is printed.
+
+Nothing else changes: rule, theta = 1, gate, trial count.

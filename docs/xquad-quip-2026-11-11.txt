@@ -1,12 +1,12 @@
-DSR N 56 (with this row); Selic 0.1375 (BCB SGS 432); data to 16/10/2026
+DSR N 57 (with this row); Selic 0.1375 (BCB SGS 432); data to 16/10/2026
 
 === Phase 0: 09/02/2010 to 16/10/2026 ===
 XQuad-CPU: 66 decisions; same picks as attempt 56 0%; lower energy 0%, higher energy 100%; repaired 0%; CPU fallback 0%; median 1.9 s per decision
-XQuad-Quip: 4 decisions; same picks as attempt 56 0%; lower energy 0%, higher energy 100%; repaired 0%; CPU fallback 0%; median 121.8 s per decision
-XQuad-Quip: not run as an arm (4 of 66 decisions, fallback 0%)
+XQuad-Quip: 66 decisions; same picks as attempt 56 0%; lower energy 0%, higher energy 100%; repaired 0%; CPU fallback 53%; median 46.1 s per decision
+XQuad-Quip: not run as an arm (66 of 66 decisions, fallback 53%)
                            CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
-Attempt 56 (own annealer) 0.201 0.179   0.584    0.760 -0.437   0.460          0.009      0.371      0.307          0.103      2.980 0.675
-XQuad-CPU                 0.162 0.200   0.375    0.485 -0.430   0.375         -0.024     -0.848      0.086          0.074      2.169 0.422
+Attempt 56 (own annealer) 0.201 0.179   0.584    0.760 -0.437   0.460          0.009      0.371      0.307          0.103      2.980 0.673
+XQuad-CPU                 0.162 0.200   0.375    0.485 -0.430   0.375         -0.024     -0.848      0.086          0.074      2.169 0.419
 Composite                 0.214 0.187   0.624    0.815 -0.415   0.515            NaN        NaN        NaN          0.115      4.204 0.927
 BOVA11                    0.072 0.234   0.010    0.014 -0.497   0.146         -0.116     -3.672      0.000            NaN        NaN   NaN
 Calendar years:
@@ -28,14 +28,14 @@ Calendar years:
 2024                       5.0%      -2.1%       5.5%  -10.1% 10.8%
 2025                      27.4%      26.7%      44.1%   34.7% 14.2%
 2026                      14.0%       1.5%      10.3%   28.0% 11.1%
-(phase 0 done in 144 s)
+(phase 0 done in 111 s)
 
 === Phase 21: 12/03/2010 to 16/10/2026 ===
 XQuad-CPU: 66 decisions; same picks as attempt 56 0%; lower energy 0%, higher energy 100%; repaired 0%; CPU fallback 0%; median 1.4 s per decision
                            CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
-Attempt 56 (own annealer) 0.165 0.174   0.421    0.542 -0.431   0.383         -0.010     -0.426      0.104          0.074      2.301 0.363
-XQuad-CPU                 0.143 0.185   0.300    0.407 -0.382   0.373         -0.026     -0.966      0.053          0.057      1.832 0.232
-Composite                 0.199 0.186   0.559    0.734 -0.422   0.473            NaN        NaN        NaN          0.105      3.842 0.844
+Attempt 56 (own annealer) 0.165 0.174   0.421    0.542 -0.431   0.383         -0.010     -0.426      0.104          0.074      2.301 0.361
+XQuad-CPU                 0.143 0.185   0.300    0.407 -0.382   0.373         -0.026     -0.966      0.053          0.057      1.832 0.230
+Composite                 0.199 0.186   0.559    0.734 -0.422   0.473            NaN        NaN        NaN          0.105      3.842 0.843
 BOVA11                    0.068 0.234  -0.007   -0.010 -0.497   0.137         -0.108     -3.383      0.001            NaN        NaN   NaN
 Calendar years:
       Attempt 56 (own annealer)  XQuad-CPU  Composite  BOVA11   CDI
@@ -56,14 +56,14 @@ Calendar years:
 2024                       2.9%     -15.3%       5.6%  -10.1% 10.8%
 2025                      22.0%      29.9%      24.7%   34.7% 14.2%
 2026                      18.2%      12.0%      15.8%   28.0% 11.1%
-(phase 21 done in 251 s)
+(phase 21 done in 210 s)
 
 === Phase 42: 13/04/2010 to 16/10/2026 ===
 XQuad-CPU: 66 decisions; same picks as attempt 56 0%; lower energy 0%, higher energy 100%; repaired 0%; CPU fallback 0%; median 1.4 s per decision
                            CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
-Attempt 56 (own annealer) 0.166 0.172   0.425    0.563 -0.377   0.439         -0.000     -0.016      0.169          0.074      2.316 0.372
-XQuad-CPU                 0.131 0.188   0.244    0.326 -0.388   0.338         -0.031     -1.182      0.038          0.047      1.472 0.186
-Composite                 0.191 0.193   0.509    0.668 -0.428   0.445            NaN        NaN        NaN          0.100      3.539 0.811
+Attempt 56 (own annealer) 0.166 0.172   0.425    0.563 -0.377   0.439         -0.000     -0.016      0.169          0.074      2.316 0.370
+XQuad-CPU                 0.131 0.188   0.244    0.326 -0.388   0.338         -0.031     -1.182      0.038          0.047      1.472 0.184
+Composite                 0.191 0.193   0.509    0.668 -0.428   0.445            NaN        NaN        NaN          0.100      3.539 0.809
 BOVA11                    0.067 0.234  -0.011   -0.015 -0.497   0.135         -0.100     -3.109      0.001            NaN        NaN   NaN
 Calendar years:
       Attempt 56 (own annealer)  XQuad-CPU  Composite  BOVA11   CDI
@@ -84,6 +84,6 @@ Calendar years:
 2024                      -4.5%      -1.3%       4.9%  -10.1% 10.8%
 2025                      25.8%      19.8%      33.4%   34.7% 14.2%
 2026                      14.6%      37.5%      10.8%   28.0% 11.1%
-(phase 42 done in 362 s)
+(phase 42 done in 313 s)
 
-Gate (P[XQuad-CPU > Composite] >= 0.95 and DSR >= 0.95 in every phase): [(0.086, 0.422), (0.053, 0.232), (0.038, 0.186)] -> FAILS: the quantum-solver line on the B3 stays closed
+Gate (P[XQuad-CPU > Composite] >= 0.95 and DSR >= 0.95 in every phase): [(0.086, 0.419), (0.053, 0.23), (0.038, 0.184)] -> FAILS: the quantum-solver line on the B3 stays closed

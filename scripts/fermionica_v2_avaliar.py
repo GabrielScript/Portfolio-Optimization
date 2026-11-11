@@ -41,6 +41,7 @@ FUNCTIONALS = {"LogDet": log_det, "vonNeumann": von_neumann}
 ARMS = {f"{nome} t{theta:g}": (funcional, theta) for nome, funcional in FUNCTIONALS.items() for theta in THETAS}
 CAGR_343 = {0: 0.218, 21: 0.191, 42: 0.199}      # DECISOES 343, three decimals: the regression anchor
 CAGR_TOL = 0.0005
+CURVES_FILE = CURVAS_51.parent / "fermionica-v2-curvas-2026-11-11.parquet"
 
 
 def picks_profile(registro: dict, do_composite: dict) -> dict[str, float]:
@@ -87,6 +88,7 @@ def main() -> int:
     print(f"DSR N {n} (with these {len(ARMS)} rows); arms {list(ARMS)}; data to {LAST_SESSION:%d/%m/%Y}")
 
     gate: dict[str, list[tuple[float, float]]] = {nome: [] for nome in ARMS}
+    salvas = []
     for fase in FASES:
         acoes = _acoes(dados.precos.loc[:LAST_SESSION].iloc[fase:])
 
@@ -125,6 +127,7 @@ def main() -> int:
             .reindex(indice)
         rf = market_data.serie_rf_diaria(indice, cdi, selic.valor)
         curvas["CDI"] = pd.Series(np.cumprod(1.0 + rf.to_numpy()), index=indice)
+        salvas.append(pd.DataFrame(curvas).assign(fase=fase).rename_axis("date").reset_index())
         tabela = metricas(curvas, rf, n)
         for nome in tabela.index:
             if nome != COMPOSITE:
@@ -142,6 +145,8 @@ def main() -> int:
             gate[nome].append((float(tabela.loc[nome, "P[> Comp]"]), float(tabela.loc[nome, "DSR"])))
         print(f"(phase {fase} done in {time.perf_counter() - inicio:.0f} s)", flush=True)
 
+    pd.concat(salvas).to_parquet(CURVES_FILE, index=False)
+    print(f"\nCurves saved: {CURVES_FILE.name}")
     print(f"\nGate per arm (P[> Composite] >= {P_MIN} and DSR >= {DSR_MIN} in every phase; DSR's V comes from the "
           f"curves of this table, see the spec's caveat):")
     for nome, leituras in gate.items():

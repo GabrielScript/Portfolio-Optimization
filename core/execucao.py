@@ -16,6 +16,7 @@ import pandas as pd
 
 from core.backtest import ResultadoBacktest
 from core.impostos import ISENCAO_DE_VENDAS, apurar_mes
+from core.risco import LIMITES, Limites, pode_negociar
 
 
 @dataclass(frozen=True)
@@ -92,6 +93,23 @@ class ZonaNoMotor:
     peso_maximo: float = 0.20       # the fixed per-stock cap (core.risco.LIMITES.peso_maximo_acao)
 
 
+@dataclass(frozen=True)
+class ExposureOverlay:
+    """
+    A share of the net worth in stocks, decided at each close (spec 2026-11-11-vol-target-motor). ``exposure`` (session
+    -> share in [0, 1]) is read at the close where the order is sent; ``cash_rate`` (session -> rate) is what the rest
+    earns in the session. At an engine rebalance the positions go to target weights x share; between rebalances, when
+    the share is more than ``band`` away from stocks / net worth, every position is scaled by the same factor. No
+    exposure order at the close of a session in which the net worth lost ``limits.perda_diaria_maxima`` or more
+    (``pode_negociar``): it waits for the next close where the gap still exceeds the band.
+    """
+
+    exposure: pd.Series
+    cash_rate: pd.Series
+    band: float = 0.10
+    limits: Limites = LIMITES
+
+
 def _trocar_pelo_preco_medio(posicoes: pd.Series, base: pd.Series, novas: pd.Series) -> tuple[pd.Series, float, float]:
     """De ``posicoes`` (custo ``base``) para ``novas``: a venda leva a base na proporção vendida e a compra soma a ela.
     Devolve a base nova, o total vendido e o resultado (ganho ou perda) das vendas."""
@@ -104,7 +122,8 @@ def _trocar_pelo_preco_medio(posicoes: pd.Series, base: pd.Series, novas: pd.Ser
 
 def refazer(resultado: ResultadoBacktest, retornos: pd.DataFrame, capital: float, custos: Custos = SEM_CUSTOS,
             liquidez: Liquidez | None = None, com_ir: bool = True, isencao: float = ISENCAO_DE_VENDAS,
-            proventos: pd.DataFrame | None = None, zona: ZonaNoMotor | None = None) -> Refeita:
+            proventos: pd.DataFrame | None = None, zona: ZonaNoMotor | None = None,
+            overlay: ExposureOverlay | None = None) -> Refeita:
     """
     A sequência de carteiras do motor (``resultado.pesos_alvo``: cada linha vale do pregão do índice em diante) refeita
     com ``capital`` em reais: a compra é no fechamento anterior a esse pregão, com o patrimônio daquele fechamento menos
@@ -119,10 +138,18 @@ def refazer(resultado: ResultadoBacktest, retornos: pd.DataFrame, capital: float
     reinvestido entra na base, e não volta a pagar IR como ganho de capital.
 
     ``zona`` (needs ``liquidez``): the no-trade zone of ``ZonaNoMotor``; None = today's full rebalance, unchanged.
+    ``overlay``: the share in stocks of ``ExposureOverlay``; None = always fully invested, unchanged. Not with ``zona``.
     """
     if zona is not None and liquidez is None:
         raise ValueError("a zona sem negociação precisa da liquidez (vol diária e custo de cada ordem)")
     datas = resultado.valores.index
+    if overlay is not None:
+        if zona is not None:
+            raise ValueError("the exposure overlay does not combine with the no-trade zone")
+        faltam = datas[:-1].difference(overlay.exposure.dropna().index)
+        if len(faltam):
+            raise ValueError(f"exposure has no share for {len(faltam)} session(s), first {faltam[0]:%Y-%m-%d}")
+        juros = overlay.cash_rate.reindex(datas).fillna(0.0)
     alvos = resultado.pesos_alvo.fillna(0.0)
     diarios = retornos.reindex(index=datas[1:], columns=alvos.columns).fillna(0.0)
     pagos = (pd.DataFrame(0.0, index=diarios.index, columns=diarios.columns) if proventos is None else
@@ -136,7 +163,12 @@ def refazer(resultado: ResultadoBacktest, retornos: pd.DataFrame, capital: float
             patrimonio = float(posicoes.sum()) + caixa
             alvo = alvos.loc[data]
             mes_da_liquidez = (anterior.to_period("M") - 1).to_timestamp()
-            if zona is None:
+            if overlay is not None:
+                parte = float(overlay.exposure.loc[anterior])
+                custo = _custo_do_rebalanceio((alvo * parte * patrimonio - posicoes).abs(), mes_da_liquidez, liquidez,
+                                              custos)
+                novas, sobra = alvo * parte * (patrimonio - custo), (1.0 - parte) * (patrimonio - custo)
+            elif zona is None:
                 custo = _custo_do_rebalanceio((alvo * patrimonio - posicoes).abs(), mes_da_liquidez, liquidez, custos)
                 novas = alvo * (patrimonio - custo)
             else:
@@ -146,9 +178,25 @@ def refazer(resultado: ResultadoBacktest, retornos: pd.DataFrame, capital: float
                                                             custos, zona, mes_fiscal)
             base, vendas, ganho = _trocar_pelo_preco_medio(posicoes, base, novas)
             vendas_do_mes, resultado_do_mes = vendas_do_mes + vendas, resultado_do_mes + ganho
-            posicoes, caixa = novas, (0.0 if zona is None else sobra)
+            posicoes, caixa = novas, (0.0 if zona is None and overlay is None else sobra)
             gastos[data] = custo
+        elif overlay is not None and posicoes.sum() > 0.0:
+            patrimonio = float(posicoes.sum()) + caixa
+            parte = float(overlay.exposure.loc[anterior])
+            diarios_do_patrimonio = pd.Series(valores, dtype=float).pct_change().dropna()
+            if (abs(parte - float(posicoes.sum()) / patrimonio) > overlay.band + 1e-12
+                    and pode_negociar(diarios_do_patrimonio, overlay.limits)):
+                mes_da_liquidez = (anterior.to_period("M") - 1).to_timestamp()
+                desejadas = posicoes * (parte * patrimonio / float(posicoes.sum()))
+                custo = _custo_do_rebalanceio((desejadas - posicoes).abs(), mes_da_liquidez, liquidez, custos)
+                novas = posicoes * (parte * (patrimonio - custo) / float(posicoes.sum()))
+                base, vendas, ganho = _trocar_pelo_preco_medio(posicoes, base, novas)
+                vendas_do_mes, resultado_do_mes = vendas_do_mes + vendas, resultado_do_mes + ganho
+                posicoes, caixa = novas, (1.0 - parte) * (patrimonio - custo)
+                gastos[data] = custo
         posicoes = posicoes * (1.0 + retorno)
+        if overlay is not None:
+            caixa = caixa * (1.0 + float(juros.loc[data]))
         base = base + posicoes * pagos.loc[data] / (1.0 + pagos.loc[data])
         if data in fins_de_mes:
             if com_ir:

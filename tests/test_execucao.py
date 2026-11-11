@@ -7,7 +7,7 @@ import pytest
 from core.backtest import (ResultadoBacktest, estrategia_buy_and_hold_ativo, retornos_da_carteira, walk_forward,
                            walk_forward_dinamico)
 from core.config import ConfigBacktest
-from core.execucao import SEM_CUSTOS, Custos, Liquidez, custo_da_ordem, refazer
+from core.execucao import SEM_CUSTOS, Custos, Liquidez, ZonaNoMotor, custo_da_ordem, refazer
 
 PAPEIS = ["AAAA3", "BBBB3", "CCCC3", "DDDD3"]
 
@@ -235,3 +235,83 @@ def test_com_a_zona_quando_os_pulados_cresceram_quem_entra_encolhe_ate_caber_com
                       zona=ZonaNoMotor(peso_maximo=1.0))
     assert refeita.custos[datas[20]] == pytest.approx(5.94)
     assert refeita.valores.iloc[-1] == pytest.approx(326.7 + 297.0 + 291.06 * 1.1)
+
+
+# ---------------------------------------------------------------- exposure overlay (spec 2026-11-11-vol-target-motor)
+from core.execucao import ExposureOverlay  # noqa: E402
+from core.risco import LIMITES  # noqa: E402
+
+
+def _overlay(datas: pd.DatetimeIndex, share: float | pd.Series = 1.0, rate: float = 0.0, band: float = 0.10,
+             ) -> ExposureOverlay:
+    exposicao = share if isinstance(share, pd.Series) else pd.Series(share, index=datas)
+    return ExposureOverlay(exposure=exposicao, cash_rate=pd.Series(rate, index=datas), band=band)
+
+
+def test_overlay_share_one_everywhere_is_the_plain_replay():
+    resultado, retornos = _motor()
+    datas = resultado.valores.index
+    for com_ir in (False, True):
+        plain = refazer(resultado, retornos, capital=100_000.0, com_ir=com_ir)
+        com = refazer(resultado, retornos, capital=100_000.0, com_ir=com_ir, overlay=_overlay(datas))
+        pd.testing.assert_series_equal(com.valores, plain.valores, rtol=1e-12)
+        pd.testing.assert_series_equal(com.saida, plain.saida, rtol=1e-12)
+
+
+def test_overlay_half_share_at_the_rebalance_leaves_half_in_cash_earning_the_rate():
+    # zero stock returns: R$ 30 mil splits 15 / 15; the cash earns 1% a session; the 31/01 rebalance splits again
+    resultado, retornos = _dobra_e_divide()
+    retornos = retornos * 0.0
+    datas = resultado.valores.index
+    refeita = refazer(resultado, retornos, capital=30_000.0, com_ir=False, overlay=_overlay(datas, 0.5, rate=0.01))
+    no_rebalanceio = 15_000.0 + 15_000.0 * 1.01 ** 2
+    assert refeita.valores.iloc[-1] == pytest.approx(no_rebalanceio / 2 + no_rebalanceio / 2 * 1.01 ** 2)
+
+
+def test_overlay_order_between_rebalances_scales_every_position_and_pays_tax_by_average_price():
+    # R$ 30 mil in A on 26/01 (share 1); A doubles on 30/01; at that close the share drops to 0.25: sell 3/4 of A
+    # (R$ 45 mil sold, cost R$ 22.5 mil, gain R$ 22.5 mil) -> IR 15% on 31/01; no engine rebalance after the first
+    dias = DIAS
+    alvos = pd.DataFrame({"A": [1.0]}, index=dias[[1]])
+    resultado = ResultadoBacktest("manual", "teste", pd.Series(1.0, index=dias), alvos, pd.Series([1.0], index=alvos.index), 0.0)
+    retornos = pd.DataFrame({"A": [0.0, 1.0, 0.0, 0.0]}, index=dias[1:])
+    share = pd.Series([1.0, 1.0, 0.25, 0.25, 0.25], index=dias)
+    refeita = refazer(resultado, retornos, capital=30_000.0, overlay=_overlay(dias, share))
+    assert refeita.impostos.to_dict() == pytest.approx({pd.Timestamp("2024-01-31"): 0.15 * 22_500.0})
+    assert refeita.valores.loc["2024-01-31"] == pytest.approx(60_000.0 - 0.15 * 22_500.0)
+
+
+def test_overlay_gap_inside_the_band_sends_no_order():
+    resultado, retornos = _dobra_e_divide()
+    dias = resultado.valores.index
+    share = pd.Series([1.0, 0.95, 1.0, 1.0, 1.0], index=dias)     # 29/01 is between the two rebalances
+    plain = refazer(resultado, retornos, capital=30_000.0)
+    com = refazer(resultado, retornos, capital=30_000.0, overlay=_overlay(dias, share, band=0.10))
+    pd.testing.assert_series_equal(com.valores, plain.valores, rtol=1e-12)
+
+
+def test_overlay_order_waits_one_session_after_a_five_percent_loss():
+    # A falls 10% on 29/01: no order at that close; the 0.25 share is applied at the close of 30/01
+    dias = DIAS
+    alvos = pd.DataFrame({"A": [1.0]}, index=dias[[0]])
+    retornos = pd.DataFrame({"A": [0.0, -0.10, 0.10, 0.10, 0.0]}, index=dias)
+    resultado = ResultadoBacktest("manual", "teste", pd.Series(1.0, index=dias.insert(0, pd.Timestamp("2024-01-25"))),
+                                  alvos, pd.Series([1.0], index=alvos.index), 0.0)
+    share = pd.Series(0.25, index=resultado.valores.index).where(resultado.valores.index >= "2024-01-29", 1.0)
+    refeita = refazer(resultado, retornos, capital=100.0, com_ir=False, overlay=_overlay(resultado.valores.index, share))
+    # 100 -> 90 on 29/01 (frozen) -> 99 on 30/01 (full) -> share 0.25 from the 30/01 close: +10% on 24.75
+    assert refeita.valores.loc["2024-01-30"] == pytest.approx(99.0)
+    assert refeita.valores.loc["2024-01-31"] == pytest.approx(99.0 + 0.10 * 24.75)
+
+
+def test_overlay_with_the_no_trade_zone_is_refused():
+    resultado, retornos = _motor()
+    with pytest.raises(ValueError, match="overlay"):
+        refazer(resultado, retornos, 100.0, liquidez=_liquidez_constante(), zona=ZonaNoMotor(),
+                overlay=_overlay(resultado.valores.index))
+
+
+def test_overlay_missing_a_session_is_refused():
+    resultado, retornos = _motor()
+    with pytest.raises(ValueError, match="exposure"):
+        refazer(resultado, retornos, 100.0, overlay=_overlay(resultado.valores.index[5:]))

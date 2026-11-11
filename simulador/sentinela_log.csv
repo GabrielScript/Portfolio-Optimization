@@ -144,3 +144,8 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-11T09:20:47,PETR4,juiz:d1-ultra,,,,0.6439102066122557,cvm-6f849c626a51,,p_nova=0.8292,,182,,,7.644e-06,
 2026-11-11T09:20:47,PETR4,juiz:d1.1,,,,0.11206635780765958,mercado-07b5f238e6ef,,p_nova=0.3954,,191,,,3.82e-06,
 2026-11-11T09:20:47,PETR4,juiz:d1-ultra,,,,0.1022889686841784,mercado-07b5f238e6ef,,p_nova=0.6662,,191,,,8.022e-06,
+2026-11-11T19:19:01,LEVE3,varredura_descartada,,,,,cvm-a390c438b4ee,"o número 17,20 do resumo não está nas citações",,,782,384.0,140.0,0.00014485,
+2026-11-11T19:19:01,LEVE3,varredura,sem_evento,,,,cvm-a390c438b4ee,,"O único item novo é o aviso de videoconferência de divulgação dos resultados do 3T26, divulgação rotineira de calendário. Nenhum item do pack indica fraude, inadimplência, sanção ou perda relevante de valor para a companhia.",[],930,768.0,126.0,0.0001022,
+2026-11-11T19:19:01,LEVE3,juiz:d1.1,,,,0.17666811300283694,cvm-a390c438b4ee,,p_nova=0.2186,,187,,,3.74e-06,
+2026-11-11T19:19:01,LEVE3,juiz:d1-ultra,,,,0.20065407152465808,cvm-a390c438b4ee,,p_nova=0.3790,,187,,,7.854e-06,
+2026-11-11T19:19:01,,resumo,,,,,,,,,,,,,

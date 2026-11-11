@@ -183,7 +183,8 @@ def refazer(resultado: ResultadoBacktest, retornos: pd.DataFrame, capital: float
         elif overlay is not None and posicoes.sum() > 0.0:
             patrimonio = float(posicoes.sum()) + caixa
             parte = float(overlay.exposure.loc[anterior])
-            diarios_do_patrimonio = pd.Series(valores, dtype=float).pct_change().dropna()
+            recentes = valores[-(overlay.limits.pregoes_congelados + 1):]
+            diarios_do_patrimonio = pd.Series(recentes, dtype=float).pct_change().dropna()
             if (abs(parte - float(posicoes.sum()) / patrimonio) > overlay.band + 1e-12
                     and pode_negociar(diarios_do_patrimonio, overlay.limits)):
                 mes_da_liquidez = (anterior.to_period("M") - 1).to_timestamp()

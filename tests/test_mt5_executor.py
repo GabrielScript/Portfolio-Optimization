@@ -143,3 +143,10 @@ def test_a_dry_run_prints_the_orders_and_writes_nothing(pastas) -> None:
 def test_the_books_cash_comes_from_its_fills() -> None:
     fills = pd.DataFrame({"side": ["buy", "sell"], "volume": [100, 50], "price": [10.0, 12.0], "commission": [1.0, 0.5]})
     assert ex.caixa(fills) == pytest.approx(100_000 - 1_000 - 1.0 + 600 - 0.5)
+
+
+def test_options_ignore_the_launchers_own_arguments(monkeypatch) -> None:
+    monkeypatch.setattr("sys.argv", ["scripts/rodar_paper.py", "mt5_executor"])     # how the Windows task calls it
+    opcoes = ex.ler_opcoes(None)
+    assert not opcoes.simular and not opcoes.leitura
+    assert ex.ler_opcoes(["--simular"]).simular

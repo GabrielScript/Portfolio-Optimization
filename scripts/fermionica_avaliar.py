@@ -6,7 +6,8 @@ The one reading of the fermionic (determinantal) selection on the Composite scor
 
 Per phase: the anchor first (the Composite's own strategy must be attempt 51's published curve, and theta = 1e6 must
 pick the Composite's names or, on a score tie, names of the same total score), then the arm (theta = 1)
-next to the Composite, BOVA11 and the CDI: metrics, calendar years and the picks' profile.
+next to the Composite, BOVA11 and the CDI: metrics, calendar years and the picks' profile. The first reading's C
+(``covariance_correlation``) is passed explicitly: the module's default changed in the second reading.
 """
 
 from __future__ import annotations
@@ -23,7 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
-from core.fermionica import THETA, estrategia_fermionica  # noqa: E402
+from core.fermionica import THETA, covariance_correlation, estrategia_fermionica  # noqa: E402
 from scripts import avaliar_conservadora, avaliar_robustez  # noqa: E402
 from scripts.avaliar_robustez import FASES, _acoes, contar_tentativas, referencias  # noqa: E402
 from scripts.avaliar_universo_dinamico import ANOS_DE_CDI, CFG_BT  # noqa: E402
@@ -105,9 +106,11 @@ def main() -> int:
         desvio = float((referencia / composite - 1.0).abs().max())
         if not desvio < ANCHOR_TOL:
             raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay is {desvio:.2e} off its curve")
-        rodar(estrategia_fermionica(nota, dados.setores, THETA_ANCHOR, registro=reg_ancora), "anchor")
+        rodar(estrategia_fermionica(nota, dados.setores, THETA_ANCHOR, registro=reg_ancora,
+                                    correlation=covariance_correlation), "anchor")
         empates = anchor_ties(reg_ancora, do_composite)
-        braco = rodar(estrategia_fermionica(nota, dados.setores, THETA, registro=reg_braco), ARM)
+        braco = rodar(estrategia_fermionica(nota, dados.setores, THETA, registro=reg_braco,
+                                            correlation=covariance_correlation), ARM)
         indice = braco.valores.index
         curvas = {ARM: braco.valores, COMPOSITE: composite,
                   "BOVA11": referencias(dados.precos.loc[:LAST_SESSION].iloc[fase:], CFG_BT)["BOVA11"].valores

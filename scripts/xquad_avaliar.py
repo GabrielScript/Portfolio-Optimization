@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.config import taxa_anual_para_aritmetica  # noqa: E402
-from core.metrics import cagr, comparar_benchmark, drawdown, retornos_de_valores  # noqa: E402
+from core.metrics import cagr, comparar_benchmark, drawdown, retornos_de_valores, sharpe, sortino  # noqa: E402
 from core.qpo import CFG_MAX_SHARPE, recorded_selector, selection_then_max_sharpe  # noqa: E402
 from core.robustez import psr_da_diferenca  # noqa: E402
 from scripts import avaliar_conservadora, avaliar_robustez  # noqa: E402
@@ -74,11 +74,9 @@ def metricas(curvas: dict[str, pd.Series], rf: pd.Series, n: int) -> pd.DataFram
             continue
         r = retornos_de_valores(valores)
         ex = r - rf.reindex(r.index).fillna(0.0)
-        baixo = ex[ex < 0].std() * np.sqrt(252)
         mdd = drawdown(valores)[1]
-        linha = {"CAGR": cagr(valores), "Vol": float(r.std() * np.sqrt(252)),
-                 "Sharpe": float(ex.mean() * 252 / (r.std() * np.sqrt(252))),
-                 "Sortino": float(ex.mean() * 252 / baixo) if baixo > 0 else np.nan, "MDD": mdd,
+        linha = {"CAGR": cagr(valores), "Vol": float(r.std() * np.sqrt(252)), "Sharpe": sharpe(ex),
+                 "Sortino": sortino(ex), "MDD": mdd,
                  "Calmar": cagr(valores) / abs(mdd) if mdd < 0 else np.nan}
         if nome != COMPOSITE:
             c = comparar_benchmark(valores, curvas[COMPOSITE], rf)

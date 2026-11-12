@@ -3,6 +3,8 @@ The one reading of three design choices of the Composite found in the code revie
 (``docs/superpowers/specs/2026-11-11-composite-variants-design.md``, committed before any number).
 
     ../Portfolio-Optimization/.venv/Scripts/python -X utf8 scripts/composto_variantes_avaliar.py > docs/composto-variantes-2026-11-11.txt
+    ... scripts/composto_variantes_avaliar.py setor > docs/composto-sem-teto-2026-11-11.txt
+    (``docs/superpowers/specs/2026-11-11-composite-sector-cap-design.md``: the Composite without the sector cap)
 
 Per phase: the anchor (the Composite's replay is attempt 51's published curve), then the four arms next to the
 Composite, the Conservadora, BOVA11 and the CDI.
@@ -27,7 +29,8 @@ from core.composto_variantes import neutral_composite_score  # noqa: E402
 from core.config import ConfigBacktest  # noqa: E402
 from core.crescimento_lucro import nota_de_crescimento  # noqa: E402
 from core.metrics import comparar_benchmark  # noqa: E402
-from core.sinais import conservadora, estrategia_conservadora  # noqa: E402
+from core.risco import LIMITES, Limites  # noqa: E402
+from core.sinais import NOMES, POR_SETOR, conservadora, estrategia_conservadora  # noqa: E402
 from core.valor import NotaDoMes  # noqa: E402
 from core.views import nota_media_dos_escores  # noqa: E402
 from scripts import avaliar_conservadora, avaliar_robustez, avaliar_valor  # noqa: E402
@@ -48,6 +51,12 @@ CURVES_FILE = CURVAS_51.parent / "composto-variantes-curvas-2026-11-11.parquet"
 class Arm:
     cfg: ConfigBacktest
     neutral: bool = False
+    por_setor: int = POR_SETOR
+
+    @property
+    def limites(self) -> Limites:
+        """The house limits; a research arm above 4 per sector lifts the 30% sector rule it is testing."""
+        return LIMITES if self.por_setor <= POR_SETOR else replace(LIMITES, teto_setor=1.0)
 
     @property
     def offset(self) -> int:
@@ -59,6 +68,9 @@ ARMS = {"Composite-21": Arm(replace(CFG_BT, janela_teste=MONTHLY)),
         "Composite-3y": Arm(replace(CFG_BT, janela_treino=THREE_YEARS)),
         "Composite-neutral": Arm(CFG_BT, neutral=True),
         "Composite-all": Arm(replace(CFG_BT, janela_teste=MONTHLY, janela_treino=THREE_YEARS), neutral=True)}
+SECTOR_ARMS = {"Composite-sem-teto": Arm(CFG_BT, por_setor=NOMES)}
+FAMILIES = {"variantes": (ARMS, CURVES_FILE),
+            "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet")}
 
 
 def neutral_score(mensal) -> NotaDoMes:
@@ -88,7 +100,8 @@ def profile(registro: dict, do_composite: dict, resultado: ResultadoBacktest) ->
             "shared": float(np.mean(comuns)) if comuns else float("nan"), "extra cost at 30 bps": EXTRA_COST * giro}
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
+    arms, curves_file = FAMILIES[argv[0] if argv else "variantes"]
     inicio = time.perf_counter()
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
@@ -98,10 +111,10 @@ def main() -> int:
     cdi = with_retries(lambda: market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE))
     publicadas = pd.read_parquet(CURVAS_51)
     precos = dados.precos.loc[:LAST_SESSION]
-    n = contar_tentativas() + len(ARMS)
-    print(f"DSR N {n} (with these {len(ARMS)} rows); arms {list(ARMS)}; data to {LAST_SESSION:%d/%m/%Y}")
+    n = contar_tentativas() + len(arms)
+    print(f"DSR N {n} (with these {len(arms)} rows); arms {list(arms)}; data to {LAST_SESSION:%d/%m/%Y}")
 
-    gate: dict[str, list[tuple[float, float]]] = {nome: [] for nome in ARMS}
+    gate: dict[str, list[tuple[float, float]]] = {nome: [] for nome in arms}
     salvas = []
     for fase in FASES:
         def rodar(estrategia: Estrategia, nome: str, arm: Arm = Arm(CFG_BT)) -> ResultadoBacktest:
@@ -119,9 +132,10 @@ def main() -> int:
               f"{desvio:.1e} ===", flush=True)
 
         curvas, perfis = {}, {COMPOSITE: profile(do_composite, do_composite, replay)}
-        for nome, arm in ARMS.items():
+        for nome, arm in arms.items():
             registro: dict = {}
-            braco = rodar(recording(estrategia_por_nota(notas[arm.neutral], dados.setores), registro), nome, arm)
+            estrategia = estrategia_por_nota(notas[arm.neutral], dados.setores, por_setor=arm.por_setor, limites=arm.limites)
+            braco = rodar(recording(estrategia, registro), nome, arm)
             if not braco.valores.index.equals(indice):
                 raise SystemExit(f"phase {fase}: {nome} does not share the Composite's dates")
             curvas[nome], perfis[nome] = braco.valores, profile(registro, do_composite, braco)
@@ -145,19 +159,19 @@ def main() -> int:
         print("Calendar years:")
         print(_year_table({k: v for k, v in curvas.items() if k != CONSERVADORA})
               .to_string(float_format=lambda x: f"{x:.1%}"))
-        for nome in ARMS:
+        for nome in arms:
             gate[nome].append((float(tabela.loc[nome, "P[> Comp]"]), float(tabela.loc[nome, "DSR"])))
         print(f"(phase {fase} done in {time.perf_counter() - inicio:.0f} s)", flush=True)
 
-    pd.concat(salvas).to_parquet(CURVES_FILE, index=False)
-    print(f"\nCurves saved: {CURVES_FILE.name}")
+    pd.concat(salvas).to_parquet(curves_file, index=False)
+    print(f"\nCurves saved: {curves_file.name}")
     print(f"\nGate per arm (P[> Composite] >= {P_MIN} and DSR >= {DSR_MIN} in every phase):")
     for nome, leituras in gate.items():
         passa = all(p >= P_MIN and d >= DSR_MIN for p, d in leituras)
         print(f"  {nome}: {[(round(p, 3), round(d, 3)) for p, d in leituras]} -> "
-              + ("CANDIDATE (family of 4: forward fictitious account only)" if passa else "fails"))
+              + ("CANDIDATE (forward fictitious account only)" if passa else "fails"))
     return 0
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

@@ -73,3 +73,5 @@ data,script,configuracao
 2026-11-07,herc_avaliar_b3.py,"HERC-CDaR-15: the Composite picks (15 names, 4 per sector) weighted by HERC-CDaR with 4 clusters, caps 20%/30%, every 63 sessions"
 2026-11-08,mars_avaliar_b3.py,"MARS-50: the AAAI-26 MARS method (10 DDPG safety-critic agents, theta 0.10-0.55, lambda 5.5-1.0, meta-adaptive controller, rule overlay 20% cap, 2% cash) trading daily the year's 50 most traded B3 names on price, MACD, RSI, CCI, ADX; 5y train, 1y validation, yearly walk-forward 2010-2026; 3 seeds, equal capital; 10 bps per side"
 2026-11-08,mars_avaliar_b3.py,"MARS-50+score: MARS-50 with the Composite's monthly score percentile as a sixth feature per asset"
+2026-11-12,mars_avaliar_b3.py,"MARS-50R: MARS with three learning repairs (critic on the raw action, cost once, controller on current critics), 50 names, seeds 42/0/1 in equal capital, Kaggle GPU"
+2026-11-12,mars_avaliar_b3.py,"MARS-50R+score: MARS-50R with the Composite score as an input, seeds 42/0/1 in equal capital, Kaggle GPU"

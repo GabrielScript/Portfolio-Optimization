@@ -33,6 +33,7 @@ COMPACT_WIDTH = 6
 RETURN_WINDOWS = (1, 5, 21, 252)  # sessions of each return the compact and cross observations carry
 VOL_WINDOW = 63
 Z_CLIP = 3.0
+MIN_WARMUP = 63                  # sessions with an eligible market a warm start needs; fewer: the cold start
 LOGIT_BOUND = 10.0               # SB3 needs a bounded box; a softmax needs far less range than this
 
 
@@ -141,6 +142,7 @@ class PortfolioEnv(Env):
         self._rate = panel.cdi                                       # what "dsr_cdi" measures the return against
         self._market = panel.market
         contagem = self._eligible[:-1].sum(axis=1)
+        self._market_open = contagem > 0
         self._market_return = np.where(contagem > 0, (self._forward * self._eligible[:-1]).sum(axis=1)
                                        / np.maximum(contagem, 1), 0.0)       # equal-weighted, row t: from t to t + 1
         self._log = np.log1p(self._forward)
@@ -171,12 +173,18 @@ class PortfolioEnv(Env):
         """The first ``(A, B)`` of the differential Sharpe ratio: the mean and mean square of the equal-weighted market
         of this environment's names over the ``dsr_warmup`` sessions realized by the first row, measured as the reward
         measures the book. From ``(0, 0)`` the variance estimate grows from nothing, and the reward of session ``k``
-        is about ``1 / sqrt(k * ETA)`` times its steady-state size."""
+        is about ``1 / sqrt(k * ETA)`` times its steady-state size.
+
+        Only sessions where some name was eligible count: at the start of the tape no name has its 252 closes, the
+        "market" earns exactly 0, and its excess over the CDI has a variance of about 1e-10, which made the ratio pay
+        rewards of 1e4 to 1e6 (found by a probe of the v3 review). With fewer than ``MIN_WARMUP`` such sessions the
+        start is cold."""
         inicio = max(0, self.t - self.config.dsr_warmup)
-        mercado = self._market_return[inicio:self.t]
+        aberto = self._market_open[inicio:self.t]
+        mercado = self._market_return[inicio:self.t][aberto]
         if self.config.reward == "dsr_cdi":
-            mercado = mercado - self._rate[inicio:self.t]
-        if len(mercado) < 2:
+            mercado = mercado - self._rate[inicio:self.t][aberto]
+        if self.config.dsr_warmup == 0 or len(mercado) < MIN_WARMUP:
             return 0.0, 0.0
         return float(mercado.mean()), float((mercado * mercado).mean())
 

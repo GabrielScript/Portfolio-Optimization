@@ -170,3 +170,13 @@ def test_the_score_enters_as_one_more_standardized_input_and_a_missing_score_as_
     assert quadro[:4, 6] == pytest.approx([-1.2247449, 0.0, 0.0, 1.2247449])
     with pytest.raises(ValueError, match="scores"):
         _cross_env(precos, 300, observation="cross_score")
+
+
+def test_a_warm_start_over_a_market_with_no_eligible_name_falls_back_to_a_cold_start() -> None:
+    """Found by a probe of the v3 review: at the start of the tape no name has 252 closes yet, so the 'market' earns
+    exactly 0 and its excess over the CDI has a variance of about 1e-10; the ratio then pays rewards of 1e4-1e6."""
+    precos = random_prices(sessions=700, names=4, seed=9)
+    env = _env(precos, start=302, cdi=0.0004, history=300, reward="dsr_cdi", dsr_warmup=252)
+    assert (env._a, env._b) == (0.0, 0.0)                           # too few sessions with an eligible market
+    tarde = _env(precos, start=650, cdi=0.0004, history=300, reward="dsr_cdi", dsr_warmup=252)
+    assert tarde._b - tarde._a ** 2 > 1e-6                          # with a year of eligible market, a warm start

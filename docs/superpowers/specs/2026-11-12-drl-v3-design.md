@@ -35,12 +35,12 @@ sample means (the paper's comparator).
 
 ## What it found elsewhere (reviewed, not rerun)
 
-- `mars.py`: (a) the critic is trained on the executed action and differentiated at the raw one, which the overlay
-  cuts by a large factor whenever cash binds, so the actor's gradient is taken outside the critic's data; (b) the
-  reward subtracts the cost a second time (the value already nets it); (c) the meta controller is trained on Q and C
-  stored when each transition was collected, most of them from untrained critics; (d) a name is sold whole on its
-  last close, which is known only afterwards. None touches the measured curve's accounting. Not rerun here: MARS
-  needs GPU hours beyond the free credit, and (a)-(c) are the paper's own algorithm in two of three cases.
+- `mars.py`: four choices weaken its learning: (a) the critic is trained on the executed action and differentiated
+  at the raw one, which the overlay cuts by a large factor whenever cash binds; (b) the reward subtracts the cost a
+  second time (the value already nets it); (c) the meta controller is trained on Q and C stored when each transition
+  was collected, most of them from untrained critics; (d) a name is sold whole on its last close, known only
+  afterwards. All four are written in MARS's own pre-registration (`2026-11-08-mars-design.md`, section 4) as the
+  paper's algorithm: the code does what was registered, and none touches the measured curve's accounting.
 - `kan.py`, `qml_sinal.prever_torch`: no defect found.
 
 ## v3 environment (all four arms)
@@ -105,3 +105,14 @@ direct arms would take about five hours there; one PPO rollout and update of the
   universe has 227; 2024, 206 and 285. Defect 7 left out about a third of the names of the training years.
 - Today's lake export cut at 2026-11-06 reproduces the v2 rule cells of 2012, 2019 and 2026 to the last digit, so
   the three rules are not rerun: their cells (`drl/saidas/2026-11-10-rules`) are read with the new arms.
+
+## Second amendment, while the PPO arms were training (2026-11-12, no PPO number read)
+
+A probe of the review found a defect of this version's own warm start: in 2006 no name has its 252 closes yet for
+the first sessions, the equal-weighted "market" behind the first `(A, B)` earns exactly 0, its excess over the CDI
+has a variance of about 1e-10, and the reward of an episode starting there reached 1e4 to 1e6. Fixed with a test:
+the warm start counts only sessions with an eligible name and needs 63 of them, else the start is cold.
+
+- Only the training stretch of the 2012 window reaches those rows (2006). The 2012 cells of `ppo/dsr_cdi` and
+  `ppo_shared/dsr_cdi` trained on the defect are deleted unread and trained again on the fixed code.
+- The direct arms never use the reward (their loss is the Sharpe of the episode), so their cells stand.

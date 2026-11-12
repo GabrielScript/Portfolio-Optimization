@@ -269,3 +269,19 @@ def families(data: InnovationData, sectors: Mapping[str, str], monthly_returns: 
     """The five families of the spec, by their letters."""
     return {"S": diffusion_score(data), "E": encroachment_score(data), "B": effort_score(data, sectors),
             "P": patent_score(data), "X": convexity_score(monthly_returns)}
+
+
+WIPO_FIELDS = list(range(1, 36))
+
+
+def field_counts(data: InnovationData, month: pd.Timestamp) -> pd.DataFrame:
+    """issuer x the 35 WIPO fields: applications published in P1's 60-month window (ending at
+    ``min(month, SNAPSHOT_HOLD)``), each adding 1 to each distinct field it has."""
+    end = min(month, SNAPSHOT_HOLD)
+    held = issuer_patents(data, end)
+    held = held[held["known_from"] >= end - pd.DateOffset(months=PATENT_MONTHS)]
+    exploded = held[["issuer", "fields"]].explode("fields").dropna(subset=["fields"])
+    if exploded.empty:
+        return pd.DataFrame(columns=WIPO_FIELDS, dtype=float)
+    table = pd.crosstab(exploded["issuer"], exploded["fields"].astype(int))
+    return table.reindex(columns=WIPO_FIELDS, fill_value=0)

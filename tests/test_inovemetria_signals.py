@@ -7,7 +7,7 @@ import pytest
 from core.inovemetria.data import InnovationData
 from core.inovemetria.diffusion import step_logistic
 from core.inovemetria.signals import (convexity_score, diffusion_score, effort_score, encroachment_score,
-                                      patent_components, patent_score)
+                                      field_counts, patent_components, patent_score)
 
 T = pd.Timestamp
 
@@ -151,3 +151,12 @@ def test_convexity_is_positive_for_an_accelerating_path():
     score = convexity_score(returns)(T("2020-01-01"), ["FAST3", "LINE3"])
     # the path is a random walk, so the OLS t is inflated: only the ranking is used (normal scores), not its scale
     assert score["FAST3"] > 3 and score["FAST3"] > score["LINE3"] + 10
+
+
+def test_field_counts_add_one_per_distinct_field_in_the_patent_window():
+    patents = [("PI1", "11111111", T("2017-01-01"), T("2018-06-01"), [4, 10]),
+               ("PI2", "11111111", T("2017-01-01"), T("2019-06-01"), [4]),
+               ("PI3", "11111111", T("2009-01-01"), T("2010-06-01"), [20])]           # older than 60 months
+    counts = field_counts(_data([], patents=patents, roots={"ACME": "11111111"}), T("2020-01-01"))
+    assert counts.loc["ACME", 4] == 2 and counts.loc["ACME", 10] == 1 and counts.loc["ACME", 20] == 0
+    assert list(counts.columns) == list(range(1, 36))

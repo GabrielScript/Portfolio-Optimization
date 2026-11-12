@@ -893,6 +893,13 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   chosen by score and by the log-determinant of their return correlation (theta 0.5), 4 per sector, 1/15 each
   (`core/fermionica_fantasma.py`, `core/fermionica.py`). The best of six determinantal arms, which failed the gate
   (DECISOES 344): followed forward next to the Composite, no claim before 252 sessions (DECISOES 348).
+- Refiled CVM statements (DECISOES 349): among the rows received before the decision month, the latest receipt of an
+  (issuer, account, period end) counts (`core.valor.documentos_conhecidos`); two of the same day that disagree are
+  left out. One decision of 66 changes in two of the three phases; the Composite baseline is 21.4 / 20.0 / 19.0%.
+- Research, none adopted (DECISOES 350; DSR union N 109): the Composite and the determinantal and von Neumann
+  selections at 5, 10, 20 and 30 names and theta 0.25 to 1, a selection of free size (grand-canonical) and weights
+  of largest von Neumann entropy (`core.diversidade.eic_weights`). Fifteen names is the peak; no arm passes the gate
+  (`docs/fermionica-grade-2026-11-11.txt`).
 - The Sentinela: the 06/11 seeding had marked the week's results filings as seen; a one-off run read them on 07/11
   (BBSE3, PSSA3 and LEVE3 `atencao`, no `grave`). It now reads each new Fato Relevante's text and asks a discarded
   answer again once (above). GPT-OSS-120B on Groq was checked on the 60 hand-labelled CVM filings: 67% right against

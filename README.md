@@ -900,6 +900,8 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   selections at 5, 10, 20 and 30 names and theta 0.25 to 1, a selection of free size (grand-canonical) and weights
   of largest von Neumann entropy (`core.diversidade.eic_weights`). Fifteen names is the peak; no arm passes the gate
   (`docs/fermionica-grade-2026-11-11.txt`).
+- Lake nightly (DECISOES 351): B3's open date "31/12/9999" is read as no date (`b3lake.b3events._br_date`); it had stopped
+  the gold insert on 11/11. The app shows only what the upkeep publishes after the lake releases its lock.
 - The Sentinela: the 06/11 seeding had marked the week's results filings as seen; a one-off run read them on 07/11
   (BBSE3, PSSA3 and LEVE3 `atencao`, no `grave`). It now reads each new Fato Relevante's text and asks a discarded
   answer again once (above). GPT-OSS-120B on Groq was checked on the 60 hand-labelled CVM filings: 67% right against

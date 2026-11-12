@@ -280,7 +280,7 @@ def field_counts(data: InnovationData, month: pd.Timestamp) -> pd.DataFrame:
     end = min(month, SNAPSHOT_HOLD)
     held = issuer_patents(data, end)
     held = held[held["known_from"] >= end - pd.DateOffset(months=PATENT_MONTHS)]
-    exploded = held[["issuer", "fields"]].explode("fields").dropna(subset=["fields"])
+    exploded = held[["issuer", "fields"]].explode("fields", ignore_index=True).dropna(subset=["fields"])
     if exploded.empty:
         return pd.DataFrame(columns=WIPO_FIELDS, dtype=float)
     table = pd.crosstab(exploded["issuer"], exploded["fields"].astype(int))

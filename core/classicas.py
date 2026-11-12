@@ -13,7 +13,8 @@ from collections.abc import Iterable, Mapping
 import pandas as pd
 
 from core.risco import emissor
-from core.valor import MESES_DE_IDADE_MAXIMA, Balancos, _conta, _fora_do_financeiro, valor_da_firma
+from core.valor import (MESES_DE_IDADE_MAXIMA, Balancos, _conta, _fora_do_financeiro, documentos_conhecidos,
+                        valor_da_firma)
 
 PESO_DO_DESEMPATE = 0.5         # book-to-market percentile x this: orders firms of equal F-score, never across them
 
@@ -26,7 +27,7 @@ def balancos_em_tres_anos(fundamentos: pd.DataFrame,
     the balances compare without seasonality), each also received before ``mes``. An issuer without one of those
     period ends is missing from that table.
     """
-    conhecidos = fundamentos[fundamentos["available_from"] < mes]
+    conhecidos = documentos_conhecidos(fundamentos, mes)
     ultimo = conhecidos.groupby("issuer")["dt_refer"].max()
     ultimo = ultimo[ultimo >= mes - pd.DateOffset(months=MESES_DE_IDADE_MAXIMA)]
     tabelas = []

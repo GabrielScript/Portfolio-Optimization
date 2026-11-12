@@ -165,3 +165,12 @@ def test_field_counts_add_one_per_distinct_field_in_the_patent_window():
 def test_a_single_quarter_has_no_diffusion_score():
     rows = _rows("ONEE", "revenue", [T("2010-12-31")], [235249.0])
     assert diffusion_score(_data(rows))(T("2012-01-01"), ["ONEE3"]).empty
+
+
+def test_a_month_before_any_filing_has_no_score_in_any_statement_family():
+    rows = _rows("ACME", "revenue", QUARTERS, _logistic(16)) + _effort_rows("ACME", (10, 30), (50, 50), -5, (100, 120))
+    data = _data(rows, activity={"ACME": "Varejo"}, roots={"ACME": "11111111"})
+    month = T("2010-02-01")
+    assert diffusion_score(data)(month, ["ACME3"]).empty and encroachment_score(data)(month, ["ACME3"]).empty
+    assert effort_score(data, {"ACME3": "Saúde"})(month, ["ACME3"]).empty
+    assert patent_score(data)(month, ["ACME3"]).empty

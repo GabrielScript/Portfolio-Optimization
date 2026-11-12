@@ -47,6 +47,8 @@ def _history(fundamentals: pd.DataFrame, month: pd.Timestamp, account: str) -> p
     """dt_refer x issuer of ``account`` received before ``month``, for issuers whose latest period end is recent."""
     rows = documentos_conhecidos(fundamentals[fundamentals["account"] == account], month)
     table = rows.pivot_table(index="dt_refer", columns="issuer", values="value", aggfunc="last").sort_index()
+    if table.empty:
+        return table
     fresh = table.apply(lambda c: c.last_valid_index()) >= month - pd.DateOffset(months=MESES_DE_IDADE_MAXIMA)
     return table.loc[:, fresh[fresh].index]
 

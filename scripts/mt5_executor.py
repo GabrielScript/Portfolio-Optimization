@@ -208,7 +208,7 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
 def leitura(terminal: Terminal, pastas: Pastas) -> None:
     with Corretora(terminal).conectar() as c:
         detidas = c.acoes_da_carteira()
-        fills = _ler(pastas.livro / "fills.csv")
+        fills = sincronizar_fills(c, pastas, _ler(pastas.livro / "execucoes.csv"), datetime.now())
         dinheiro = caixa(fills)
         valores = pd.Series({n: q * preco(c.cotacao(n)) for n, q in detidas.items()}, dtype=float)
     total = dinheiro + float(valores.sum())

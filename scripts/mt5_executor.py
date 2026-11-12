@@ -227,11 +227,17 @@ def _anotar(resultado: Resultado, inicio: datetime) -> None:
                            "desfecho": resultado.desfecho, "ordens": resultado.ordens, "nota": resultado.nota[:300]}])
 
 
-def main() -> int:
+def ler_opcoes(argv: list[str] | None) -> argparse.Namespace:
+    """The options from ``argv`` only, never from ``sys.argv``: the routines' launcher calls ``main()`` with its own
+    arguments still there (``rodar_paper.py mt5_executor``), which argparse would reject with exit 2."""
     argumentos = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     argumentos.add_argument("--simular", action="store_true")
     argumentos.add_argument("--leitura", action="store_true")
-    opcoes = argumentos.parse_args()
+    return argumentos.parse_args(argv if argv is not None else [])
+
+
+def main(argv: list[str] | None = None) -> int:
+    opcoes = ler_opcoes(argv)
     sys.path.insert(0, str(PACOTE_MT5))
     import MetaTrader5 as mt5
     if opcoes.leitura:
@@ -246,4 +252,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

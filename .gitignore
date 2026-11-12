@@ -157,3 +157,4 @@ docs/dados/*-anbima/*.xls
 .streamlit/secrets.toml
 .venv-drl
 drl/saidas/*.csv
+.venv-mt5

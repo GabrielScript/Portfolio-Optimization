@@ -1,0 +1,2 @@
+          cagr    vol  sharpe  sortino     mdd  calmar  turnover  total   years    names
+ppo/dsr 0.0609 0.2322 -0.0325  -0.0434 -0.5133  0.1187    2.0155 1.3732 15.0000 161.8000

@@ -14,6 +14,7 @@ import numpy as np
 
 SESSIONS = 252
 FIELDS = ("cagr", "vol", "sharpe", "sortino", "mdd", "calmar", "turnover", "total")
+CAPM_FIELDS = ("alpha", "beta", "t_alpha")
 
 
 def session_returns(values: Sequence[float] | np.ndarray) -> np.ndarray:
@@ -50,3 +51,29 @@ def metrics(values: Sequence[float] | np.ndarray, risk_free: Sequence[float] | n
             "calmar": float(cagr / abs(mdd)) if mdd < 0 else 0.0,
             "turnover": float(np.sum(turnover) / anos) if turnover is not None else 0.0,
             "total": total}
+
+
+def capm(values: Sequence[float] | np.ndarray, benchmark: Sequence[float] | np.ndarray,
+         risk_free: Sequence[float] | np.ndarray) -> dict[str, float]:
+    """
+    The house's CAPM line (``core.metrics.comparar_benchmark``): least squares of the curve's session return over the
+    risk-free rate on the benchmark's. ``alpha`` is a year's (252 x the intercept); ``t_alpha`` divides the intercept
+    by its Newey-West (1987) error, Bartlett kernel with ``floor(4 (T / 100) ** (2 / 9))`` lags, because the residual
+    of a daily portfolio return is autocorrelated and the plain error understates it.
+    """
+    r, b, rf = session_returns(values), session_returns(benchmark), np.asarray(risk_free, dtype=float)
+    if not r.shape == b.shape == rf.shape or len(r) < 3:
+        raise ValueError(f"the curve, the benchmark and the rate must cover the same sessions (at least three "
+                         f"returns): {len(r)}, {len(b)}, {len(rf)}")
+    regressores = np.column_stack([np.ones(len(r)), b - rf])
+    (intercepto, beta), *_ = np.linalg.lstsq(regressores, r - rf, rcond=None)
+    momentos = regressores * (r - rf - regressores @ np.array([intercepto, beta]))[:, None]
+    meio = momentos.T @ momentos
+    defasagens = int(np.floor(4 * (len(r) / 100) ** (2 / 9)))
+    for defasagem in range(1, defasagens + 1):
+        cruzado = momentos[defasagem:].T @ momentos[:-defasagem]
+        meio += (1 - defasagem / (defasagens + 1)) * (cruzado + cruzado.T)
+    inversa = np.linalg.inv(regressores.T @ regressores)
+    erro = float(np.sqrt(max((inversa @ meio @ inversa)[0, 0], 0.0)))
+    return {"alpha": float(intercepto * SESSIONS), "beta": float(beta),
+            "t_alpha": float(intercepto / erro) if erro > 0 else float("nan")}

@@ -12,6 +12,7 @@ pasted its numbers from another report, with a different risk-free rate and a dr
 from __future__ import annotations
 
 import argparse
+import itertools
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -21,14 +22,14 @@ import pandas as pd
 from drl.dados import Panel, load_panel
 from drl.executar import LAGO, SAIDAS, Cell, read_cell
 from drl.periodo import emendar
-from drl.relatorio import FIELDS, metrics
+from drl.relatorio import CAPM_FIELDS, FIELDS, capm, metrics
 
 
 def stitch(cells: Sequence[Cell]) -> tuple[pd.Series, np.ndarray]:
     """One curve (indexed by session) and the turnover of every decision, from the cells of one strategy. Each cell
     must start on the session the previous one ended on."""
     ordenadas = sorted(cells, key=lambda cell: cell.year)
-    for anterior, seguinte in zip(ordenadas, ordenadas[1:]):
+    for anterior, seguinte in itertools.pairwise(ordenadas):
         if seguinte.sessions[0] != anterior.sessions[-1]:
             raise ValueError(f"{anterior.strategy}: {seguinte.year} starts on {seguinte.sessions[0]}, but "
                              f"{anterior.year} ended on {anterior.sessions[-1]} (a year is missing)")
@@ -47,6 +48,24 @@ def curve_metrics(curva: pd.Series, panel: Panel, turnover: np.ndarray | None = 
     return metrics(curva.to_numpy(), panel.cdi[inicio:inicio + len(curva) - 1], turnover)
 
 
+def curve_capm(curva: pd.Series, benchmark: pd.Series, panel: Panel) -> dict[str, float]:
+    """The CAPM line of ``curva`` against ``benchmark`` on the curve's sessions, over the CDI of those sessions."""
+    referencia = benchmark.reindex(curva.index)
+    if referencia.isna().any():
+        raise ValueError("the benchmark does not cover every session of the curve")
+    inicio = int(panel.sessions.get_loc(curva.index[0]))
+    return capm(curva.to_numpy(), referencia.to_numpy(), panel.cdi[inicio:inicio + len(curva) - 1])
+
+
+def yearly_returns(curvas: dict[str, pd.Series]) -> pd.DataFrame:
+    """Calendar-year returns of each curve (rows: years); the first year is measured from the curve's first point."""
+    colunas = {}
+    for nome, curva in curvas.items():
+        fechos = curva.groupby(curva.index.year).last()
+        colunas[nome] = fechos / fechos.shift(1).fillna(curva.iloc[0]) - 1.0
+    return pd.DataFrame(colunas)
+
+
 def read_run(pasta: Path) -> dict[str, list[Cell]]:
     celulas: dict[str, list[Cell]] = {}
     for arquivo in sorted(pasta.glob("*.json")):
@@ -57,42 +76,65 @@ def read_run(pasta: Path) -> dict[str, list[Cell]]:
     return celulas
 
 
-def table(celulas: dict[str, list[Cell]], panel: Panel, composite: pd.Series | None = None) -> pd.DataFrame:
-    """One row per strategy over the years every strategy of the run has; the Composite reference on the same dates."""
-    anos = set.intersection(*(set(cell.year for cell in grupo) for grupo in celulas.values()))
+COMPOSITE_ROW = "Composite (house engine, reference)"
+
+
+def curves(celulas: dict[str, list[Cell]], composite: pd.Series | None = None, benchmark: pd.Series | None = None
+           ) -> tuple[dict[str, pd.Series], dict[str, np.ndarray], set[int]]:
+    """Each strategy's stitched curve over the years every strategy of the run has, every curve ending where the
+    shortest reference ends, and the Composite reference cut to the same sessions; each strategy's turnover; the
+    years."""
+    anos = set.intersection(*({cell.year for cell in grupo} for grupo in celulas.values()))
     if not anos:
         raise ValueError("the strategies of this run share no test year")
-    fim = None if composite is None else composite.index[-1]      # every row ends where the reference ends
-    linhas, janela = {}, None
+    fins = [serie.index[-1] for serie in (composite, benchmark) if serie is not None]
+    curvas, giros = {}, {}
     for estrategia, grupo in celulas.items():
-        curva, giro = stitch([cell for cell in grupo if cell.year in anos])
-        curva = curva if fim is None else curva.loc[:fim]
-        janela = curva.index
-        linhas[estrategia] = {**curve_metrics(curva, panel, giro), "years": len(anos),
-                              "names": float(np.mean([cell.names for cell in grupo if cell.year in anos]))}
-    if composite is not None and janela is not None:
-        recorte = composite.reindex(janela)
+        curva, giros[estrategia] = stitch([cell for cell in grupo if cell.year in anos])
+        curvas[estrategia] = curva.loc[:min(fins)] if fins else curva
+    if composite is not None:
+        recorte = composite.reindex(next(iter(curvas.values())).index)
         if recorte.isna().any():
             raise ValueError("the Composite curve does not cover every session of the run")
-        linhas["Composite (house engine, reference)"] = {**curve_metrics(recorte, panel), "years": len(anos),
-                                                         "names": 15.0}
-    return pd.DataFrame(linhas).T[[*FIELDS, "years", "names"]].sort_values("sharpe", ascending=False)
+        curvas[COMPOSITE_ROW] = recorte
+    return curvas, giros, anos
+
+
+def table(celulas: dict[str, list[Cell]], panel: Panel, composite: pd.Series | None = None,
+          benchmark: pd.Series | None = None) -> pd.DataFrame:
+    """One row per strategy over the years every strategy of the run has; the Composite reference on the same dates;
+    with a ``benchmark`` curve, the CAPM line of every row against it."""
+    curvas, giros, anos = curves(celulas, composite, benchmark)
+    linhas = {}
+    for nome, curva in curvas.items():
+        nomes = 15.0 if nome == COMPOSITE_ROW else float(np.mean([c.names for c in celulas[nome] if c.year in anos]))
+        linhas[nome] = {**curve_metrics(curva, panel, giros.get(nome)), "years": len(anos), "names": nomes}
+        if benchmark is not None:
+            linhas[nome] |= curve_capm(curva, benchmark, panel)
+    colunas = [*FIELDS, *(CAPM_FIELDS if benchmark is not None else ()), "years", "names"]
+    return pd.DataFrame(linhas).T[colunas].sort_values("sharpe", ascending=False)
 
 
 def main(argv: Sequence[str] | None = None) -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--lago", type=Path, default=LAGO)
     p.add_argument("--run", required=True)
-    p.add_argument("--composite", type=Path, default=None)
+    p.add_argument("--composite", type=Path, default=None, help="parquet with the columns date and Composite")
+    p.add_argument("--benchmark", default=None, help="a column of the same parquet (BOVA11) for the CAPM line")
     p.add_argument("--last-session", default=None)
     args = p.parse_args(argv)
     panel = load_panel(args.lago, args.last_session)
-    composite = None
+    composite = benchmark = None
     if args.composite is not None:
-        composite = pd.read_parquet(args.composite).set_index("date")["Composite"].dropna()
-        composite.index = pd.DatetimeIndex(pd.to_datetime(composite.index))
-    tabela = table(read_run(SAIDAS / args.run), panel, composite)
-    texto = tabela.to_string(float_format=lambda x: f"{x:.4f}")
+        referencias = pd.read_parquet(args.composite)
+        referencias = referencias.set_index(pd.DatetimeIndex(pd.to_datetime(referencias.pop("date"))))
+        composite = referencias["Composite"].dropna()
+        benchmark = None if args.benchmark is None else referencias[args.benchmark].dropna()
+    celulas = read_run(SAIDAS / args.run)
+    tabela = table(celulas, panel, composite, benchmark)
+    anuais = yearly_returns(curves(celulas, composite, benchmark)[0])[list(tabela.index)]
+    texto = (tabela.to_string(float_format=lambda x: f"{x:.4f}") + "\n\nCalendar-year returns\n"
+             + anuais.to_string(float_format=lambda x: f"{x:+.3f}"))
     (SAIDAS / args.run / "leitura.txt").write_text(texto + "\n", encoding="utf-8", newline="\n")
     print(texto)
     return 0

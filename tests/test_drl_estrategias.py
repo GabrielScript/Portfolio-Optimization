@@ -69,13 +69,16 @@ def test_a_rule_reads_only_returns_realized_before_its_decision() -> None:
 
 
 def test_on_policy_agents_get_a_value_head_and_off_policy_agents_a_q_head() -> None:
-    for algoritmo in agentes.ON_POLICY:
+    for algoritmo in ("ppo", "a2c"):
         assert set(agentes.policy_kwargs(algoritmo)["net_arch"]) == {"pi", "vf"}
         assert agentes.policy_kwargs(algoritmo)["log_std_init"] == agentes.LOG_STD_INIT
     for algoritmo in agentes.OFF_POLICY:                            # SAC included: it could never run before
         assert set(agentes.policy_kwargs(algoritmo)["net_arch"]) == {"pi", "qf"}
         assert "log_std_init" not in agentes.policy_kwargs(algoritmo)
         assert agentes.algorithm_kwargs(algoritmo, 1000)["buffer_size"] == agentes.REPLAY_BUFFER
+    assert agentes.policy_kwargs("ppo_shared", width=6) == {"width": 6, "log_std_init": agentes.LOG_STD_INIT}
+    with pytest.raises(ValueError):
+        agentes.policy_kwargs("ppo_shared")                         # the shared network must know the row's width
     with pytest.raises(ValueError):
         agentes.policy_kwargs("dqn")
 

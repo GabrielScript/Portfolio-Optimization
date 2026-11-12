@@ -39,6 +39,7 @@ class Panel:
     eligible: np.ndarray         # (sessions, names) bool
     cdi: np.ndarray              # (sessions - 1,) CDI from t to t + 1
     market: np.ndarray           # (sessions, 2) standardized vol20 and vol20 / vol60 of the eligible market, known at t
+    scores: np.ndarray | None = None     # (sessions, names) an outside score known at t, NaN where there is none
 
     def __post_init__(self) -> None:
         sessoes, nomes = len(self.sessions), len(self.names)
@@ -49,6 +50,8 @@ class Panel:
             raise ValueError(f"shapes disagree: cdi {self.cdi.shape}, market {self.market.shape}")
         if not (np.isfinite(self.forward).all() and np.isfinite(self.cdi).all() and np.isfinite(self.market).all()):
             raise ValueError("the panel must hold no NaN or inf")
+        if self.scores is not None and self.scores.shape != (sessoes, nomes):
+            raise ValueError(f"shapes disagree: scores {self.scores.shape}, sessions {sessoes}, names {nomes}")
 
     def columns(self, names: list[str]) -> np.ndarray:
         """Positions of ``names`` in the panel."""
@@ -96,11 +99,21 @@ def market_features(forward: np.ndarray, eligible: np.ndarray) -> np.ndarray:
     return saida
 
 
-def build_panel(prices: pd.DataFrame, universe: pd.DataFrame, cdi: pd.Series, history: int = HISTORY) -> Panel:
+def score_matrix(scores: pd.DataFrame, months: pd.DatetimeIndex, names: pd.Index) -> np.ndarray:
+    """``scores`` (columns ``month``, ``security``, ``score``: the score of a month, known before its first session)
+    laid on the panel: one row per entry of ``months``, NaN where a name has no score that month."""
+    tabela = scores.assign(month=pd.to_datetime(scores["month"])).pivot(index="month", columns="security",
+                                                                         values="score")
+    return tabela.reindex(index=months, columns=names).to_numpy(dtype=float)
+
+
+def build_panel(prices: pd.DataFrame, universe: pd.DataFrame, cdi: pd.Series, history: int = HISTORY,
+                scores: pd.DataFrame | None = None) -> Panel:
     """
     ``prices``: total-return index, sessions x names, NaN where the name did not trade. ``universe``: columns ``month``
     and ``security``. ``cdi``: daily rate (a fraction, not percent) indexed by session; a session without a rate
-    accrues 0.
+    accrues 0. ``scores``: an outside monthly score (see ``score_matrix``); row ``t`` carries the score of the month
+    of session ``t + 1``, the month the decision earns in, as the eligible list does.
     """
     prices = prices.sort_index()
     sessoes = pd.DatetimeIndex(prices.index)
@@ -118,11 +131,14 @@ def build_panel(prices: pd.DataFrame, universe: pd.DataFrame, cdi: pd.Series, hi
         na_lista[np.asarray(meses == mes)] = coluna
     eligible = na_lista & (unbroken_run(validos) >= history)
     taxa = cdi.reindex(sessoes[1:]).fillna(0.0).to_numpy(dtype=float)
-    return Panel(sessoes, tuple(prices.columns), forward, eligible, taxa, market_features(forward, eligible))
+    notas = None if scores is None else score_matrix(scores, meses, prices.columns)
+    return Panel(sessoes, tuple(prices.columns), forward, eligible, taxa, market_features(forward, eligible), notas)
 
 
-def load_panel(folder: Path, last_session: str | pd.Timestamp | None = None, history: int = HISTORY) -> Panel:
-    """The panel from a folder of lake exports (``universe_prices``, ``universe_monthly``, ``cdi_daily``)."""
+def load_panel(folder: Path, last_session: str | pd.Timestamp | None = None, history: int = HISTORY,
+               scores: Path | None = None) -> Panel:
+    """The panel from a folder of lake exports (``universe_prices``, ``universe_monthly``, ``cdi_daily``) and,
+    for the arm that reads it, a parquet of monthly scores."""
     tabela = pd.read_parquet(folder / PRICES)
     prices = tabela.set_index(pd.DatetimeIndex(pd.to_datetime(tabela.pop("date")))).astype("float64")
     prices = prices.drop(columns=[nome for nome in NOT_STOCKS if nome in prices.columns])
@@ -131,4 +147,5 @@ def load_panel(folder: Path, last_session: str | pd.Timestamp | None = None, his
     universe = pd.read_parquet(folder / UNIVERSE, columns=["month", "security"])
     bruto = pd.read_parquet(folder / CDI)
     cdi = pd.Series(bruto["cdi_pct"].to_numpy(dtype=float) / 100.0, index=pd.DatetimeIndex(pd.to_datetime(bruto["date"])))
-    return build_panel(prices, universe, cdi[~cdi.index.duplicated(keep="last")].sort_index(), history)
+    return build_panel(prices, universe, cdi[~cdi.index.duplicated(keep="last")].sort_index(), history,
+                       None if scores is None else pd.read_parquet(scores))

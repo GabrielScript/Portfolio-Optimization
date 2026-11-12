@@ -36,24 +36,21 @@ imagem = imagem.add_local_python_source("drl")
 def one_cell(strategy: str, year: int, spec: dict) -> dict:
     """Runs one cell and returns it; a failure propagates, so the local entry point reports it by name."""
     from drl import executar, protocolo
-    from drl.ambiente import EnvConfig
     from drl.dados import load_panel
 
-    run_spec = executar.RunSpec(EnvConfig(**spec["env"]), tuple(spec["seeds"]), spec["timesteps"], spec["n_envs"],
-                                spec["last_session"])
+    run_spec = executar.spec_from_dict(spec)
     panel = load_panel(Path(REMOTE_LAKE), run_spec.last_session)
     janelas = {j.ano_teste: j for j in protocolo.janelas(panel.sessions, executar.FIRST_YEAR, executar.LAST_YEAR)}
     return asdict(executar.run_cell(panel, janelas[year], strategy, run_spec))
 
 
 @app.local_entrypoint()
-def main(run: str, strategies: str = "ppo/dsr", timesteps: int = 150_000, seeds: str = "0,1,2,3,4",
-         hold: int = 21, observation: str = "compact", cost_bps: float = 10.0, last_session: str = "",
+def main(run: str, strategies: str = "ppo/dsr_cdi", timesteps: int = 150_000, seeds: str = "0,1,2,3,4",
+         hold: int = 21, observation: str = "cross", cost_bps: float = 10.0, last_session: str = "",
          years: str = ""):
     from drl import executar
-    from drl.ambiente import EnvConfig
 
-    spec = executar.RunSpec(EnvConfig(cost_bps=cost_bps, hold=hold, observation=observation),
+    spec = executar.RunSpec(executar.corrected_env(cost_bps, hold, observation),
                             tuple(int(s) for s in seeds.split(",")), timesteps, 4, last_session or None)
     anos = ([int(ano) for ano in years.split(",")] if years
             else list(range(executar.FIRST_YEAR, executar.LAST_YEAR + 1)))

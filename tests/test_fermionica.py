@@ -139,3 +139,49 @@ def test_strategy_when_the_caps_admit_fewer_than_k_is_the_ranking_under_the_cap(
     pesos = estrategia_fermionica(_descending, setores, nomes=10, por_setor=2)(_treino(nomes))
     assert list(pesos.index) == list(carteira_da_nota(_descending(None, nomes), setores, 10, 2).index)
     assert len(pesos) == 8
+
+
+# the grand-canonical selection and the EIC weights (docs/superpowers/specs/2026-11-11-fermionic-size-grid-design.md)
+def test_names_per_sector_is_the_30_percent_rule_in_names():
+    from core.fermionica import names_per_sector
+    assert [names_per_sector(k) for k in (5, 8, 10, 12, 15, 20, 25, 30, 40, 50)] == [1, 2, 3, 3, 4, 6, 7, 9, 12, 15]
+
+
+def test_grand_canonical_picks_are_the_best_set_over_the_sizes():
+    from core.fermionica import grand_canonical_picks
+    for seed in range(4):
+        corr, z = _corr(9, seed), np.random.default_rng(seed).normal(size=9)
+        picks = grand_canonical_picks(z, corr, None, 0.5, sizes=(2, 3, 4, 5))
+        melhor = max(objective(z, corr, s, 0.5) for k in (2, 3, 4, 5) for s in itertools.combinations(range(9), k))
+        assert objective(z, corr, picks, 0.5) == pytest.approx(melhor)
+
+
+def test_grand_canonical_picks_without_correlation_are_the_names_of_positive_score():
+    from core.fermionica import grand_canonical_picks
+    z = np.array([1.5, -0.2, 0.7, -1.0, 0.1, -0.4, -0.9, -0.8])
+    assert grand_canonical_picks(z, np.eye(8), None, 0.5, sizes=(2, 3, 4, 5)) == (0, 2, 4)
+
+
+def test_grand_canonical_strategy_gives_equal_weights_on_a_size_of_the_grid_under_its_sector_cap():
+    from core.fermionica import estrategia_grande_canonica, names_per_sector
+    nomes = [f"A{i:03d}3" for i in range(40)]
+    setores = {nome: f"s{i % 8}" for i, nome in enumerate(nomes)}
+    registro = {}
+    pesos = estrategia_grande_canonica(_descending, setores, theta=0.5, tamanhos=(5, 8, 10, 15),
+                                       registro=registro)(_treino(nomes))
+    k, = registro.values()
+    assert k in (5, 8, 10, 15) and len(pesos) == k and pesos.to_numpy() == pytest.approx(1 / k)
+    assert pd.Series([setores[p] for p in pesos.index]).value_counts().max() <= names_per_sector(k)
+
+
+def test_eic_strategy_keeps_the_names_and_reweights_them_inside_the_house_caps():
+    from core.composto import estrategia_por_nota
+    from core.fermionica import com_pesos_eic
+    nomes = [f"A{i:03d}3" for i in range(40)]
+    setores = {nome: f"s{i % 8}" for i, nome in enumerate(nomes)}
+    treino = _treino(nomes)
+    base = estrategia_por_nota(_descending, setores)
+    pesos = com_pesos_eic(base, setores)(treino)
+    assert list(pesos.index) == list(base(treino).index) and pesos.sum() == pytest.approx(1.0)
+    assert pesos.max() <= 0.20 + 1e-6 and pesos.min() > 0 and pesos.std() > 1e-4
+    assert pesos.groupby(pd.Series(setores)).sum().max() <= 0.30 + 1e-6

@@ -69,13 +69,11 @@ class FakeTerminal:
 
 def test_connecting_raises_with_the_terminals_error_and_always_shuts_down() -> None:
     falso = FakeTerminal(ok=False)
-    with pytest.raises(TerminalError, match="Authorization failed"):
-        with Corretora(falso).conectar():
-            pass
+    with pytest.raises(TerminalError, match="Authorization failed"), Corretora(falso).conectar():
+        pass
     terminal = FakeTerminal()
-    with pytest.raises(RuntimeError):
-        with Corretora(terminal).conectar():
-            raise RuntimeError("boom")
+    with pytest.raises(RuntimeError), Corretora(terminal).conectar():
+        raise RuntimeError("boom")
     assert terminal.closed
 
 

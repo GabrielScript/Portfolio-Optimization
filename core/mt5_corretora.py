@@ -122,7 +122,7 @@ class Corretora:
                 continue
             sinal = 1 if p.type == self.t.POSITION_TYPE_BUY else -1
             nome = name_of(p.symbol)
-            acoes[nome] = acoes.get(nome, 0) + sinal * int(round(p.volume))
+            acoes[nome] = acoes.get(nome, 0) + sinal * round(p.volume)
         return pd.Series(acoes, dtype=int)
 
     def enviar(self, ordem: Order, limite: float, rotulo: str) -> Envio:
@@ -147,6 +147,6 @@ class Corretora:
             if d.magic != MAGIC or d.type not in (self.t.DEAL_TYPE_BUY, self.t.DEAL_TYPE_SELL):
                 continue
             lado: Side = "buy" if d.type == self.t.DEAL_TYPE_BUY else "sell"
-            fills.append(Fill(name_of(d.symbol), d.symbol, lado, int(round(d.volume)), float(d.price),
+            fills.append(Fill(name_of(d.symbol), d.symbol, lado, round(d.volume), float(d.price),
                               abs(float(d.commission)), _wall_clock(d.time), int(d.order)))
         return fills

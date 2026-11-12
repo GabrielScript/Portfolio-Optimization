@@ -209,3 +209,7 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-12T17:20:10,FIQE3,varredura,sem_evento,,,,cvm-be44993ce795,,"O único item novo é um Comunicado ao Mercado sobre a apresentação de resultados trimestrais, divulgação rotineira sem conteúdo que comprometa o valor da companhia. A queda recente de preço não é explicada por nenhum item do pack e não configura, por si só, perda permanente de capital.",[],929,512.0,142.0,0.00014929,
 2026-11-12T17:20:10,FIQE3,juiz:d1.1,,,,0.31086484280139615,cvm-be44993ce795,,p_nova=0.5789,,178,,,3.56e-06,
 2026-11-12T17:20:10,FIQE3,juiz:d1-ultra,,,,0.25236786828046404,cvm-be44993ce795,,p_nova=0.4753,,178,,,7.476e-06,
+2026-11-12T19:20:08,ALLD3,varredura,sem_evento,,,,cvm-5a33622c4714,,"O único item novo é um comunicado ao mercado sobre a apresentação da call de resultados do 3T26, divulgação rotineira. Nada indica impacto relevante sobre o valor da companhia.",[],767,512.0,99.0,9.919e-05,
+2026-11-12T19:20:08,ALLD3,juiz:d1.1,,,,0.0625809706951694,cvm-5a33622c4714,,p_nova=0.2673,,168,,,3.36e-06,
+2026-11-12T19:20:08,ALLD3,juiz:d1-ultra,,,,0.24316815744043135,cvm-5a33622c4714,,p_nova=0.5123,,168,,,7.056e-06,
+2026-11-12T19:20:08,,resumo,,,,,,,,,,,,,

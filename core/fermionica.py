@@ -1,7 +1,8 @@
 """
 fermionica.py - Determinantal (fermionic) and entropic selection on a score of the month
-(docs/superpowers/specs/2026-11-11-fermionic-portfolio-design.md and 2026-11-11-fermionic-v2-design.md). Research
-only: the app, the paper logs and the screen do not read this.
+(docs/superpowers/specs/2026-11-11-fermionic-portfolio-design.md and 2026-11-11-fermionic-v2-design.md). Research,
+plus the rule of the "Fermiônica" fictitious account (``core.fermionica_fantasma``): it must import on the app's
+requirements, which have no PySCIPOpt.
 
 The picks maximize, over |S| = k and the group caps,
 
@@ -15,6 +16,7 @@ L = diag(e^{theta z}) C diag(e^{theta z}): similar names repel. theta -> infinit
 from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
@@ -23,15 +25,23 @@ from core.backtest import CarteiraRecusada, Estrategia
 from core.diversidade import Diversity, log_det, shrunk_correlation
 from core.estimation import estimar_momentos
 from core.qpo import candidates
-from core.qubo_universo import FULL_UNIVERSE, GroupCaps
 from core.risco import LIMITES, Limites, checar_carteira
 from core.sinais import NOMES, POR_SETOR, carteira_da_nota
 from core.valor import NotaDoMes
 
 THETA = 1.0            # first reading: 0.2 of z-score is traded for removing a correlation of ~0.57 with the set
 SWAP_TOL = 1e-9        # a swap must raise F by more than this, relative to max(1, |F|)
+FULL_UNIVERSE = 10**6  # more names than the B3 lists: ``core.qpo.candidates`` keeps every eligible name
 
 Correlation = Callable[[pd.DataFrame], np.ndarray]      # training-window returns of the candidates -> C
+
+
+@dataclass(frozen=True)
+class GroupCaps:
+    """At most ``max_per_group`` picks share a group (the sector); ``groups`` is aligned with the candidates. Same
+    fields as ``core.qubo_universo.GroupCaps``, which cannot be imported here (that module needs PySCIPOpt)."""
+    groups: Sequence[str]
+    max_per_group: int
 
 
 def covariance_correlation(treino: pd.DataFrame) -> np.ndarray:

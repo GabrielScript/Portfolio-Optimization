@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from core.simulador import CAPITAL_ACOES, INICIO, Painel, quedas, retornos_recentes
+from core.fermionica_fantasma import CARTEIRA as FERMIONICA, INICIO as INICIO_FERMIONICA
 from core.mista import CARTEIRA as MISTA, INICIO as INICIO_MISTA
 from core.top5 import CARTEIRA as TOP5, INICIO as INICIO_TOP5
 from ui import formato, graficos
@@ -19,7 +20,9 @@ CARTEIRA_PRINCIPAL = "Composto"
 SOBRE_AS_CARTEIRAS = (f"A {TOP5} compra as 5 ações de maior nota da Composite, uma por setor, 20% cada, e começa no "
                       f"fechamento de {INICIO_TOP5:%d/%m/%Y}. A {MISTA} junta as 12 primeiras da Composite com as 3 "
                       f"BDRs americanas de maior momentum, 1/15 cada, já pagando 15% de Imposto de Renda sobre o lucro das BDRs, e "
-                      f"começa no fechamento de {INICIO_MISTA:%d/%m/%Y}.")
+                      f"começa no fechamento de {INICIO_MISTA:%d/%m/%Y}. A {FERMIONICA} escolhe 15 ações pela nota da "
+                      f"Composite, abrindo mão de um pouco de nota por ações que andam menos juntas, 1/15 cada, e "
+                      f"começa no fechamento de {INICIO_FERMIONICA:%d/%m/%Y}.")
 # fixed pt-BR decimals through a Styler (the finish review: "localized" dropped trailing zeros)
 REAIS_DAS_POSICOES = ["Fechamento na troca (R$)", "Valor (R$)"]
 PERCENTUAIS_DAS_POSICOES = ["Desde a troca", "Peso"]

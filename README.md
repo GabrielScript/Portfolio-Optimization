@@ -889,6 +889,10 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   against the Composite's 19-21%: equal weights inside the Composite stay. The four branches are pushed, not merged.
 - New ghost account "12/3" in the simulator from 09/11/2026: the Composite with 12 names plus the 3 US BDRs of highest
   12-1 momentum, 1/15 each, net of the 15% tax on BDR gains (`core/mista.py`, DECISOES 299).
+- New ghost account "Fermiônica" in the simulator from 12/11/2026: 15 names among every candidate with a Composite score,
+  chosen by score and by the log-determinant of their return correlation (theta 0.5), 4 per sector, 1/15 each
+  (`core/fermionica_fantasma.py`, `core/fermionica.py`). The best of six determinantal arms, which failed the gate
+  (DECISOES 344): followed forward next to the Composite, no claim before 252 sessions (DECISOES 348).
 - The Sentinela: the 06/11 seeding had marked the week's results filings as seen; a one-off run read them on 07/11
   (BBSE3, PSSA3 and LEVE3 `atencao`, no `grave`). It now reads each new Fato Relevante's text and asks a discarded
   answer again once (above). GPT-OSS-120B on Groq was checked on the 60 hand-labelled CVM filings: 67% right against

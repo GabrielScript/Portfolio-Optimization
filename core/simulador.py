@@ -20,8 +20,9 @@ CAPITAL_ACOES = 10_000.0          # the whole account in stocks (user, 2026-11-0
 CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in stocks (2026-11-03)
 # DeepSeek: the names of both rule portfolios it judges favorable; Controle: the same list in equal weights, no model
 # (DECISOES 240 and 251); Top-5: the Composite's 5 highest scores, one per sector (``core.top5.CARTEIRA``, DECISOES 290);
-# 12/3: the Composite with 12 names plus 3 US BDRs (``core.mista.CARTEIRA``, DECISOES 299)
-CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3")
+# 12/3: the Composite with 12 names plus 3 US BDRs (``core.mista.CARTEIRA``, DECISOES 299); Fermiônica: 15 names by
+# the Composite's score and the log det of their correlation (``core.fermionica_fantasma.CARTEIRA``, DECISOES 348)
+CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3", "Fermiônica")
 # a gain on a BDR or a BR-listed ETF pays 15% with no R$ 20 mil exemption; a R$ 10,000 account never sells R$ 20 mil of
 # stocks in a month, so stocks stay exempt. Only the 12/3 holds them (the user, 2026-11-07: the ghost net of that tax)
 CARTEIRAS_COM_IR = ("12/3", "12/3 (base)", "12/3 + Sentinela")    # the last two: core.sentinela.conta (2026-11-08)

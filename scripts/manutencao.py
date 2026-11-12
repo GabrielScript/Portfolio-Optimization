@@ -64,6 +64,7 @@ PASTA_LEITURAS_V3 = Path("paper-v3/leituras")
 ARQUIVO_CONSERVADORA_V3 = Path("paper-v3/conservadora.csv")
 ARQUIVO_TOP5 = Path("simulador/top5.csv")              # the Top-5 account's record (core.top5, DECISOES 290)
 ARQUIVO_MISTA = Path("simulador/mista_12_3.csv")       # the 12/3 account's record (core.mista, DECISOES 299)
+ARQUIVO_FERMIONICA = Path("simulador/fermionica.csv")  # the Fermiônica account's record (core.fermionica_fantasma, 348)
 ARQUIVO_SIMULADOR = Path("simulador/ordens.csv")        # the fictitious account's ledger
 ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious options account's ledger (DECISOES 259)
 ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
@@ -420,7 +421,7 @@ def ordens_do_simulador(raiz: Path, hoje: date, ordens: pd.DataFrame) -> pd.Data
     registros = {"Composto": pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"]),
                  "Conservadora": pd.read_csv(raiz / ARQUIVO_CONSERVADORA_V3, parse_dates=["data"])}
     for carteira, arquivo in (("DeepSeek", ARQUIVO_DEEPSEEK), ("Controle", ARQUIVO_CONTROLE), ("Top-5", ARQUIVO_TOP5),
-                              ("12/3", ARQUIVO_MISTA)):
+                              ("12/3", ARQUIVO_MISTA), ("Fermiônica", ARQUIVO_FERMIONICA)):
         if (raiz / arquivo).exists():
             registros[carteira] = pd.read_csv(raiz / arquivo, parse_dates=["data"])
     papeis = sorted({*ordens["ticker"], *(papel for registro in registros.values() for papel in registro["ticker"])})
@@ -533,6 +534,24 @@ def atualizar_mista(raiz: Path, git: Git, pesos_do_dia: Callable[[pd.Timestamp],
     return f"12/3: registro de {base}"
 
 
+def atualizar_fermionica(raiz: Path, git: Git, pesos_do_dia: Callable[[pd.Timestamp], pd.Series]) -> str:
+    """Appends the Fermiônica records due on the Composite's record (``core.top5.registros_devidos`` from
+    ``core.fermionica_fantasma.INICIO``; ``pesos_do_dia``: that module's ``pesos_do_dia``) and commits the file."""
+    from core import fermionica_fantasma, top5
+    if not (raiz / ARQUIVO_REGISTRO_V3).exists():
+        return "Fermiônica: sem o registro da Composite"
+    composto = pd.read_csv(raiz / ARQUIVO_REGISTRO_V3, parse_dates=["data"])
+    novas = top5.registros_devidos(composto, top5.ler(raiz / ARQUIVO_FERMIONICA), pesos_do_dia,
+                                   fermionica_fantasma.INICIO)
+    if not novas.empty:
+        top5.acrescentar(raiz / ARQUIVO_FERMIONICA, novas)
+    if not pendentes(git, [ARQUIVO_FERMIONICA.as_posix()]):
+        return "Fermiônica: em dia"
+    base = f"{top5.ler(raiz / ARQUIVO_FERMIONICA)['base'].max():%d/%m/%Y}"
+    commitar(git, [ARQUIVO_FERMIONICA.as_posix()], f"data: registro da Fermiônica de {base} (manutenção)")
+    return f"Fermiônica: registro de {base}"
+
+
 def atualizar_deepseek(raiz: Path, git: Git, gerar: Callable[[], str]) -> str:
     """Runs the DeepSeek portfolio's opinion when due (``gerar``: ``scripts/carteira_deepseek.py``, DECISOES 240) and
     commits its folder when it wrote files."""
@@ -552,15 +571,16 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              opcoes: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
              top5: Callable[[pd.Timestamp], pd.Series] | None = None,
              mista: Callable[[pd.Timestamp], pd.Series] | None = None,
-             opcoes_deep: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None
-             ) -> Resultado:
+             opcoes_deep: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
+             fermionica: Callable[[pd.Timestamp], pd.Series] | None = None) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
     the time (None: no headlines step); ``ler_leitura_v3`` runs ``paper_v3.py --leitura`` (None: no paper-v3 step);
     ``gerar_curvas`` runs ``scripts/curvas_ao_vivo.py`` (None: no live curves step); ``simular``: the account's orders
     due for its ledger (None: no simulator step); ``top5``: the Top-5 weights of a Composite record's close (None: no
-    Top-5 record step); ``opcoes`` / ``opcoes_deep``: the two options accounts' due rows (None: no such step)."""
+    Top-5 record step); ``mista`` / ``fermionica``: the same for the 12/3 and the Fermiônica accounts; ``opcoes`` /
+    ``opcoes_deep``: the two options accounts' due rows (None: no such step)."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -585,6 +605,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
         passos.append(("top-5", lambda: atualizar_top5(raiz, git, top5)))
     if mista is not None:                       # before the simulator, which trades its record
         passos.append(("12/3", lambda: atualizar_mista(raiz, git, mista)))
+    if fermionica is not None:                  # before the simulator, which trades its record
+        passos.append(("Fermiônica", lambda: atualizar_fermionica(raiz, git, fermionica)))
     if simular is not None:
         passos.append(("simulador", lambda: atualizar_simulador(raiz, git, simular, alertar)))
     if opcoes is not None:
@@ -722,6 +744,11 @@ def _pesos_da_mista(data: pd.Timestamp) -> pd.Series:
     return mista.pesos_do_dia(data)
 
 
+def _pesos_da_fermionica(data: pd.Timestamp) -> pd.Series:
+    from core import fermionica_fantasma
+    return fermionica_fantasma.pesos_do_dia(data)
+
+
 def main() -> int:
     agora = datetime.now()
     esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
@@ -735,7 +762,7 @@ def main() -> int:
                          opcoes=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas),
                          opcoes_deep=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas,
                                                                           _conta_deep()),
-                         top5=_pesos_do_top5, mista=_pesos_da_mista)
+                         top5=_pesos_do_top5, mista=_pesos_da_mista, fermionica=_pesos_da_fermionica)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

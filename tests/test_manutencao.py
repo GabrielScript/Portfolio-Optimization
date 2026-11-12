@@ -850,6 +850,59 @@ def test_a_run_with_the_12_3_step_records_it_before_the_simulator_trades(app):
     assert resultado.nota.index("12/3: registro de 27/10/2026") < resultado.nota.index("simulador:")
 
 
+def _quinze(data: pd.Timestamp) -> pd.Series:
+    return pd.Series(1 / 15, index=[f"P{i:02d}3.SA" for i in range(15)])
+
+
+def test_the_fermionic_step_records_the_composites_record_in_force_and_commits_it_once(app):
+    # the user, 2026-11-11 (DECISOES 348): the record the simulator trades for the "Fermiônica" account
+    from core import fermionica_fantasma, top5
+    from scripts.manutencao import ARQUIVO_FERMIONICA, atualizar_fermionica, git_em
+    _registro_do_composto(app, "2026-10-27")
+    git = git_em(app)
+    assert atualizar_fermionica(app, git, _quinze) == "Fermiônica: registro de 27/10/2026"
+    registro = top5.ler(app / ARQUIVO_FERMIONICA)
+    assert set(registro["data"]) == {fermionica_fantasma.INICIO} and len(registro) == 15
+    assert not git("status", "--porcelain", "--", str(ARQUIVO_FERMIONICA))
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_fermionica(app, git, lambda data: pytest.fail("no new Composite record")) == "Fermiônica: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
+def test_a_run_with_the_fermionic_step_records_it_before_the_simulator_trades(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    _registro_do_composto(app, "2026-10-27")
+    vistos = []
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 12, 22, 30), lambda: _saida(10),
+                         simular=lambda ordens: vistos.append((app / "simulador" / "fermionica.csv").exists()) or
+                         pd.DataFrame(), fermionica=_quinze)
+    assert resultado.desfecho == "ok" and vistos == [True]
+    assert resultado.nota.index("Fermiônica: registro de 27/10/2026") < resultado.nota.index("simulador:")
+
+
+def test_the_simulator_trades_the_fermionic_record_when_it_exists(app, monkeypatch):
+    from core import fermionica_fantasma, top5
+    from scripts import manutencao as m
+    (app / "lago").mkdir()
+    (app / "paper-v3").mkdir()
+    papeis = [f"P{i:02d}3" for i in range(15)]
+    dias = pd.bdate_range("2026-11-09", periods=4)
+    pd.DataFrame({"date": dias, **dict.fromkeys(papeis, 10.0), "BOVA11": 100.0, "IVVB11": 100.0}).to_parquet(
+        app / m.ARQUIVO_CALENDARIO, index=False)
+    for nome in ("composto", "conservadora"):
+        pd.DataFrame({"data": "2026-10-27", "ticker": papeis, "peso": 1 / 15, "preco": 9.0}).to_csv(
+            app / "paper-v3" / f"{nome}.csv", index=False)
+    top5.acrescentar(app / m.ARQUIVO_FERMIONICA, top5.registros_devidos(
+        pd.read_csv(app / "paper-v3" / "composto.csv", parse_dates=["data"]), top5.vazio(), _quinze,
+        fermionica_fantasma.INICIO))
+    monkeypatch.setattr("core.cdi_lago.daily_cdi", lambda _anos, _hoje: pd.Series(dtype=float))
+    from core.simulador import ler_ordens
+    novas = m.ordens_do_simulador(app, date(2026, 11, 12), ler_ordens(app / m.ARQUIVO_SIMULADOR))
+    assert set(novas.loc[novas["carteira"] == "Fermiônica", "data"]) == {fermionica_fantasma.INICIO}
+    assert set(novas.loc[novas["carteira"] == "Fermiônica", "ticker"]) == set(papeis)
+
+
 def test_a_run_updates_the_deep_options_account_right_after_the_first_one(app):
     from core.simulador_opcoes import COLUNAS, COLUNAS_MARCAS
     from scripts.manutencao import executar, git_em

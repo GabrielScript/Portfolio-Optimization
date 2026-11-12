@@ -53,6 +53,8 @@ CARTEIRAS = {
     "Top-5": ("Composite top-5", "as 5 ações de maior nota da Composite, no máximo uma por setor, 20% cada"),
     "12/3": ("12/3 com BDRs", "as 12 primeiras da Composite mais as 3 BDRs americanas de maior momentum, 1/15 cada, "
                               "com 15% de Imposto de Renda sobre o lucro das BDRs"),
+    "Fermiônica": ("Fermiônica", "15 ações escolhidas pela nota da Composite e pela baixa correlação entre elas, "
+                                 "em pesos iguais"),
 }
 
 

@@ -28,7 +28,7 @@ def test_the_message_says_what_it_is_names_each_portfolio_and_the_ones_without_o
     primeira = corpo.splitlines()[0]
     assert "conta fictícia" in primeira.lower() and "fechamento de 04/11/2026" in primeira and "dinheiro real" in primeira
     assert "DeepSeek: as ações que o assessor DeepSeek julgou favoráveis" in corpo
-    assert "Sem ordens nesta data: Composite, Conservadora, Controle, Composite top-5 e 12/3 com BDRs." in corpo
+    assert "Sem ordens nesta data: Composite, Conservadora, Controle, Composite top-5, 12/3 com BDRs e Fermiônica." in corpo
     assert ae.mensagem_das_ordens(_ordens().iloc[:1])[0] == "Aleph Quant (simulador): 1 ordem no fechamento de 04/11/2026"
 
 

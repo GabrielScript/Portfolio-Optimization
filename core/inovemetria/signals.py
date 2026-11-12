@@ -67,8 +67,8 @@ def _consecutive(series: pd.Series) -> tuple[np.ndarray, np.ndarray] | None:
     s = series.dropna().iloc[-QUARTERS_MAX:]
     if (s <= 0).any():
         return None
-    quarters = s.index.to_period("Q")
-    adjacent = (quarters[1:] - quarters[:-1]).map(lambda d: d.n) == 1
+    quarters = s.index.year.to_numpy() * 4 + (s.index.month.to_numpy() - 1) // 3   # quarter number
+    adjacent = np.diff(quarters) == 1
     if adjacent.sum() < PAIRS_MIN:
         return None
     values = s.to_numpy()

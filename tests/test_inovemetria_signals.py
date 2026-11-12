@@ -160,3 +160,8 @@ def test_field_counts_add_one_per_distinct_field_in_the_patent_window():
     counts = field_counts(_data([], patents=patents, roots={"ACME": "11111111"}), T("2020-01-01"))
     assert counts.loc["ACME", 4] == 2 and counts.loc["ACME", 10] == 1 and counts.loc["ACME", 20] == 0
     assert list(counts.columns) == list(range(1, 36))
+
+
+def test_a_single_quarter_has_no_diffusion_score():
+    rows = _rows("ONEE", "revenue", [T("2010-12-31")], [235249.0])
+    assert diffusion_score(_data(rows))(T("2012-01-01"), ["ONEE3"]).empty

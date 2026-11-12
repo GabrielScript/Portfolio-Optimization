@@ -90,3 +90,18 @@ Months without fundamentals carry no score (zeros after standardization): a limi
 
 PPO arms on Modal (4 CPU, 8 GiB per cell), inside the month's free credit (US$ 9.19 left on 2026-11-12); budget
 US$ 4. Direct arms on the laptop.
+
+## Amendment before any number (2026-11-12, after the timing smoke runs)
+
+Timed on the laptop, no return read: a direct step takes 0.25 s (285 names x 32 episodes x 12 decisions), so the two
+direct arms would take about five hours there; one PPO rollout and update of the shared policy takes 85 s, so
+150,000 decisions x 5 seeds x 15 windows would cost several times the free credit.
+
+- `ppo_shared/dsr_cdi`: **30,240 decisions (ten rollouts) and seeds 0-2**, the cut v2 made for its off-policy agents
+  for the same reason. A limitation of that arm's reading, written here before it.
+- All four arms run on Modal. Budget US$ 7 of the US$ 9.19, the direct arms first, `modal billing summary` checked
+  before the PPO arms.
+- The timing run also counted the names (no return involved): the 2012 window trades 143 names and its training
+  universe has 227; 2024, 206 and 285. Defect 7 left out about a third of the names of the training years.
+- Today's lake export cut at 2026-11-06 reproduces the v2 rule cells of 2012, 2019 and 2026 to the last digit, so
+  the three rules are not rerun: their cells (`drl/saidas/2026-11-10-rules`) are read with the new arms.

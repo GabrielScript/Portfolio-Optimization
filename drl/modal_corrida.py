@@ -1,9 +1,10 @@
 """Fan a run out on Modal: one container per (strategy, test year), each writing the same cell file ``drl.executar``
 writes locally. Replaces the four near-identical Modal scripts of the first version.
 
-    DRL_LAGO=<lake exports> modal run drl/modal_corrida.py --run <name> --strategies ppo/dsr,ppo/dsr_drawdown
+    DRL_LAGO=<lake exports> modal run drl/modal_corrida.py --run <name> --strategies ppo/dsr_cdi,direct/sharpe
 
-Set ``DRL_LAGO`` to the lake exports folder when running from a worktree.
+Set ``DRL_LAGO`` to the lake exports folder when running from a worktree. The frozen Composite score
+(``docs/dados/2026-11-12-drl-v3``) travels in the image for ``direct_score``.
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ import modal
 RAIZ = Path(__file__).resolve().parent.parent
 REMOTE_LAKE = "/root/lake"
 LAKE_FILES = ("universe_prices.parquet", "universe_monthly.parquet", "cdi_daily.parquet")
+SCORES = "composite_score.parquet"
 
 app = modal.App("aleph-drl")
 
@@ -29,6 +31,8 @@ imagem = (
 )
 for _arquivo in LAKE_FILES:
     imagem = imagem.add_local_file(str(LAGO_LOCAL / _arquivo), remote_path=f"{REMOTE_LAKE}/{_arquivo}")
+imagem = imagem.add_local_file(str(RAIZ / "docs" / "dados" / "2026-11-12-drl-v3" / SCORES),
+                               remote_path=f"{REMOTE_LAKE}/{SCORES}")
 imagem = imagem.add_local_python_source("drl")
 
 
@@ -39,7 +43,7 @@ def one_cell(strategy: str, year: int, spec: dict) -> dict:
     from drl.dados import load_panel
 
     run_spec = executar.spec_from_dict(spec)
-    panel = load_panel(Path(REMOTE_LAKE), run_spec.last_session)
+    panel = load_panel(Path(REMOTE_LAKE), run_spec.last_session, scores=Path(REMOTE_LAKE) / SCORES)
     janelas = {j.ano_teste: j for j in protocolo.janelas(panel.sessions, executar.FIRST_YEAR, executar.LAST_YEAR)}
     return asdict(executar.run_cell(panel, janelas[year], strategy, run_spec))
 
@@ -47,11 +51,12 @@ def one_cell(strategy: str, year: int, spec: dict) -> dict:
 @app.local_entrypoint()
 def main(run: str, strategies: str = "ppo/dsr_cdi", timesteps: int = 150_000, seeds: str = "0,1,2,3,4",
          hold: int = 21, observation: str = "cross", cost_bps: float = 10.0, last_session: str = "",
-         years: str = ""):
+         years: str = "", direct_steps: int = 300):
     from drl import executar
 
     spec = executar.RunSpec(executar.corrected_env(cost_bps, hold, observation),
-                            tuple(int(s) for s in seeds.split(",")), timesteps, 4, last_session or None)
+                            tuple(int(s) for s in seeds.split(",")), timesteps, 4, last_session or None,
+                            direct_steps=direct_steps)
     anos = ([int(ano) for ano in years.split(",")] if years
             else list(range(executar.FIRST_YEAR, executar.LAST_YEAR + 1)))
     pedidos = [(estrategia.strip(), ano)

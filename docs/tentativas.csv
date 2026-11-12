@@ -122,3 +122,6 @@ data,script,configuracao
 2026-11-12,inovemetria_avaliar.py,"Fermi-Tech t0.5: log det selection, theta 0.5, Composite score, C = (C_returns + K)/2 with K the cosine kernel of WIPO field counts of 60 months of INPI patents (identity without patents), 15 names, <=4 per sector, house rules, 10 bps"
 2026-11-12,inovemetria_avaliar.py,"Fermi-Inov-Tech t0.5: log det selection, theta 0.5, z from the Composite+INOV score, C = (C_returns + K)/2, 15 names, <=4 per sector, house rules, 10 bps"
 2026-11-12,inovemetria_avaliar.py,"Fermi-Half t0.5: log det selection, theta 0.5, Composite score, C = (C_returns + I)/2 (the shrinkage control of Fermi-Tech), 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-12,informados_avaliar.py,"Comp+Pat-w: z(Composite) + lambda x z(patent family P), lambda = clip(past mean IC ratio, 0, 1), 0 before 36 months, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-12,informados_avaliar.py,"Fermi-mean: mean of the log det books at theta 0.25, 0.5, 0.75, 1.0 on the Composite score, <=4 per sector, house rules, 10 bps"
+2026-11-12,informados_avaliar.py,"Comp+Ins-w: z(Composite) + lambda x z(insider net purchase ratio INS, CVM art. 11 filings, 6 reference months), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"

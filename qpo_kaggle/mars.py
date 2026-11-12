@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import argparse
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 import numpy as np
@@ -167,10 +167,11 @@ class Carteira:
         return self.caixa + float(self.x.sum())
 
 
-def passo(painel: Painel, carteira: Carteira, t: int, acao: np.ndarray, cfg: Execucao
+def passo(painel: Painel, carteira: Carteira, t: int, acao: np.ndarray, cfg: Execucao, custo_unico: bool = False
           ) -> tuple[float, np.ndarray, float]:
     """Trade at session t's close by the overlay, then move to t + 1 (prices, CDI on cash). Returns the reward, the
-    executed action and the risk score of the action before the overlay."""
+    executed action and the risk score of the action before the overlay. The paper's reward subtracts the cost from
+    a return that already nets it; ``custo_unico`` (MARS-R) subtracts it once."""
     risco = risco_env(carteira.x, carteira.caixa, acao, painel.cov(t), cfg)
     valor = carteira.valor
     x, caixa, custo, feita = executar(carteira.x, carteira.caixa, acao, painel.listado[t], painel.sai_amanha(t), cfg)
@@ -179,7 +180,8 @@ def passo(painel: Painel, carteira: Carteira, t: int, acao: np.ndarray, cfg: Exe
     carteira.caixa = caixa * (1.0 + float(painel.cdi[t + 1]))
     carteira.valores.append(carteira.valor)
     retorno = carteira.valor / valor - 1.0
-    return retorno - custo / valor - penalidade(np.asarray(carteira.valores)), feita, risco
+    segunda_vez = 0.0 if custo_unico else custo / valor
+    return retorno - segunda_vez - penalidade(np.asarray(carteira.valores)), feita, risco
 
 
 # ---------------------------------------------------------------- the agents
@@ -204,6 +206,7 @@ class Treino:
     mac_lote: int = 256
     mac_lr: float = 1e-4
     lambda_meta: float = 0.5
+    reparado: bool = False       # MARS-R: critic on the raw action, the cost once, the controller on current critics
 
 
 class Conjunto(nn.Module):
@@ -303,10 +306,29 @@ class Aprendiz:
             c = self.rede.seguranca(entrada).view(-1)
         return agregada.cpu().numpy(), pesos.cpu().numpy(), q, c
 
+    def acoes_do_critico(self, indices: torch.Tensor) -> torch.Tensor:
+        """The action the critic is trained on. The paper's Algorithm 1 stores the executed one, but the actor is
+        improved through the critic at its raw output, which the overlay cuts by a large factor whenever cash binds:
+        the gradient is then taken where the critic saw no data. MARS-R trains the critic on the raw action (the
+        overlay is part of the environment), so both sides meet on the same input."""
+        return self.memoria.a_bruta[indices] if self.cfg.reparado else self.memoria.a[indices]
+
+    def valores_do_mac(self, indices: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
+        """Per-agent Q and C of the sampled states, (batch, N). The paper trains the controller on the values stored
+        when each transition was collected, most of them from critics that had barely trained; MARS-R evaluates the
+        current critics at the current actors' actions."""
+        m = self.memoria
+        if not self.cfg.reparado:
+            return m.q[indices], m.c[indices]
+        with torch.no_grad():
+            s = m.s[indices]
+            entrada = torch.cat([s.expand(N_AGENTES, *s.shape), self.rede.acoes(s)], dim=-1)
+            return self.rede.critico(entrada).squeeze(-1).T, self.rede.seguranca(entrada).squeeze(-1).T
+
     def atualizar(self) -> None:
         cfg, m = self.cfg, self.memoria
         indices = torch.randint(m.n, (N_AGENTES, cfg.lote), device=self.dispositivo)
-        s, s2, a, a_bruta = m.s[indices], m.s2[indices], m.a[indices], m.a_bruta[indices]
+        s, s2, a, a_bruta = m.s[indices], m.s2[indices], self.acoes_do_critico(indices), m.a_bruta[indices]
         r, risco = m.r[indices], m.risco[indices]
         with torch.no_grad():
             alvo = r + cfg.gama * self.rede.critico_alvo(torch.cat([s2, torch.tanh(self.rede.ator_alvo(s2))], -1))
@@ -335,8 +357,9 @@ class Aprendiz:
         for _ in range(cfg.mac_passos):
             indices = torch.randint(m.n, (min(cfg.mac_lote, m.n),), device=self.dispositivo)
             pesos = self.rede.pesos(m.s[indices])
-            q_medio = (pesos * m.q[indices]).sum(-1)
-            c_medio = (pesos * m.c[indices]).sum(-1)
+            q, c = self.valores_do_mac(indices)
+            q_medio = (pesos * q).sum(-1)
+            c_medio = (pesos * c).sum(-1)
             perda = -(q_medio.mean() / (q_medio.std() + 1e-6) - cfg.lambda_meta * c_medio.mean())
             self.opt_mac.zero_grad(set_to_none=True)
             perda.backward()
@@ -350,7 +373,7 @@ class Aprendiz:
             s = painel.estado(t, carteira.x, carteira.caixa)
             agregada, _, q, c = self.decidir(s)
             bruta = np.clip(agregada + gerador.normal(0.0, self.cfg.ruido, agregada.shape), -1.0, 1.0)
-            recompensa, feita, risco = passo(painel, carteira, t, bruta, execucao)
+            recompensa, feita, risco = passo(painel, carteira, t, bruta, execucao, self.cfg.reparado)
             s2 = painel.estado(t + 1, carteira.x, carteira.caixa)
             self.memoria.guardar(s=torch.from_numpy(s).to(d), s2=torch.from_numpy(s2).to(d),
                                  a=torch.as_tensor(feita, dtype=torch.float32, device=d),
@@ -384,7 +407,15 @@ def sharpe(valores: list[float] | np.ndarray, cdi: np.ndarray) -> float:
 
 # ---------------------------------------------------------------- the yearly walk-forward
 
-BRACOS = ("MARS-50", "MARS-50+score")
+BRACOS = ("MARS-50", "MARS-50+score", "MARS-50R", "MARS-50R+score")     # R: the repaired learning (MARS-R)
+
+
+def reparado(braco: str) -> bool:
+    return braco.startswith("MARS-50R")
+
+
+def com_nota(braco: str) -> bool:
+    return braco.endswith("+score")
 
 
 def carregar_painel(pacote: np.lib.npyio.NpzFile, ano: int, com_nota: bool) -> Painel:
@@ -436,8 +467,9 @@ def treinar_e_guardar(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, an
     """One (arm, seed, year) training; the chosen snapshot's actors and controller go to ``pasta``. The years train
     independently: only the test chains them (``encadear``)."""
     inicio = time.perf_counter()
-    painel = carregar_painel(pacote, ano, com_nota=braco == "MARS-50+score")
+    painel = carregar_painel(pacote, ano, com_nota=com_nota(braco))
     print(f"{braco} seed {semente} {ano}: {len(painel.nomes)} names, device {dispositivo}", flush=True)
+    cfg = replace(cfg, reparado=reparado(braco))
     aprendiz, episodio, nota = treinar_ano(painel, cfg, Execucao(), semente * 10_000 + ano, dispositivo)
     estado = {chave: valor.cpu() for chave, valor in aprendiz.rede.state_dict().items()
               if chave.startswith(("ator.", "mac."))}
@@ -459,7 +491,7 @@ def encadear(pacote: np.lib.npyio.NpzFile, braco: str, semente: int, pasta: Path
     datas, valores, estaticos, pesos, resumo = [], [], [], [], []
     nomes_antes = None
     for ano in anos or [int(ano) for ano in pacote["anos"]]:
-        painel = carregar_painel(pacote, ano, com_nota=braco == "MARS-50+score")
+        painel = carregar_painel(pacote, ano, com_nota=com_nota(braco))
         guardado = torch.load(pasta / nome_do_estado(braco, semente, ano), map_location="cpu", weights_only=True)
         estado = 1 + painel.caracteristicas.shape[1] * (1 + painel.caracteristicas.shape[2])
         aprendiz = Aprendiz(estado, len(painel.nomes), Treino(), dispositivo, 1)

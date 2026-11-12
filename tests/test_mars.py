@@ -88,3 +88,59 @@ def test_the_validation_sharpe_is_measured_over_the_cdi():
     retornos = np.array([0.003, -0.001, 0.003, -0.001])         # excess +0.002, -0.002, ...: mean 0
     valores = np.cumprod(np.concatenate([[1.0], 1.0 + retornos]))
     assert sharpe(valores, cdi) == pytest.approx(0.0, abs=1e-9)
+
+
+# --- MARS-R (docs/superpowers/specs/2026-11-12-mars-r-design.md): the three learning repairs --------------------------
+
+
+def _aprendiz(reparado: bool):
+    import torch
+
+    from qpo_kaggle.mars import Aprendiz, Treino
+
+    torch.manual_seed(0)
+    aprendiz = Aprendiz(estado=7, acoes=3, cfg=Treino(lote=4, mac_lote=4, reparado=reparado),
+                        dispositivo=torch.device("cpu"), capacidade=8)
+    for _ in range(8):
+        s = torch.randn(7)
+        aprendiz.memoria.guardar(s=s, s2=torch.randn(7), a=torch.full((3,), 0.1), a_bruta=torch.full((3,), 0.9),
+                                 r=torch.zeros(1), risco=torch.zeros(1), q=torch.full((10,), 5.0),
+                                 c=torch.full((10,), 7.0))
+    return aprendiz
+
+
+def test_the_paper_trains_the_critic_on_the_executed_action_and_the_repair_on_the_raw_one():
+    import torch
+
+    indices = torch.zeros(10, 4, dtype=torch.long)
+    assert float(_aprendiz(False).acoes_do_critico(indices).mean()) == pytest.approx(0.1)
+    assert float(_aprendiz(True).acoes_do_critico(indices).mean()) == pytest.approx(0.9)
+
+
+def test_the_repaired_controller_reads_the_critics_as_they_are_now_not_as_stored():
+    import torch
+
+    indices = torch.arange(4)
+    q, c = _aprendiz(False).valores_do_mac(indices)
+    assert float(q.mean()) == 5.0 and float(c.mean()) == 7.0
+    aprendiz = _aprendiz(True)
+    q, c = aprendiz.valores_do_mac(indices)
+    s = aprendiz.memoria.s[indices]
+    entrada = torch.cat([s.expand(10, 4, 7), aprendiz.rede.acoes(s)], dim=-1)
+    assert q.shape == (4, 10) and torch.allclose(q, aprendiz.rede.critico(entrada).squeeze(-1).T)
+    assert torch.allclose(c, aprendiz.rede.seguranca(entrada).squeeze(-1).T) and not q.requires_grad
+
+
+def test_the_repaired_reward_subtracts_the_cost_once():
+    from qpo_kaggle.mars import Carteira, Painel, passo
+
+    tabela = np.array([[10.0], [10.0]])
+    painel = Painel(np.array(["N0"]), np.arange(2), tabela, np.zeros((2, 1, 5), np.float32), np.zeros(2),
+                    np.array([0, 0, 0, 2]))
+    recompensas = {}
+    for custo_unico in (False, True):
+        carteira = Carteira.em_caixa(1)
+        recompensas[custo_unico], *_ = passo(painel, carteira, 0, np.ones(1), Execucao(), custo_unico=custo_unico)
+    custo = 0.10 * 0.001                                             # a buy of 10% of V at 10 bps
+    assert recompensas[True] - recompensas[False] == pytest.approx(custo)
+    assert recompensas[True] == pytest.approx(-custo - 0.5 * np.std([-custo]) - 2.0 * custo)

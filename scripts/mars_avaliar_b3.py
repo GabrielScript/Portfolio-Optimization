@@ -34,8 +34,10 @@ from scripts.qpo_montar import FOLDER, LAST_SESSION  # noqa: E402
 from scripts.qubo_universo_avaliar import P_MIN, _value_score, strategy_gate  # noqa: E402
 
 BRACOS = {"MARS-50": "MARS-50", "MARS-50+score": "MARS-50_score"}
+BRACOS_R = {"MARS-50R": "MARS-50R", "MARS-50R+score": "MARS-50R_score"}      # 2026-11-12-mars-r-design.md
 SEMENTES = (42, 0, 1)
 N_DSR = 106         # the union of every branch's trials, section 5
+N_DSR_R = 123       # 117 + 4 (DRL v3) + 2, the MARS-R spec
 GRUPOS = {"conservative (0-2)": slice(0, 3), "neutral (3-6)": slice(3, 7), "aggressive (7-9)": slice(7, 10)}
 
 
@@ -78,6 +80,9 @@ def tabela_do_artigo(curvas: dict[str, pd.Series], ano: int, rf: pd.Series) -> p
 def main(argv: list[str]) -> int:
     inicio = time.perf_counter()
     pasta = Path(argv[0])
+    if argv[1:] == ["R"]:                        # the MARS-R reading: its arms and its N, everything else the same
+        global BRACOS, N_DSR
+        BRACOS, N_DSR = BRACOS_R, N_DSR_R
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
     mensal = avaliar_conservadora.carregar_mensal(FOLDER)

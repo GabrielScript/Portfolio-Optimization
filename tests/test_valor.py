@@ -217,3 +217,29 @@ def test_composto_de_valor_deixa_fora_quem_nao_tem_lucro_no_balanco():
                         dict.fromkeys(balanco.index, "Bens Industriais"))
     composto = composto_de_valor(balancos, SEM_PROVENTOS, pd.Timestamp("2025-06-01"), ["AAAA3", "BBBB3", "SOBA3"])
     assert composto.index.tolist() == ["AAAA3", "BBBB3"]
+
+
+# refiled statements (docs/superpowers/specs/2026-11-11-duplicate-filings-design.md)
+_REENTREGA = [("ACME", "ebit", "2024-12-31", "2025-03-20", 10.0),      # first filing
+              ("ACME", "ebit", "2024-12-31", "2025-04-15", 14.0)]      # refiled with another value
+
+
+@pytest.mark.parametrize("linhas", [_REENTREGA, _REENTREGA[::-1]], ids=["file order", "reversed"])
+def test_a_refiled_statement_replaces_the_first_from_its_receipt_on_whatever_the_row_order(linhas):
+    fundamentos = _fundamentos(*linhas)
+    abril, maio = (fundamentos_no_mes(fundamentos, pd.Timestamp(mes)) for mes in ("2025-04-01", "2025-05-01"))
+    assert (abril.loc["ACME", "ebit"], maio.loc["ACME", "ebit"]) == (10.0, 14.0)
+
+
+def test_two_filings_of_the_same_day_count_once_when_equal_and_are_unknown_when_they_differ():
+    from core.valor import documentos_conhecidos
+    fundamentos = _fundamentos(("ACME", "ebit", "2024-09-30", "2024-11-10", 8.0),
+                               ("ACME", "ebit", "2024-12-31", "2025-03-20", 10.0),
+                               ("ACME", "ebit", "2024-12-31", "2025-03-20", 11.0),       # same day, another value
+                               ("ACME", "cash", "2024-12-31", "2025-03-20", 3.0),
+                               ("ACME", "cash", "2024-12-31", "2025-03-20", 3.0))        # same day, same value
+    maio = pd.Timestamp("2025-05-01")
+    conhecidos = documentos_conhecidos(fundamentos, maio)
+    assert not conhecidos.duplicated(["issuer", "account", "dt_refer"]).any() and len(conhecidos) == 2
+    do_mes = fundamentos_no_mes(fundamentos, maio)
+    assert (do_mes.loc["ACME", "ebit"], do_mes.loc["ACME", "cash"]) == (8.0, 3.0)        # ebit: the period before

@@ -135,3 +135,13 @@ def test_acquirers_multiple_of_a_month_uses_documents_received_before_it_on_each
     junho = multiplo_do_adquirente_no_mes(balancos, pd.Timestamp("2025-06-01"), candidatos)
     assert maio.idxmax() == "BETA3" and junho.idxmax() in ("ACME3", "ACME4")
     assert maio["ACME3"] == maio["ACME4"] and "SEMN3" not in maio.index
+
+
+@pytest.mark.parametrize("invertido", [False, True], ids=["file order", "reversed"])
+def test_three_years_of_balances_read_a_refiled_statement_from_its_receipt_on_whatever_the_row_order(invertido):
+    # docs/superpowers/specs/2026-11-11-duplicate-filings-design.md
+    from core.classicas import balancos_em_tres_anos
+    linhas = [("ACME", "ebit", "2024-12-31", "2025-03-20", 10.0), ("ACME", "ebit", "2024-12-31", "2025-04-15", 14.0)]
+    fundamentos = _fundamentos(*(linhas[::-1] if invertido else linhas))
+    abril, maio = (balancos_em_tres_anos(fundamentos, pd.Timestamp(mes))[0] for mes in ("2025-04-01", "2025-05-01"))
+    assert (abril.loc["ACME", "ebit"], maio.loc["ACME", "ebit"]) == (10.0, 14.0)

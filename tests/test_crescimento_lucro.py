@@ -54,3 +54,16 @@ def test_the_score_is_the_mean_normal_score_of_both_changes_with_the_ones_availa
     assert list(nota.index) == candidatos[:5] and nota["AAAA3"] == nota["AAAA4"]
     assert nota.to_numpy() == pytest.approx(esperado.reindex(candidatos[:5]).to_numpy())
     assert nota["DDDD3"] == pytest.approx(lucro["DDDD3"]) and not np.isnan(nota["DDDD3"])
+
+
+@pytest.mark.parametrize("invertido", [False, True], ids=["file order", "reversed"])
+def test_the_change_reads_a_refiled_statement_from_its_receipt_on_whatever_the_row_order(invertido):
+    # docs/superpowers/specs/2026-11-11-duplicate-filings-design.md
+    from core.crescimento_lucro import variacao_anual
+    linhas = [_linha("AAAA", "net_income", "2020-12-31", 10.0, "2021-03-20"),
+              _linha("AAAA", "total_assets", "2020-12-31", 100.0, "2021-03-20"),
+              _linha("AAAA", "net_income", "2021-12-31", 15.0, "2022-03-20"),
+              _linha("AAAA", "net_income", "2021-12-31", 20.0, "2022-04-15")]             # refiled
+    fundamentos = pd.DataFrame(linhas[::-1] if invertido else linhas)
+    abril, maio = (variacao_anual(fundamentos, "net_income", pd.Timestamp(mes)) for mes in ("2022-04-01", "2022-05-01"))
+    assert (abril["AAAA"], maio["AAAA"]) == pytest.approx((0.05, 0.10))

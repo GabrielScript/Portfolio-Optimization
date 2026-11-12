@@ -10,7 +10,7 @@ from __future__ import annotations
 import pandas as pd
 
 from core.risco import emissor
-from core.valor import NotaDoMes
+from core.valor import NotaDoMes, documentos_conhecidos
 from core.views import nota_media_dos_escores
 
 
@@ -18,7 +18,7 @@ def variacao_anual(fundamentos: pd.DataFrame, conta: str, mes: pd.Timestamp) -> 
     """Issuer -> (``conta``(t) - ``conta``(t - 1 year)) / total assets(t - 1 year), where t is the latest period end
     of ``conta`` received before ``mes`` and t - 1 year the same quarter end a year earlier, also received before
     ``mes``. Out: no year-ago filing, total assets <= 0 a year before."""
-    conhecidos = fundamentos[fundamentos["available_from"] < mes]
+    conhecidos = documentos_conhecidos(fundamentos, mes)
     valores = conhecidos.pivot_table(index=["issuer", "dt_refer"], columns="account", values="value", aggfunc="last")
     if conta not in valores.columns or "total_assets" not in valores.columns:
         return pd.Series(dtype=float)

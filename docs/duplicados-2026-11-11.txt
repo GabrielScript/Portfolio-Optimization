@@ -1,0 +1,8 @@
+1. Attempt 51's replay, data to 16/10/2026
+  phase 0: gap to the published curve before 0.0e+00, after 0.0e+00 (tolerance 1e-09); decisions with other names 0 of 66; CAGR before 21.4006%, after 21.4006%
+  phase 21: gap to the published curve before 0.0e+00, after 1.1e-02 (tolerance 1e-09); decisions with other names 1 of 66; CAGR before 19.9227%, after 20.0043%
+    07/06/2024: out ['LEVE3'], in ['STBP3']
+  phase 42: gap to the published curve before 0.0e+00, after 1.6e-02 (tolerance 1e-09); decisions with other names 1 of 66; CAGR before 19.0556%, after 19.0202%
+    08/07/2024: out ['VULC3'], in ['STBP3']
+2. The Composite on 27/10/2026 from C:\Users\gabri\Desktop\AI Hedge Fund Brazil\ai-hedge-fund\Portfolio-Optimization\data\b3lake: 15 names; out [], in []
+   after: ['ALLD3', 'BBSE3', 'CXSE3', 'FIQE3', 'ITSA4', 'JHSF3', 'LEVE3', 'LOGG3', 'MILS3', 'MLAS3', 'PETR4', 'PSSA3', 'SAUD3', 'UGPA3', 'VBBR3']

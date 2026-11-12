@@ -27,13 +27,29 @@ SETOR_FORA = "Financeiro"
 FRACAO_BARATA = 0.30            # os 30% de maior composto de valor (PLAN §5, S2.3: fixo no pré-registro)
 MESES_DO_MOMENTUM_CURTO = 6     # momentum de 6 meses de O'Shaughnessy
 POSTO_NEUTRO = 0.5              # múltiplo que falta fica no meio da fila (O'Shaughnessy dá 50 de 100)
+DOCUMENTO = ["issuer", "account", "dt_refer"]
+
+
+def documentos_conhecidos(fundamentos: pd.DataFrame, mes: pd.Timestamp) -> pd.DataFrame:
+    """The rows received before ``mes``, one per issuer, account and period end
+    (docs/superpowers/specs/2026-11-11-duplicate-filings-design.md): a refiled statement replaces the first from its
+    receipt on; two rows of the same receipt day count once when equal and are unknown (left out) when they differ."""
+    conhecidos = fundamentos[fundamentos["available_from"] < mes]
+    repetidos = conhecidos.duplicated(DOCUMENTO, keep=False)
+    if not repetidos.any():
+        return conhecidos
+    reentregas = conhecidos[repetidos]
+    ultimas = reentregas[reentregas["available_from"]
+                         == reentregas.groupby(DOCUMENTO)["available_from"].transform("max")]
+    de_acordo = ultimas.groupby(DOCUMENTO)["value"].transform("nunique") == 1
+    return pd.concat([conhecidos[~repetidos], ultimas[de_acordo].drop_duplicates(DOCUMENTO)])
 
 
 def fundamentos_no_mes(fundamentos: pd.DataFrame, mes: pd.Timestamp) -> pd.DataFrame:
     """Emissor x conta: o valor do documento de fim de período mais recente entre os recebidos antes de ``mes``, desde
     que esse fim de período tenha no máximo ``MESES_DE_IDADE_MAXIMA`` meses."""
-    conhecidos = fundamentos[(fundamentos["available_from"] < mes)
-                             & (fundamentos["dt_refer"] >= mes - pd.DateOffset(months=MESES_DE_IDADE_MAXIMA))]
+    conhecidos = documentos_conhecidos(fundamentos, mes)
+    conhecidos = conhecidos[conhecidos["dt_refer"] >= mes - pd.DateOffset(months=MESES_DE_IDADE_MAXIMA)]
     ultimos = conhecidos.sort_values("dt_refer").drop_duplicates(["issuer", "account"], keep="last")
     return ultimos.pivot(index="issuer", columns="account", values="value")
 

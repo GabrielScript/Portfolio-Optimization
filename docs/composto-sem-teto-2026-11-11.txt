@@ -1,0 +1,99 @@
+DSR N 68 (with these 1 rows); arms ['Composite-sem-teto']; data to 16/10/2026
+
+=== Phase 0: 09/02/2010 to 16/10/2026; anchor: Composite replay off by 0.0e+00 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-sem-teto              0.203 0.192   0.566    0.782 -0.449   0.453         -0.008     -0.805      0.237          0.107      3.726 0.976         1.004         0.663
+Composite                       0.214 0.187   0.624    0.865 -0.415   0.515            NaN        NaN        NaN          0.115      4.204 0.988           NaN         0.652
+Conservadora (15, pesos iguais) 0.174 0.180   0.455    0.625 -0.407   0.428         -0.021     -1.166      0.032          0.080      3.242 0.911         0.883         0.644
+BOVA11                          0.072 0.234   0.010    0.014 -0.497   0.146         -0.116     -3.672      0.000            NaN        NaN   NaN         1.019           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              2.961     0.000     66.000   115.409  15.000                 0.006
+Composite-sem-teto     2.878     0.000     66.000   115.409  13.076                 0.006
+Calendar years:
+      Composite-sem-teto  Composite  BOVA11   CDI
+2010               20.2%      23.2%    6.8%  8.7%
+2011               13.3%       2.6%  -18.3% 11.5%
+2012               25.2%      26.3%    6.6%  8.2%
+2013               -0.6%      -1.3%  -15.8%  7.9%
+2014                7.4%       7.3%   -3.4% 10.6%
+2015                1.6%       6.4%  -13.2% 13.0%
+2016               39.1%      40.9%   38.2% 13.9%
+2017               38.5%      34.7%   26.8%  9.8%
+2018               20.6%      22.2%   14.6%  6.3%
+2019               54.7%      57.3%   31.5%  5.9%
+2020               17.6%      30.0%    3.1%  2.7%
+2021               15.9%      20.8%  -12.1%  4.3%
+2022                7.4%       4.6%    5.1% 12.3%
+2023               31.9%      33.6%   23.1% 13.0%
+2024                5.3%       5.5%  -10.1% 10.8%
+2025               47.6%      44.1%   34.7% 14.2%
+2026                5.0%      10.3%   28.0% 11.1%
+(phase 0 done in 87 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; anchor: Composite replay off by 0.0e+00 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-sem-teto              0.188 0.193   0.498    0.684 -0.462   0.407         -0.008     -0.727      0.250          0.097      3.286 0.972         1.003         0.665
+Composite                       0.199 0.186   0.559    0.774 -0.422   0.473            NaN        NaN        NaN          0.105      3.842 0.986           NaN         0.650
+Conservadora (15, pesos iguais) 0.164 0.180   0.406    0.560 -0.416   0.394         -0.019     -1.142      0.045          0.074      3.148 0.925         0.890         0.650
+BOVA11                          0.068 0.234  -0.007   -0.010 -0.497   0.137         -0.108     -3.383      0.001            NaN        NaN   NaN         1.024           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.069     0.000     66.000   116.030  15.000                 0.006
+Composite-sem-teto     2.962     0.000     66.000   116.030  12.985                 0.006
+Calendar years:
+      Composite-sem-teto  Composite  BOVA11   CDI
+2010               21.4%      17.8%   -0.6%  7.9%
+2011               14.9%       6.2%  -18.3% 11.5%
+2012               25.3%      24.6%    6.6%  8.2%
+2013                2.9%       6.7%  -15.8%  7.9%
+2014                2.2%       2.4%   -3.4% 10.6%
+2015                2.3%       4.9%  -13.2% 13.0%
+2016               40.5%      36.4%   38.2% 13.9%
+2017               40.7%      42.9%   26.8%  9.8%
+2018               23.6%      23.6%   14.6%  6.3%
+2019               40.6%      50.2%   31.5%  5.9%
+2020                0.3%       6.0%    3.1%  2.7%
+2021               22.8%      27.9%  -12.1%  4.3%
+2022                3.7%      10.1%    5.1% 12.3%
+2023               28.1%      32.3%   23.1% 13.0%
+2024               11.4%       5.6%  -10.1% 10.8%
+2025               25.7%      24.7%   34.7% 14.2%
+2026               12.8%      15.8%   28.0% 11.1%
+(phase 21 done in 160 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; anchor: Composite replay off by 0.0e+00 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-sem-teto              0.176 0.195   0.443    0.616 -0.420   0.419         -0.010     -0.857      0.160          0.088      2.994 0.976         0.982         0.671
+Composite                       0.191 0.193   0.509    0.708 -0.428   0.445            NaN        NaN        NaN          0.100      3.539 0.991           NaN         0.671
+Conservadora (15, pesos iguais) 0.169 0.182   0.426    0.590 -0.395   0.428         -0.008     -0.471      0.136          0.079      3.244 0.973         0.875         0.656
+BOVA11                          0.067 0.234  -0.011   -0.015 -0.497   0.135         -0.100     -3.109      0.001            NaN        NaN   NaN         0.994           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.220     0.000     66.000   116.712  15.000                 0.006
+Composite-sem-teto     3.098     0.000     66.000   116.712  12.894                 0.006
+Calendar years:
+      Composite-sem-teto  Composite  BOVA11   CDI
+2010               14.9%      19.4%   -2.5%  7.2%
+2011               15.4%       3.3%  -18.3% 11.5%
+2012               24.5%      25.6%    6.6%  8.2%
+2013                1.5%      -0.7%  -15.8%  7.9%
+2014                4.5%       4.6%   -3.4% 10.6%
+2015               -1.8%      -1.3%  -13.2% 13.0%
+2016               25.1%      23.6%   38.2% 13.9%
+2017               41.0%      43.6%   26.8%  9.8%
+2018               13.9%      14.0%   14.6%  6.3%
+2019               43.5%      51.7%   31.5%  5.9%
+2020               13.3%      19.0%    3.1%  2.7%
+2021               23.7%      30.7%  -12.1%  4.3%
+2022               -1.7%      10.4%    5.1% 12.3%
+2023               26.6%      31.2%   23.1% 13.0%
+2024                6.3%       4.9%  -10.1% 10.8%
+2025               37.6%      33.4%   34.7% 14.2%
+2026               10.8%      10.8%   28.0% 11.1%
+(phase 42 done in 228 s)
+
+Curves saved: composto-sem-teto-curvas-2026-11-11.parquet
+
+Gate per arm (P[> Composite] >= 0.95 and DSR >= 0.95 in every phase):
+  Composite-sem-teto: [(0.237, 0.976), (0.25, 0.972), (0.16, 0.976)] -> fails

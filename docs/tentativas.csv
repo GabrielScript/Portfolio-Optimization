@@ -72,3 +72,4 @@ data,script,configuracao
 2026-11-11,composto_variantes_avaliar.py,"Composite-3y: attempt 51 Composite (15 names, 4 per sector, equal weights, house rules, 10 bps) with a 756-session window (three years of history to be a candidate) instead of 1260"
 2026-11-11,composto_variantes_avaliar.py,"Composite-neutral: attempt 51 Composite (15 names, 4 per sector, equal weights, house rules, 10 bps) with a missing component (value, growth) counted as a normal score of 0 instead of skipped"
 2026-11-11,composto_variantes_avaliar.py,"Composite-all: attempt 51 Composite (15 names, 4 per sector, equal weights, house rules, 10 bps) with the three changes together (21 sessions, 756-session window, neutral fill)"
+2026-11-11,composto_variantes_avaliar.py setor,"Composite-sem-teto: attempt 51 Composite (15 names, equal weights, 10 bps) without the 4-per-sector cap and with the 30% sector rule lifted in the house check; one class per issuer kept"

@@ -123,3 +123,22 @@ Stages 0 and 1 on the laptop (bars streamed name by name; RAM is the constraint)
   10:15 bar, exit at the open of the 11:30 bar.
 - The house universe (`universe_monthly`) holds stocks and units only. A day without a trade counts as zero volume
   in the 63-session median.
+
+## Second amendment before any trade return (2026-11-12, the frozen bars; only data-quality numbers read)
+
+- Frozen: 61 months, 169 names ever in the universe (92 to 132 a month), 140 with bars; **29 names (707 of 6,780
+  universe-months, 10%) have no bars** on the terminal (left the exchange: AZUL4, BRFS3, CIEL3, JBSS3, NTCO3, SULA11
+  and others): the survivorship bias of every result below.
+- The terminal's bars are back-adjusted and mostly lack the closing-call print (PETR4's last bar starts at 16:45 on
+  823 days, 17:45 on 394, 18:00 on 29). Daily returns from the bars against the lake's adjusted returns, 171,725
+  name-days: median absolute difference 0.01%, 99% within 0.43%, 1,553 (0.9%) above 0.5%. The name-drop rule of the
+  spec would drop 46 liquid names for those isolated days, so it is replaced: **a name-day whose bar return differs
+  from the lake's adjusted return by more than 0.5% is excluded, and so is the next session's gap.**
+- Regular bars: every bar of the day except one starting at 18:00, and except one starting at 17:00 when it is the
+  day's last. **End-of-day exit: the open of the day's last regular bar** (replaces "17:40" and "the 17:30 bar").
+- Beta: the slope of the name's daily return on BOVA11's over the previous 60 sessions (bars, last regular close),
+  clipped to [0, 2]. (a)'s scale: the standard deviation of the name's abnormal 30-minute return in the same
+  15-minute slot over the previous 20 sessions. (c)'s scale: the standard deviation of the name's abnormal daily
+  return over the previous 60 sessions. One open trade per name at a time. Spread and cost from the entry and exit
+  bars' own spread field (points of R$ 0.01).
+- Clustered t: per-trade net returns, clusters = days.

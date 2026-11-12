@@ -83,7 +83,6 @@ def main(periodo: str) -> int:
     universo = pd.read_parquet(PASTA / "universe.parquet")
     meses = universo.assign(m=pd.to_datetime(universo["month"]).dt.to_period("M")).groupby("security")["m"].apply(set)
     documentos, retornos_do_lago = filing_days(), lake_returns()
-    setores = pd.read_parquet(SETORES).drop_duplicates("security").set_index("security")["issuer"]
 
     def ler(nome: str) -> pd.DataFrame:
         barras = pd.read_parquet(BARRAS / f"{nome}.parquet", columns=["time", "open", "close", "spread"])
@@ -100,7 +99,7 @@ def main(periodo: str) -> int:
         fechamentos = ev.daily_closes(barras)
         beta = ev.rolling_beta(fechamentos, fech_mercado)
         do_lago = retornos_do_lago[nome] if nome in retornos_do_lago else None
-        com_documento = documentos.get(setores.get(nome, ""), set())
+        com_documento = documentos.get(nome[:4], set())      # the issuer is the ticker's first four letters
         for padrao, funcao in padroes.items():
             fora = excluded_days(nome, fechamentos, do_lago, meses[nome], com_documento, gap=padrao == "opening_gap")
             for multiplo in (1.0, 2.0):

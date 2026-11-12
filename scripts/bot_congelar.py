@@ -29,7 +29,8 @@ MAXIMO = 99_999                     # the terminal serves at most 100,000 bars a
 
 def universe_table() -> pd.DataFrame:
     painel = pd.read_parquet(LAGO / "daily_liquid_panel.parquet", columns=["date", "security", "volume_brl"],
-                             filters=[("date", ">=", INICIO - pd.DateOffset(months=6))])
+                             filters=[("date", ">=", (INICIO - pd.DateOffset(months=6)).date())])
+    painel["date"] = pd.to_datetime(painel["date"])
     volume = painel.pivot(index="date", columns="security", values="volume_brl").fillna(0.0)   # no trade = no volume
     casa = pd.read_parquet(LAGO / "universe_monthly.parquet")
     meses = pd.date_range(INICIO, volume.index.max(), freq="MS")

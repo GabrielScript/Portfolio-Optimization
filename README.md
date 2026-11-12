@@ -900,6 +900,12 @@ Past results, before tax, no promise for the future. Details: `DECISOES.md` 236-
   selections at 5, 10, 20 and 30 names and theta 0.25 to 1, a selection of free size (grand-canonical) and weights
   of largest von Neumann entropy (`core.diversidade.eic_weights`). Fifteen names is the peak; no arm passes the gate
   (`docs/fermionica-grade-2026-11-11.txt`).
+- Research, none adopted (DECISOES 352; DSR union N 117): Inovemetria, five innovation and diffusion signals of the
+  full universe (`core/inovemetria/`): growth-curve forecast (Bass, logistic, Gompertz), share taken in the sector,
+  intangible and gross investment, INPI patents and price convexity. Patents and convexity pass the IC gate (0.024,
+  t 3.6; 0.029, t 2.6); no portfolio arm beats the Composite, alone, inside its score or inside the determinantal
+  selection with a patent-field kernel (`docs/inovemetria-ic-2026-11-12.txt`, `docs/inovemetria-2026-11-12.txt`).
+  A map of the candidates is in `docs/inovemetria-mapa-2026-11-12.csv`.
 - Lake nightly (DECISOES 351): B3's open date "31/12/9999" is read as no date (`b3lake.b3events._br_date`); it had stopped
   the gold insert on 11/11. The app shows only what the upkeep publishes after the lake releases its lock.
 - The Sentinela: the 06/11 seeding had marked the week's results filings as seen; a one-off run read them on 07/11

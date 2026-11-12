@@ -1,0 +1,16 @@
+=== Phase 21: 12/03/2010 to 16/10/2026; DSR N 117 (with these 8 rows); anchors: Composite 0.0e+00, LogDet-15 t0.5 0.0e+00 off their saved curves; stage-1 families passing: ['P', 'X'] ===
+                      CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs BOVA  t vs BOVA   DSR  alpha vs Comp  t vs Comp  P[> Comp]  shared  turnover  refusals
+Composite            0.200 0.186   0.563    0.779 -0.422   0.475          0.106      3.863 0.982            NaN        NaN        NaN     NaN     3.069       NaN
+LogDet-15 t0.5       0.204 0.183   0.587    0.809 -0.427   0.477          0.109      3.788 0.978          0.007      0.723      0.620  13.394     3.061     0.000
+Inov-15              0.146 0.212   0.302    0.406 -0.502   0.291          0.065      1.960 0.752         -0.033     -1.068      0.088   3.803     3.086     0.000
+Comp+Inov-15         0.181 0.195   0.464    0.628 -0.448   0.404          0.092      3.024 0.937         -0.011     -0.598      0.214  10.682     3.230     0.000
+Comp+InovGate-15     0.195 0.200   0.517    0.703 -0.469   0.415          0.104      3.374 0.967         -0.000     -0.025      0.464  10.500     3.232     0.000
+Fermi-Inov t0.5      0.186 0.186   0.502    0.677 -0.426   0.438          0.095      3.108 0.932         -0.002     -0.120      0.271  10.333     3.164     0.000
+vonNeumann-Inov t0.5 0.184 0.185   0.491    0.663 -0.426   0.431          0.092      2.958 0.918         -0.004     -0.198      0.235  10.167     3.161     0.000
+Fermi-Tech t0.5      0.189 0.186   0.512    0.706 -0.409   0.461          0.096      3.377 0.960         -0.008     -1.004      0.110  13.682     3.116     0.000
+Fermi-Inov-Tech t0.5 0.183 0.191   0.478    0.646 -0.428   0.427          0.092      3.007 0.931         -0.007     -0.377      0.236  10.530     3.187     0.000
+Fermi-Half t0.5      0.194 0.185   0.538    0.742 -0.423   0.459          0.101      3.594 0.970         -0.004     -0.739      0.156  14.424     3.064     0.000
+BOVA11               0.068 0.234  -0.007   -0.010 -0.497   0.137            NaN        NaN   NaN         -0.109     -3.404      0.001     NaN       NaN       NaN
+Fermi-Tech t0.5 against its control Fermi-Half t0.5: alpha -0.38%, t -0.55
+Decisions the kernel changes: Fermi-Tech t0.5 vs LogDet-15 t0.5 59 of 66; Fermi-Inov-Tech t0.5 vs Fermi-Inov t0.5 62 of 66; Fermi-Half t0.5 vs LogDet-15 t0.5 54 of 66
+(phase 21 done in 1555 s)

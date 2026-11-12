@@ -1,0 +1,430 @@
+
+CAGR (phases 0 / 21 / 42):
+fase                   0     21    42
+arm                                  
+Composite           21.4% 20.0% 19.0%
+LogDet-15 t0.5      22.7% 20.4% 20.7%
+Composite-5         18.5% 19.5% 16.4%
+LogDet-5 t0.25      15.9% 17.7% 17.1%
+LogDet-5 t0.5       19.2% 17.3% 16.3%
+LogDet-5 t0.75      17.8% 19.2% 15.6%
+LogDet-5 t1         17.9% 18.6% 15.8%
+vonNeumann-5 t0.25  14.9% 17.9% 16.6%
+vonNeumann-5 t0.5   19.0% 16.8% 16.3%
+vonNeumann-5 t0.75  18.6% 18.8% 15.5%
+vonNeumann-5 t1     17.7% 18.6% 15.5%
+Composite-10        20.7% 18.3% 17.4%
+LogDet-10 t0.25     19.3% 18.9% 20.4%
+LogDet-10 t0.5      20.8% 18.0% 20.8%
+LogDet-10 t0.75     21.0% 18.5% 18.1%
+LogDet-10 t1        21.0% 18.5% 20.0%
+vonNeumann-10 t0.25 20.1% 17.5% 20.5%
+vonNeumann-10 t0.5  20.6% 19.1% 20.5%
+vonNeumann-10 t0.75 20.8% 17.7% 18.9%
+vonNeumann-10 t1    21.2% 18.0% 18.4%
+Composite-20        18.9% 16.7% 16.9%
+LogDet-20 t0.25     18.7% 17.8% 16.2%
+LogDet-20 t0.5      19.5% 18.2% 17.5%
+LogDet-20 t0.75     19.8% 18.5% 17.9%
+LogDet-20 t1        19.9% 18.2% 18.2%
+vonNeumann-20 t0.25 18.2% 17.0% 16.0%
+vonNeumann-20 t0.5  18.7% 18.3% 17.5%
+vonNeumann-20 t0.75 19.7% 17.8% 17.0%
+vonNeumann-20 t1    20.2% 18.1% 17.8%
+Composite-30        17.3% 16.7% 15.7%
+LogDet-30 t0.25     17.1% 16.0% 15.3%
+LogDet-30 t0.5      17.0% 15.9% 15.8%
+LogDet-30 t0.75     17.6% 16.2% 15.5%
+LogDet-30 t1        17.5% 16.2% 14.9%
+vonNeumann-30 t0.25 18.1% 15.9% 15.1%
+vonNeumann-30 t0.5  17.3% 15.9% 15.2%
+vonNeumann-30 t0.75 17.3% 15.6% 15.9%
+vonNeumann-30 t1    17.3% 16.1% 15.5%
+LogDet-15 t0.75     22.0% 20.1% 20.0%
+vonNeumann-15 t0.75 22.4% 20.4% 20.6%
+GrandCanonical t0.5 15.9% 15.8% 17.0%
+Composite-EIC       22.1% 20.4% 19.6%
+LogDet-15 t0.5-EIC  22.7% 20.4% 21.0%
+BOVA11               7.2%  6.8%  6.7%
+
+Vol (phases 0 / 21 / 42):
+fase                   0     21    42
+arm                                  
+Composite           18.7% 18.6% 19.3%
+LogDet-15 t0.5      18.5% 18.3% 18.7%
+Composite-5         21.8% 21.6% 21.3%
+LogDet-5 t0.25      21.0% 21.5% 21.5%
+LogDet-5 t0.5       21.6% 21.8% 21.3%
+LogDet-5 t0.75      21.6% 21.8% 21.2%
+LogDet-5 t1         21.5% 21.9% 21.3%
+vonNeumann-5 t0.25  21.0% 21.4% 21.5%
+vonNeumann-5 t0.5   21.5% 21.9% 21.3%
+vonNeumann-5 t0.75  21.6% 21.8% 21.2%
+vonNeumann-5 t1     21.5% 21.9% 21.2%
+Composite-10        19.7% 19.4% 19.8%
+LogDet-10 t0.25     19.0% 18.9% 19.8%
+LogDet-10 t0.5      19.2% 19.0% 19.5%
+LogDet-10 t0.75     19.3% 19.1% 19.5%
+LogDet-10 t1        19.5% 19.2% 19.5%
+vonNeumann-10 t0.25 18.9% 18.6% 19.6%
+vonNeumann-10 t0.5  19.2% 18.8% 19.6%
+vonNeumann-10 t0.75 19.3% 19.0% 19.4%
+vonNeumann-10 t1    19.4% 19.1% 19.5%
+Composite-20        18.8% 18.9% 19.3%
+LogDet-20 t0.25     18.2% 18.1% 18.6%
+LogDet-20 t0.5      18.4% 18.3% 18.8%
+LogDet-20 t0.75     18.5% 18.5% 18.9%
+LogDet-20 t1        18.6% 18.5% 18.9%
+vonNeumann-20 t0.25 18.2% 17.9% 18.3%
+vonNeumann-20 t0.5  18.4% 17.8% 18.5%
+vonNeumann-20 t0.75 18.5% 18.1% 18.8%
+vonNeumann-20 t1    18.5% 18.5% 18.8%
+Composite-30        19.0% 18.6% 19.4%
+LogDet-30 t0.25     18.2% 18.1% 18.5%
+LogDet-30 t0.5      18.5% 18.3% 18.8%
+LogDet-30 t0.75     18.7% 18.4% 19.0%
+LogDet-30 t1        18.8% 18.4% 19.1%
+vonNeumann-30 t0.25 18.0% 18.0% 18.3%
+vonNeumann-30 t0.5  18.2% 18.1% 18.5%
+vonNeumann-30 t0.75 18.4% 18.3% 18.7%
+vonNeumann-30 t1    18.5% 18.5% 18.9%
+LogDet-15 t0.75     18.6% 18.3% 19.1%
+vonNeumann-15 t0.75 18.5% 18.3% 18.9%
+GrandCanonical t0.5 18.7% 18.4% 18.9%
+Composite-EIC       18.5% 18.4% 19.0%
+LogDet-15 t0.5-EIC  18.4% 18.2% 18.7%
+BOVA11              23.4% 23.4% 23.4%
+
+MDD (phases 0 / 21 / 42):
+fase                    0      21     42
+arm                                     
+Composite           -41.5% -42.2% -42.8%
+LogDet-15 t0.5      -43.3% -42.7% -44.8%
+Composite-5         -41.9% -45.7% -45.2%
+LogDet-5 t0.25      -38.6% -46.2% -47.5%
+LogDet-5 t0.5       -42.6% -46.2% -45.9%
+LogDet-5 t0.75      -42.6% -46.2% -45.9%
+LogDet-5 t1         -41.9% -46.2% -45.2%
+vonNeumann-5 t0.25  -38.6% -46.2% -47.5%
+vonNeumann-5 t0.5   -42.6% -46.2% -45.9%
+vonNeumann-5 t0.75  -42.6% -46.2% -45.9%
+vonNeumann-5 t1     -41.9% -46.2% -45.9%
+Composite-10        -42.8% -40.0% -46.3%
+LogDet-10 t0.25     -46.1% -44.8% -46.5%
+LogDet-10 t0.5      -46.1% -44.4% -47.1%
+LogDet-10 t0.75     -46.1% -44.4% -47.1%
+LogDet-10 t1        -46.1% -44.4% -42.6%
+vonNeumann-10 t0.25 -46.1% -44.8% -48.5%
+vonNeumann-10 t0.5  -46.1% -44.8% -46.9%
+vonNeumann-10 t0.75 -46.1% -44.4% -47.1%
+vonNeumann-10 t1    -46.1% -44.4% -47.1%
+Composite-20        -45.0% -45.6% -45.3%
+LogDet-20 t0.25     -45.5% -42.1% -46.4%
+LogDet-20 t0.5      -45.1% -44.8% -47.5%
+LogDet-20 t0.75     -45.1% -44.7% -45.8%
+LogDet-20 t1        -45.3% -44.7% -45.8%
+vonNeumann-20 t0.25 -44.1% -43.6% -46.7%
+vonNeumann-20 t0.5  -46.1% -42.2% -46.4%
+vonNeumann-20 t0.75 -45.8% -44.3% -47.8%
+vonNeumann-20 t1    -45.1% -45.3% -47.0%
+Composite-30        -45.2% -43.9% -47.3%
+LogDet-30 t0.25     -45.2% -43.2% -47.1%
+LogDet-30 t0.5      -44.3% -44.1% -47.1%
+LogDet-30 t0.75     -44.3% -44.2% -47.2%
+LogDet-30 t1        -44.6% -44.3% -47.4%
+vonNeumann-30 t0.25 -43.9% -43.7% -46.7%
+vonNeumann-30 t0.5  -44.7% -43.4% -46.6%
+vonNeumann-30 t0.75 -44.3% -44.2% -47.0%
+vonNeumann-30 t1    -44.3% -44.2% -47.1%
+LogDet-15 t0.75     -43.3% -42.8% -44.6%
+vonNeumann-15 t0.75 -43.3% -42.7% -47.6%
+GrandCanonical t0.5 -45.6% -44.9% -47.8%
+Composite-EIC       -41.8% -42.0% -43.0%
+LogDet-15 t0.5-EIC  -43.9% -42.9% -45.3%
+BOVA11              -49.7% -49.7% -49.7%
+
+Sharpe (phases 0 / 21 / 42):
+fase                  0     21    42
+arm                                 
+Composite           0.62  0.56  0.51
+LogDet-15 t0.5      0.69  0.59  0.59
+Composite-5         0.45  0.50  0.38
+LogDet-5 t0.25      0.36  0.43  0.40
+LogDet-5 t0.5       0.48  0.41  0.37
+LogDet-5 t0.75      0.43  0.48  0.34
+LogDet-5 t1         0.43  0.46  0.35
+vonNeumann-5 t0.25  0.32  0.43  0.38
+vonNeumann-5 t0.5   0.47  0.39  0.37
+vonNeumann-5 t0.75  0.46  0.46  0.34
+vonNeumann-5 t1     0.43  0.46  0.34
+Composite-10        0.57  0.47  0.43
+LogDet-10 t0.25     0.52  0.51  0.56
+LogDet-10 t0.5      0.58  0.47  0.58
+LogDet-10 t0.75     0.59  0.49  0.47
+LogDet-10 t1        0.59  0.48  0.55
+vonNeumann-10 t0.25 0.56  0.45  0.56
+vonNeumann-10 t0.5  0.58  0.52  0.57
+vonNeumann-10 t0.75 0.59  0.45  0.50
+vonNeumann-10 t1    0.60  0.46  0.48
+Composite-20        0.51  0.41  0.42
+LogDet-20 t0.25     0.51  0.47  0.39
+LogDet-20 t0.5      0.54  0.49  0.44
+LogDet-20 t0.75     0.56  0.50  0.46
+LogDet-20 t1        0.56  0.48  0.48
+vonNeumann-20 t0.25 0.49  0.44  0.39
+vonNeumann-20 t0.5  0.51  0.50  0.45
+vonNeumann-20 t0.75 0.55  0.47  0.43
+vonNeumann-20 t1    0.57  0.48  0.46
+Composite-30        0.43  0.41  0.36
+LogDet-30 t0.25     0.44  0.39  0.35
+LogDet-30 t0.5      0.43  0.38  0.37
+LogDet-30 t0.75     0.45  0.39  0.35
+LogDet-30 t1        0.45  0.39  0.33
+vonNeumann-30 t0.25 0.49  0.38  0.34
+vonNeumann-30 t0.5  0.45  0.38  0.35
+vonNeumann-30 t0.75 0.44  0.37  0.38
+vonNeumann-30 t1    0.44  0.39  0.35
+LogDet-15 t0.75     0.65  0.57  0.55
+vonNeumann-15 t0.75 0.67  0.59  0.58
+GrandCanonical t0.5 0.38  0.37  0.42
+Composite-EIC       0.66  0.58  0.54
+LogDet-15 t0.5-EIC  0.69  0.59  0.60
+BOVA11              0.01 -0.01 -0.01
+
+P[> Comp] (phases 0 / 21 / 42):
+fase                  0    21   42
+arm                               
+Composite              -    -    -
+LogDet-15 t0.5      0.87 0.62 0.90
+Composite-5         0.26 0.53 0.25
+LogDet-5 t0.25      0.06 0.32 0.34
+LogDet-5 t0.5       0.33 0.28 0.24
+LogDet-5 t0.75      0.19 0.50 0.18
+LogDet-5 t1         0.19 0.43 0.20
+vonNeumann-5 t0.25  0.03 0.33 0.28
+vonNeumann-5 t0.5   0.30 0.23 0.26
+vonNeumann-5 t0.75  0.26 0.44 0.18
+vonNeumann-5 t1     0.18 0.43 0.17
+Composite-10        0.38 0.17 0.20
+LogDet-10 t0.25     0.14 0.27 0.77
+LogDet-10 t0.5      0.38 0.13 0.85
+LogDet-10 t0.75     0.44 0.19 0.32
+LogDet-10 t1        0.46 0.20 0.75
+vonNeumann-10 t0.25 0.26 0.10 0.77
+vonNeumann-10 t0.5  0.34 0.32 0.81
+vonNeumann-10 t0.75 0.40 0.09 0.48
+vonNeumann-10 t1    0.49 0.12 0.38
+Composite-20        0.02 0.00 0.04
+LogDet-20 t0.25     0.04 0.10 0.03
+LogDet-20 t0.5      0.08 0.09 0.11
+LogDet-20 t0.75     0.11 0.11 0.18
+LogDet-20 t1        0.12 0.07 0.24
+vonNeumann-20 t0.25 0.04 0.06 0.04
+vonNeumann-20 t0.5  0.03 0.10 0.13
+vonNeumann-20 t0.75 0.11 0.04 0.07
+vonNeumann-20 t1    0.18 0.07 0.17
+Composite-30        0.01 0.02 0.02
+LogDet-30 t0.25     0.01 0.02 0.02
+LogDet-30 t0.5      0.01 0.01 0.03
+LogDet-30 t0.75     0.01 0.01 0.02
+LogDet-30 t1        0.01 0.01 0.01
+vonNeumann-30 t0.25 0.04 0.02 0.02
+vonNeumann-30 t0.5  0.01 0.01 0.01
+vonNeumann-30 t0.75 0.01 0.01 0.03
+vonNeumann-30 t1    0.01 0.01 0.02
+LogDet-15 t0.75     0.72 0.50 0.82
+vonNeumann-15 t0.75 0.81 0.61 0.88
+GrandCanonical t0.5 0.00 0.01 0.14
+Composite-EIC       0.91 0.72 0.85
+LogDet-15 t0.5-EIC  0.84 0.61 0.90
+BOVA11              0.00 0.00 0.00
+
+alpha vs same size (phases 0 / 21 / 42):
+fase                   0     21    42
+arm                                  
+Composite               -     -     -
+LogDet-15 t0.5      +1.4% +0.7% +1.8%
+Composite-5         +0.0% +0.0% +0.0%
+LogDet-5 t0.25      -1.5% -0.7% +1.0%
+LogDet-5 t0.5       +1.0% -1.4% +0.1%
+LogDet-5 t0.75      -0.3% +0.0% -0.5%
+LogDet-5 t1         -0.3% -0.5% -0.4%
+vonNeumann-5 t0.25  -2.3% -0.5% +0.6%
+vonNeumann-5 t0.5   +0.8% -1.9% +0.2%
+vonNeumann-5 t0.75  +0.3% -0.3% -0.6%
+vonNeumann-5 t1     -0.5% -0.5% -0.6%
+Composite-10        +0.0% +0.0% +0.0%
+LogDet-10 t0.25     -0.4% +1.1% +3.0%
+LogDet-10 t0.5      +0.5% +0.1% +3.2%
+LogDet-10 t0.75     +0.6% +0.4% +0.9%
+LogDet-10 t1        +0.6% +0.4% +2.5%
+vonNeumann-10 t0.25 +0.4% +0.1% +3.2%
+vonNeumann-10 t0.5  +0.4% +1.2% +3.1%
+vonNeumann-10 t0.75 +0.5% -0.2% +1.6%
+vonNeumann-10 t1    +0.7% -0.0% +1.1%
+Composite-20        +0.0% +0.0% +0.0%
+LogDet-20 t0.25     +0.4% +1.5% -0.2%
+LogDet-20 t0.5      +0.8% +1.5% +0.7%
+LogDet-20 t0.75     +1.0% +1.7% +1.0%
+LogDet-20 t1        +1.0% +1.4% +1.2%
+vonNeumann-20 t0.25 +0.1% +0.9% -0.2%
+vonNeumann-20 t0.5  +0.3% +1.8% +0.8%
+vonNeumann-20 t0.75 +1.0% +1.2% +0.4%
+vonNeumann-20 t1    +1.3% +1.4% +1.0%
+Composite-30        +0.0% +0.0% +0.0%
+LogDet-30 t0.25     +0.3% -0.3% -0.1%
+LogDet-30 t0.5      +0.0% -0.5% +0.3%
+LogDet-30 t0.75     +0.4% -0.3% -0.1%
+LogDet-30 t1        +0.3% -0.3% -0.6%
+vonNeumann-30 t0.25 +1.2% -0.2% -0.1%
+vonNeumann-30 t0.5  +0.4% -0.4% -0.1%
+vonNeumann-30 t0.75 +0.3% -0.7% +0.4%
+vonNeumann-30 t1    +0.2% -0.4% -0.1%
+LogDet-15 t0.75     +0.7% +0.3% +1.0%
+vonNeumann-15 t0.75 +1.1% +0.6% +1.6%
+GrandCanonical t0.5 -3.9% -2.8% -1.0%
+Composite-EIC       +0.7% +0.4% +0.6%
+LogDet-15 t0.5-EIC  +1.5% +0.8% +2.1%
+BOVA11                  -     -     -
+
+t same size (phases 0 / 21 / 42):
+fase                   0     21    42
+arm                                  
+Composite               -     -     -
+LogDet-15 t0.5      +1.44 +0.72 +1.68
+Composite-5             -     -     -
+LogDet-5 t0.25      -0.89 -0.36 +0.59
+LogDet-5 t0.5       +0.73 -0.91 +0.08
+LogDet-5 t0.75      -0.29 +0.01 -0.53
+LogDet-5 t1         -0.35 -0.38 -0.52
+vonNeumann-5 t0.25  -1.28 -0.22 +0.32
+vonNeumann-5 t0.5   +0.56 -1.14 +0.15
+vonNeumann-5 t0.75  +0.27 -0.20 -0.54
+vonNeumann-5 t1     -0.46 -0.38 -0.65
+Composite-10            -     -     -
+LogDet-10 t0.25     -0.29 +0.73 +1.65
+LogDet-10 t0.5      +0.53 +0.11 +2.25
+LogDet-10 t0.75     +0.69 +0.45 +0.81
+LogDet-10 t1        +0.70 +0.42 +1.97
+vonNeumann-10 t0.25 +0.27 +0.08 +1.62
+vonNeumann-10 t0.5  +0.38 +0.97 +1.92
+vonNeumann-10 t0.75 +0.54 -0.17 +1.35
+vonNeumann-10 t1    +0.85 -0.03 +1.01
+Composite-20            -     -     -
+LogDet-20 t0.25     +0.30 +1.03 -0.21
+LogDet-20 t0.5      +0.99 +1.86 +0.78
+LogDet-20 t0.75     +1.40 +2.31 +1.31
+LogDet-20 t1        +1.62 +2.27 +1.81
+vonNeumann-20 t0.25 +0.08 +0.60 -0.14
+vonNeumann-20 t0.5  +0.27 +1.80 +0.82
+vonNeumann-20 t0.75 +1.22 +1.51 +0.39
+vonNeumann-20 t1    +1.84 +1.96 +1.24
+Composite-30            -     -     -
+LogDet-30 t0.25     +0.29 -0.23 -0.07
+LogDet-30 t0.5      +0.01 -0.57 +0.36
+LogDet-30 t0.75     +0.78 -0.55 -0.16
+LogDet-30 t1        +0.64 -0.61 -1.24
+vonNeumann-30 t0.25 +0.98 -0.16 -0.11
+vonNeumann-30 t0.5  +0.41 -0.35 -0.17
+vonNeumann-30 t0.75 +0.41 -0.79 +0.47
+vonNeumann-30 t1    +0.34 -0.45 -0.09
+LogDet-15 t0.75     +0.86 +0.41 +1.15
+vonNeumann-15 t0.75 +1.18 +0.69 +1.43
+GrandCanonical t0.5 -2.37 -1.73 -0.59
+Composite-EIC       +1.72 +1.00 +1.36
+LogDet-15 t0.5-EIC  +1.33 +0.74 +1.69
+BOVA11                  -     -     -
+
+turnover (phases 0 / 21 / 42):
+fase                 0   21  42
+arm                            
+Composite           3.0 3.1 3.2
+LogDet-15 t0.5      2.9 3.1 3.1
+Composite-5         4.6 4.9 4.7
+LogDet-5 t0.25      4.5 4.7 4.4
+LogDet-5 t0.5       4.5 4.6 4.5
+LogDet-5 t0.75      4.7 4.7 4.7
+LogDet-5 t1         4.6 4.8 4.8
+vonNeumann-5 t0.25  4.4 4.7 4.4
+vonNeumann-5 t0.5   4.5 4.6 4.5
+vonNeumann-5 t0.75  4.6 4.8 4.7
+vonNeumann-5 t1     4.7 4.8 4.7
+Composite-10        3.5 3.5 3.7
+LogDet-10 t0.25     3.3 3.5 3.5
+LogDet-10 t0.5      3.3 3.6 3.5
+LogDet-10 t0.75     3.3 3.4 3.5
+LogDet-10 t1        3.4 3.4 3.5
+vonNeumann-10 t0.25 3.3 3.5 3.4
+vonNeumann-10 t0.5  3.3 3.5 3.5
+vonNeumann-10 t0.75 3.3 3.5 3.5
+vonNeumann-10 t1    3.3 3.5 3.5
+Composite-20        2.8 2.8 2.9
+LogDet-20 t0.25     2.7 2.8 2.9
+LogDet-20 t0.5      2.8 2.8 2.9
+LogDet-20 t0.75     2.8 2.8 2.9
+LogDet-20 t1        2.8 2.8 2.9
+vonNeumann-20 t0.25 2.8 2.8 2.9
+vonNeumann-20 t0.5  2.8 2.8 2.9
+vonNeumann-20 t0.75 2.8 2.8 2.9
+vonNeumann-20 t1    2.8 2.8 2.9
+Composite-30        2.4 2.4 2.6
+LogDet-30 t0.25     2.4 2.5 2.5
+LogDet-30 t0.5      2.4 2.5 2.5
+LogDet-30 t0.75     2.4 2.5 2.6
+LogDet-30 t1        2.4 2.5 2.6
+vonNeumann-30 t0.25 2.3 2.3 2.4
+vonNeumann-30 t0.5  2.4 2.4 2.5
+vonNeumann-30 t0.75 2.4 2.4 2.5
+vonNeumann-30 t1    2.4 2.5 2.6
+LogDet-15 t0.75     3.0 3.1 3.1
+vonNeumann-15 t0.75 2.9 3.0 3.1
+GrandCanonical t0.5 2.4 2.4 2.5
+Composite-EIC       3.0 3.1 3.3
+LogDet-15 t0.5-EIC  2.9 3.1 3.1
+BOVA11                -   -   -
+
+Gate per arm (P[> Composite] >= 0.95 and DSR >= 0.95 in every phase), 41 correlated rows:
+  LogDet-15 t0.5: [(0.869, 0.987), (0.62, 0.989), (0.901, 0.977)] -> fails
+  Composite-5: [(0.259, 0.813), (0.531, 0.958), (0.254, 0.744)] -> fails
+  LogDet-5 t0.25: [(0.064, 0.617), (0.315, 0.895), (0.342, 0.758)] -> fails
+  LogDet-5 t0.5: [(0.328, 0.833), (0.279, 0.89), (0.244, 0.719)] -> fails
+  LogDet-5 t0.75: [(0.19, 0.765), (0.496, 0.946), (0.184, 0.678)] -> fails
+  LogDet-5 t1: [(0.19, 0.767), (0.431, 0.934), (0.198, 0.693)] -> fails
+  vonNeumann-5 t0.25: [(0.034, 0.544), (0.327, 0.9), (0.285, 0.723)] -> fails
+  vonNeumann-5 t0.5: [(0.298, 0.821), (0.225, 0.87), (0.256, 0.725)] -> fails
+  vonNeumann-5 t0.75: [(0.259, 0.802), (0.445, 0.937), (0.179, 0.673)] -> fails
+  vonNeumann-5 t1: [(0.177, 0.758), (0.431, 0.934), (0.174, 0.669)] -> fails
+  Composite-10: [(0.378, 0.958), (0.168, 0.962), (0.196, 0.887)] -> fails
+  LogDet-10 t0.25: [(0.136, 0.885), (0.273, 0.953), (0.773, 0.944)] -> fails
+  LogDet-10 t0.5: [(0.38, 0.946), (0.128, 0.945), (0.849, 0.959)] -> fails
+  LogDet-10 t0.75: [(0.441, 0.954), (0.192, 0.956), (0.322, 0.893)] -> fails
+  LogDet-10 t1: [(0.46, 0.958), (0.201, 0.96), (0.747, 0.951)] -> fails
+  vonNeumann-10 t0.25: [(0.264, 0.909), (0.098, 0.913), (0.773, 0.94)] -> fails
+  vonNeumann-10 t0.5: [(0.337, 0.938), (0.315, 0.964), (0.81, 0.952)] -> fails
+  vonNeumann-10 t0.75: [(0.397, 0.949), (0.092, 0.938), (0.479, 0.917)] -> fails
+  vonNeumann-10 t1: [(0.486, 0.958), (0.119, 0.946), (0.376, 0.903)] -> fails
+  Composite-20: [(0.016, 0.952), (0.002, 0.953), (0.039, 0.921)] -> fails
+  LogDet-20 t0.25: [(0.044, 0.912), (0.099, 0.946), (0.033, 0.835)] -> fails
+  LogDet-20 t0.5: [(0.083, 0.949), (0.085, 0.972), (0.115, 0.917)] -> fails
+  LogDet-20 t0.75: [(0.112, 0.96), (0.111, 0.978), (0.18, 0.937)] -> fails
+  LogDet-20 t1: [(0.122, 0.965), (0.071, 0.976), (0.235, 0.948)] -> fails
+  vonNeumann-20 t0.25: [(0.039, 0.887), (0.056, 0.919), (0.044, 0.808)] -> fails
+  vonNeumann-20 t0.5: [(0.035, 0.922), (0.097, 0.968), (0.128, 0.908)] -> fails
+  vonNeumann-20 t0.75: [(0.114, 0.956), (0.041, 0.963), (0.066, 0.897)] -> fails
+  vonNeumann-20 t1: [(0.176, 0.967), (0.066, 0.973), (0.167, 0.933)] -> fails
+  Composite-30: [(0.008, 0.925), (0.023, 0.969), (0.024, 0.898)] -> fails
+  LogDet-30 t0.25: [(0.009, 0.881), (0.016, 0.919), (0.019, 0.821)] -> fails
+  LogDet-30 t0.5: [(0.005, 0.888), (0.01, 0.924), (0.028, 0.872)] -> fails
+  LogDet-30 t0.75: [(0.013, 0.922), (0.012, 0.946), (0.016, 0.861)] -> fails
+  LogDet-30 t1: [(0.011, 0.921), (0.011, 0.948), (0.006, 0.828)] -> fails
+  vonNeumann-30 t0.25: [(0.044, 0.91), (0.021, 0.907), (0.021, 0.779)] -> fails
+  vonNeumann-30 t0.5: [(0.009, 0.891), (0.012, 0.919), (0.013, 0.82)] -> fails
+  vonNeumann-30 t0.75: [(0.008, 0.905), (0.007, 0.917), (0.03, 0.877)] -> fails
+  vonNeumann-30 t1: [(0.007, 0.909), (0.013, 0.937), (0.015, 0.86)] -> fails
+  LogDet-15 t0.75: [(0.715, 0.982), (0.497, 0.987), (0.816, 0.971)] -> fails
+  vonNeumann-15 t0.75: [(0.808, 0.985), (0.609, 0.989), (0.883, 0.975)] -> fails
+  GrandCanonical t0.5: [(0.002, 0.841), (0.011, 0.939), (0.136, 0.938)] -> fails
+  Composite-EIC: [(0.909, 0.983), (0.722, 0.988), (0.846, 0.961)] -> fails
+  LogDet-15 t0.5-EIC: [(0.836, 0.983), (0.607, 0.986), (0.904, 0.975)] -> fails
+
+Arms passing the gate: none

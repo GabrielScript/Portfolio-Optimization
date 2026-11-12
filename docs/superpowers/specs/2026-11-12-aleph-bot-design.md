@@ -110,3 +110,16 @@ hypothesis, cheap on the demo, and stage 1 can end it in days.
 ## Compute
 
 Stages 0 and 1 on the laptop (bars streamed name by name; RAM is the constraint). Stage 2 on Kaggle's free GPU.
+
+## Amendment before any number (2026-11-12, stage 0 findings; no return computed)
+
+- The lake's CVM filings (`sentiment/ipe/ipe.parquet`, 749,165 rows, 2003 to 2026-11-07) carry a delivery date and
+  no time of day. **Pattern (b) is dropped unread**, as stage 0 provided; stage 1 has two event studies and N goes
+  126 -> 128. Filing dates still serve the "no filing" conditions of (a) and (c): a filing dated the same day (for
+  (a)) or dated the previous session's day or the same day (for (c)) excludes the event.
+- **Stage 1 runs on M15 bars for every name**, so all names share the same span (2021-11-11 on); M5 reaches only
+  about 2022-03 on the liquid names and is kept for stage 2. On M15: (a) the 30-minute return is two bars, entry at
+  the next bar's open, exit at the open four bars later or at the 17:30 bar's close; (c) entry at the open of the
+  10:15 bar, exit at the open of the 11:30 bar.
+- The house universe (`universe_monthly`) holds stocks and units only. A day without a trade counts as zero volume
+  in the 63-session median.

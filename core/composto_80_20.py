@@ -1,9 +1,9 @@
 """
 composto_80_20.py - The Composite 80/20 (the user, 2026-11-13; docs/superpowers/specs/2026-11-13-composto-80-20-design.md):
 80% the Composite's record in force (``paper-v3/composto.csv``, its weights scaled by 0.8) and 20% a Bitcoin ETF,
-back to 80/20 at the first session of each month and at each new Composite record. The official book of the MT5
-demo executor and a ghost account of the simulator. A user decision, not a passed test (every Bitcoin mix failed
-its gate).
+back to 80/20 at the first session of each month and at each new Composite record. A ghost account of the simulator
+only: the user kept the pure Composite official on MT5 and in the app (2026-11-13 ~16:00). Every Bitcoin mix failed
+its gate.
 
 The ghost's record (``simulador/composto_80_20.csv``) has the Top-5's columns (``core.top5``): ``data`` is the day it
 trades at (the simulator takes the first session on or after it), ``base`` the Composite record it scales.

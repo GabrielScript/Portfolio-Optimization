@@ -18,7 +18,12 @@ fantasma do Aleph Quant". A user decision, not a passed test: every Bitcoin mix 
   monthly; here each rebalance resets the stock names to the record's weights too (the ghost and MT5 are rebalanced
   books, as the other accounts are).
 
-## MT5 (demo, `scripts/mt5_executor.py`)
+## MT5 (demo, `scripts/mt5_executor.py`) - reverted the same day
+
+The user, 13/11 ~16:00: "Permanece com a estratégia do composite puro, tanto no meta trader 5 e Aleph Quant, o
+Composite 80/20 deixa como estratégia fantasma no meu app". The executor trades the pure Composite again (its
+version before this spec); `orders_for(unit_lot=...)` and the first-tick wait stay. What was built:
+
 
 - The book's target is the 80/20 mix of the last Composite record; its record key is `<Composite date>|<YYYY-MM>`, so
   a new month or a new Composite record is a new record that the executor sends (one resend next session, as before).

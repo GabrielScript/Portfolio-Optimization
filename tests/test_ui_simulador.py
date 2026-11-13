@@ -24,3 +24,8 @@ def test_the_caption_says_what_the_composite_80_20_is_and_when_it_starts():
     # the user, 2026-11-13: the Composite 80/20 is the official strategy, followed as a ghost account too
     assert "Composto 80/20" in simulador.SOBRE_AS_CARTEIRAS and "13/11/2026" in simulador.SOBRE_AS_CARTEIRAS
     assert "BITH11" in simulador.SOBRE_AS_CARTEIRAS and "Bitcoin" in simulador.SOBRE_AS_CARTEIRAS
+
+
+def test_the_80_20_is_a_ghost_account_not_the_official_strategy():
+    # the user, 2026-11-13 ~16:00: the pure Composite stays official on MT5 and in the app; the 80/20 is a ghost
+    assert "oficial" not in simulador.SOBRE_AS_CARTEIRAS

@@ -22,7 +22,7 @@ CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in
 # (DECISOES 240 and 251); Top-5: the Composite's 5 highest scores, one per sector (``core.top5.CARTEIRA``, DECISOES 290);
 # 12/3: the Composite with 12 names plus 3 US BDRs (``core.mista.CARTEIRA``, DECISOES 299); Fermiônica: 15 names by
 # the Composite's score and the log det of their correlation (``core.fermionica_fantasma.CARTEIRA``, DECISOES 348);
-# Composto 80/20: 80% the Composite and 20% a Bitcoin ETF, the official strategy (``core.composto_80_20``, 2026-11-13)
+# Composto 80/20: 80% the Composite and 20% a Bitcoin ETF, a ghost (``core.composto_80_20``, 2026-11-13)
 CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3", "Fermiônica", "Composto 80/20")
 # a gain on a BDR or a BR-listed ETF pays 15% with no R$ 20 mil exemption; a R$ 10,000 account never sells R$ 20 mil of
 # stocks in a month, so stocks stay exempt. The 12/3 holds BDRs (the user, 2026-11-07: the ghost net of that tax) and the

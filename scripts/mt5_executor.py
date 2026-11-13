@@ -1,9 +1,6 @@
 """
-The MT5 executor (docs/superpowers/specs/2026-11-12-mt5-demo-design.md, plan step 3): the official book traded by
-itself on XP's MetaTrader 5 demo account, in B3's closing call. Since 2026-11-13 the book is the Composite 80/20
-(``core.composto_80_20``; spec 2026-11-13-composto-80-20-design): 80% the Composite's last record
-(``paper-v3/composto.csv``) and 20% BITH11, its record key ``<Composite date>|<YYYY-MM>`` so a new month or a new
-Composite record is sent as a new record.
+The MT5 executor (docs/superpowers/specs/2026-11-12-mt5-demo-design.md, plan step 3): the Composite's last record
+(``paper-v3/composto.csv``) traded by itself on XP's MetaTrader 5 demo account, in B3's closing call.
 
 The Windows task "aleph mt5" runs it every weekday at 17:50 through the routines' launcher:
     <Python312>/pythonw.exe -X utf8 scripts/com_python_base.py scripts/rodar_paper.py mt5_executor
@@ -43,7 +40,6 @@ from core.mt5_book import (
     target_shares,
 )
 from core.mt5_corretora import Corretora, Cotacao, Terminal
-from core import composto_80_20
 
 INICIAL = 100_000.0                                      # the book's money (the user, 2026-11-12)
 CHAMADA, ULTIMO_ENVIO = time(17, 55, 15), time(17, 58, 30)   # B3's closing call 17:55-18:00 since 03/11/2026
@@ -87,9 +83,11 @@ def _anexar(arquivo: Path, linhas: list[dict]) -> None:
         escritor.writerows(linhas)
 
 
-def registro_do_livro(arquivo: Path, hoje: pd.Timestamp) -> tuple[str, pd.Series]:
-    """The book's record key and weights on ``hoje``: the Composite 80/20 of the Composite's last record."""
-    return composto_80_20.livro_do_dia(pd.read_csv(arquivo, parse_dates=["data"]), hoje)
+def ultimo_registro(arquivo: Path) -> tuple[str, pd.Series]:
+    """The last record's date and weights."""
+    tabela = pd.read_csv(arquivo)
+    data = str(tabela["data"].max())
+    return data, tabela.loc[tabela["data"] == data].set_index("ticker")["peso"].astype(float)
 
 
 def caixa(fills: pd.DataFrame) -> float:
@@ -139,7 +137,7 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
           simular: bool = False) -> Resultado:
     if (pastas.livro / "PARAR").exists():
         return Resultado("parado", nota="paper-mt5/PARAR exists")
-    registro, pesos = registro_do_livro(pastas.registro, pd.Timestamp(agora().date()))
+    registro, pesos = ultimo_registro(pastas.registro)
     with Corretora(terminal).conectar() as c:
         conta = c.conta()
         motivo = check_account(conta.is_demo, conta.server)
@@ -170,7 +168,7 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
         if alvo is None:
             valor = dinheiro + float((detidas.reindex(nomes, fill_value=0) * ultimos).sum())
             alvo = target_shares(pesos, ultimos.reindex(pesos.index), valor)
-        ordens = orders_for(alvo, detidas, unit_lot={composto_80_20.ETF})
+        ordens = orders_for(alvo, detidas)
         motivo = check_names(ordens, nomes) or check_cash(ordens, ultimos, dinheiro)
         if motivo:
             return Resultado("recusado", registro, nota=motivo)

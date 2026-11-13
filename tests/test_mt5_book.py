@@ -83,3 +83,16 @@ def test_cash_moves_with_the_fills_and_their_fees() -> None:
 def test_the_cost_of_an_order_at_the_users_real_size() -> None:
     # an order of 6,700 in a 100,000 book is 67 at R$ 1,000; R$ 4.90 on 67 is 731 bps
     assert mb.cost_at_small_book_bps(6_700.0, 100_000.0) == pytest.approx(4.90 / 67.0 * 1e4)
+
+
+def test_a_name_without_a_fractional_symbol_is_sent_whole_on_its_standard_symbol() -> None:
+    # the Composite 80/20 (spec 2026-11-13): BITH11 has volume step 1 and no BITH11F on the terminal
+    ordens = mb.orders_for(pd.Series({"BITH11": 222, "AAAA3": 222}), pd.Series(dtype=int), unit_lot={"BITH11"})
+    assert ordens == [Order("AAAA3", "AAAA3", "buy", 200), Order("AAAA3", "AAAA3F", "buy", 22),
+                      Order("BITH11", "BITH11", "buy", 222)]
+
+
+def test_the_80_20_target_holds_20_percent_in_the_etf_under_the_name_cap() -> None:
+    pesos = pd.Series({"AAAA3": 0.4, "BBBB3": 0.4, "BITH11": 0.2})
+    alvo = mb.target_shares(pesos, pd.Series({"AAAA3": 10.0, "BBBB3": 20.0, "BITH11": 90.0}), 100_000.0)
+    assert 0.19 < alvo["BITH11"] * 90.0 / 100_000.0 <= 0.20

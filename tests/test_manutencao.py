@@ -912,3 +912,54 @@ def test_a_run_updates_the_deep_options_account_right_after_the_first_one(app):
                          opcoes=lambda _livro, _marcas: nada, opcoes_deep=lambda _livro, _marcas: nada)
     assert resultado.desfecho == "ok"
     assert resultado.nota.index("opções: em dia") < resultado.nota.index("opções deep OTM: em dia")
+
+
+def test_the_80_20_step_records_the_registration_day_and_commits_it_once(app):
+    # the user, 2026-11-13 (spec 2026-11-13-composto-80-20-design): the record the "Composto 80/20" account trades
+    from core import composto_80_20, top5
+    from scripts.manutencao import ARQUIVO_COMPOSTO_80_20, atualizar_composto_80_20, git_em
+    _registro_do_composto(app, "2026-10-27")
+    git = git_em(app)
+    hoje = pd.Timestamp("2026-11-13")
+    assert atualizar_composto_80_20(app, git, hoje) == "Composto 80/20: registro de 13/11/2026"
+    registro = top5.ler(app / ARQUIVO_COMPOSTO_80_20)
+    assert set(registro["data"]) == {composto_80_20.INICIO} and registro["peso"].sum() == pytest.approx(1.0)
+    assert registro.set_index("ticker")["peso"][composto_80_20.ETF] == pytest.approx(0.20)
+    assert not git("status", "--porcelain", "--", str(ARQUIVO_COMPOSTO_80_20))
+    antes = git("rev-parse", "HEAD")
+    assert atualizar_composto_80_20(app, git, hoje) == "Composto 80/20: em dia"
+    assert git("rev-parse", "HEAD") == antes
+
+
+def test_a_run_with_the_80_20_step_records_it_before_the_simulator_trades(app):
+    from scripts.manutencao import executar, git_em
+    _checkout(app, 10)
+    _registro_do_composto(app, "2026-10-27")
+    vistos = []
+    resultado = executar(app, git_em(app), app / "daily.lock", datetime(2026, 11, 13, 22, 30), lambda: _saida(10),
+                         simular=lambda ordens: vistos.append((app / "simulador" / "composto_80_20.csv").exists()) or
+                         pd.DataFrame(), composto_80_20=True)
+    assert resultado.desfecho == "ok" and vistos == [True]
+    assert resultado.nota.index("Composto 80/20: registro de 13/11/2026") < resultado.nota.index("simulador:")
+
+
+def test_the_simulator_trades_the_80_20_record_when_it_exists(app, monkeypatch):
+    from core import composto_80_20, top5
+    from scripts import manutencao as m
+    (app / "lago").mkdir()
+    (app / "paper-v3").mkdir()
+    papeis = [f"P{i:02d}3" for i in range(15)]
+    dias = pd.bdate_range("2026-11-10", periods=4)
+    pd.DataFrame({"date": dias, **dict.fromkeys(papeis, 10.0), "BITH11": 90.0, "BOVA11": 100.0, "IVVB11": 100.0}
+                 ).to_parquet(app / m.ARQUIVO_CALENDARIO, index=False)
+    for nome in ("composto", "conservadora"):
+        pd.DataFrame({"data": "2026-10-27", "ticker": papeis, "peso": 1 / 15, "preco": 9.0}).to_csv(
+            app / "paper-v3" / f"{nome}.csv", index=False)
+    composto = pd.read_csv(app / "paper-v3" / "composto.csv", parse_dates=["data"])
+    top5.acrescentar(app / m.ARQUIVO_COMPOSTO_80_20,
+                     composto_80_20.registros_devidos(composto, composto_80_20.vazio(), pd.Timestamp("2026-11-13")))
+    monkeypatch.setattr("core.cdi_lago.daily_cdi", lambda _anos, _hoje: pd.Series(dtype=float))
+    from core.simulador import ler_ordens
+    novas = m.ordens_do_simulador(app, date(2026, 11, 13), ler_ordens(app / m.ARQUIVO_SIMULADOR))
+    contas = novas[novas["carteira"] == composto_80_20.CARTEIRA]
+    assert set(contas["data"]) == {composto_80_20.INICIO} and set(contas["ticker"]) == {*papeis, "BITH11"}

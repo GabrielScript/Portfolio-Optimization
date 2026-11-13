@@ -1,4 +1,5 @@
-"""The MT5 executor's run (spec 2026-11-12-mt5-demo, plan step 3), on a fake terminal and temporary files."""
+"""The MT5 executor's run (spec 2026-11-12-mt5-demo, plan step 3; the Composite 80/20 since spec 2026-11-13), on a fake
+terminal and temporary files."""
 
 from __future__ import annotations
 
@@ -13,7 +14,8 @@ from scripts import mt5_executor as ex
 
 DIA = datetime(2026, 11, 13)
 NA_CHAMADA = DIA.replace(hour=17, minute=56)
-PRECOS = {"AAAA3": 10.0, "BBBB3": 20.0, "CCCC3": 5.0, "DDDD3": 8.0, "EEEE3": 40.0}
+PRECOS = {"AAAA3": 10.0, "BBBB3": 20.0, "CCCC3": 5.0, "DDDD3": 8.0, "EEEE3": 40.0, "BITH11": 90.0}
+CHAVE = "2026-11-12|2026-11"                # the last Composite record and the month: the book's record key
 
 
 class Terminal:
@@ -79,10 +81,28 @@ def test_a_new_record_is_bought_in_the_closing_call_with_the_books_100k(pastas) 
     comprado = sum(p["volume"] * PRECOS[p["symbol"].removesuffix("F")] for p in terminal.sent)
     assert 99_000 < comprado <= 100_000
     assert {p["symbol"].removesuffix("F") for p in terminal.sent} == set(PRECOS)
-    assert all(p["magic"] == MAGIC and p["comment"] == "aleph 2026-11-12" for p in terminal.sent)
+    assert all(p["magic"] == MAGIC and p["comment"] == f"aleph {CHAVE}" for p in terminal.sent)
     assert all(p["price"] == pytest.approx(PRECOS[p["symbol"].removesuffix("F")] * 1.02) for p in terminal.sent)
     alvos = pd.read_csv(pastas.livro / "alvos.csv")
-    assert set(alvos["registro"]) == {"2026-11-12"} and len(alvos) == 5
+    assert set(alvos["registro"]) == {CHAVE} and len(alvos) == 6
+    etf = [p for p in terminal.sent if p["symbol"].startswith("BITH11")]
+    assert [p["symbol"] for p in etf] == ["BITH11"] and 0.19 < etf[0]["volume"] * 90.0 / 100_000 <= 0.20
+
+
+def test_a_new_month_is_a_new_record_sent_back_to_80_20(pastas) -> None:
+    rodar(pastas, Terminal(NA_CHAMADA))
+    alvos = pd.read_csv(pastas.livro / "alvos.csv").set_index("nome")["acoes"]
+    cheio = [NS(symbol=n, volume=float(q), type=0, magic=MAGIC) for n, q in alvos.items()]
+    deals = [NS(symbol=n, type=0, volume=float(q), price=PRECOS[n], commission=0.0,
+                time=int(pd.Timestamp(NA_CHAMADA).timestamp()), order=1, magic=MAGIC) for n, q in alvos.items()]
+    dezembro = NA_CHAMADA.replace(month=12, day=1)
+    precos = dict(PRECOS, BITH11=120.0)                # Bitcoin up: the sleeve is above 20%, part of it is sold
+    terminal = Terminal(dezembro, positions=cheio, deals=deals)
+    terminal.symbol_info_tick = lambda symbol: NS(bid=precos[symbol.removesuffix("F")], ask=precos[symbol.removesuffix("F")],
+                                                  last=precos[symbol.removesuffix("F")], time=int(pd.Timestamp(dezembro).timestamp()))
+    r = rodar(pastas, terminal, agora=dezembro)
+    assert r.desfecho == "enviado" and r.registro == "2026-11-12|2026-12"
+    assert {(p["symbol"], p["type"]) for p in terminal.sent if p["symbol"] == "BITH11"} == {("BITH11", 3)}
 
 
 def test_the_same_record_is_not_traded_twice_the_same_day(pastas) -> None:

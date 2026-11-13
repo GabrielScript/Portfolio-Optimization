@@ -430,3 +430,17 @@ def test_the_bdr_gain_is_over_the_average_price_of_every_buy():
     assert sim.ganho_sobre_o_preco_medio(
         linhas(("2026-11-03", "12/3", {"AAPL34": (10, 10.0, 0.0)}), ("2026-11-04", "12/3", {"AAPL34": (10, 20.0, 0.0)})),
         "AAPL34", 5, 18.0) == pytest.approx(5 * (18.0 - 15.0))
+
+
+def test_the_80_20_account_pays_15_percent_on_the_bitcoin_etfs_gain():
+    # the Composite 80/20 (spec 2026-11-13): a B3-listed ETF's gain pays 15% with no R$ 20 mil exemption
+    from core import composto_80_20
+    assert composto_80_20.CARTEIRA in sim.CARTEIRAS and composto_80_20.CARTEIRA in sim.CARTEIRAS_COM_IR
+    assert composto_80_20.ETF in sim.TRIBUTADOS_15
+    dias = pd.bdate_range(INICIO, periods=2)
+    precos = pd.DataFrame({"BITH11": [10.0, 15.0]} | {papel: [10.0, 10.0] for papel in OUTROS}, index=dias)
+    registros = {composto_80_20.CARTEIRA: pd.concat([registro("2026-11-03", {"BITH11": 0.2} | dict(list(OUTROS.items())[:4])),
+                                                     registro("2026-11-04", OUTROS)])}
+    novas = sim.ordens_devidas(ledger(), registros, precos, SEM_CDI, sem_custo).set_index(["data", "ticker"])
+    venda = novas.loc[(pd.Timestamp("2026-11-04"), "BITH11")]
+    assert venda["ordem"] < 0 and venda["custo"] == pytest.approx(0.15 * -venda["ordem"] * (15.0 - 10.0))

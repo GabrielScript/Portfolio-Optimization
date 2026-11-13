@@ -21,11 +21,14 @@ CAPITAL_OPCOES = 0.0               # no options sleeve: the user invests only in
 # DeepSeek: the names of both rule portfolios it judges favorable; Controle: the same list in equal weights, no model
 # (DECISOES 240 and 251); Top-5: the Composite's 5 highest scores, one per sector (``core.top5.CARTEIRA``, DECISOES 290);
 # 12/3: the Composite with 12 names plus 3 US BDRs (``core.mista.CARTEIRA``, DECISOES 299); Fermiônica: 15 names by
-# the Composite's score and the log det of their correlation (``core.fermionica_fantasma.CARTEIRA``, DECISOES 348)
-CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3", "Fermiônica")
+# the Composite's score and the log det of their correlation (``core.fermionica_fantasma.CARTEIRA``, DECISOES 348);
+# Composto 80/20: 80% the Composite and 20% a Bitcoin ETF, the official strategy (``core.composto_80_20``, 2026-11-13)
+CARTEIRAS = ("Composto", "Conservadora", "DeepSeek", "Controle", "Top-5", "12/3", "Fermiônica", "Composto 80/20")
 # a gain on a BDR or a BR-listed ETF pays 15% with no R$ 20 mil exemption; a R$ 10,000 account never sells R$ 20 mil of
-# stocks in a month, so stocks stay exempt. Only the 12/3 holds them (the user, 2026-11-07: the ghost net of that tax)
-CARTEIRAS_COM_IR = ("12/3", "12/3 (base)", "12/3 + Sentinela")    # the last two: core.sentinela.conta (2026-11-08)
+# stocks in a month, so stocks stay exempt. The 12/3 holds BDRs (the user, 2026-11-07: the ghost net of that tax) and the
+# Composto 80/20 the Bitcoin ETF
+CARTEIRAS_COM_IR = ("12/3", "12/3 (base)", "12/3 + Sentinela",    # the two 12/3 copies: core.sentinela.conta (2026-11-08)
+                    "Composto 80/20")
 IR = 0.15
 REFERENCIAS = ("BOVA11",)              # comparison only, never invested (IVVB11 dropped, user 2026-11-03)
 CUSTOS = Custos(emolumentos=0.0003, impacto=1.0)    # the same as the real-money plan in the app
@@ -43,7 +46,8 @@ def _fator_do_juro(cdi: pd.Series, dias: pd.DatetimeIndex) -> pd.Series:
 
 def _tributados() -> frozenset[str]:
     from ativos_eua import ATIVOS_EUA
-    return frozenset(ativo["ticker"] for ativo in ATIVOS_EUA)
+    from core.composto_80_20 import ETF
+    return frozenset(ativo["ticker"] for ativo in ATIVOS_EUA) | {ETF}
 
 
 TRIBUTADOS_15 = _tributados()

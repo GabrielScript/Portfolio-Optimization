@@ -18,3 +18,9 @@ def test_the_top5_is_on_the_chart_and_the_caption_says_what_it_is_and_when_it_st
     assert simulador.carteiras_com_posicoes(["Composto", "Top-5"]) == ["Composto", "Top-5"]
     assert "Top-5" in simulador.SOBRE_AS_CARTEIRAS and "06/11/2026" in simulador.SOBRE_AS_CARTEIRAS
     assert "uma por setor" in simulador.SOBRE_AS_CARTEIRAS
+
+
+def test_the_caption_says_what_the_composite_80_20_is_and_when_it_starts():
+    # the user, 2026-11-13: the Composite 80/20 is the official strategy, followed as a ghost account too
+    assert "Composto 80/20" in simulador.SOBRE_AS_CARTEIRAS and "13/11/2026" in simulador.SOBRE_AS_CARTEIRAS
+    assert "BITH11" in simulador.SOBRE_AS_CARTEIRAS and "Bitcoin" in simulador.SOBRE_AS_CARTEIRAS

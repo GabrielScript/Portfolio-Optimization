@@ -111,6 +111,8 @@ def main(periodo: str) -> int:
     SAIDA.mkdir(parents=True, exist_ok=True)
     for padrao in padroes:
         tabelas = {m: pd.concat(resultado[padrao][m], ignore_index=True) for m in (1.0, 2.0)}
+        for tabela in tabelas.values():                # empty frames in the concat leave the column as object
+            tabela["day"] = pd.to_datetime(tabela["day"])
         if not estudo:
             tabelas = {m: t[t["day"] > FIM_DO_ESTUDO] for m, t in tabelas.items()}
         base, dobro = summary(tabelas[1.0]), summary(tabelas[2.0])

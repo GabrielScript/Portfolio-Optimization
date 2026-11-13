@@ -1,0 +1,35 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}
+
+=== Anchors (2012-01 to 2026-09, 177 months; panels built in 332 s)
+  anchor Conservadora: IC 0.0854 (t 5.79); published 0.085
+  anchor value: IC 0.0701 (t 6.47); published 0.070
+  anchor profit growth: IC 0.0332 (t 3.63); published 0.033
+
+=== Monthly Spearman IC of each signal (higher is better), raw and after the three components; gate IC ≥ 0,02 e t ≥ 2; stage 2 needs the gate and a residual IC > 0 with t >= 2 (weak below t 2.8)
+          months   names    IC     t  IC>0 2012–2016 2017–2021 2022–2026 resid IC resid t rc Conservadora rc value rc profit growth  gate    stage 2
+SHARPE   177.000 136.000 0.057 4.465 0.661     0.083     0.030     0.057    0.017   1.825           0.384    0.322            0.349  PASS         no
+SORTINO  177.000 136.000 0.056 4.353 0.667     0.082     0.029     0.056    0.017   1.813           0.377    0.321            0.348  PASS         no
+CVAR     177.000 136.000 0.078 4.824 0.638     0.089     0.024     0.123    0.026   2.527           0.773    0.255            0.082  PASS       weak
+ALPHA    177.000 136.000 0.053 4.204 0.667     0.078     0.027     0.054    0.022   2.204           0.329    0.311            0.345  PASS       weak
+T-ALPHA  177.000 136.000 0.058 4.667 0.672     0.088     0.030     0.057    0.018   1.911           0.387    0.323            0.343  PASS         no
+BETA     177.000 152.000 0.027 1.576 0.525     0.028    -0.011     0.068    0.002   0.102           0.391    0.120            0.108  fail         no
+RET-3y   177.000 137.000 0.066 4.839 0.667     0.086     0.031     0.081    0.029   2.931           0.451    0.344            0.334  PASS  CANDIDATE
+RET-6y   177.000 120.000 0.054 3.815 0.638     0.053     0.033     0.077    0.015   1.493           0.527    0.304            0.229  PASS         no
+ROE      177.000 136.000 0.051 4.153 0.650     0.060     0.013     0.080   -0.001  -0.066           0.508    0.489            0.399  PASS         no
+RISK-ALL 177.000 136.000 0.069 4.585 0.655     0.090     0.030     0.088    0.022   2.113           0.562    0.381            0.354  PASS       weak
+
+=== Mean monthly rank correlation among the signals
+          SHARPE  SORTINO  CVAR  ALPHA  T-ALPHA  BETA  RET-3y  RET-6y  ROE  RISK-ALL
+SHARPE      1.00     1.00  0.31   0.97     0.99  0.21    0.96    0.66 0.45      0.93
+SORTINO     1.00     1.00  0.30   0.97     0.98  0.21    0.96    0.66 0.44      0.92
+CVAR        0.31     0.30  1.00   0.24     0.30  0.54    0.40    0.51 0.45      0.55
+ALPHA       0.97     0.97  0.24   1.00     0.97  0.16    0.95    0.62 0.42      0.89
+T-ALPHA     0.99     0.98  0.30   0.97     1.00  0.18    0.95    0.65 0.44      0.91
+BETA        0.21     0.21  0.54   0.16     0.18  1.00    0.25    0.30 0.27      0.42
+RET-3y      0.96     0.96  0.40   0.95     0.95  0.25    1.00    0.70 0.48      0.94
+RET-6y      0.66     0.66  0.51   0.62     0.65  0.30    0.70    1.00 0.56      0.79
+ROE         0.45     0.44  0.45   0.42     0.44  0.27    0.48    0.56 1.00      0.63
+RISK-ALL    0.93     0.92  0.55   0.89     0.91  0.42    0.94    0.79 0.63      1.00
+
+Stage 2 candidates: CVAR, ALPHA, RET-3y, RISK-ALL
+(total 387 s)

@@ -1,5 +1,5 @@
 """
-Daily curves of the Composite and of the Fermiônica (LogDet-15 t0.5) on the code after the profit-growth age rule
+Daily curves of the Composite, the Fermiônica (LogDet-15 t0.5) and von Neumann (theta 0.5) on the code after the profit-growth age rule
 (DECISOES 360), one phase per process, saved for readings that combine them with other legs (the crypto lake's
 Bitcoin sleeve). Anchor: the Composite's CAGR equals the one printed in DECISOES 360 for the phase.
 
@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core.backtest import Congelamento, walk_forward_dinamico  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
 from core.crescimento_lucro import nota_de_crescimento  # noqa: E402
+from core.diversidade import von_neumann  # noqa: E402
 from core.fermionica import estrategia_fermionica  # noqa: E402
 from core.metrics import cagr  # noqa: E402
 from core.qubo_universo import composite_score  # noqa: E402
@@ -48,9 +49,10 @@ def main(fase: int) -> int:
     if abs(cagr(composite.dropna()) - ANCHOR[fase]) > 5e-5:
         raise SystemExit(f"phase {fase}: anchor failed, CAGR {cagr(composite.dropna()):.5f} vs {ANCHOR[fase]}")
     fermi = rodar(estrategia_fermionica(nota, dados.setores, 0.5), "LogDet-15 t0.5")
-    tabela = pd.DataFrame({"Composite": composite, "LogDet-15 t0.5": fermi}).rename_axis("date").reset_index()
+    neumann = rodar(estrategia_fermionica(nota, dados.setores, 0.5, diversity=von_neumann), "vonNeumann-15 t0.5")
+    tabela = pd.DataFrame({"Composite": composite, "LogDet-15 t0.5": fermi, "vonNeumann-15 t0.5": neumann}).rename_axis("date").reset_index()
     tabela.to_parquet(str(OUT).format(fase), index=False)
-    print(f"phase {fase}: Composite {cagr(composite.dropna()):.4f}, Fermiônica {cagr(fermi.dropna()):.4f}")
+    print(f"phase {fase}: Composite {cagr(composite.dropna()):.4f}, Fermiônica {cagr(fermi.dropna()):.4f}, von Neumann {cagr(neumann.dropna()):.4f}")
     return 0
 
 

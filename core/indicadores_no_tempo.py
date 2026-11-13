@@ -18,7 +18,7 @@ import pandas as pd
 from core.indicadores import desempenho_por_acao, multiplos, risco_por_acao
 from core.risco import emissor
 from core.sinais import _meses_antes
-from core.valor import fundamentos_no_mes
+from core.valor import NotaDoMes, fundamentos_no_mes
 from core.views import escore_normal
 
 FECHAMENTOS_DE_3_ANOS = 756     # the table's window for Sharpe, Sortino, CVaR and the CAPM
@@ -108,3 +108,18 @@ def residuo(sinal: pd.Series, componentes: pd.DataFrame) -> pd.Series:
     regressores = np.column_stack([np.ones(len(alvo)), escores.to_numpy()])
     coeficientes, *_ = np.linalg.lstsq(regressores, alvo.to_numpy(), rcond=None)
     return alvo - regressores @ coeficientes
+
+
+def notas_dos_sinais(fontes: Fontes, sinais: Iterable[str]) -> dict[str, NotaDoMes]:
+    """One score per signal, all reading the same table of a month, computed once per month and candidate list."""
+    feitas: dict[tuple, pd.DataFrame] = {}
+
+    def _tabela(mes: pd.Timestamp, candidatos: Iterable[str]) -> pd.DataFrame:
+        chave = (mes, tuple(candidatos))
+        if chave not in feitas:
+            feitas[chave] = tabela_no_mes(fontes, mes, chave[1])
+        return feitas[chave]
+
+    def _da_coluna(sinal: str) -> NotaDoMes:
+        return lambda mes, candidatos: _tabela(mes, candidatos)[sinal].dropna()
+    return {sinal: _da_coluna(sinal) for sinal in sinais}

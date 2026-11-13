@@ -131,3 +131,16 @@ def test_the_residual_is_what_the_components_normal_scores_do_not_explain():
     # a signal that is a monotone function of one component carries nothing beyond it
     assert np.abs(residuo(np.exp(componentes["cons"]), componentes[["cons"]])).max() < 1e-9
     assert residuo(sinal.iloc[:4], componentes.iloc[:4]).empty    # too few names to fit three components
+
+
+def test_the_scores_of_the_signals_read_one_table_per_month(monkeypatch):
+    import core.indicadores_no_tempo as modulo
+    fontes, nomes = _fontes()
+    tabela = modulo.tabela_no_mes(fontes, MES, nomes)
+    chamadas = []
+    original = modulo.tabela_no_mes
+    monkeypatch.setattr(modulo, "tabela_no_mes", lambda *args: chamadas.append(args[1]) or original(*args))
+    notas = modulo.notas_dos_sinais(fontes, ["RET-3y", "RET-6y"])
+    pd.testing.assert_series_equal(notas["RET-3y"](MES, nomes), tabela["RET-3y"])
+    assert "NOVO3" not in notas["RET-6y"](MES, nomes).index       # a name without the signal has no score
+    assert chamadas == [MES]                                      # two signals, one table

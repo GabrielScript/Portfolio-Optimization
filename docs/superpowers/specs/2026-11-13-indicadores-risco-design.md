@@ -85,3 +85,28 @@ does not move: an IC reading is not a strategy configuration.
 
 `core/indicadores_no_tempo.py` (the table at a month; the residual), `scripts/indicadores_risco_ic.py` (the
 reading), `tests/test_indicadores_no_tempo.py`. Nothing the app, the paper logs or the accounts import changes.
+
+## Amendment 1 (2026-11-13, after stage 1 was read, before any stage 2 number)
+
+- Stage 1 (`docs/indicadores-risco-ic-2026-11-13.txt`, commit `d42699c`): anchors exact (0.0854 / 0.0701 /
+  0.0332). Nine of ten pass the gate; `BETA` fails (IC 0.027, t 1.58). Residual IC with t >= 2: `RET-3y` 0.029
+  (t 2.93), `CVAR` 0.026 (2.53, weak), `ALPHA` 0.022 (2.20, weak), `RISK-ALL` 0.022 (2.11, weak).
+- The four are run, as registered: choosing among them now would be a choice made after the data.
+- Against my prior: wrong on `RET-3y` (expected within 0.01 of zero; it is 0.066, t 4.84, the one strong
+  residual), on the three-year ratios (expected at most one through the gate; all four pass at 0.053 to 0.058) and
+  on `BETA` (expected to pass; it fails). Right that `ROE` and the ratios mostly repeat the components (`ROE`
+  residual -0.001); wrong that `ROE` was the likeliest to add something.
+- What stage 1 also says: `SHARPE`, `SORTINO`, `ALPHA`, `T-ALPHA` and `RET-3y` are one signal (mean rank
+  correlation 0.95 to 1.00), so the `ALPHA`, `RET-3y` and `RISK-ALL` (0.94 with `RET-3y`) arms are near duplicates
+  and count as three rows of one idea. The residual was taken on the Conservadora's score, a volatility half-split
+  plus yield and momentum ranks: part of what is left may be 12-month momentum and low risk at a finer grain
+  rather than three-year information.
+- Build: `feat/informados` merged into this branch for `core.informados.earned_weight` and `weighted_score`
+  (DECISOES 354). Anchor per phase, before any arm: the Composite's replay on its saved curve of DECISOES 350
+  (1e-9); the LogDet anchor of 354 is dropped (no determinant arm here). lambda from the monthly ICs of 2012-01 on,
+  as in 354, so 0 before 2015-01. DSR at N = 132 (128 + these four rows).
+- Arms: `Comp+RET3y-w`, `Comp+CVAR-w`, `Comp+ALPHA-w`, `Comp+RISKALL-w`.
+- Prior for stage 2: each arm shares 11 to 13 of 15 names with the Composite; alpha against the Composite within
+  1.5 points a year either side; P[> Composite] between 0.2 and 0.9 and not the same side in the three phases for
+  at least one arm; no arm passes. If one passes: a forward fictitious account at most, never the book or the
+  19/12 buy.

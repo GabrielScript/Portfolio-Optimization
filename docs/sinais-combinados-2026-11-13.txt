@@ -1,0 +1,72 @@
+
+CAGR (phases 0 / 21 / 42):
+fase                0     21    42
+arm                               
+BOVA11            7.2%  6.8%  6.7%
+Comp+Extras-0.25 20.9% 21.6% 19.5%
+Composite        21.8% 20.3% 19.2%
+
+Vol (phases 0 / 21 / 42):
+fase                0     21    42
+arm                               
+BOVA11           23.4% 23.4% 23.4%
+Comp+Extras-0.25 19.3% 19.1% 19.4%
+Composite        18.7% 18.7% 19.3%
+
+MDD (phases 0 / 21 / 42):
+fase                 0      21     42
+arm                                  
+BOVA11           -49.7% -49.7% -49.7%
+Comp+Extras-0.25 -46.8% -45.1% -46.8%
+Composite        -41.5% -42.2% -42.8%
+
+Sharpe (phases 0 / 21 / 42):
+fase               0     21    42
+arm                              
+BOVA11           0.01 -0.01 -0.01
+Comp+Extras-0.25 0.59  0.62  0.53
+Composite        0.64  0.58  0.52
+
+P[> Comp] (phases 0 / 21 / 42):
+fase               0    21   42
+arm                            
+BOVA11           0.00 0.00 0.00
+Comp+Extras-0.25 0.30 0.87 0.61
+Composite           -    -    -
+
+DSR (phases 0 / 21 / 42):
+fase                0     21    42
+arm                               
+BOVA11               -     -     -
+Comp+Extras-0.25 0.998 0.998 0.998
+Composite        0.999 0.995 0.998
+
+alpha vs Comp (phases 0 / 21 / 42):
+fase                 0      21     42
+arm                                  
+BOVA11           -11.9% -11.2% -10.1%
+Comp+Extras-0.25  -0.7%  +1.1%  +0.4%
+Composite             -      -      -
+
+t vs Comp (phases 0 / 21 / 42):
+fase                0     21    42
+arm                               
+BOVA11           -3.76 -3.49 -3.16
+Comp+Extras-0.25 -0.59 +1.18 +0.39
+Composite            -     -     -
+
+shared (phases 0 / 21 / 42):
+fase               0    21   42
+arm                            
+BOVA11              -    -    -
+Comp+Extras-0.25 13.1 13.1 13.1
+Composite           -    -    -
+
+turnover (phases 0 / 21 / 42):
+fase              0   21  42
+arm                         
+BOVA11             -   -   -
+Comp+Extras-0.25 3.0 3.0 3.2
+Composite        3.0 3.1 3.2
+
+Gate (P[> Composite] >= 0.95 and DSR >= 0.95 in every phase): Comp+Extras-0.25 [(0.295, 0.998), (0.871, 0.998), (0.606, 0.998)] -> fails

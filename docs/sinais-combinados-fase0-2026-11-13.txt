@@ -1,0 +1,6 @@
+=== Phase 0: 09/02/2010 to 16/10/2026; DSR N 133; anchor: Composite 0.0e+00 off its saved curve ===
+                  CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs BOVA  t vs BOVA   DSR  alpha vs Comp  t vs Comp  P[> Comp]  shared  names  turnover  refusals
+Composite        0.218 0.187   0.640    0.890 -0.415   0.525          0.118      4.308 0.999            NaN        NaN        NaN     NaN    NaN     2.972       NaN
+Comp+Extras-0.25 0.209 0.193   0.590    0.813 -0.468   0.447          0.113      3.846 0.998         -0.007     -0.586      0.295  13.121 15.000     2.973     0.000
+BOVA11           0.072 0.234   0.010    0.014 -0.497   0.146            NaN        NaN   NaN         -0.119     -3.763      0.000     NaN    NaN       NaN       NaN
+(phase 0 done in 154 s)

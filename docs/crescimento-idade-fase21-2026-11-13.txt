@@ -1,0 +1,6 @@
+=== Phase 21: 12/03/2010 to 16/10/2026; max gap to the saved curve 0.0510; turnover 3.10
+                       CAGR    Vol  Sharpe  Sortino     MDD  Calmar  alpha vs BOVA  t vs BOVA    DSR  alpha vs Comp  t vs Comp  P[> Comp]
+Composite            0.2000 0.1863  0.5628   0.7789 -0.4216  0.4745         0.1060     3.8635 0.9987            NaN        NaN        NaN
+Composite (age rule) 0.2034 0.1867  0.5770   0.7998 -0.4216  0.4825         0.1088     3.9564 0.9990         0.0029     1.0712     0.8307
+BOVA11               0.0681 0.2339 -0.0072  -0.0100 -0.4965  0.1371            NaN        NaN    NaN        -0.1091    -3.4041     0.0008
+decisions 66

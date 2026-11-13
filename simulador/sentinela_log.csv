@@ -237,3 +237,8 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-13T17:20:14,JHSF3,varredura,sem_evento,,,,cvm-7d52abec98f1,,"O único item novo é um Comunicado ao Mercado referente à apresentação de resultados do 3T26, divulgação rotineira sem conteúdo que comprometa o valor da companhia. A queda recente de preço não é explicada por nenhum item do pack.",[],771,384.0,171.0,0.0001618,
 2026-11-13T17:20:14,JHSF3,juiz:d1.1,,,,0.29961095701226337,cvm-7d52abec98f1,,p_nova=0.6297,,172,,,3.44e-06,
 2026-11-13T17:20:14,JHSF3,juiz:d1-ultra,,,,0.281318827795358,cvm-7d52abec98f1,,p_nova=0.5735,,172,,,7.224e-06,
+2026-11-13T18:20:09,MILS3,varredura,sem_evento,,,,cvm-f2e9abd62f3a;cvm-e379acc3a2fa,,"Os itens novos são comunicações rotineiras: alteração na diretoria estatutária e declaração de alienação de participação acionária relevante, sem detalhes de impacto relevante. Nada compromete o valor da companhia sob a ótica de longo prazo do investidor.",[],848,512.0,168.0,0.00015274,
+2026-11-13T18:20:09,MILS3,juiz:d1.1,,,,0.014880902402620758,cvm-f2e9abd62f3a,,p_nova=0.8453,,175,,,3.5e-06,
+2026-11-13T18:20:09,MILS3,juiz:d1-ultra,,,,0.17084219680252014,cvm-f2e9abd62f3a,,p_nova=0.9064,,175,,,7.35e-06,
+2026-11-13T18:20:09,MILS3,juiz:d1.1,,,,0.5265110869328324,cvm-e379acc3a2fa,,p_nova=0.8309,,183,,,3.66e-06,
+2026-11-13T18:20:09,MILS3,juiz:d1-ultra,,,,0.7993459133735225,cvm-e379acc3a2fa,,p_nova=0.8427,,183,,,7.686e-06,

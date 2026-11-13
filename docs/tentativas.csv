@@ -125,3 +125,7 @@ data,script,configuracao
 2026-11-12,informados_avaliar.py,"Comp+Pat-w: z(Composite) + lambda x z(patent family P), lambda = clip(past mean IC ratio, 0, 1), 0 before 36 months, 15 names, <=4 per sector, house rules, 10 bps"
 2026-11-12,informados_avaliar.py,"Fermi-mean: mean of the log det books at theta 0.25, 0.5, 0.75, 1.0 on the Composite score, <=4 per sector, house rules, 10 bps"
 2026-11-12,informados_avaliar.py,"Comp+Ins-w: z(Composite) + lambda x z(insider net purchase ratio INS, CVM art. 11 filings, 6 reference months), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-13,indicadores_risco_avaliar.py,"Comp+RET3y-w: z(Composite) + lambda x z(total return of the 36 months before the month), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-13,indicadores_risco_avaliar.py,"Comp+CVAR-w: z(Composite) + lambda x z(minus the daily 95% expected shortfall over 756 sessions), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-13,indicadores_risco_avaliar.py,"Comp+ALPHA-w: z(Composite) + lambda x z(CAPM alpha against BOVA11 over 756 sessions), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-13,indicadores_risco_avaliar.py,"Comp+RISKALL-w: z(Composite) + lambda x z(mean normal score of Sharpe, Sortino, CVaR, alpha, t of alpha, low beta, 3- and 6-year return and ROE at the month), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"

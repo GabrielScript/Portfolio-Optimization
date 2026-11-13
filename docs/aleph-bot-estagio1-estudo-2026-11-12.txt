@@ -1,0 +1,17 @@
+Aleph Bot stage 1, estudo: 140 names with bars, market BOVA11; bars up to 2024-12-31
+
+=== overreaction ===
+         trades   days  mean gross bps  mean net bps      t  win rate
+cost x1 6194.00 754.00            3.20         -6.76  -5.51      0.45
+cost x2 6194.00 754.00            3.20        -16.73 -13.65      0.37
+by year (trades, mean net bps): {2021: (62, -2.5), 2022: (1943, -6.8), 2023: (1938, -6.6), 2024: (2251, -7.0)}
+names traded: 105; gate (mean net > 0, t >= 3.0, trades >= 300): fails
+
+=== opening_gap ===
+         trades  days  mean gross bps  mean net bps    t  win rate
+cost x1   29.00 25.00           83.78         74.74 1.44      0.48
+cost x2   29.00 25.00           83.78         65.69 1.27      0.45
+by year (trades, mean net bps): {2022: (6, -25.7), 2023: (12, 151.2), 2024: (11, 46.1)}
+names traded: 17; gate (mean net > 0, t >= 3.0, trades >= 300): fails
+
+(total 761 s)

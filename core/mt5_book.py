@@ -44,19 +44,22 @@ def target_shares(weights: pd.Series, quotes: pd.Series, book_value: float) -> p
     return plano.itens["quantidade"].astype(int)
 
 
-def _split(name: str, side: Side, volume: int) -> list[Order]:
+def _split(name: str, side: Side, volume: int, unit_lot: Collection[str] = ()) -> list[Order]:
+    if name in unit_lot:
+        return [Order(name, name, side, volume)]
     lotes, resto = divmod(volume, LOT)
     return ([Order(name, name, side, lotes * LOT)] if lotes else []) + \
            ([Order(name, name + FRACTIONAL, side, resto)] if resto else [])
 
 
-def orders_for(target: pd.Series, held: pd.Series) -> list[Order]:
+def orders_for(target: pd.Series, held: pd.Series, unit_lot: Collection[str] = ()) -> list[Order]:
     """The orders from ``held`` to ``target`` (shares by name, a name absent = 0): sells first, each quantity split
-    into lots of 100 on the standard symbol and the rest on the fractional one."""
+    into lots of 100 on the standard symbol and the rest on the fractional one; a name in ``unit_lot`` (an ETF with
+    volume step 1 and no fractional symbol, e.g. BITH11) is sent whole on its standard symbol."""
     nomes = sorted(set(target.index) | set(held.index))
     diferenca = target.reindex(nomes, fill_value=0).astype(int) - held.reindex(nomes, fill_value=0).astype(int)
-    vendas = [o for nome, d in diferenca.items() if d < 0 for o in _split(nome, "sell", -int(d))]
-    compras = [o for nome, d in diferenca.items() if d > 0 for o in _split(nome, "buy", int(d))]
+    vendas = [o for nome, d in diferenca.items() if d < 0 for o in _split(nome, "sell", -int(d), unit_lot)]
+    compras = [o for nome, d in diferenca.items() if d > 0 for o in _split(nome, "buy", int(d), unit_lot)]
     return vendas + compras
 
 

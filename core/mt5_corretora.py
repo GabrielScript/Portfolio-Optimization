@@ -10,7 +10,8 @@ before every order: nothing reaches an account that is not XP's demo, whatever t
 
 from __future__ import annotations
 
-from collections.abc import Iterator
+import time
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Any, Protocol
@@ -22,6 +23,7 @@ from core.mt5_book import FRACTIONAL, Order, Side, check_account
 TERMINAL_PATH = "C:/Program Files/MetaTrader 5 Terminal/terminal64.exe"    # forward slashes: backslashes broke the IPC
 TIMEOUT_MS = 60_000
 MAGIC = 51_2026          # the book's mark on its orders (attempt 51's Composite, 2026)
+PRIMEIRO_TICK_TENTATIVAS, PRIMEIRO_TICK_PAUSA_S = 10, 0.2    # up to 2 s for a newly selected symbol's first tick
 
 
 class Terminal(Protocol):
@@ -88,8 +90,9 @@ def _wall_clock(seconds: int) -> pd.Timestamp:
 
 
 class Corretora:
-    def __init__(self, terminal: Terminal, path: str = TERMINAL_PATH) -> None:
-        self.t, self.path = terminal, path
+    def __init__(self, terminal: Terminal, path: str = TERMINAL_PATH,
+                 esperar: Callable[[float], None] = time.sleep) -> None:
+        self.t, self.path, self.esperar = terminal, path, esperar
 
     @contextmanager
     def conectar(self) -> Iterator[Corretora]:
@@ -109,6 +112,11 @@ class Corretora:
     def cotacao(self, symbol: str) -> Cotacao | None:
         self.t.symbol_select(symbol, True)
         tick = self.t.symbol_info_tick(symbol)
+        for _ in range(PRIMEIRO_TICK_TENTATIVAS):    # a symbol just added to the Market Watch has no tick yet (time 0)
+            if tick is None or tick.time:
+                break
+            self.esperar(PRIMEIRO_TICK_PAUSA_S)
+            tick = self.t.symbol_info_tick(symbol)
         if tick is None:
             return None
         return Cotacao(float(tick.bid), float(tick.ask), float(tick.last), _wall_clock(tick.time))

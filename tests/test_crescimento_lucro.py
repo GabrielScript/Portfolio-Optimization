@@ -67,3 +67,14 @@ def test_the_change_reads_a_refiled_statement_from_its_receipt_on_whatever_the_r
     fundamentos = pd.DataFrame(linhas[::-1] if invertido else linhas)
     abril, maio = (variacao_anual(fundamentos, "net_income", pd.Timestamp(mes)) for mes in ("2022-04-01", "2022-05-01"))
     assert (abril["AAAA"], maio["AAAA"]) == pytest.approx((0.05, 0.10))
+
+
+def test_an_issuer_whose_latest_statement_is_older_than_the_age_limit_has_no_change():
+    # the value leg's rule (core.valor.fundamentos_no_mes): a period end older than MESES_DE_IDADE_MAXIMA months
+    # means the company stopped filing; its old growth must not keep scoring it
+    from core.crescimento_lucro import variacao_anual
+    from core.valor import MESES_DE_IDADE_MAXIMA
+    limite = pd.Timestamp("2021-12-31") + pd.DateOffset(months=MESES_DE_IDADE_MAXIMA)
+    ainda = variacao_anual(_fundamentos(), "net_income", limite)                       # exactly at the limit: kept
+    assert ainda.to_dict() == {"AAAA": pytest.approx((15.0 - 10.0) / 100.0)}
+    assert variacao_anual(_fundamentos(), "net_income", limite + pd.DateOffset(months=1)).empty

@@ -55,6 +55,8 @@ CARTEIRAS = {
                               "com 15% de Imposto de Renda sobre o lucro das BDRs"),
     "Fermiônica": ("Fermiônica", "15 ações escolhidas pela nota da Composite e pela baixa correlação entre elas, "
                                  "em pesos iguais"),
+    "Composto 80/20": ("Composite 80/20", "80% a Composite e 20% em Bitcoin pelo ETF BITH11, de volta a 80/20 todo "
+                                          "mês, com 15% de Imposto de Renda sobre o lucro do ETF"),
 }
 
 

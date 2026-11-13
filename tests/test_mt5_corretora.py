@@ -133,3 +133,14 @@ def test_fills_are_the_books_deals_only() -> None:
     assert [(f.name, f.symbol, f.side, f.volume, f.price, f.commission) for f in fills] == [
         ("PETR4", "PETR4F", "buy", 37, 44.7, 0.5), ("BBSE3", "BBSE3", "sell", 100, 37.9, 0.0)]
     assert fills[0].time == pd.Timestamp("2026-11-12 15:23:39")
+
+
+def test_a_symbol_just_added_to_the_market_watch_waits_for_its_first_tick() -> None:
+    # 13/11/2026: BITH11's first read right after symbol_select came back all zeros (time 0), the run was refused
+    terminal, esperas = FakeTerminal(), []
+    vazio = NS(bid=0.0, ask=0.0, last=0.0, time=0)
+    leituras = iter([vazio, vazio])
+    terminal.symbol_info_tick = lambda symbol: next(leituras, NS(bid=87.43, ask=87.45, last=87.43, time=T0))
+    with Corretora(terminal, esperar=esperas.append).conectar() as c:
+        cotacao = c.cotacao("BITH11")
+    assert (cotacao.bid, cotacao.ask) == (87.43, 87.45) and len(esperas) == 2

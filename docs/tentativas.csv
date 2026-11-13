@@ -129,3 +129,4 @@ data,script,configuracao
 2026-11-13,indicadores_risco_avaliar.py,"Comp+CVAR-w: z(Composite) + lambda x z(minus the daily 95% expected shortfall over 756 sessions), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
 2026-11-13,indicadores_risco_avaliar.py,"Comp+ALPHA-w: z(Composite) + lambda x z(CAPM alpha against BOVA11 over 756 sessions), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
 2026-11-13,indicadores_risco_avaliar.py,"Comp+RISKALL-w: z(Composite) + lambda x z(mean normal score of Sharpe, Sortino, CVaR, alpha, t of alpha, low beta, 3- and 6-year return and ROE at the month), lambda as Comp+Pat-w, 15 names, <=4 per sector, house rules, 10 bps"
+2026-11-13,sinais_combinados_avaliar.py,"Comp+Extras-0.25: z(Composite) + 0.25 x z(mean normal score of patents P, convexity X, insider net purchases INS and 36-month return RET-3y), fixed weight, 15 names, <=4 per sector, house rules, 10 bps"

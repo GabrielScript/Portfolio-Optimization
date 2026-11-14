@@ -8,17 +8,16 @@ são usados, não mudados).
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass, replace
+from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
 from scipy.stats import norm
 
-from core.backtest import CarteiraRecusada, Estrategia, _cfg_com_rf_da_data
-from core.config import ConfigOtimizacao, limites_por_setor
+from core.backtest import Estrategia, otimizar_nas_regras, so_com_setor
+from core.config import ConfigOtimizacao
 from core.estimation import estimar_momentos
-from core.optimization import otimizar
-from core.risco import LIMITES, Limites, checar_carteira, emissor
+from core.risco import LIMITES, Limites, emissor
 from core.valor import NotaDoMes
 
 TAU = 0.05                  # incerteza do prior; com Ω proporcional a τ, ele se cancela na média posterior
@@ -128,16 +127,10 @@ def estrategia_com_views(cfg_otimizacao: ConfigOtimizacao, setores: Mapping[str,
     meses = pd.to_datetime(valor_mercado["month"])
 
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
-        treino = treino[[papel for papel in treino.columns if setores.get(papel)]]
+        treino = so_com_setor(treino, setores)
         mes = treino.index[-1].to_period("M").to_timestamp()
         momentos = estimar_momentos(treino, shrink_mu=False)
         do_mes = valor_mercado[meses == mes].set_index("issuer")["market_cap"]
         mu = mu_com_views(momentos.cov, list(treino.columns), mes, do_mes, sinais, delta, tau)
-        grupos = limites_por_setor({papel: setores[papel] for papel in treino.columns}, limites.teto_setor)
-        cfg = replace(_cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1]), grupos=grupos)
-        pesos = otimizar(mu, momentos.cov, cfg).pesos
-        violacoes = checar_carteira(pesos, setores, momentos.cov, limites)
-        if violacoes:
-            raise CarteiraRecusada(violacoes)
-        return pesos
+        return otimizar_nas_regras(mu, momentos.cov, treino.index[-1], cfg_otimizacao, setores, rf_diaria, limites)
     return _estrategia

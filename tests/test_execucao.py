@@ -237,6 +237,43 @@ def test_com_a_zona_quando_os_pulados_cresceram_quem_entra_encolhe_ate_caber_com
     assert refeita.valores.iloc[-1] == pytest.approx(326.7 + 297.0 + 291.06 * 1.1)
 
 
+def test_um_volume_mediano_zero_e_medida_que_falta_e_leva_a_mediana_dos_outros_papeis():
+    # A sem negócio na maioria dos pregões do mês: volume mediano 0. Sem a guarda, raiz(ordem / 0) = custo infinito
+    from core.execucao import _custo_do_rebalanceio
+    mes = pd.Timestamp("2020-01-01")
+    liquidez = Liquidez(meio_spread=pd.DataFrame(0.01, index=[mes], columns=["A", "B", "C"]),
+                        vol_diaria=pd.DataFrame(0.02, index=[mes], columns=["A", "B", "C"]),
+                        volume_mediano=pd.DataFrame([[0.0, 1e6, 3e6]], index=[mes], columns=["A", "B", "C"]))
+    custos = Custos(0.0005, 0.5)
+    custo = _custo_do_rebalanceio(pd.Series({"A": 10_000.0}), mes, liquidez, custos)
+    assert custo == pytest.approx(custo_da_ordem(10_000.0, 0.01, 0.02, 2e6, custos))
+
+
+def test_com_a_zona_um_setor_acima_do_teto_forca_as_ordens_dos_seus_papeis_como_no_plano_ao_vivo():
+    # 1/4 em A, B, C, D; A e B no mesmo setor; A sobe 40%: o setor fica com 0,35 / 1,1 + 0,25 / 1,1 = 54,5% > 52%.
+    # Vol quase nula: a zona pularia todos os reajustes; com o teto de setor, A e B são reajustados (C e D não)
+    from core.execucao import ZonaNoMotor
+    datas = pd.bdate_range("2020-02-03", periods=30)
+    papeis = ["A", "B", "C", "D"]
+    pesos = pd.DataFrame(0.25, index=[datas[1], datas[20]], columns=papeis)
+    resultado = ResultadoBacktest("quatro", "walk-forward OOS", pd.Series(1.0, index=datas), pesos,
+                                  pd.Series(1.0, index=pesos.index), 0.0)
+    retornos = pd.DataFrame(0.0, index=datas, columns=papeis)
+    retornos.loc[datas[5], "A"] = 0.40
+    meses = pd.date_range("2020-01-01", "2020-03-01", freq="MS")
+    liquidez = Liquidez(*(pd.DataFrame(valor, index=meses, columns=papeis) for valor in (0.01, 1e-4, 1e9)))
+    setores = {"A": "X", "B": "X", "C": "Y", "D": "Z"}
+    sem_setor = refazer(resultado, retornos, 1_000.0, Custos(0.0, 0.0), liquidez, com_ir=False,
+                        zona=ZonaNoMotor(peso_maximo=1.0))
+    com_setor = refazer(resultado, retornos, 1_000.0, Custos(0.0, 0.0), liquidez, com_ir=False,
+                        zona=ZonaNoMotor(peso_maximo=1.0, setores=setores, teto_setor=0.52))
+    segundo = datas[20]
+    patrimonio = 990.0 * 1.1        # depois da 1ª compra (1% de spread) e da alta de A
+    reajuste = abs(patrimonio * 0.25 - 990.0 * 0.25 * 1.4) + abs(patrimonio * 0.25 - 990.0 * 0.25)
+    assert sem_setor.custos[segundo] == 0.0
+    assert com_setor.custos[segundo] == pytest.approx(0.01 * reajuste)
+
+
 # ---------------------------------------------------------------- exposure overlay (spec 2026-11-11-vol-target-motor)
 from core.execucao import ExposureOverlay  # noqa: E402
 from core.risco import LIMITES  # noqa: E402

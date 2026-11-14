@@ -52,6 +52,15 @@ DATA = CURVAS_51.parent
 SAVED_344 = DATA / "fermionica-v2-curvas-2026-11-11.parquet"
 
 
+def anchor_2_holds(fase: int, desvio: float, cagr_rerun: float) -> bool:
+    """LogDet-15 t0.5 rerun against its saved curve: exact (``CURVE_TOL``) in phase 0, as the spec asks; in phases 21
+    and 42 its CAGR within 0.0015 of DECISOES 344 (three decimals), since the refiled-statements fix (DECISOES 349)
+    changed a decision there after the curves were saved."""
+    if fase == 0:
+        return desvio < CURVE_TOL
+    return abs(round(cagr_rerun, 3) - CAGR_344[fase]) <= 0.0015
+
+
 @dataclass(frozen=True)
 class Arm:
     estrategia: Estrategia
@@ -127,8 +136,7 @@ def phase(fase: int) -> int:
             salva = pd.read_parquet(SAVED_344)
             salva = salva.loc[salva["fase"] == fase].set_index("date")["LogDet t0.5"].reindex(indice)
             desvio = float((resultado.valores / salva - 1.0).abs().max())
-            exata = fase == 0 and desvio < CURVE_TOL
-            if not exata and abs(round(cagr(resultado.valores), 3) - CAGR_344[fase]) > 0.0015:
+            if not anchor_2_holds(fase, desvio, cagr(resultado.valores)):
                 raise SystemExit(f"phase {fase}: anchor 2 failed, {nome} is {desvio:.2e} off its saved curve, "
                                  f"CAGR {cagr(resultado.valores):.4f}")
             print(f"anchor 2: {nome} off its saved curve by {desvio:.1e}, CAGR {cagr(resultado.valores):.4%} "
@@ -174,8 +182,8 @@ def summary() -> int:
     for nome, linhas in metricas_das_fases.groupby("arm", sort=False):
         if nome in (COMPOSITE, "BOVA11", "CDI"):
             continue
-        leituras = list(zip(linhas["P[> Comp]"].round(3), linhas["DSR"].round(3)))
-        if all(p >= P_MIN and d >= DSR_MIN for p, d in leituras):
+        leituras = list(zip(linhas["P[> Comp]"].round(3), linhas["DSR"].round(3)))      # printed, not judged
+        if all(p >= P_MIN and d >= DSR_MIN for p, d in zip(linhas["P[> Comp]"], linhas["DSR"])):
             passaram.append(nome)
         print(f"  {nome}: {leituras} -> {'CANDIDATE (forward fictitious account only)' if nome in passaram else 'fails'}")
     print(f"\nArms passing the gate: {passaram or 'none'}")

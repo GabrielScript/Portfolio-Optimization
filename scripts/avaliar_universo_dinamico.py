@@ -56,13 +56,14 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.backtest import (Estrategia, ResultadoBacktest, backtest_pesos_fixos,  # noqa: E402
+from core.backtest import (Congelamento, Estrategia, ResultadoBacktest, backtest_pesos_fixos,  # noqa: E402
                            estrategia_buy_and_hold_ativo, estrategia_equiponderada, estrategia_hrp,
                            estrategia_otimizada, retornos_da_carteira, walk_forward, walk_forward_dinamico)
 from core import market_data  # noqa: E402
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
 from core.metrics import (momentos_sharpe, resumo_desempenho, retornos_de_valores,  # noqa: E402
                           sharpe_probabilistico, sharpe_referencia_deflacionado)
+from core.robustez import psr_da_diferenca  # noqa: E402
 
 PASTA_LAGO = Path(__file__).resolve().parent.parent / "data" / "b3lake"
 ARQUIVO_PRECOS = "universe_prices.parquet"
@@ -193,21 +194,19 @@ def rodar_horizonte(precos: pd.DataFrame, universo: pd.DataFrame, cfg: ConfigOti
 
 
 def misturar(nucleo: ResultadoBacktest, satelite: ResultadoBacktest, peso_nucleo: float, cfg: ConfigBacktest,
-             nome: str) -> ResultadoBacktest:
+             nome: str, congelamento: Congelamento | None = None) -> ResultadoBacktest:
     """
     Núcleo + satélite de volta aos pesos-alvo a cada ``cfg.janela_teste`` pregões (as mesmas datas de rebalanceio das
-    duas curvas, que vêm do mesmo walk-forward), com ``cfg.custo_bps`` sobre o que muda entre elas.
+    duas curvas, que vêm do mesmo walk-forward), com ``cfg.custo_bps`` sobre o que muda entre elas; com
+    ``congelamento``, a volta é congelada pela perda diária do satélite.
     """
     retornos = pd.DataFrame({"núcleo": retornos_de_valores(nucleo.valores),
                              "satélite": retornos_de_valores(satelite.valores)})
     alvo = pd.Series({"núcleo": peso_nucleo, "satélite": 1.0 - peso_nucleo})
-    mistura = backtest_pesos_fixos(retornos, alvo, cfg, nome)
-    return replace(mistura, metodologia="walk-forward OOS, núcleo + satélite",
+    mistura = backtest_pesos_fixos(retornos, alvo, cfg, nome, congelamento)
+    regras = "" if congelamento is None else " com regras"
+    return replace(mistura, metodologia=f"walk-forward OOS, núcleo + satélite{regras}",
                    valores=mistura.valores.set_axis(nucleo.valores.index))
-
-
-def _psr_da_diferenca(valores: pd.Series, valores_referencia: pd.Series) -> float:
-    return sharpe_probabilistico(momentos_sharpe(retornos_de_valores(valores) - retornos_de_valores(valores_referencia)))
 
 
 def montar_tabela(resultados: Mapping[str, ResultadoBacktest], medidas: Mapping[str, Medidas],
@@ -231,7 +230,7 @@ def montar_tabela(resultados: Mapping[str, ResultadoBacktest], medidas: Mapping[
             "HHI": float((pesos**2).sum(axis=1).mean()) if not pesos.empty else float("nan"),
             "PSR": sharpe_probabilistico(momentos[nome]), "DSR": float("nan"),
             f"P[{CONTROLE} > X]": medidas[nome].p_controle_supera,
-            "P[> BOVA11]": (_psr_da_diferenca(resultado.valores, bova.valores)
+            "P[> BOVA11]": (psr_da_diferenca(resultado.valores, bova.valores)
                             if bova is not None and nome != "BOVA11" else float("nan")),
             "Falhas": len(resultado.falhas)}
     lista_fechada = [nome for nome in (*ESTRATEGIAS, *MISTURAS) if nome in resultados]

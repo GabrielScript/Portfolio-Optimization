@@ -287,16 +287,29 @@ def estrategia_otimizada_nas_regras(cfg_otimizacao: ConfigOtimizacao, shrink_mu:
     ``checar_carteira`` com a cov do treino; violação = ``CarteiraRecusada`` (o motor mantém a atual).
     """
     def _estrategia(treino: pd.DataFrame) -> pd.Series:
-        treino = treino[[papel for papel in treino.columns if setores.get(papel)]]
+        treino = so_com_setor(treino, setores)
         momentos = estimar_momentos(treino, shrink_mu=shrink_mu)
-        grupos = limites_por_setor({papel: setores[papel] for papel in treino.columns}, limites.teto_setor)
-        cfg = replace(_cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, treino.index[-1]), grupos=grupos)
-        pesos = otimizar(momentos.mu, momentos.cov, cfg).pesos
-        violacoes = checar_carteira(pesos, setores, momentos.cov, limites)
-        if violacoes:
-            raise CarteiraRecusada(violacoes)
-        return pesos
+        return otimizar_nas_regras(momentos.mu, momentos.cov, treino.index[-1], cfg_otimizacao, setores, rf_diaria,
+                                   limites)
     return _estrategia
+
+
+def so_com_setor(treino: pd.DataFrame, setores: Mapping[str, str]) -> pd.DataFrame:
+    """Só os papéis com setor: sem setor não é elegível."""
+    return treino[[papel for papel in treino.columns if setores.get(papel)]]
+
+
+def otimizar_nas_regras(mu: pd.Series, cov: pd.DataFrame, data: pd.Timestamp, cfg_otimizacao: ConfigOtimizacao,
+                        setores: Mapping[str, str], rf_diaria: pd.Series | None, limites: Limites) -> pd.Series:
+    """Os pesos de ``otimizar`` com o teto de setor dos papéis de ``mu`` (``limites_por_setor``) e o rf de ``data``,
+    conferidos por ``checar_carteira`` com ``cov``; violação = ``CarteiraRecusada``."""
+    grupos = limites_por_setor({papel: setores[papel] for papel in mu.index}, limites.teto_setor)
+    cfg = replace(_cfg_com_rf_da_data(cfg_otimizacao, rf_diaria, data), grupos=grupos)
+    pesos = otimizar(mu, cov, cfg).pesos
+    violacoes = checar_carteira(pesos, setores, cov, limites)
+    if violacoes:
+        raise CarteiraRecusada(violacoes)
+    return pesos
 
 
 def estrategia_reamostrada(cfg_otimizacao: ConfigOtimizacao, shrink_mu: bool,

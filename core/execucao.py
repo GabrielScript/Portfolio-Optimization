@@ -9,6 +9,7 @@ no-trade zone inside ``refazer``.
 from __future__ import annotations
 
 import math
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 import numpy as np
@@ -67,6 +68,8 @@ def _medidas_do_mes(papeis: pd.Index, mes: pd.Timestamp, liquidez: Liquidez) -> 
         if mes not in quadro.index:
             raise ValueError(f"Sem liquidez de {mes:%m/%Y} para o custo das ordens")
         linha = quadro.loc[mes]
+        if nome == "volume":    # no traded value: a missing measure, not an infinite cost (sqrt(order / 0))
+            linha = linha.where(linha > 0.0)
         medidas[nome] = linha.reindex(papeis).fillna(linha.median())
     return medidas
 
@@ -82,15 +85,19 @@ class ZonaNoMotor:
     The no-trade zone of ``ZonaSemNegociacao`` inside ``refazer``: at each rebalance, a ticker held and kept in the
     target skips its order when ``custo_da_ordem`` plus the sale's marginal IR in the month's apuração is above
     (``aversao`` / 2) x vol_diaria^2 x ``horizonte`` x (order / patrimony)^2 x patrimony, with the liquidity's
-    ``vol_diaria`` of the month before the order; unless skipping leaves it above ``peso_maximo``. As in the live
-    plan, the skipped positions keep their value and the others go to their own target value (weight x patrimony);
-    what is left stays in cash at 0% until the next rebalance; when the skipped ones grew and the rest does not fit,
-    the others shrink in proportion. The cost comes out of the cash first, then out of the others in proportion.
+    ``vol_diaria`` of the month before the order; unless skipping leaves it above ``peso_maximo`` or its sector (in
+    ``setores``) above ``teto_setor``, which forces every order of that sector (the live plan's ``_fura_um_teto``).
+    As in the live plan, the skipped positions keep their value and the others go to their own target value (weight x
+    patrimony); what is left stays in cash at 0% until the next rebalance; when the skipped ones grew and the rest
+    does not fit, the others shrink in proportion. The cost comes out of the cash first, then out of the others in
+    proportion.
     """
 
     aversao: float = 2.0
     horizonte: int = 63
     peso_maximo: float = 0.20       # the fixed per-stock cap (core.risco.LIMITES.peso_maximo_acao)
+    setores: Mapping[str, str] | None = None    # ticker -> sector; None: no sector ceiling
+    teto_setor: float = LIMITES.teto_setor
 
 
 @dataclass(frozen=True)
@@ -226,8 +233,8 @@ def _rebalanceio_com_zona(alvo: pd.Series, posicoes: pd.Series, base: pd.Series,
     custo_de_cada = _custos_das_ordens(ordens.abs(), medidas, custos)
     ganho = zona.aversao / 2.0 * medidas["vol"] ** 2 * zona.horizonte * (ordens / patrimonio) ** 2 * patrimonio
     pular = ((posicoes > 0.0) & (alvo > 0.0) & (ordens != 0.0)
-             & (custo_de_cada + _ir_marginal_no_motor(alvo * patrimonio, posicoes, base, mes_fiscal) > ganho)
-             & ~(posicoes / patrimonio > zona.peso_maximo + 1e-12))
+             & (custo_de_cada + _ir_marginal_no_motor(alvo * patrimonio, posicoes, base, mes_fiscal) > ganho))
+    pular &= ~_fura_um_teto_no_motor((posicoes / patrimonio).where(pular, alvo), zona)
     if not pular.any():
         custo = float(custo_de_cada.sum())
         return alvo * (patrimonio - custo), custo, 0.0
@@ -242,6 +249,17 @@ def _rebalanceio_com_zona(alvo: pd.Series, posicoes: pd.Series, base: pd.Series,
         livres = livres * (1.0 + sobra / float(livres.sum()))
         sobra = 0.0
     return livres + fixas, custo, sobra
+
+
+def _fura_um_teto_no_motor(pesos: pd.Series, zona: ZonaNoMotor) -> pd.Series:
+    """Per ticker, with the skipped ones at their current weight: above ``peso_maximo``, or in a sector above
+    ``teto_setor``."""
+    fura = pesos > zona.peso_maximo + 1e-12
+    if zona.setores is None:
+        return fura
+    setor = pd.Series([zona.setores.get(papel) for papel in pesos.index], index=pesos.index)
+    por_setor = pesos.groupby(setor).sum()
+    return fura | setor.isin(por_setor.index[por_setor > zona.teto_setor + 1e-12])
 
 
 def _ir_marginal_no_motor(desejadas: pd.Series, posicoes: pd.Series, base: pd.Series,

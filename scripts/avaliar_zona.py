@@ -110,7 +110,7 @@ def main() -> int:
         for capital in CAPITAIS:
             refeitas = {nome: refazer(curvas[CONSERVADORA], retornos, capital, CUSTOS_DA_B3, liquidez,
                                       isencao=ISENCAO_DE_VENDAS, proventos=proventos, zona=zona)
-                        for nome, zona in ((SEM_ZONA, None), (COM_ZONA, ZONA))}
+                        for nome, zona in ((SEM_ZONA, None), (COM_ZONA, replace(ZONA, setores=dados.setores)))}
             refeitas["BOVA11"] = refazer(curvas["BOVA11"], retornos, capital, CUSTOS_DA_B3, liquidez, isencao=0.0)
             tabela = medidas(refeitas)
             tabela.loc[COM_ZONA, "P[com > sem]"] = psr_da_diferenca(refeitas[COM_ZONA].saida, refeitas[SEM_ZONA].saida)

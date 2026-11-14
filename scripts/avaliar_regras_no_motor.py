@@ -62,17 +62,18 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core import market_data  # noqa: E402
-from core.backtest import (Congelamento, ResultadoBacktest, backtest_pesos_fixos,  # noqa: E402
+from core.backtest import (Congelamento, ResultadoBacktest,  # noqa: E402
                            estrategia_otimizada_nas_regras, walk_forward_dinamico)
 from core.config import ConfigBacktest, ConfigOtimizacao, Objetivo, taxa_anual_para_aritmetica  # noqa: E402
 from core.lago import ler_setores  # noqa: E402
 from core.metrics import (momentos_sharpe, resumo_desempenho, retornos_de_valores,  # noqa: E402
                           sharpe_probabilistico, sharpe_referencia_deflacionado)
 from core.risco import LIMITES, TOLERANCIA, Limites, checar_carteira, stop_relativo  # noqa: E402
+from core.robustez import psr_da_diferenca  # noqa: E402
 from scripts.avaliar_universo_dinamico import (ANOS_DE_CDI, ARQUIVO_UNIVERSO, CFG_BT, CFG_KELLY,  # noqa: E402
                                                CONTROLE, ESTRATEGIAS, HORIZONTES, MISTURAS, PASTA_LAGO, REFERENCIAS,
-                                               Avaliacao, DadosLago, _porcento, _psr_da_diferenca, avaliar,
-                                               carregar_lago, imprimir, recortar_horizonte)
+                                               Avaliacao, DadosLago, _porcento, avaliar, carregar_lago, imprimir,
+                                               misturar, recortar_horizonte)
 
 ARQUIVO_SETORES = "sectors.parquet"
 SATELITE, NUCLEO, MISTURA = "Kelly λ=2 com regras", "Mín. Vol com regras", "Núcleo Mín. Vol 70/30 com regras"
@@ -150,12 +151,7 @@ def recusas_por_regra(resultado: ResultadoBacktest) -> dict[str, int]:
 def misturar_congelando(nucleo: ResultadoBacktest, satelite: ResultadoBacktest, peso_nucleo: float,
                         cfg: ConfigBacktest, nome: str, congelamento: Congelamento) -> ResultadoBacktest:
     """O ``misturar`` do S1-P.b com a volta aos pesos-alvo congelada pela perda diária do satélite."""
-    retornos = pd.DataFrame({"núcleo": retornos_de_valores(nucleo.valores),
-                             "satélite": retornos_de_valores(satelite.valores)})
-    alvo = pd.Series({"núcleo": peso_nucleo, "satélite": 1.0 - peso_nucleo})
-    mistura = backtest_pesos_fixos(retornos, alvo, cfg, nome, congelamento)
-    return replace(mistura, metodologia="walk-forward OOS, núcleo + satélite com regras",
-                   valores=mistura.valores.set_axis(nucleo.valores.index))
+    return misturar(nucleo, satelite, peso_nucleo, cfg, nome, congelamento)
 
 
 @dataclass(frozen=True)
@@ -219,7 +215,7 @@ def tabela_com_regras(base: Mapping[str, ResultadoBacktest], regras: Mapping[str
             "Nº ativos": float((pesos > 1e-6).sum(axis=1).mean()) if not pesos.empty else float("nan"),
             "PSR": sharpe_probabilistico(momentos[nome]),
             "DSR": sharpe_probabilistico(momentos[nome], referencia) if nome in LISTA_DO_DSR else float("nan"),
-            "P[com > sem]": (_psr_da_diferenca(resultado.valores, curvas[PARES[nome]].valores)
+            "P[com > sem]": (psr_da_diferenca(resultado.valores, curvas[PARES[nome]].valores)
                              if nome in PARES else float("nan")),
             "Recusas": len(resultado.recusas), "Adiados": len(resultado.adiamentos)}
     return pd.DataFrame(linhas).T

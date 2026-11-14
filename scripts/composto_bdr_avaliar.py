@@ -23,7 +23,7 @@ from scripts.xquad_avaliar import COMPOSITE, DSR_MIN, P_MIN, metricas  # noqa: E
 
 GOLD = Path("D:/b3-datalake/gold/equity_adjusted.parquet")
 CURVAS = RAIZ / "docs" / "dados" / "pos-idade-curvas-fase{}-2026-11-13.parquet"
-CDI = RAIZ / "data" / "b3lake" / "cdi_daily.parquet"
+CDI = RAIZ.parent / "Portfolio-Optimization" / "data" / "b3lake" / "cdi_daily.parquet"   # git-ignored: the main checkout
 SAIDA = RAIZ / "docs" / "dados" / "composto-bdr-escolhas-2026-11-14.csv"
 INICIO, FIM = pd.Timestamp("2021-01-04"), pd.Timestamp("2026-10-16")
 LEITURA = dt.date(2019, 11, 1)          # 252 sessions before the first decision

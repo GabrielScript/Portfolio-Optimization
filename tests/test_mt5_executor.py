@@ -80,7 +80,7 @@ def test_a_new_record_is_bought_in_the_closing_call_with_the_books_100k(pastas) 
     assert 99_000 < comprado <= 100_000
     assert {p["symbol"].removesuffix("F") for p in terminal.sent} == set(PRECOS)
     assert all(p["magic"] == MAGIC and p["comment"] == "aleph 2026-11-12" for p in terminal.sent)
-    assert all(p["price"] == pytest.approx(PRECOS[p["symbol"].removesuffix("F")] * 1.02) for p in terminal.sent)
+    assert all(p["price"] == pytest.approx(PRECOS[p["symbol"].removesuffix("F")] * 1.005, abs=0.01) for p in terminal.sent)
     alvos = pd.read_csv(pastas.livro / "alvos.csv")
     assert set(alvos["registro"]) == {"2026-11-12"} and len(alvos) == 5
 

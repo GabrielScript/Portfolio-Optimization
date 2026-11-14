@@ -40,11 +40,12 @@ def test_no_order_when_the_book_already_holds_the_target() -> None:
     assert mb.orders_for(pd.Series({"AAAA3": 10}), pd.Series({"AAAA3": 10})) == []
 
 
-def test_limit_prices_are_a_band_around_the_last_price_on_the_tick() -> None:
-    assert mb.limit_price("buy", 10.00) == pytest.approx(10.20)
-    assert mb.limit_price("sell", 10.00) == pytest.approx(9.80)
-    assert mb.limit_price("buy", 2.09) == pytest.approx(2.14)      # 2.1318 rounded up to the cent
-    assert mb.limit_price("sell", 2.09) == pytest.approx(2.04)     # 2.0482 rounded down
+def test_limit_prices_are_a_half_percent_band_around_the_last_price_on_the_tick() -> None:
+    # the user, 2026-11-13: 0.5%, not 2% (XP's demo fills a limit order at its limit at once: the first buy paid 2%)
+    assert mb.limit_price("buy", 10.00) == pytest.approx(10.05)
+    assert mb.limit_price("sell", 10.00) == pytest.approx(9.95)
+    assert mb.limit_price("buy", 2.09) == pytest.approx(2.11)      # 2.10045 rounded up to the cent
+    assert mb.limit_price("sell", 2.09) == pytest.approx(2.07)     # 2.07955 rounded down
     with pytest.raises(ValueError):
         mb.limit_price("buy", 0.0)
 

@@ -20,7 +20,8 @@ from core.risco import LIMITES
 Side = Literal["buy", "sell"]
 LOT = 100                       # B3's standard lot; the rest goes to the fractional market
 FRACTIONAL = "F"                # suffix of the fractional symbol
-BAND = 0.02                     # limit price band around the last price in the closing call
+BAND = 0.005                    # limit band around the last price; 0.5% since 2026-11-13: XP's demo fills a limit
+                                # order at its limit at once, and the 2% band made the first buy pay 2% (the user)
 TICK = 0.01
 SERVER = "XPMT5-DEMO"
 MAX_QUOTE_AGE = pd.Timedelta(minutes=5)

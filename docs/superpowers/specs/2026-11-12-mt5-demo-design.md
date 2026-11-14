@@ -28,8 +28,8 @@ leaves out.
 3. **The orders.** Target quantities = weight x book value / last price, whole shares (`core.ordens`' rules: the
    house's cost reserve, at most 20% a name). Orders = target minus held, sells first. Each quantity splits into
    lots of 100 on the standard symbol and the rest on the `F` symbol. Limit orders sent in the closing call
-   (17:55-18:00) so the fill is the close the fictitious account uses: buy limit = last price + 2%, sell limit = last
-   price - 2% (the auction's price is one for all; the limit only bounds a broken print). Day orders, filling
+   (17:55-18:00) so the fill is the close the fictitious account uses: buy limit = last price + 0.5%, sell limit = last
+   price - 0.5% (2% until 13/11/2026: XP's demo filled each limit order at its limit at once) (the auction's price is one for all; the limit only bounds a broken print). Day orders, filling
    `RETURN`.
 4. **After the close.** The next run reads the deals of the day and writes each fill to `paper-mt5/ordens.csv`:
    time, symbol, side, quantity, limit, fill price, the lake's close of the day, the difference in bps, and what the

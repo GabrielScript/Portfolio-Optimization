@@ -8,6 +8,7 @@ Uso: .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py            (paper-
      .venv/Scripts/pythonw.exe -X utf8 scripts/rodar_paper.py manutencao (upkeep: liquidity, readings, push)
      <Python312>/pythonw.exe -X utf8 scripts/com_python_base.py scripts/rodar_paper.py sentinela (hourly Sentinela)
      <Python312>/pythonw.exe -X utf8 scripts/com_python_base.py scripts/rodar_paper.py mt5_executor (MT5 demo, 17:50)
+     <Python312>/pythonw.exe -X utf8 scripts/com_python_base.py scripts/rodar_paper.py resultado_diario (email, 20:00)
 
 Só biblioteca padrão de propósito. Se a importação da rotina falhar (venv quebrado, pacote faltando, erro de sintaxe),
 o ``main()`` dela nem começa e não anota nada; aqui a falha vira um log com o traceback e uma linha "falhou" no
@@ -51,6 +52,8 @@ ROTINAS = {
                          lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", nota]),
     "mt5_executor": Rotina(_LOCAL / "paper-mt5", ["quando", "registro", "desfecho", "ordens", "nota"],
                            lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "", "falhou", "0", nota]),
+    "resultado_diario": Rotina(_LOCAL / "paper-resultado", ["quando", "desfecho", "nota"],
+                               lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", nota]),
     "sentinela": Rotina(_LOCAL / "paper-sentinela", ["hora", "situacao", "chamadas", "graves", "acoes", "adiados",
                                                      "emails", "falhas", "git"],
                         lambda inicio, nota: [inicio.isoformat(timespec="seconds"), "falhou", "0", "", "", "", "0",

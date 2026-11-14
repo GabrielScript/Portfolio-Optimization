@@ -144,3 +144,17 @@ def test_a_symbol_just_added_to_the_market_watch_waits_for_its_first_tick() -> N
     with Corretora(terminal, esperar=esperas.append).conectar() as c:
         cotacao = c.cotacao("BITH11")
     assert (cotacao.bid, cotacao.ask) == (87.43, 87.45) and len(esperas) == 2
+
+
+def test_the_daily_closes_of_a_symbol_come_by_session_date():
+    # the 20:00 report (2026-11-13): today's official close from the terminal's daily bars
+    import numpy as np
+    terminal = FakeTerminal()
+    terminal.TIMEFRAME_D1 = 16408
+    pedidos = []
+    barras = np.array([(1794441600, 44.70), (1794528000, 45.21)], dtype=[("time", "<i8"), ("close", "<f8")])
+    terminal.copy_rates_from_pos = lambda symbol, frame, start, count: pedidos.append((symbol, frame, start, count)) or barras
+    with Corretora(terminal).conectar() as c:
+        fechamentos = c.fechamentos("PETR4", 5)
+    assert pedidos == [("PETR4", 16408, 0, 5)] and terminal.selected[-1] == "PETR4"
+    assert fechamentos.to_dict() == {pd.Timestamp("2026-11-12"): 44.70, pd.Timestamp("2026-11-13"): 45.21}

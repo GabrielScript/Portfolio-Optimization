@@ -38,6 +38,7 @@ class Terminal(Protocol):
     def positions_get(self) -> Any: ...
     def order_send(self, request: dict) -> Any: ...
     def history_deals_get(self, date_from: Any, date_to: Any) -> Any: ...
+    def copy_rates_from_pos(self, symbol: str, timeframe: int, start: int, count: int) -> Any: ...
 
 
 class TerminalError(RuntimeError):
@@ -120,6 +121,16 @@ class Corretora:
         if tick is None:
             return None
         return Cotacao(float(tick.bid), float(tick.ask), float(tick.last), _wall_clock(tick.time))
+
+    def fechamentos(self, symbol: str, sessoes: int) -> pd.Series:
+        """The close of each of the last ``sessoes`` daily bars by session date (empty when the terminal has none);
+        today's bar, after the closing call, holds B3's official close."""
+        self.t.symbol_select(symbol, True)
+        barras = self.t.copy_rates_from_pos(symbol, self.t.TIMEFRAME_D1, 0, sessoes)
+        if barras is None or len(barras) == 0:
+            return pd.Series(dtype=float)
+        return pd.Series([float(b["close"]) for b in barras],
+                         index=[_wall_clock(int(b["time"])).normalize() for b in barras])
 
     def acoes_da_carteira(self) -> pd.Series:
         """The book's shares by name (its positions only, standard and fractional summed; a sell position is

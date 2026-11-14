@@ -65,8 +65,11 @@ def test_orders_only_on_allowed_names() -> None:
 def test_buys_never_exceed_the_book_cash_plus_its_sells() -> None:
     cotacoes = pd.Series({"AAAA3": 10.0, "BBBB3": 20.0})
     ordens = [Order("BBBB3", "BBBB3", "sell", 100), Order("AAAA3", "AAAA3", "buy", 300)]
-    assert mb.check_cash(ordens, cotacoes, cash=1_000.0) is None    # 3,000 <= 1,000 + 2,000
-    assert "cash" in mb.check_cash(ordens, cotacoes, cash=999.0)
+    assert mb.check_cash(ordens, cotacoes, cash=1_000.0, band=0.0) is None    # 3,000 <= 1,000 + 2,000
+    assert "cash" in mb.check_cash(ordens, cotacoes, cash=999.0, band=0.0)
+    # at the limits each order fills at (the 0.5% band): 3,015 <= 1,025 + 1,990
+    assert mb.check_cash(ordens, cotacoes, cash=1_025.0) is None
+    assert "cash" in mb.check_cash(ordens, cotacoes, cash=1_000.0)
 
 
 def test_a_quote_must_be_live() -> None:

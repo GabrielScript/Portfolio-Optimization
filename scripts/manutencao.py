@@ -92,7 +92,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 _LOCAL = Path(os.environ.get("LOCALAPPDATA", Path.home()))
 PASTA_ESTADO = _LOCAL / "paper-manutencao"     # runs.csv, outside the repository (the launcher's "manutencao")
 TRAVA_DO_LAGO = _LOCAL / "b3lake" / "daily.lock"
-ROTINAS_ANTES = ("b3lake daily", "paper trading", "paper v2")     # the upkeep waits for them to finish
+ROTINAS_ANTES = ("b3lake daily", "paper trading", "paper v2", "paper v3")     # the upkeep waits for them to end
 # the private headlines store (DECISOES 134): cloned next to the projects folder, outside every repository
 URL_DAS_MANCHETES = "https://github.com/GabrielScript/alepha-manchetes.git"
 CLONE_DAS_MANCHETES = RAIZ.parent.parent / "alepha-manchetes"
@@ -699,6 +699,15 @@ def tarefas_rodando(nomes: tuple[str, ...]) -> int:
     return int(feita.stdout.strip() or 0)
 
 
+def rotinas_antes_rodando(consultar: Callable[[tuple[str, ...]], int] = tarefas_rodando) -> bool:
+    """Whether one of ``ROTINAS_ANTES`` runs; a failed query (PowerShell error or timeout) counts as running, so the
+    wait goes on up to its limit instead of the whole upkeep crashing before its runs.csv line."""
+    try:
+        return consultar(ROTINAS_ANTES) > 0
+    except Exception:  # noqa: BLE001 - any failure of the query: keep waiting, bounded by esperar's limit
+        return True
+
+
 def avisar(raiz: Path, titulo: str, corpo: str, mostrar: bool = False) -> str:
     """A Windows notification through ``scripts/avisar.ps1`` (``mostrar``: only print "title | body", for tests)."""
     ambiente = {**os.environ, "AVISO_TITULO": titulo, "AVISO_CORPO": corpo}
@@ -774,7 +783,7 @@ def _pesos_da_fermionica(data: pd.Timestamp) -> pd.Series:
 
 def main() -> int:
     agora = datetime.now()
-    esperar(lambda: tarefas_rodando(ROTINAS_ANTES) > 0, time.sleep)
+    esperar(rotinas_antes_rodando, time.sleep)
     resultado = executar(RAIZ, git_em(RAIZ), TRAVA_DO_LAGO, agora, lambda: ler_leitura(RAIZ), pasta_do_log=PASTA_DO_LOG,
                          manchetes=(CLONE_DAS_MANCHETES, URL_DAS_MANCHETES, PASTA_DO_LOG,
                                     lambda: _gerar_manchetes(PASTA_DO_LOG)),

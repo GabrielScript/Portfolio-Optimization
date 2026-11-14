@@ -31,6 +31,8 @@ RAIZ = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(RAIZ))
 
 from core.mt5_book import (
+    BAND,
+    cash_after,
     check_account,
     check_cash,
     check_names,
@@ -94,8 +96,17 @@ def caixa(fills: pd.DataFrame) -> float:
     """The book's cash: the start minus its buys, plus its sells, minus the commissions charged."""
     if fills.empty:
         return INICIAL
-    sinal = fills["side"].map({"buy": -1.0, "sell": 1.0})
-    return float(INICIAL + (sinal * fills["volume"] * fills["price"]).sum() - fills["commission"].sum())
+    return float(cash_after(INICIAL, fills[["side", "volume", "price", "commission"]].itertuples(index=False)))
+
+
+def fills_sem_posicao(fills: pd.DataFrame, detidas: pd.Series) -> list[str]:
+    """Names whose net filled shares differ from the book's positions: a history the terminal did not return whole."""
+    if fills.empty:
+        liquidas = pd.Series(dtype=int)
+    else:
+        liquidas = (fills["volume"] * fills["side"].map({"buy": 1, "sell": -1})).groupby(fills["name"]).sum()
+    nomes = sorted(set(liquidas.index) | set(detidas.index))
+    return [n for n in nomes if int(liquidas.get(n, 0)) != int(detidas.get(n, 0))]
 
 
 def preco(cotacao: Cotacao | None) -> float:
@@ -121,10 +132,13 @@ def devido(registro: str, execucoes: pd.DataFrame, alvos: pd.DataFrame, detidas:
            hoje: str) -> tuple[str, pd.Series | None]:
     """("novo", None) for a record never sent; ("repetir", target) for a record sent once on an earlier session whose
     target is not held yet; ("nada", None) otherwise."""
-    enviadas = execucoes.loc[execucoes["registro"].astype(str) == registro] if not execucoes.empty else execucoes
+    if not execucoes.empty:     # a run that sent nothing (stale quotes on a holiday) is not an attempt
+        enviadas = execucoes.loc[(execucoes["registro"].astype(str) == registro) & (execucoes["enviadas"] > 0)]
+    else:
+        enviadas = execucoes
     if enviadas.empty:
         return "novo", None
-    alvo = alvos.loc[alvos["registro"].astype(str) == registro].set_index("nome")["acoes"].astype(int)
+    alvo = alvo_gravado(alvos, registro)
     nomes = sorted(set(alvo.index) | set(detidas.index))
     falta = (alvo.reindex(nomes, fill_value=0) != detidas.reindex(nomes, fill_value=0)).any()
     ultima = str(pd.Timestamp(enviadas["quando"].max()).date())
@@ -133,9 +147,22 @@ def devido(registro: str, execucoes: pd.DataFrame, alvos: pd.DataFrame, detidas:
     return "nada", None
 
 
+def alvo_gravado(alvos: pd.DataFrame, registro: str) -> pd.Series:
+    """The target written for ``registro`` (shares by name; empty when none was written). A name written twice keeps
+    its last line: a run killed between orders used to append the record's target again."""
+    if alvos.empty:
+        return pd.Series(dtype=int)
+    linhas = alvos.loc[alvos["registro"].astype(str) == registro].drop_duplicates("nome", keep="last")
+    return linhas.set_index("nome")["acoes"].astype(int)
+
+
+def _parado(pastas: Pastas) -> bool:
+    return (pastas.livro / "PARAR").exists()
+
+
 def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esperar: Callable[[datetime], None],
           simular: bool = False) -> Resultado:
-    if (pastas.livro / "PARAR").exists():
+    if _parado(pastas):
         return Resultado("parado", nota="paper-mt5/PARAR exists")
     registro, pesos = ultimo_registro(pastas.registro)
     with Corretora(terminal).conectar() as c:
@@ -147,6 +174,9 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
         execucoes, alvos = _ler(pastas.livro / "execucoes.csv"), _ler(pastas.livro / "alvos.csv")
         fills = sincronizar_fills(c, pastas, execucoes, momento)
         detidas = c.acoes_da_carteira()
+        sem_fill = fills_sem_posicao(fills, detidas)
+        if sem_fill:
+            return Resultado("recusado", registro, nota=f"fills do not match the positions of {sem_fill}")
         tipo, alvo = devido(registro, execucoes, alvos, detidas, str(momento.date()))
         if simular:
             tipo, alvo = "novo", None
@@ -158,6 +188,8 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
             if momento.time() < CHAMADA:
                 esperar(datetime.combine(momento.date(), CHAMADA))
                 momento = agora()
+                if _parado(pastas):
+                    return Resultado("parado", registro, nota="paper-mt5/PARAR created during the wait")
 
         nomes = sorted(set(pesos.index) | set(detidas.index))
         ultimos = pd.Series({nome: preco(c.cotacao(nome)) for nome in nomes})
@@ -165,9 +197,12 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
         if sem:
             return Resultado("recusado", registro, nota=f"no quote for {sem}")
         dinheiro = caixa(fills)
-        if alvo is None:
-            valor = dinheiro + float((detidas.reindex(nomes, fill_value=0) * ultimos).sum())
-            alvo = target_shares(pesos, ultimos.reindex(pesos.index), valor)
+        gravado = alvo_gravado(alvos, registro) if tipo == "novo" and not simular else pd.Series(dtype=int)
+        if alvo is None and not gravado.empty:      # an earlier run of this record wrote it and was cut or sent nothing
+            alvo = gravado
+        if alvo is None:     # held shares at the sell limit, bought ones at the buy limit: the cash never goes negative
+            valor = dinheiro + float((detidas.reindex(nomes, fill_value=0) * ultimos).sum()) * (1 - BAND)
+            alvo = target_shares(pesos, ultimos.reindex(pesos.index) * (1 + BAND), valor)
         ordens = orders_for(alvo, detidas)
         motivo = check_names(ordens, nomes) or check_cash(ordens, ultimos, dinheiro)
         if motivo:
@@ -178,11 +213,14 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
             return Resultado("simulado", registro, len(ordens), f"cash {dinheiro:,.2f}, held {detidas.to_dict()}")
 
         quando = momento.isoformat(timespec="seconds")
-        if tipo == "novo":
+        if tipo == "novo" and gravado.empty:
             _anexar(pastas.livro / "alvos.csv", [{"registro": registro, "nome": n, "acoes": int(q)}
                                                  for n, q in alvo.items() if q > 0])
-        linhas, enviadas = [], 0
+        linhas, enviadas, parou = [], 0, False
         for o in ordens:
+            if _parado(pastas):
+                parou = True
+                break
             cotacao = c.cotacao(o.symbol)
             motivo = None if cotacao is None else check_quote(o.symbol, cotacao.bid, cotacao.ask, cotacao.time,
                                                               pd.Timestamp(agora()))
@@ -202,6 +240,8 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
         _anexar(pastas.livro / "execucoes.csv", [{"quando": quando, "registro": registro, "tipo": tipo,
                                                   "ordens": len(ordens), "enviadas": enviadas,
                                                   "caixa": round(dinheiro, 2)}])
+        if parou:
+            return Resultado("parado", registro, enviadas, f"paper-mt5/PARAR after {enviadas} of {len(ordens)} orders")
         return Resultado("enviado", registro, enviadas, f"{tipo}: {enviadas} of {len(ordens)} orders sent")
 
 

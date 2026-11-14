@@ -158,3 +158,33 @@ def test_the_daily_closes_of_a_symbol_come_by_session_date():
         fechamentos = c.fechamentos("PETR4", 5)
     assert pedidos == [("PETR4", 16408, 0, 5)] and terminal.selected[-1] == "PETR4"
     assert fechamentos.to_dict() == {pd.Timestamp("2026-11-12"): 44.70, pd.Timestamp("2026-11-13"): 45.21}
+
+
+class Falha(FakeTerminal):
+    """The terminal lost its IPC link: positions and deals come back None (not an empty tuple)."""
+
+    def __init__(self, codigo: int) -> None:
+        super().__init__()
+        self.codigo = codigo
+
+    def last_error(self):
+        return (self.codigo, "No IPC connection" if self.codigo != 1 else "Success")
+
+    def positions_get(self):
+        return None
+
+    def history_deals_get(self, date_from, date_to):
+        return None
+
+
+def test_a_terminal_failure_on_positions_or_deals_raises_instead_of_an_empty_book() -> None:
+    c = Corretora(Falha(-10004))
+    with pytest.raises(TerminalError):
+        c.acoes_da_carteira()
+    with pytest.raises(TerminalError):
+        c.execucoes(pd.Timestamp("2026-11-12"), pd.Timestamp("2026-11-13"))
+
+
+def test_none_with_the_success_code_is_an_empty_book() -> None:
+    c = Corretora(Falha(1))
+    assert c.acoes_da_carteira().empty and c.execucoes(pd.Timestamp("2026-11-12"), pd.Timestamp("2026-11-13")) == []

@@ -150,3 +150,86 @@ def test_options_ignore_the_launchers_own_arguments(monkeypatch) -> None:
     opcoes = ex.ler_opcoes(None)
     assert not opcoes.simular and not opcoes.leitura
     assert ex.ler_opcoes(["--simular"]).simular
+
+
+# ---------------------------------------------------------------- the live-path review (2026-11-14)
+def _limite(p) -> float:
+    return p["volume"] * p["price"]
+
+
+def test_a_stop_file_created_during_the_wait_for_the_call_sends_nothing(pastas) -> None:
+    terminal = Terminal(DIA.replace(hour=17, minute=50))
+    pastas.livro.mkdir(parents=True)
+    r = ex.rodar(terminal, pastas, lambda: DIA.replace(hour=17, minute=50),
+                 lambda ate: (pastas.livro / "PARAR").touch())
+    assert r.desfecho == "parado" and terminal.sent == []
+
+
+class ParaNoMeio(Terminal):
+    """The user creates paper-mt5/PARAR right after the first order went out."""
+
+    def __init__(self, agora, livro) -> None:
+        super().__init__(agora)
+        self.livro = livro
+
+    def order_send(self, request):
+        resposta = super().order_send(request)
+        (self.livro / "PARAR").touch()
+        return resposta
+
+
+def test_a_stop_file_created_between_two_orders_stops_the_rest(pastas) -> None:
+    pastas.livro.mkdir(parents=True)
+    terminal = ParaNoMeio(NA_CHAMADA, pastas.livro)
+    r = rodar(pastas, terminal)
+    assert r.desfecho == "parado" and len(terminal.sent) == 1
+
+
+class MorreNoMeio(Terminal):
+    def order_send(self, request):
+        if len(self.sent) == 2:
+            raise RuntimeError("the process died here")
+        return super().order_send(request)
+
+
+def test_a_run_killed_between_orders_keeps_one_target_and_the_next_runs_still_work(pastas) -> None:
+    with pytest.raises(RuntimeError):
+        rodar(pastas, MorreNoMeio(NA_CHAMADA))
+    assert rodar(pastas, Terminal(NA_CHAMADA)).desfecho == "enviado"
+    alvos = pd.read_csv(pastas.livro / "alvos.csv")
+    assert len(alvos) == 5 and not alvos.duplicated(["registro", "nome"]).any()
+    amanha = NA_CHAMADA.replace(day=16)
+    assert rodar(pastas, Terminal(amanha), agora=amanha).desfecho in ("enviado", "nada")
+
+
+class Velho(Terminal):
+    """Quotes from 10 minutes ago: a B3 holiday on a weekday (the terminal shows the last session's prices)."""
+
+    def symbol_info_tick(self, symbol):
+        tick = super().symbol_info_tick(symbol)
+        return NS(bid=tick.bid, ask=tick.ask, last=tick.last, time=tick.time - 600)
+
+
+def test_runs_that_sent_nothing_do_not_use_up_the_two_attempts(pastas) -> None:
+    for dia in (13, 16):
+        momento = NA_CHAMADA.replace(day=dia)
+        assert rodar(pastas, Velho(momento), agora=momento).ordens == 0
+    depois = NA_CHAMADA.replace(day=17)
+    terminal = Terminal(depois)
+    assert rodar(pastas, terminal, agora=depois).desfecho == "enviado" and terminal.sent
+
+
+def test_positions_the_fills_do_not_explain_refuse_the_run(pastas) -> None:
+    rodar(pastas, Terminal(NA_CHAMADA))
+    alvos = pd.read_csv(pastas.livro / "alvos.csv").set_index("nome")["acoes"]
+    detidas = [NS(symbol=n, volume=float(q), type=0, magic=MAGIC) for n, q in alvos.items() if n != "EEEE3"]
+    amanha = NA_CHAMADA.replace(day=16)
+    terminal = Terminal(amanha, positions=detidas, deals=())        # the deals history came back empty
+    r = rodar(pastas, terminal, agora=amanha)
+    assert r.desfecho == "recusado" and "fills" in r.nota and terminal.sent == []
+
+
+def test_the_first_buy_fits_the_books_money_at_the_limit_prices_it_pays(pastas) -> None:
+    terminal = Terminal(NA_CHAMADA)
+    rodar(pastas, terminal)
+    assert sum(_limite(p) for p in terminal.sent) <= ex.INICIAL

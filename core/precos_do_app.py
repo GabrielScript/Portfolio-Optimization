@@ -31,6 +31,8 @@ def emendar(base: pd.DataFrame, recentes: pd.DataFrame) -> pd.DataFrame:
     security). Each column of ``base`` is rescaled by ``recentes`` / ``base`` on the last session of the overlap where
     both have a price (an ex-date between the files); a column with no common price is kept as it is."""
     ultima = base.index.max()
+    if recentes.empty or recentes.index.max() <= ultima:   # the base was committed ahead: its ex-dates are newer
+        return base
     comuns = base.loc[base.index.isin(recentes.index)]
     if not comuns.empty:
         razoes = recentes.reindex(index=comuns.index, columns=base.columns) / comuns

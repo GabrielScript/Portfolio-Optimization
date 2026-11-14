@@ -963,3 +963,16 @@ def test_the_simulator_trades_the_80_20_record_when_it_exists(app, monkeypatch):
     novas = m.ordens_do_simulador(app, date(2026, 11, 13), ler_ordens(app / m.ARQUIVO_SIMULADOR))
     contas = novas[novas["carteira"] == composto_80_20.CARTEIRA]
     assert set(contas["data"]) == {composto_80_20.INICIO} and set(contas["ticker"]) == {*papeis, "BITH11"}
+
+
+def test_the_upkeep_also_waits_for_paper_v3():
+    from scripts import manutencao
+    assert "paper v3" in manutencao.ROTINAS_ANTES
+
+
+def test_a_failed_query_of_the_running_tasks_counts_as_still_running_not_as_a_crash():
+    from scripts import manutencao
+
+    def falha(nomes):
+        raise TimeoutError("powershell timed out")
+    assert manutencao.rotinas_antes_rodando(falha) is True

@@ -24,6 +24,7 @@ TERMINAL_PATH = "C:/Program Files/MetaTrader 5 Terminal/terminal64.exe"    # for
 TIMEOUT_MS = 60_000
 MAGIC = 51_2026          # the book's mark on its orders (attempt 51's Composite, 2026)
 PRIMEIRO_TICK_TENTATIVAS, PRIMEIRO_TICK_PAUSA_S = 10, 0.2    # up to 2 s for a newly selected symbol's first tick
+SUCESSO = 1              # last_error()'s code when a None means "nothing", not a failure (RES_S_OK)
 
 
 class Terminal(Protocol):
@@ -132,11 +133,21 @@ class Corretora:
         return pd.Series([float(b["close"]) for b in barras],
                          index=[_wall_clock(int(b["time"])).normalize() for b in barras])
 
+    def _lista(self, resposta: Any, o_que: str) -> Any:
+        """The terminal's tuple; a None is an empty book only when ``last_error`` says success, else a failure (the
+        book would size itself on its starting money and the cash check would pass buys it cannot pay)."""
+        if resposta is not None:
+            return resposta
+        erro = self.t.last_error()
+        if erro and erro[0] == SUCESSO:
+            return ()
+        raise TerminalError(f"no {o_que}: {erro}")
+
     def acoes_da_carteira(self) -> pd.Series:
         """The book's shares by name (its positions only, standard and fractional summed; a sell position is
         negative)."""
         acoes: dict[str, int] = {}
-        for p in self.t.positions_get() or ():
+        for p in self._lista(self.t.positions_get(), "positions"):
             if p.magic != MAGIC:
                 continue
             sinal = 1 if p.type == self.t.POSITION_TYPE_BUY else -1
@@ -162,7 +173,7 @@ class Corretora:
     def execucoes(self, desde: pd.Timestamp, ate: pd.Timestamp) -> list[Fill]:
         """The book's fills between two wall-clock times."""
         fills = []
-        for d in self.t.history_deals_get(desde.to_pydatetime(), ate.to_pydatetime()) or ():
+        for d in self._lista(self.t.history_deals_get(desde.to_pydatetime(), ate.to_pydatetime()), "deals"):
             if d.magic != MAGIC or d.type not in (self.t.DEAL_TYPE_BUY, self.t.DEAL_TYPE_SELL):
                 continue
             lado: Side = "buy" if d.type == self.t.DEAL_TYPE_BUY else "sell"

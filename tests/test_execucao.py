@@ -1,0 +1,317 @@
+"""Execução realista de uma curva fora da amostra (S4): custo por liquidez e IR sobre a sequência de carteiras."""
+
+import numpy as np
+import pandas as pd
+import pytest
+
+from core.backtest import (ResultadoBacktest, estrategia_buy_and_hold_ativo, retornos_da_carteira, walk_forward,
+                           walk_forward_dinamico)
+from core.config import ConfigBacktest
+from core.execucao import SEM_CUSTOS, Custos, Liquidez, ZonaNoMotor, custo_da_ordem, refazer
+
+PAPEIS = ["AAAA3", "BBBB3", "CCCC3", "DDDD3"]
+
+
+def _motor() -> tuple[ResultadoBacktest, pd.DataFrame]:
+    """Uma rodada real do motor: 4 papéis, pesos que mudam a cada rebalanceio, treino de 60 e teste de 21."""
+    datas = pd.bdate_range("2020-01-01", periods=200)
+    gerador = np.random.default_rng(9)
+    precos = pd.DataFrame(100 * np.cumprod(1 + gerador.normal(0.0005, 0.02, (200, 4)), axis=0), index=datas,
+                          columns=PAPEIS)
+    universo = pd.DataFrame([(mes.date(), papel) for mes in pd.date_range("2020-01-01", "2020-10-01", freq="MS")
+                             for papel in PAPEIS], columns=["month", "security"])
+
+    def estrategia(treino: pd.DataFrame) -> pd.Series:
+        media = treino.mean().clip(lower=1e-4)
+        return media / media.sum()
+
+    cfg = ConfigBacktest(janela_treino=60, janela_teste=21, capital_inicial=100.0, custo_bps=0.0)
+    return walk_forward_dinamico(precos, universo, estrategia, cfg, "motor"), retornos_da_carteira(precos)
+
+
+def test_sem_custo_e_sem_ir_a_curva_refeita_e_a_do_motor():
+    # âncora: a mesma sequência de carteiras, comprada no fechamento anterior ao 1º pregão de cada uma, dá a mesma curva
+    resultado, retornos = _motor()
+    refeita = refazer(resultado, retornos, capital=100.0, custos=SEM_CUSTOS, com_ir=False)
+    assert len(resultado.pesos_alvo) == 7
+    pd.testing.assert_series_equal(refeita.valores, resultado.valores, check_names=False, rtol=1e-10)
+
+
+def test_o_buy_and_hold_das_referencias_tambem_e_refeito_sem_diferenca():
+    # as referências vêm do ``walk_forward`` (amostra comum), não do dinâmico: mesma convenção de pesos_alvo
+    datas = pd.bdate_range("2020-01-01", periods=150)
+    precos = pd.DataFrame({"BOVA11": 100 * np.cumprod(1 + np.random.default_rng(3).normal(0.0004, 0.015, 150)),
+                           "IVVB11": 100.0}, index=datas)
+    retornos = retornos_da_carteira(precos)
+    cfg = ConfigBacktest(janela_treino=60, janela_teste=21, capital_inicial=100.0, custo_bps=0.0)
+    curva = walk_forward(retornos, estrategia_buy_and_hold_ativo("BOVA11"), cfg, "BOVA11")
+    refeita = refazer(curva, retornos, capital=100.0, com_ir=False)
+    pd.testing.assert_series_equal(refeita.valores, curva.valores, check_names=False, rtol=1e-10)
+
+
+def test_custo_da_ordem_e_emolumentos_meio_spread_e_impacto_pela_raiz_do_tamanho():
+    # R$ 100 mil num papel de R$ 10 milhões por dia, vol diária de 2%: impacto 2% x raiz(1%) = 0,2%
+    custo = custo_da_ordem(100_000.0, meio_spread=0.001, vol_diaria=0.02, volume_mediano=10_000_000.0,
+                           custos=Custos(emolumentos=0.0003, impacto=1.0))
+    assert custo == pytest.approx(100_000.0 * (0.0003 + 0.001 + 0.002))
+
+
+def _liquidez_constante(meio_spread_do_mes: dict[str, float] | None = None) -> Liquidez:
+    meses = pd.date_range("2019-12-01", "2020-12-01", freq="MS")
+    spread = pd.DataFrame(0.001, index=meses, columns=PAPEIS)
+    for mes, valor in (meio_spread_do_mes or {}).items():
+        spread.loc[pd.Timestamp(mes)] = valor
+    return Liquidez(meio_spread=spread, vol_diaria=pd.DataFrame(0.02, index=meses, columns=PAPEIS),
+                    volume_mediano=pd.DataFrame(1e7, index=meses, columns=PAPEIS))
+
+
+def test_rebalanceio_paga_o_custo_de_cada_ordem_com_a_liquidez_do_mes_anterior():
+    # a 1ª compra é no fechamento de 24/03/2020: vale a liquidez de fevereiro (a de março, 5%, ainda não fechou)
+    resultado, retornos = _motor()
+    custos = Custos(emolumentos=0.0003, impacto=1.0)
+    refeita = refazer(resultado, retornos, capital=1e6, custos=custos,
+                      liquidez=_liquidez_constante({"2020-03-01": 0.05}), com_ir=False)
+    alvo, primeiro = resultado.pesos_alvo.iloc[0], resultado.pesos_alvo.index[0]
+    esperado = sum(custo_da_ordem(peso * 1e6, 0.001, 0.02, 1e7, custos) for peso in alvo)
+    assert refeita.custos.iloc[0] == pytest.approx(esperado)
+    crescimento = float((alvo * (1.0 + retornos.loc[primeiro, alvo.index])).sum())
+    assert refeita.valores.loc[primeiro] == pytest.approx((1e6 - esperado) * crescimento)
+
+
+DIAS = pd.DatetimeIndex(["2024-01-26", "2024-01-29", "2024-01-30", "2024-01-31", "2024-02-01"])
+DIAS_NO_MEIO_DO_MES = pd.bdate_range("2024-01-08", "2024-01-12")
+
+
+def _dobra_e_divide(dias: pd.DatetimeIndex = DIAS) -> tuple[ResultadoBacktest, pd.DataFrame]:
+    """R$ 30 mil em A no fechamento do 1º dia; A dobra no 3º; no fechamento do 3º a carteira vira metade A, metade B
+    (vende R$ 30 mil de A, comprado a R$ 15 mil pelo preço médio). Retornos zero no resto."""
+    alvos = pd.DataFrame({"A": [1.0, 0.5], "B": [0.0, 0.5]}, index=dias[[1, 3]])
+    resultado = ResultadoBacktest("manual", "teste", pd.Series(1.0, index=dias), alvos,
+                                  pd.Series([1.0, 0.5], index=alvos.index), 0.0)
+    return resultado, pd.DataFrame({"A": [0.0, 1.0, 0.0, 0.0], "B": 0.0}, index=dias[1:])
+
+
+def test_venda_pelo_preco_medio_paga_ir_no_fim_do_mes_e_a_saida_cobra_o_ganho_que_falta():
+    # vendas de R$ 30 mil (> R$ 20 mil): IR de 15% x R$ 15 mil = R$ 2.250 em 31/01, pago vendendo um pouco de tudo; a
+    # saída em 01/02 cobra 15% do ganho que sobrou em A (R$ 14.437,50 depois do pagamento)
+    resultado, retornos = _dobra_e_divide()
+    refeita = refazer(resultado, retornos, capital=30_000.0)
+    assert refeita.impostos.to_dict() == pytest.approx({pd.Timestamp("2024-01-31"): 2_250.0})
+    assert refeita.valores.loc["2024-01-31"] == pytest.approx(57_750.0)
+    assert refeita.saida.loc["2024-02-01"] == pytest.approx(57_750.0 - 0.15 * 14_437.5)
+
+
+def test_a_saida_no_meio_do_mes_soma_o_ganho_ja_realizado_ao_que_falta_realizar():
+    # em 11/01: R$ 15 mil realizados na venda de 10/01 + R$ 15 mil ainda em A; vendas do mês R$ 30 mil + R$ 60 mil
+    resultado, retornos = _dobra_e_divide(DIAS_NO_MEIO_DO_MES)
+    refeita = refazer(resultado, retornos, capital=30_000.0)
+    assert refeita.saida.loc["2024-01-11"] == pytest.approx(60_000.0 - 0.15 * 30_000.0)
+
+
+def test_o_ultimo_pregao_da_amostra_nao_apura_o_mes_e_a_saida_cobra_tudo_junto():
+    # 12/01 não é o último pregão de janeiro: nada de IR mensal; a saída soma realizado e não realizado num só mês
+    resultado, retornos = _dobra_e_divide(DIAS_NO_MEIO_DO_MES)
+    refeita = refazer(resultado, retornos, capital=30_000.0)
+    assert refeita.impostos.empty
+    assert refeita.valores.iloc[-1] == pytest.approx(60_000.0)
+    assert refeita.saida.iloc[-1] == pytest.approx(60_000.0 - 0.15 * 30_000.0)
+
+
+def test_etf_nao_tem_isencao_de_vendas_ate_20_mil():
+    # com R$ 10 mil a venda de 30/01 é de R$ 10 mil (ganho R$ 5 mil): isenta em ação, 15% em ETF; idem na saída de 01/02
+    resultado, retornos = _dobra_e_divide()
+    acao = refazer(resultado, retornos, capital=10_000.0)
+    etf = refazer(resultado, retornos, capital=10_000.0, isencao=0.0)
+    assert acao.impostos.empty
+    assert acao.saida.iloc[-1] == pytest.approx(20_000.0)
+    assert etf.impostos.to_dict() == pytest.approx({pd.Timestamp("2024-01-31"): 750.0})
+    assert etf.saida.iloc[-1] == pytest.approx(19_250.0 - 0.15 * 4_812.5)
+
+
+def test_provento_reinvestido_entra_na_base_e_nao_paga_ir_como_ganho_de_capital():
+    # 30/01: dos R$ 60 mil, provento de 25% do fechamento ex (R$ 12 mil) reinvestido -> base de A R$ 42 mil; a venda de
+    # metade leva R$ 21 mil de base: ganho R$ 9 mil, IR R$ 1.350
+    resultado, retornos = _dobra_e_divide()
+    proventos = pd.DataFrame({"A": [0.0, 0.25, 0.0, 0.0]}, index=DIAS[1:])
+    refeita = refazer(resultado, retornos, capital=30_000.0, proventos=proventos)
+    assert refeita.impostos.to_dict() == pytest.approx({pd.Timestamp("2024-01-31"): 1_350.0})
+
+
+def test_sem_ir_nao_ha_imposto_e_a_saida_e_o_patrimonio():
+    resultado, retornos = _dobra_e_divide()
+    refeita = refazer(resultado, retornos, capital=30_000.0, com_ir=False)
+    assert refeita.impostos.empty
+    pd.testing.assert_series_equal(refeita.saida, refeita.valores)
+    assert refeita.valores.iloc[-1] == pytest.approx(60_000.0)
+
+
+def _duas_carteiras_iguais() -> tuple[ResultadoBacktest, pd.DataFrame, Liquidez]:
+    """50/50 em A e B no 2º e no 21º pregão; A sobe 2% no 6º; spread de 1%, vol quase nula, volume enorme."""
+    datas = pd.bdate_range("2020-02-03", periods=30)
+    pesos = pd.DataFrame(0.5, index=[datas[1], datas[20]], columns=["A", "B"])
+    resultado = ResultadoBacktest("duas", "walk-forward OOS", pd.Series(1.0, index=datas), pesos,
+                                  pd.Series(1.0, index=pesos.index), 0.0)
+    retornos = pd.DataFrame(0.0, index=datas, columns=["A", "B"])
+    retornos.loc[datas[5], "A"] = 0.02
+    meses = pd.date_range("2020-01-01", "2020-03-01", freq="MS")
+    liquidez = Liquidez(meio_spread=pd.DataFrame(0.01, index=meses, columns=["A", "B"]),
+                        vol_diaria=pd.DataFrame(1e-4, index=meses, columns=["A", "B"]),
+                        volume_mediano=pd.DataFrame(1e9, index=meses, columns=["A", "B"]))
+    return resultado, retornos, liquidez
+
+
+def test_com_a_zona_o_rebalanceio_que_so_reajusta_a_deriva_e_pulado_quando_custa_mais_que_o_ganho():
+    # 1ª compra: 1% de spread em R$ 1.000 = R$ 10; A deriva para 504,90 contra 495; reajustar custa ~R$ 0,10 e o ganho
+    # de risco com vol de 0,01% ao dia é ~0: a zona pula as duas ordens e a carteira só deriva
+    from core.execucao import ZonaNoMotor
+    resultado, retornos, liquidez = _duas_carteiras_iguais()
+    refeita = refazer(resultado, retornos, 1_000.0, Custos(0.0, 0.0), liquidez, com_ir=False,
+                      zona=ZonaNoMotor(peso_maximo=1.0))      # 2 papéis: o teto de 20% forçaria as ordens
+    sem_zona = refazer(resultado, retornos, 1_000.0, Custos(0.0, 0.0), liquidez, com_ir=False)
+    segundo = resultado.pesos_alvo.index[1]
+    assert sem_zona.custos[segundo] > 0.0
+    assert refeita.custos[segundo] == 0.0
+    assert refeita.valores.iloc[-1] == pytest.approx(990.0 * (0.5 * 1.02 + 0.5))
+
+
+def test_com_a_zona_a_ordem_de_um_papel_acima_do_teto_de_20_por_cento_e_feita():
+    from core.execucao import ZonaNoMotor
+    resultado, retornos, liquidez = _duas_carteiras_iguais()
+    refeita = refazer(resultado, retornos, 1_000.0, Custos(0.0, 0.0), liquidez, com_ir=False, zona=ZonaNoMotor())
+    assert refeita.custos[resultado.pesos_alvo.index[1]] > 0.0      # A e B com 50% passam dos 20%: reajusta
+
+
+def test_com_a_zona_o_ir_marginal_da_venda_entra_no_custo_e_pode_pular_o_reajuste():
+    # R$ 1 milhão, A sobe 20%: reajustar vende R$ 49.500 de A (passa dos R$ 20 mil, ganho de R$ 8.250, IR de
+    # R$ 1.237,50). Custo de 1% = R$ 495; com vol de 8% ao dia o ganho de risco é 0,08^2 x 63 x (49.500 / 1.089.000)^2
+    # x 1.089.000 = R$ 907: sem IR a venda passa; com o IR, não
+    from core.execucao import ZonaNoMotor
+    resultado, retornos, liquidez = _duas_carteiras_iguais()
+    retornos.loc[retornos.index[5], "A"] = 0.20
+    liquidez = Liquidez(liquidez.meio_spread, liquidez.vol_diaria * 0 + 0.08, liquidez.volume_mediano)
+    zona = ZonaNoMotor(peso_maximo=1.0)
+    segundo = resultado.pesos_alvo.index[1]
+    sem_ir = refazer(resultado, retornos, 1e6, Custos(0.0, 0.0), liquidez, com_ir=False, zona=zona)
+    com_ir = refazer(resultado, retornos, 1e6, Custos(0.0, 0.0), liquidez, com_ir=True, zona=zona)
+    assert sem_ir.custos[segundo] > 0.0
+    assert com_ir.custos[segundo] == 0.0
+
+
+def test_com_a_zona_quem_entra_recebe_o_proprio_alvo_e_a_sobra_fica_em_caixa():
+    # 1/3 em A, B e C; A cai 10%; no 2º rebalanceio C sai e D entra. Os reajustes de A e B são pulados, D recebe 1/3
+    # do patrimônio (287,10) e a sobra (297 - 287,10 - custos de 2,97 + 2,871) fica em caixa, a 0%
+    from core.execucao import ZonaNoMotor
+    datas = pd.bdate_range("2020-02-03", periods=30)
+    papeis = ["A", "B", "C", "D"]
+    pesos = pd.DataFrame([[1 / 3, 1 / 3, 1 / 3, 0.0], [1 / 3, 1 / 3, 0.0, 1 / 3]], index=[datas[1], datas[20]],
+                         columns=papeis)
+    resultado = ResultadoBacktest("tres", "walk-forward OOS", pd.Series(1.0, index=datas), pesos,
+                                  pd.Series(1.0, index=pesos.index), 0.0)
+    retornos = pd.DataFrame(0.0, index=datas, columns=papeis)
+    retornos.loc[datas[5], "A"] = -0.10
+    meses = pd.date_range("2020-01-01", "2020-03-01", freq="MS")
+    liquidez = Liquidez(*(pd.DataFrame(valor, index=meses, columns=papeis) for valor in (0.01, 1e-4, 1e9)))
+    refeita = refazer(resultado, retornos, 900.0, Custos(0.0, 0.0), liquidez, com_ir=False,
+                      zona=ZonaNoMotor(peso_maximo=1.0))
+    assert refeita.custos[datas[20]] == pytest.approx(2.97 + 2.871)
+    assert refeita.valores.iloc[-1] == pytest.approx(861.3 - 2.97 - 2.871)
+
+
+def test_com_a_zona_quando_os_pulados_cresceram_quem_entra_encolhe_ate_caber_com_o_custo():
+    # A sobe 10%: os pulados (A 326,70 e B 297) deixam 297 para D, cujo alvo é 306,90; D fica com 297 e paga o custo
+    # (2,97 da venda de C + 2,97 da compra): 291,06; depois D sobe 10%
+    from core.execucao import ZonaNoMotor
+    datas = pd.bdate_range("2020-02-03", periods=30)
+    papeis = ["A", "B", "C", "D"]
+    pesos = pd.DataFrame([[1 / 3, 1 / 3, 1 / 3, 0.0], [1 / 3, 1 / 3, 0.0, 1 / 3]], index=[datas[1], datas[20]],
+                         columns=papeis)
+    resultado = ResultadoBacktest("tres", "walk-forward OOS", pd.Series(1.0, index=datas), pesos,
+                                  pd.Series(1.0, index=pesos.index), 0.0)
+    retornos = pd.DataFrame(0.0, index=datas, columns=papeis)
+    retornos.loc[datas[5], "A"], retornos.loc[datas[25], "D"] = 0.10, 0.10
+    meses = pd.date_range("2020-01-01", "2020-03-01", freq="MS")
+    liquidez = Liquidez(*(pd.DataFrame(valor, index=meses, columns=papeis) for valor in (0.01, 1e-4, 1e9)))
+    refeita = refazer(resultado, retornos, 900.0, Custos(0.0, 0.0), liquidez, com_ir=False,
+                      zona=ZonaNoMotor(peso_maximo=1.0))
+    assert refeita.custos[datas[20]] == pytest.approx(5.94)
+    assert refeita.valores.iloc[-1] == pytest.approx(326.7 + 297.0 + 291.06 * 1.1)
+
+
+# ---------------------------------------------------------------- exposure overlay (spec 2026-11-11-vol-target-motor)
+from core.execucao import ExposureOverlay  # noqa: E402
+from core.risco import LIMITES  # noqa: E402
+
+
+def _overlay(datas: pd.DatetimeIndex, share: float | pd.Series = 1.0, rate: float = 0.0, band: float = 0.10,
+             ) -> ExposureOverlay:
+    exposicao = share if isinstance(share, pd.Series) else pd.Series(share, index=datas)
+    return ExposureOverlay(exposure=exposicao, cash_rate=pd.Series(rate, index=datas), band=band)
+
+
+def test_overlay_share_one_everywhere_is_the_plain_replay():
+    resultado, retornos = _motor()
+    datas = resultado.valores.index
+    for com_ir in (False, True):
+        plain = refazer(resultado, retornos, capital=100_000.0, com_ir=com_ir)
+        com = refazer(resultado, retornos, capital=100_000.0, com_ir=com_ir, overlay=_overlay(datas))
+        pd.testing.assert_series_equal(com.valores, plain.valores, rtol=1e-12)
+        pd.testing.assert_series_equal(com.saida, plain.saida, rtol=1e-12)
+
+
+def test_overlay_half_share_at_the_rebalance_leaves_half_in_cash_earning_the_rate():
+    # zero stock returns: R$ 30 mil splits 15 / 15; the cash earns 1% a session; the 31/01 rebalance splits again
+    resultado, retornos = _dobra_e_divide()
+    retornos = retornos * 0.0
+    datas = resultado.valores.index
+    refeita = refazer(resultado, retornos, capital=30_000.0, com_ir=False, overlay=_overlay(datas, 0.5, rate=0.01))
+    no_rebalanceio = 15_000.0 + 15_000.0 * 1.01 ** 2
+    assert refeita.valores.iloc[-1] == pytest.approx(no_rebalanceio / 2 + no_rebalanceio / 2 * 1.01 ** 2)
+
+
+def test_overlay_order_between_rebalances_scales_every_position_and_pays_tax_by_average_price():
+    # R$ 30 mil in A on 26/01 (share 1); A doubles on 30/01; at that close the share drops to 0.25: sell 3/4 of A
+    # (R$ 45 mil sold, cost R$ 22.5 mil, gain R$ 22.5 mil) -> IR 15% on 31/01; no engine rebalance after the first
+    dias = DIAS
+    alvos = pd.DataFrame({"A": [1.0]}, index=dias[[1]])
+    resultado = ResultadoBacktest("manual", "teste", pd.Series(1.0, index=dias), alvos, pd.Series([1.0], index=alvos.index), 0.0)
+    retornos = pd.DataFrame({"A": [0.0, 1.0, 0.0, 0.0]}, index=dias[1:])
+    share = pd.Series([1.0, 1.0, 0.25, 0.25, 0.25], index=dias)
+    refeita = refazer(resultado, retornos, capital=30_000.0, overlay=_overlay(dias, share))
+    assert refeita.impostos.to_dict() == pytest.approx({pd.Timestamp("2024-01-31"): 0.15 * 22_500.0})
+    assert refeita.valores.loc["2024-01-31"] == pytest.approx(60_000.0 - 0.15 * 22_500.0)
+
+
+def test_overlay_gap_inside_the_band_sends_no_order():
+    resultado, retornos = _dobra_e_divide()
+    dias = resultado.valores.index
+    share = pd.Series([1.0, 0.95, 1.0, 1.0, 1.0], index=dias)     # 29/01 is between the two rebalances
+    plain = refazer(resultado, retornos, capital=30_000.0)
+    com = refazer(resultado, retornos, capital=30_000.0, overlay=_overlay(dias, share, band=0.10))
+    pd.testing.assert_series_equal(com.valores, plain.valores, rtol=1e-12)
+
+
+def test_overlay_order_waits_one_session_after_a_five_percent_loss():
+    # A falls 10% on 29/01: no order at that close; the 0.25 share is applied at the close of 30/01
+    dias = DIAS
+    alvos = pd.DataFrame({"A": [1.0]}, index=dias[[0]])
+    retornos = pd.DataFrame({"A": [0.0, -0.10, 0.10, 0.10, 0.0]}, index=dias)
+    resultado = ResultadoBacktest("manual", "teste", pd.Series(1.0, index=dias.insert(0, pd.Timestamp("2024-01-25"))),
+                                  alvos, pd.Series([1.0], index=alvos.index), 0.0)
+    share = pd.Series(0.25, index=resultado.valores.index).where(resultado.valores.index >= "2024-01-29", 1.0)
+    refeita = refazer(resultado, retornos, capital=100.0, com_ir=False, overlay=_overlay(resultado.valores.index, share))
+    # 100 -> 90 on 29/01 (frozen) -> 99 on 30/01 (full) -> share 0.25 from the 30/01 close: +10% on 24.75
+    assert refeita.valores.loc["2024-01-30"] == pytest.approx(99.0)
+    assert refeita.valores.loc["2024-01-31"] == pytest.approx(99.0 + 0.10 * 24.75)
+
+
+def test_overlay_with_the_no_trade_zone_is_refused():
+    resultado, retornos = _motor()
+    with pytest.raises(ValueError, match="overlay"):
+        refazer(resultado, retornos, 100.0, liquidez=_liquidez_constante(), zona=ZonaNoMotor(),
+                overlay=_overlay(resultado.valores.index))
+
+
+def test_overlay_missing_a_session_is_refused():
+    resultado, retornos = _motor()
+    with pytest.raises(ValueError, match="exposure"):
+        refazer(resultado, retornos, 100.0, overlay=_overlay(resultado.valores.index[5:]))

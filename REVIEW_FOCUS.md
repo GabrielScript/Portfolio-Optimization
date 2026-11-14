@@ -19,3 +19,21 @@ Look first for anything that makes the backtest better than a real investor coul
    trade, turnover, the 20% name and 30% sector caps, cash.
 5. **Metrics** (`core/metrics`, `core/robustez`): CAGR, Sharpe over the CDI, drawdown, P[> Composite] (probabilistic
    Sharpe of the difference), DSR with the number of trials.
+
+## Added after a call trace of the Composite's run (2026-11-13)
+
+A profile of the Composite's phase-0 replay (CAGR 0.2179) and of paper-v3's 27/10 decision listed the unreviewed code
+that actually runs. Same priorities as above:
+
+6. **The covariance behind the risk check** (`core/estimation.estimar_momentos`, `covariancia_ledoit_wolf`):
+   `core/composto.estrategia_por_nota` passes it to `core/risco.checar_carteira`, which can refuse a portfolio (the
+   engine then keeps the current one). Shrinkage, the window, missing returns.
+7. **The backtest's parameters** (`core/config.py`): `ConfigBacktest` (costs, rebalance rule, defaults) and its checks.
+8. **Helpers on the path**: `scripts/avaliar_regras_no_motor.setores_dos_papeis` (the sector map behind the 30% cap),
+   `scripts/fermionica_grade_avaliar.memoized` (a month's score cached: a wrong key would reuse another month's),
+   `scripts/qpo_montar` (the frozen data folder, the last session and the run date).
+9. **The gate's table** (`scripts/xquad_avaliar.metricas`, with `core/market_data`'s CDI and Selic for the risk-free
+   rate): P[> Composite], DSR, alpha and Sharpe of every reading.
+10. **The lake's orchestration** (`lake/src/b3lake/cli.py`, from the b3-datalake repo; its modules were reviewed
+    separately): the order of bronze, silver, gold and export, and the arguments each step gets (a missing folder that
+    silently skips a step such as the CVM share factors).

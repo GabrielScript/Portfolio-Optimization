@@ -74,6 +74,14 @@ space mining, orbital compute, space habitats, wireless power.
   t against the Composite) with BOVA11 and the CDI beside them. N for the DSR = 155 (149 after DECISOES 366 + these 6).
 - No gate verdict: the selection reads the window, so P and DSR are reported for the record only.
 
+## Addendum: 10 and 20 BDRs (the user, 14/11, during the first run: "Adicione no teste 10 ações e 20 ações")
+
+Written after the 15 picks and the first lines of the 2024-2026 table were printed, before any number of the 10 and 20
+books. The pick goes in rounds: round 1 takes each sector's best (as above) in the sectors' order; when the count is
+not reached, round 2 takes each sector's second (candidates ranked by liquidity tier, then growth) in the same order,
+and so on. 10 = the first ten of round 1; 15 = as above; 20 = sixteen sectors of round 1 plus four of round 2. Each
+size has the same six rows (five mixes and the names alone); N for the DSR = 167 (149 + 18) for every size.
+
 ## Expectation (before the run)
 
 The 2024-2026 window flatters the sleeve by construction: the picks are each sector's best performer, several of them

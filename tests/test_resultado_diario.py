@@ -56,3 +56,45 @@ def test_without_the_book_the_email_says_why():
     sim = rd.Linha(patrimonio=10_000.0, dia=0.0, dia_reais=0.0, desde_inicio=0.0, inicio=pd.Timestamp("2026-11-03"))
     assunto, corpo = rd.mensagem(HOJE, sim, 0.0, None, [], sem_livro="terminal fechado")
     assert "MT5" not in assunto and "MetaTrader 5: sem leitura (terminal fechado)" in corpo
+
+
+class _SemNegocioHoje:
+    """The demo terminal on 13/11: AAAA3 held (100 shares bought at R$ 10), no trade today, no daily bar today."""
+    ACCOUNT_TRADE_MODE_DEMO, POSITION_TYPE_BUY, DEAL_TYPE_BUY, DEAL_TYPE_SELL, TIMEFRAME_D1 = 0, 0, 0, 1, 16408
+
+    def account_info(self):
+        from types import SimpleNamespace as NS
+        return NS(trade_mode=0, server="XPMT5-DEMO", login=1, balance=1e6)
+
+    def symbol_select(self, symbol, enable):
+        return True
+
+    def symbol_info_tick(self, symbol):
+        from types import SimpleNamespace as NS
+        return NS(bid=0.0, ask=0.0, last=0.0, time=int(ONTEM.timestamp()))
+
+    def copy_rates_from_pos(self, symbol, timeframe, start, count):
+        return [{"time": int(ONTEM.timestamp()), "close": 11.0}]
+
+    def positions_get(self):
+        from types import SimpleNamespace as NS
+        from core.mt5_corretora import MAGIC
+        return (NS(symbol="AAAA3", volume=100.0, type=0, magic=MAGIC),)
+
+    def history_deals_get(self, date_from, date_to):
+        from types import SimpleNamespace as NS
+        from core.mt5_corretora import MAGIC
+        return (NS(symbol="AAAA3", type=0, volume=100.0, price=10.0, commission=0.0, time=int(ONTEM.timestamp()),
+                   order=1, magic=MAGIC),)
+
+
+def test_a_held_name_without_a_trade_today_keeps_its_previous_close_in_the_books_value(monkeypatch, tmp_path):
+    from datetime import datetime
+    from core.mt5_corretora import Corretora
+    from scripts import resultado_diario as script
+    monkeypatch.setattr(script, "PASTA_MT5", tmp_path)
+    notas: list[str] = []
+    script.linha_do_livro(Corretora(_SemNegocioHoje()), HOJE, datetime(2026, 11, 13, 20, 0), notas, gravar=True)
+    patrimonio = pd.read_csv(tmp_path / "patrimonio.csv")["patrimonio"].iloc[-1]
+    assert patrimonio == pytest.approx(100_000 - 1_000 + 100 * 11.0)
+    assert any("mantido o fechamento anterior" in nota for nota in notas)

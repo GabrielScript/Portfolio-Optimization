@@ -105,10 +105,13 @@ def linha_do_livro(c: Corretora, hoje: pd.Timestamp, agora: datetime, notas: lis
     detidas = c.acoes_da_carteira()
     valor = ex.caixa(fills)
     for nome, acoes in detidas.items():
-        preco = _fechamento_de_hoje(c, nome, c.fechamentos(nome, SESSOES), hoje, notas)
+        fechamentos = c.fechamentos(nome, SESSOES)
+        preco = _fechamento_de_hoje(c, nome, fechamentos, hoje, notas)
         if preco is None:
-            cotacao = c.cotacao(nome)
-            preco = ex.preco(cotacao)
+            anteriores = fechamentos.loc[fechamentos.index < hoje]
+            preco = float(anteriores.iloc[-1]) if not anteriores.empty else ex.preco(c.cotacao(nome))
+        if not preco > 0:
+            raise ValueError(f"{nome}: no close and no quote in the MT5 terminal")
         valor += acoes * preco
     arquivo = PASTA_MT5 / "patrimonio.csv"
     historico = pd.read_csv(arquivo) if arquivo.exists() else pd.DataFrame(columns=["data", "patrimonio"])

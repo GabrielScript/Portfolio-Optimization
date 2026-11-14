@@ -89,9 +89,12 @@ def check_names(orders: Iterable[Order], allowed: Collection[str]) -> str | None
     return f"orders on names outside the book: {fora}" if fora else None
 
 
-def check_cash(orders: Sequence[Order], quotes: pd.Series, cash: float) -> str | None:
-    """The buys at the quotes must fit in the book's cash plus its sells (all fill in the same closing call)."""
-    valor = {lado: sum(o.volume * float(quotes[o.name]) for o in orders if o.side == lado) for lado in ("buy", "sell")}
+def check_cash(orders: Sequence[Order], quotes: pd.Series, cash: float, band: float = BAND) -> str | None:
+    """The buys must fit in the book's cash plus its sells (all fill in the same closing call), each at its limit:
+    ``band`` above the quote for a buy, below for a sell (XP's demo fills a limit order at its limit)."""
+    fator = {"buy": 1.0 + band, "sell": 1.0 - band}
+    valor = {lado: sum(o.volume * float(quotes[o.name]) * fator[lado] for o in orders if o.side == lado)
+             for lado in ("buy", "sell")}
     if valor["buy"] > cash + valor["sell"] + 1e-6:
         return f"buys {valor['buy']:.2f} exceed the book's cash {cash:.2f} plus sells {valor['sell']:.2f}"
     return None

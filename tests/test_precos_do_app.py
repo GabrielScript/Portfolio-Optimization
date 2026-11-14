@@ -149,3 +149,12 @@ def test_a_b3_quote_gives_way_to_the_lakes_close_of_its_session_and_a_newer_one_
 
     assert corrigidas.loc["PETR4.SA", ["preco", "fonte"]].tolist() == [pytest.approx(50.71), FONTE_FECHAMENTO]
     assert corrigidas.loc["VALE3.SA", ["preco", "fonte"]].tolist() == [pytest.approx(61.00), FONTE_B3]
+
+
+def test_a_small_file_that_ends_before_the_base_leaves_the_base_as_it_is():
+    # the big file was committed ahead of the small one: the base already has 21/10 and the R$ 1 paid on 20/10
+    # (19/10 rescaled to 57.00); the small file stops on 20/10 and still holds 19/10 unadjusted. No rescale.
+    base = _quadro(["2026-10-19", "2026-10-20", "2026-10-21"], PETR4=[57.0, 57.5, 58.0])
+    recentes = _quadro(["2026-10-19", "2026-10-20"], PETR4=[58.0, 58.5])
+    emendado = emendar(base, recentes)
+    assert emendado["PETR4"].tolist() == pytest.approx([57.0, 57.5, 58.0])

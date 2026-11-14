@@ -82,6 +82,29 @@ not reached, round 2 takes each sector's second (candidates ranked by liquidity 
 and so on. 10 = the first ten of round 1; 15 = as above; 20 = sixteen sectors of round 1 plus four of round 2. Each
 size has the same six rows (five mixes and the names alone); N for the DSR = 167 (149 + 18) for every size.
 
+## Addendum 2: BDR dividends and the Fermionic base (the user, 14/11, after the tables)
+
+"Pegue os dividendos de BDR ... A mesma tabela só que para o Fermiônico". Written after the price-only tables, before
+any number with dividends or with the Fermionic base.
+
+- Source. B3 lists only the last ~3 cash events of a BDR (`b3lake.b3events.keep_past_cash`), so the lake has BDR
+  dividends from 11/2025 only, already in `tr_close`. Before that, the dividends come from the underlying US security
+  in the US lake (`D:/dados_stocks_USA_datalake/prices`, stockanalysis.com, S&P Global dividends): the factor
+  j = (adj_t / close_t) / (adj_t-1 / close_t-1) - 1 of the daily file (from 01/11/2021), and of the monthly file for
+  the months before it (dated the month's last session, never earlier than the payment).
+- Net: 70% of j (30% US withholding at source; no further Brazilian tax, the credit covers it). A factor above 20% is a
+  spin-off or a return of capital, not a dividend: applied in full (Dell's VMware spin-off of 2021-11 shows in the lake
+  as a -51% day of D1EL34). Applied from the first B3 session on or after the US date, only before the BDR's first B3
+  cash event in the lake (no double count).
+- Map: MUTC34 MU, NEXT34 NEE, TSMC34 TSM, LILY34 LLY, GOGL34 GOOGL, TSLA34 TSLA, C2RW34 CRWD, P2LT34 PLTR, FCXO34 FCX,
+  UNHH34 UNH, S1NP34 SNPS, I1SR34 ISRG, TMOS34 TMO, DEEC34 DE, BOTZ39 BOTZ, PYPL34 PYPL, D1EL34 DELL, BURA39 URA,
+  A1MT34 AMAT, N1VO34 NVO.
+- The picks stay as printed (price growth); the backtests of the 20 names use the adjusted series. The Composite table
+  is rerun with it (a data correction, no new rows).
+- Fermionic base: the Fermiônica account's rule, `LogDet-15 t0.5`, from the same saved curves (phases 0 / 21 / 42),
+  in place of the Composite leg: `Ferm90+kBDR` to `Ferm50+kBDR` for k = 10, 15, 20 (15 new rows), beside the Composite
+  and the Fermiônica alone; P and DSR still against the Composite. N for the DSR = 182 (167 + 15) in both tables.
+
 ## Expectation (before the run)
 
 The 2024-2026 window flatters the sleeve by construction: the picks are each sector's best performer, several of them

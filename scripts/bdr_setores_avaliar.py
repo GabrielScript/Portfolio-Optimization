@@ -131,7 +131,7 @@ def main(argv: list[str]) -> int:
 
     cdi = pd.read_parquet(CDI)
     rf_todo = pd.Series(cdi["cdi_pct"].to_numpy(float) / 100.0, index=pd.to_datetime(cdi["date"]))
-    for inicio, fim, rotulo in JANELAS:
+    for inicio, fim, janela in JANELAS:
         for fase in FASES:
             tabela_curvas = pd.read_parquet(str(CURVAS).format(fase))
             composto = pd.Series(tabela_curvas[COMPOSITE].to_numpy(float), index=pd.to_datetime(tabela_curvas["date"]))
@@ -144,7 +144,7 @@ def main(argv: list[str]) -> int:
             rf = rf_todo.reindex(composto.index).ffill().fillna(0.0)
             curvas["CDI"] = pd.Series(np.cumprod(1.0 + rf.to_numpy()), index=composto.index)
             resultado = metricas(curvas, rf, N_DSR)
-            print(f"\n=== {rotulo}, phase {fase}: {composto.index[0]:%d/%m/%Y} to {composto.index[-1]:%d/%m/%Y}")
+            print(f"\n=== {janela}, phase {fase}: {composto.index[0]:%d/%m/%Y} to {composto.index[-1]:%d/%m/%Y}")
             print(resultado[[c for c in COLUNAS if c in resultado.columns]].to_string(
                 float_format=lambda x: f"{x:.3f}"))
     return 0

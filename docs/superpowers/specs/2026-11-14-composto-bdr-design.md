@@ -51,7 +51,7 @@ calendar is the same in every phase.
 
 `scripts.xquad_avaliar.metricas` (CAGR, Vol, Sharpe and Sortino over the CDI, MDD, Calmar, P[> Composite], DSR, alpha
 and t against the Composite and BOVA11); CDI from `data/b3lake/cdi_daily.parquet`; BOVA11 from the gold table.
-N for the DSR = `contar_tentativas()` + 16. Gate per arm, net of tax: P[> Composite] >= 0.95 and DSR >= 0.95 in every
+N for the DSR = 149 (addendum before any number: `docs/tentativas.csv` on main has 109 rows, behind DECISOES' count of 133 that includes unmerged branches; the stricter 133 + 16 is used). Gate per arm, net of tax: P[> Composite] >= 0.95 and DSR >= 0.95 in every
 phase. An arm that passes becomes a forward ghost account only; none replaces the Composite.
 
 ## Expectation (before the run)

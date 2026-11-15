@@ -1,0 +1,99 @@
+DSR N 189 (with these 1 rows); arms ['Composite-faixa-20']; data to 16/10/2026
+
+=== Phase 0: 09/02/2010 to 16/10/2026; anchor: Composite replay off by 5.5e-02 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-faixa-20              0.214 0.185   0.626    0.873 -0.405   0.527         -0.001     -0.098      0.311          0.114      4.220 0.968         0.973         0.647
+Composite                       0.218 0.187   0.640    0.890 -0.415   0.525            NaN        NaN        NaN          0.118      4.308 0.974           NaN         0.652
+Conservadora (15, pesos iguais) 0.174 0.180   0.455    0.625 -0.407   0.428         -0.024     -1.308      0.022          0.080      3.242 0.826         0.879         0.644
+BOVA11                          0.072 0.234   0.010    0.014 -0.497   0.146         -0.119     -3.763      0.000            NaN        NaN   NaN         1.015           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              2.972     0.000     66.000   115.409  15.000                 0.006
+Composite-faixa-20     2.455     0.000     66.000   115.409  13.530                 0.005
+Calendar years:
+      Composite-faixa-20  Composite  BOVA11   CDI
+2010               25.7%      23.2%    6.8%  8.7%
+2011                4.0%       2.6%  -18.3% 11.5%
+2012               24.8%      26.3%    6.6%  8.2%
+2013               -0.4%      -1.3%  -15.8%  7.9%
+2014                5.0%       7.3%   -3.4% 10.6%
+2015               -3.2%       6.4%  -13.2% 13.0%
+2016               39.7%      40.9%   38.2% 13.9%
+2017               28.9%      38.6%   26.8%  9.8%
+2018               26.3%      22.2%   14.6%  6.3%
+2019               67.7%      57.3%   31.5%  5.9%
+2020               24.1%      30.0%    3.1%  2.7%
+2021               27.5%      21.8%  -12.1%  4.3%
+2022                4.3%       4.4%    5.1% 12.3%
+2023               41.7%      36.2%   23.1% 13.0%
+2024                7.4%       5.5%  -10.1% 10.8%
+2025               37.5%      44.1%   34.7% 14.2%
+2026               10.6%      10.3%   28.0% 11.1%
+(phase 0 done in 111 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; anchor: Composite replay off by 5.9e-02 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-faixa-20              0.189 0.186   0.514    0.711 -0.422   0.448         -0.010     -1.043      0.090          0.096      3.599 0.955         0.974         0.651
+Composite                       0.203 0.187   0.577    0.800 -0.422   0.482            NaN        NaN        NaN          0.109      3.956 0.979           NaN         0.651
+Conservadora (15, pesos iguais) 0.164 0.180   0.406    0.560 -0.416   0.394         -0.022     -1.302      0.030          0.074      3.148 0.876         0.887         0.650
+BOVA11                          0.068 0.234  -0.007   -0.010 -0.497   0.137         -0.112     -3.488      0.001            NaN        NaN   NaN         1.021           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.102     0.000     66.000   116.030  15.000                 0.006
+Composite-faixa-20     2.453     0.000     66.000   116.030  13.409                 0.005
+Calendar years:
+      Composite-faixa-20  Composite  BOVA11   CDI
+2010               17.6%      17.8%   -0.6%  7.9%
+2011                9.6%       6.2%  -18.3% 11.5%
+2012               24.8%      24.6%    6.6%  8.2%
+2013                5.6%       6.7%  -15.8%  7.9%
+2014                3.0%       1.7%   -3.4% 10.6%
+2015                8.2%       4.9%  -13.2% 13.0%
+2016               35.2%      36.3%   38.2% 13.9%
+2017               34.7%      50.8%   26.8%  9.8%
+2018               22.8%      23.6%   14.6%  6.3%
+2019               48.9%      50.2%   31.5%  5.9%
+2020                0.9%       6.0%    3.1%  2.7%
+2021               26.3%      26.4%  -12.1%  4.3%
+2022                2.4%      10.1%    5.1% 12.3%
+2023               27.9%      32.3%   23.1% 13.0%
+2024                4.5%       8.1%  -10.1% 10.8%
+2025               32.8%      24.7%   34.7% 14.2%
+2026               15.6%      15.8%   28.0% 11.1%
+(phase 21 done in 230 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; anchor: Composite replay off by 5.5e-02 ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR  beta vs Comp  beta vs BOVA
+Composite-faixa-20              0.186 0.188   0.495    0.685 -0.428   0.433         -0.002     -0.192      0.263          0.095      3.497 0.984         0.954         0.654
+Composite                       0.192 0.193   0.516    0.718 -0.428   0.449            NaN        NaN        NaN          0.101      3.602 0.991           NaN         0.671
+Conservadora (15, pesos iguais) 0.169 0.182   0.426    0.590 -0.395   0.428         -0.009     -0.547      0.119          0.079      3.244 0.968         0.875         0.656
+BOVA11                          0.067 0.234  -0.011   -0.015 -0.497   0.135         -0.101     -3.163      0.001            NaN        NaN   NaN         0.994           NaN
+Profile (turnover a year; eligible = names with the whole window per decision; shared = names in common with the Composite on its decision dates; extra cost = CAGR lost at 30 bps, approximate):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.224     0.000     66.000   116.712  15.000                 0.006
+Composite-faixa-20     2.487     0.000     66.000   116.712  13.242                 0.005
+Calendar years:
+      Composite-faixa-20  Composite  BOVA11   CDI
+2010               16.8%      19.4%   -2.5%  7.2%
+2011                6.2%       3.3%  -18.3% 11.5%
+2012               24.8%      25.6%    6.6%  8.2%
+2013                1.1%      -0.7%  -15.8%  7.9%
+2014                3.8%       4.6%   -3.4% 10.6%
+2015               -1.1%      -1.3%  -13.2% 13.0%
+2016               36.3%      27.1%   38.2% 13.9%
+2017               33.9%      45.6%   26.8%  9.8%
+2018               10.5%      13.1%   14.6%  6.3%
+2019               57.6%      51.7%   31.5%  5.9%
+2020               14.3%      19.0%    3.1%  2.7%
+2021               23.8%      29.7%  -12.1%  4.3%
+2022                7.2%      10.4%    5.1% 12.3%
+2023               33.8%      31.2%   23.1% 13.0%
+2024                3.7%       4.7%  -10.1% 10.8%
+2025               38.0%      33.4%   34.7% 14.2%
+2026                7.5%      10.8%   28.0% 11.1%
+(phase 42 done in 331 s)
+
+Curves saved: composto-faixa-curvas-2026-11-15.parquet
+
+Gate per arm (P[> Composite] >= 0.95 and DSR >= 0.95 in every phase):
+  Composite-faixa-20: [(0.311, 0.968), (0.09, 0.955), (0.263, 0.984)] -> fails

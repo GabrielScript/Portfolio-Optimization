@@ -30,3 +30,10 @@ ghost account only; the official book (app and MT5 demo) stays the pure Composit
 
 Lower turnover (fewer exits of names that slip from 15th to 16th-20th), CAGR within about half a point of the
 Composite's either way at 10 bps a side, so no pass: the band saves costs the engine already prices low.
+
+## Addendum (2026-11-15, before any number of the arm was read)
+
+The first run stopped at the anchor: the Composite's replay is 0.0547 off attempt 51's saved curve in phase 0, the gap
+the 13/11 age-rule reading already recorded (0.0549): that curve predates the refiled-statements and age-rule fixes
+(DECISOES 349, 360). The band is compared with the Composite replayed in the same run by today's code (same engine,
+data and dates), not with the saved curve; the replay's gap to the saved curve is printed, not enforced.

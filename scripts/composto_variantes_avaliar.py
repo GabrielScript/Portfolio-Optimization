@@ -72,7 +72,8 @@ ARMS = {"Composite-21": Arm(replace(CFG_BT, janela_teste=MONTHLY)),
         "Composite-all": Arm(replace(CFG_BT, janela_teste=MONTHLY, janela_treino=THREE_YEARS), neutral=True)}
 SECTOR_ARMS = {"Composite-sem-teto": Arm(CFG_BT, por_setor=NOMES)}
 BAND_ARMS = {"Composite-faixa-20": Arm(CFG_BT, faixa=20)}
-N_FIXED = {"faixa": 189}            # DECISOES 369 left N at 188; the band is the 189th
+N_FIXED = {"faixa": 189}
+REPLAY_BASE = {"faixa"}           # compared with today's Composite replay (spec addendum: the saved curve predates 349/360)            # DECISOES 369 left N at 188; the band is the 189th
 FAMILIES = {"variantes": (ARMS, CURVES_FILE),
             "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet"),
             "faixa": (BAND_ARMS, CURVAS_51.parent / "composto-faixa-curvas-2026-11-15.parquet")}
@@ -132,7 +133,9 @@ def main(argv: list[str]) -> int:
         indice = replay.valores.index
         composite = publicadas.loc[publicadas["fase"] == fase].set_index("date")["Composto"].reindex(indice)
         desvio = float((replay.valores / composite - 1.0).abs().max())
-        if not desvio < ANCHOR_TOL:
+        if familia in REPLAY_BASE:
+            composite = replay.valores
+        elif not desvio < ANCHOR_TOL:
             raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay is {desvio:.2e} off its curve")
         print(f"\n=== Phase {fase}: {indice[0]:%d/%m/%Y} to {indice[-1]:%d/%m/%Y}; anchor: Composite replay off by "
               f"{desvio:.1e} ===", flush=True)

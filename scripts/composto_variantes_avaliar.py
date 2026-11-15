@@ -25,6 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core import market_data  # noqa: E402
 from core.backtest import Congelamento, Estrategia, ResultadoBacktest, walk_forward_dinamico  # noqa: E402
 from core.composto import estrategia_por_nota  # noqa: E402
+from core.composto_faixa import estrategia_com_faixa  # noqa: E402
 from core.composto_variantes import neutral_composite_score  # noqa: E402
 from core.config import ConfigBacktest  # noqa: E402
 from core.crescimento_lucro import nota_de_crescimento  # noqa: E402
@@ -52,6 +53,7 @@ class Arm:
     cfg: ConfigBacktest
     neutral: bool = False
     por_setor: int = POR_SETOR
+    faixa: int = 0                 # > 0: the holding band of spec 2026-11-15-composto-faixa
 
     @property
     def limites(self) -> Limites:
@@ -69,8 +71,11 @@ ARMS = {"Composite-21": Arm(replace(CFG_BT, janela_teste=MONTHLY)),
         "Composite-neutral": Arm(CFG_BT, neutral=True),
         "Composite-all": Arm(replace(CFG_BT, janela_teste=MONTHLY, janela_treino=THREE_YEARS), neutral=True)}
 SECTOR_ARMS = {"Composite-sem-teto": Arm(CFG_BT, por_setor=NOMES)}
+BAND_ARMS = {"Composite-faixa-20": Arm(CFG_BT, faixa=20)}
+N_FIXED = {"faixa": 189}            # DECISOES 369 left N at 188; the band is the 189th
 FAMILIES = {"variantes": (ARMS, CURVES_FILE),
-            "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet")}
+            "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet"),
+            "faixa": (BAND_ARMS, CURVAS_51.parent / "composto-faixa-curvas-2026-11-15.parquet")}
 
 
 def neutral_score(mensal) -> NotaDoMes:
@@ -101,7 +106,8 @@ def profile(registro: dict, do_composite: dict, resultado: ResultadoBacktest) ->
 
 
 def main(argv: list[str]) -> int:
-    arms, curves_file = FAMILIES[argv[0] if argv else "variantes"]
+    familia = argv[0] if argv else "variantes"
+    arms, curves_file = FAMILIES[familia]
     inicio = time.perf_counter()
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
@@ -111,7 +117,7 @@ def main(argv: list[str]) -> int:
     cdi = with_retries(lambda: market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE))
     publicadas = pd.read_parquet(CURVAS_51)
     precos = dados.precos.loc[:LAST_SESSION]
-    n = contar_tentativas() + len(arms)
+    n = N_FIXED.get(familia, contar_tentativas() + len(arms))
     print(f"DSR N {n} (with these {len(arms)} rows); arms {list(arms)}; data to {LAST_SESSION:%d/%m/%Y}")
 
     gate: dict[str, list[tuple[float, float]]] = {nome: [] for nome in arms}
@@ -134,7 +140,9 @@ def main(argv: list[str]) -> int:
         curvas, perfis = {}, {COMPOSITE: profile(do_composite, do_composite, replay)}
         for nome, arm in arms.items():
             registro: dict = {}
-            estrategia = estrategia_por_nota(notas[arm.neutral], dados.setores, por_setor=arm.por_setor, limites=arm.limites)
+            estrategia = (estrategia_com_faixa(notas[arm.neutral], dados.setores, faixa=arm.faixa, limites=arm.limites)
+                          if arm.faixa else
+                          estrategia_por_nota(notas[arm.neutral], dados.setores, por_setor=arm.por_setor, limites=arm.limites))
             braco = rodar(recording(estrategia, registro), nome, arm)
             if not braco.valores.index.equals(indice):
                 raise SystemExit(f"phase {fase}: {nome} does not share the Composite's dates")

@@ -11,6 +11,7 @@ from __future__ import annotations
 import hashlib
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
 import numpy as np
@@ -33,6 +34,10 @@ def main() -> int:
     avaliar_valor.PASTA_UNIVERSO = FOLDER
     mensal = avaliar_conservadora.carregar_mensal(FOLDER)
     balancos, sha256_cvm = avaliar_valor.carregar_balancos(FOLDER.parent / "2026-10-24-cvm")
+    caps = pd.read_parquet(FOLDER.parent / "2026-10-24-cvm" / "market_caps.parquet",      # same hashed file, + shares
+                           columns=["issuer", "month", "market_cap", "shares_today_units"])
+    caps["month"] = pd.to_datetime(caps["month"])
+    balancos = replace(balancos, valor_mercado=caps)
     fechamentos = pd.read_parquet(FOLDER / "universe_prices.parquet")
     fechamentos = fechamentos.set_index(pd.DatetimeIndex(pd.to_datetime(fechamentos.pop("date")))).astype("float64")
     pacote = ler_pacote(PACOTE_213 / "pacote.npz")

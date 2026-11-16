@@ -280,3 +280,6 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-16T11:17:53,MILS3,varredura,sem_evento,,,,cvm-0c432b994ba8,,"O único item novo é um Comunicado ao Mercado sobre a Apresentação Corporativa trimestral, divulgação rotineira. Nada no pack sugere fraude, inadimplência, sanção regulatória ou perda relevante de valor.",[],905,768.0,135.0,0.00010385,
 2026-11-16T11:17:53,MILS3,juiz:d1.1,,,,0.09261685093119681,cvm-0c432b994ba8,,p_nova=0.2886,,175,,,3.5e-06,
 2026-11-16T11:17:53,MILS3,juiz:d1-ultra,,,,0.17084220680574733,cvm-0c432b994ba8,,p_nova=0.5370,,175,,,7.35e-06,
+2026-11-16T15:17:59,MILS3,varredura,sem_evento,,,,cvm-94533344a0b4,,"O único item novo é um comunicado sobre declaração de aquisição de participação acionária relevante, sem detalhes que indiquem prejuízo aos minoritários ou comprometimento do valor da companhia. Divulgação rotineira, sem impacto material identificado.",[],775,512.0,232.0,0.00018019,
+2026-11-16T15:17:59,MILS3,juiz:d1.1,,,,0.641939329342703,cvm-94533344a0b4,,p_nova=0.8155,,182,,,3.64e-06,
+2026-11-16T15:17:59,MILS3,juiz:d1-ultra,,,,0.7382047509865145,cvm-94533344a0b4,,p_nova=0.7993,,182,,,7.644e-06,

@@ -11,7 +11,7 @@ próprio ``mes``) e ao walk-forward (decisão dentro do ``mes``, com o mês corr
 
 from __future__ import annotations
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 
 import pandas as pd
 
@@ -59,17 +59,19 @@ def dividend_yield_12m(proventos: pd.DataFrame, mes: pd.Timestamp, papeis: Itera
 
 
 def conservadora(retornos_mensais: pd.DataFrame, proventos: pd.DataFrame, mes: pd.Timestamp,
-                 candidatos: Iterable[str]) -> pd.Series:
+                 candidatos: Iterable[str],
+                 momentum: Callable[[pd.DataFrame, pd.Timestamp], pd.Series] | None = None) -> pd.Series:
     """
     Nota da Conservadora de Blitz e van Vliet (2018) para ``mes``, nos ``candidatos`` com vol de 36 meses e momentum
     12-1 completos (os outros ficam fora): 1 para a metade de menor vol (os ``n // 2`` de menor vol) e 0 para a outra,
     mais a média dos postos percentuais do dividend yield de 12 meses e do momentum dentro da própria metade (empate
     com o posto médio). As ``k`` maiores notas são as ``k`` escolhas da fórmula, e a nota inteira ordena o universo
-    para o IC: a metade de menor vol, que é a maior parte do efeito, entra na ordem.
+    para o IC: a metade de menor vol, que é a maior parte do efeito, entra na ordem. ``momentum`` troca o 12-1 por
+    outra medida com a mesma assinatura (pesquisa: spec 2026-11-16-momentum-residual); sem ele, o 12-1 de sempre.
     """
     papeis = [papel for papel in candidatos if papel in retornos_mensais.columns]
     medidas = pd.DataFrame({"vol": volatilidade_36m(retornos_mensais[papeis], mes),
-                            "momentum": momentum_12_1(retornos_mensais[papeis], mes)}).dropna()
+                            "momentum": (momentum or momentum_12_1)(retornos_mensais[papeis], mes)}).dropna()
     medidas["dy"] = dividend_yield_12m(proventos, mes, medidas.index)
     menor_vol = medidas["vol"].rank(method="first") <= len(medidas) // 2
     postos = pd.Series(index=medidas.index, dtype=float)

@@ -1,0 +1,80 @@
+B3: monthly Spearman IC against the 3-month target, 2012-01 to 2026-07; gate IC >= 0.02 and Newey-West t >= 2.0
+         months    IC     t share > 0 passes
+Ridge29     175 0.124 6.474     0.749   True
+PLS29       175 0.123 6.353     0.766   True
+Ridge       175 0.127 6.372     0.731   True
+RF          175 0.119 6.195     0.760   True
+MLP         175 0.109 5.496     0.749   True
+composto    175 0.114 6.036     0.720   True
+Ridge29 - Ridge: -0.0024, t -0.33
+Ridge29 - composto: +0.0106, t +1.13
+Ridge29 - RF: +0.0051, t +0.79
+Ridge29 edge (passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+PLS29 - Ridge: -0.0038, t -0.52
+PLS29 - composto: +0.0092, t +0.88
+PLS29 - RF: +0.0037, t +0.67
+PLS29 edge (passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+Each feature alone (descriptive): monthly Spearman IC against the target, missing rows (angle 0) left out
+                        IC      t  rows/month
+momentum             0.112  5.804     165.154
+baixa_vol            0.103  4.511     165.166
+dividendos           0.085  5.536     165.371
+formula_magica       0.086  4.940     129.011
+trending_value       0.093  5.886     139.143
+crescimento          0.042  3.404     160.069
+momentum_6_1         0.104  5.809     165.371
+reversao_curta      -0.042 -3.498     165.246
+reversao_longa      -0.058 -3.124     145.383
+beta                -0.063 -2.511     155.497
+vol_idiossincratica  0.103  5.422     155.497
+max_diario           0.071  4.200     165.074
+vol_diaria           0.110  4.790     165.349
+tamanho             -0.076 -3.858     158.823
+lucro_preco          0.072  4.443     152.023
+valor_patrimonial   -0.006 -0.389     158.823
+receita_preco       -0.030 -1.905     158.069
+caixa_preco          0.041  3.018     158.069
+ebitda_ev            0.060  4.219     155.737
+roe                  0.070  4.004     150.651
+roa                  0.079  4.405     155.097
+lucratividade_bruta  0.016  1.033     161.543
+margem_operacional   0.080  4.853     158.971
+accruals            -0.011 -1.066     155.097
+alavancagem          0.030  2.831     162.251
+caixa_ativos         0.037  2.906     162.251
+crescimento_ativos  -0.019 -1.725     160.335
+crescimento_receita  0.031  2.594     156.081
+emissao_liquida      0.056  6.232     155.018
+
+Ridge-29, last month's coefficients (descriptive):
+roa                   -0.0491
+reversao_curta        -0.0392
+reversao_longa        -0.0261
+lucratividade_bruta   -0.0226
+crescimento_ativos    -0.0070
+dividendos            -0.0020
+accruals              -0.0016
+crescimento_receita   +0.0049
+formula_magica        +0.0056
+trending_value        +0.0064
+tamanho               +0.0080
+lucro_preco           +0.0105
+ebitda_ev             +0.0106
+vol_idiossincratica   +0.0150
+max_diario            +0.0190
+beta                  +0.0262
+receita_preco         +0.0264
+emissao_liquida       +0.0267
+alavancagem           +0.0272
+crescimento           +0.0278
+vol_diaria            +0.0320
+momentum_6_1          +0.0322
+roe                   +0.0337
+caixa_preco           +0.0372
+margem_operacional    +0.0427
+caixa_ativos          +0.0496
+baixa_vol             +0.0685
+momentum              +0.0713
+valor_patrimonial     +0.0747

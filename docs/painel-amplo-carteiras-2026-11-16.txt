@@ -1,0 +1,102 @@
+Files (sha256): {'universe_prices.parquet': 'c9e3d481c038c1a8103ec0c5bb6eb2c8faec9e3e6e0e4e5b56d5871a6bf2b7fc', 'universe_monthly.parquet': '7deb425014ab993155da8fde6e6b6498877560966db3b88b6011cf9fb6cbdefd', 'sectors.parquet': '19d542a796876bd31ca4f10c1c9d637aa057c3fd9423c1a438463a43735b87b7', 'monthly_total_returns.parquet': 'ec344a53266e1ba372d0b8e556d4b7665e6a28f2390c38bc93b64f0a939d1a02', 'dividends.parquet': '9e72d106974726e7daf6d42286307e396b7cd907553cbfedc9711d86d3533ac0', 'fundamentals.parquet': '3b27a66c587e7236072300925af3d34132078207f702bd077702b5a376a6e851', 'market_caps.parquet': 'f9c49ffadfbb23a9c4f981704d73bce75c9482307bf6d81d4dc8a1a4802d0c64', 'cdi_daily.parquet': '8733c51d8b262d614bbca19c92079ce12f70074b32123888b487762984768b90'}; DSR N 197 (this branch's file counts 63)
+
+=== Phase 0: 09/02/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Ridge29-15                        0.349 0.511         0.981  0.989 0.531         10.429 0.156 -0.473          0.022              0.304
+PLS29-15                          0.299 0.432         0.959  0.972 0.403         14.667 0.145 -0.507          0.011              0.193
+Composto                          0.624 0.843         1.000  1.000 0.921          3.870 0.214 -0.415            NaN                NaN
+Conservadora (15, pesos iguais)   0.455 0.614         0.993  0.998 0.688          7.276 0.174 -0.407            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.072 -0.497            NaN                NaN
+Ridge29-15: refusals 0, failures 0, annual turnover 3.62
+PLS29-15: refusals 0, failures 0, annual turnover 3.67
+Composto: refusals 0, failures 0, annual turnover 2.96
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 2.97
+      Ridge29-15  PLS29-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010       23.6%     21.2%     23.2%                            23.2%    6.8%
+2011        1.4%      5.9%      2.6%                             9.8%  -18.3%
+2012       37.0%     32.1%     26.3%                            32.2%    6.6%
+2013       -9.0%    -10.8%     -1.3%                            -3.3%  -15.8%
+2014        0.9%     -1.7%      7.3%                             1.6%   -3.4%
+2015       -0.3%      4.5%      6.4%                             0.4%  -13.2%
+2016       43.5%     29.2%     40.9%                            25.1%   38.2%
+2017       36.8%     63.2%     34.7%                            50.8%   26.8%
+2018       13.0%     -1.4%     22.2%                            15.7%   14.6%
+2019       39.4%     45.1%     57.3%                            49.9%   31.5%
+2020       18.3%     12.6%     30.0%                             3.1%    3.1%
+2021        8.1%      4.9%     20.8%                            13.6%  -12.1%
+2022        2.5%      0.6%      4.6%                            26.1%    5.1%
+2023       25.8%     21.9%     33.6%                            22.9%   23.1%
+2024       -7.9%     -8.3%      5.5%                            -7.7%  -10.1%
+2025       26.5%     24.6%     44.1%                            31.5%   34.7%
+2026       15.4%     18.8%     10.3%                             9.7%   28.0%
+Ridge29-15 latest picks (14/08/2026): ALOS3, ALUP11, BBDC4, BBSE3, ENGI11, EZTC3, FIQE3, GOAU4, ITUB4, JHSF3, LOGG3, MLAS3, PSSA3, SAPR11, SHUL4
+PLS29-15 latest picks (14/08/2026): ALOS3, ALUP11, BBDC4, BBSE3, CXSE3, ENGI11, EZTC3, FIQE3, GOAU4, ITUB4, JHSF3, LOGG3, MLAS3, PETR4, SHUL4
+(phase 0 done in 47 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Ridge29-15                        0.240 0.387         0.941  0.962 0.317         18.072 0.131 -0.462          0.007              0.132
+PLS29-15                          0.269 0.413         0.952  0.970 0.355         15.946 0.137 -0.487          0.017              0.204
+Composto                          0.559 0.782         0.999  1.000 0.866          4.501 0.199 -0.422            NaN                NaN
+Conservadora (15, pesos iguais)   0.406 0.590         0.991  0.997 0.633          7.901 0.164 -0.416            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.068 -0.497            NaN                NaN
+Ridge29-15: refusals 0, failures 0, annual turnover 3.63
+PLS29-15: refusals 0, failures 0, annual turnover 3.63
+Composto: refusals 0, failures 0, annual turnover 3.07
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 2.98
+      Ridge29-15  PLS29-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010       17.3%     17.1%     17.8%                            17.8%   -0.6%
+2011        1.5%      6.2%      6.2%                            10.6%  -18.3%
+2012       34.8%     30.4%     24.6%                            32.9%    6.6%
+2013       -7.8%     -6.1%      6.7%                            -2.8%  -15.8%
+2014        0.5%      3.8%      2.4%                             3.1%   -3.4%
+2015        1.5%      2.1%      4.9%                             1.3%  -13.2%
+2016       35.7%     41.1%     36.4%                            15.9%   38.2%
+2017       45.9%     49.0%     42.9%                            51.1%   26.8%
+2018        1.4%      7.3%     23.6%                            22.4%   14.6%
+2019       38.0%     45.8%     50.2%                            51.3%   31.5%
+2020       -7.3%     -3.4%      6.0%                            -4.4%    3.1%
+2021        6.2%     -2.1%     27.9%                             6.2%  -12.1%
+2022       14.1%      3.6%     10.1%                            15.7%    5.1%
+2023       18.3%     13.4%     32.3%                            15.7%   23.1%
+2024       -7.3%     -9.9%      5.6%                            -3.3%  -10.1%
+2025       25.8%     29.5%     24.7%                            27.5%   34.7%
+2026       14.8%     19.1%     15.8%                            25.4%   28.0%
+(phase 21 done in 94 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026 ===
+                                 Sharpe    IR  P aritmético  P log   DSR  MinTRL (anos)  CAGR    MDD  P[> Composto]  P[> Conservadora]
+Ridge29-15                        0.378 0.587         0.991  0.995 0.924          7.936 0.163 -0.423          0.173              0.470
+PLS29-15                          0.357 0.552         0.987  0.992 0.902          8.943 0.158 -0.465          0.148              0.414
+Composto                          0.509 0.743         0.999  0.999 0.980          4.947 0.191 -0.428            NaN                NaN
+Conservadora (15, pesos iguais)   0.426 0.632         0.994  0.998 0.946          6.876 0.169 -0.395            NaN                NaN
+BOVA11                              NaN   NaN           NaN    NaN   NaN            NaN 0.067 -0.497            NaN                NaN
+Ridge29-15: refusals 0, failures 0, annual turnover 3.65
+PLS29-15: refusals 0, failures 0, annual turnover 3.67
+Composto: refusals 0, failures 0, annual turnover 3.22
+Conservadora (15, pesos iguais): refusals 0, failures 0, annual turnover 3.03
+      Ridge29-15  PLS29-15  Composto  Conservadora (15, pesos iguais)  BOVA11
+2010       27.0%     27.8%     19.4%                            19.4%   -2.5%
+2011       -3.4%     -3.8%      3.3%                             7.2%  -18.3%
+2012       35.7%     35.6%     25.6%                            32.3%    6.6%
+2013      -10.0%     -7.0%     -0.7%                            -4.1%  -15.8%
+2014        0.6%      2.2%      4.6%                             0.2%   -3.4%
+2015        1.2%     -0.1%     -1.3%                             2.9%  -13.2%
+2016       33.2%     27.8%     23.6%                            22.7%   38.2%
+2017       42.6%     60.1%     43.6%                            53.1%   26.8%
+2018       15.2%     17.8%     14.0%                            12.0%   14.6%
+2019       53.3%     52.2%     51.7%                            43.9%   31.5%
+2020       24.2%     21.4%     19.0%                            14.2%    3.1%
+2021        0.9%      0.3%     30.7%                            10.0%  -12.1%
+2022        3.8%      2.5%     10.4%                            13.9%    5.1%
+2023       15.9%     13.2%     31.2%                            15.6%   23.1%
+2024       -7.5%     -9.1%      4.9%                            -6.5%  -10.1%
+2025       31.0%     27.0%     33.4%                            33.5%   34.7%
+2026       24.2%     15.1%     10.8%                            20.9%   28.0%
+(phase 42 done in 142 s)
+
+Gate, all >= 0.95 in every phase:
+Ridge29-15: P[> Composite] [0.022 0.007 0.173], P[> Conservadora] [0.304 0.132 0.47 ], P[> BOVA11] [0.981 0.941 0.991], DSR [0.531 0.317 0.924]: does not pass
+PLS29-15: P[> Composite] [0.011 0.017 0.148], P[> Conservadora] [0.193 0.204 0.414], P[> BOVA11] [0.959 0.952 0.987], DSR [0.403 0.355 0.902]: does not pass
+
+Done in 142 s

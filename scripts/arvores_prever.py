@@ -21,11 +21,42 @@ from qpo_kaggle.arvores import LIGHTGBM, MODELOS, prever_arvore
 from qpo_kaggle.qml_pacote import ler_pacote
 
 SEMENTES = (0, 1, 2)
+SAIDA = Path(__file__).resolve().parent.parent / "arvores_run"   # .venv-qpo cannot write on D: (DECISOES 296)
 ATRIBUTOS = ("momentum", "baixa_vol", "dividendos", "formula_magica", "trending_value", "crescimento")
 
 
 def _hashes(colunas: dict[str, np.ndarray]) -> dict[str, str]:
     return {nome: hashlib.sha256(np.ascontiguousarray(valor).tobytes()).hexdigest() for nome, valor in colunas.items()}
+
+
+def prever_semente(pasta: Path, nome: str, semente: int) -> None:
+    """One seed alone, in its own process (the same fits as ``prever``): ``arvores_<model>_<seed>.npz``."""
+    pacote = ler_pacote(pasta / "pacote.npz")
+    inicio = time.perf_counter()
+
+    def progresso(posicao: int) -> None:
+        if (posicao + 1) % 25 == 0:
+            print(f"  seed {semente}: {posicao + 1} months, {time.perf_counter() - inicio:.0f} s", flush=True)
+
+    previsao = prever_arvore(MODELOS[nome], pacote, semente, progresso)
+    np.savez_compressed(SAIDA / f"arvores_{nome}_{semente}.npz", **{f"{nome}_{semente}": previsao})
+    print(f"{nome} seed {semente}: done in {time.perf_counter() - inicio:.0f} s", flush=True)
+
+
+def unir_sementes(pasta: Path, nome: str) -> None:
+    """``arvores_<model>.npz`` from the per-seed files, as ``prever`` would have written it."""
+    pacote = ler_pacote(pasta / "pacote.npz")
+    colunas: dict[str, np.ndarray] = {}
+    for semente in SEMENTES:
+        with np.load(SAIDA / f"arvores_{nome}_{semente}.npz") as arquivo:
+            colunas[f"{nome}_{semente}"] = arquivo[f"{nome}_{semente}"]
+    colunas[nome] = np.mean([colunas[f"{nome}_{s}"] for s in SEMENTES], axis=0)
+    ultimo = MODELOS[nome](0).fit(pacote.theta[pacote.treinos[-1]], pacote.y[pacote.treinos[-1]])
+    importancia = np.asarray(ultimo.feature_importances_, dtype=float)
+    colunas[f"{nome}_importancia"] = importancia / importancia.sum()
+    np.savez_compressed(SAIDA / f"arvores_{nome}.npz", **colunas)
+    print(f"{nome}: seeds joined; last-month importance "
+          + ", ".join(f"{a} {v:.3f}" for a, v in zip(ATRIBUTOS, colunas[f'{nome}_importancia'], strict=True)))
 
 
 def prever(pasta: Path, nome: str) -> None:
@@ -46,18 +77,19 @@ def prever(pasta: Path, nome: str) -> None:
     ultimo = MODELOS[nome](0).fit(pacote.theta[pacote.treinos[-1]], pacote.y[pacote.treinos[-1]])
     importancia = np.asarray(ultimo.feature_importances_, dtype=float)
     colunas[f"{nome}_importancia"] = importancia / importancia.sum()
-    np.savez_compressed(pasta / f"arvores_{nome}.npz", **colunas)
+    np.savez_compressed(SAIDA / f"arvores_{nome}.npz", **colunas)
     print(f"{nome}: done in {time.perf_counter() - inicio:.0f} s; last-month importance "
           + ", ".join(f"{a} {v:.3f}" for a, v in zip(ATRIBUTOS, colunas[f'{nome}_importancia'], strict=True)), flush=True)
 
 
 def juntar(pasta: Path) -> None:
-    saida = pasta / "previsoes.npz"
-    with np.load(saida) as antigos:
+    """``arvores_run/previsoes.npz`` = the package's ``previsoes.npz`` plus the tree columns; the shell copies it to D:."""
+    with np.load(pasta / "previsoes.npz") as antigos:
         resultados = dict(antigos)
+    saida = SAIDA / "previsoes.npz"
     antes = _hashes(resultados)
     for nome in MODELOS:
-        with np.load(pasta / f"arvores_{nome}.npz") as novos:
+        with np.load(SAIDA / f"arvores_{nome}.npz") as novos:
             resultados |= {chave: novos[chave] for chave in novos.files if not chave.endswith("_importancia")}
     np.savez_compressed(saida, **resultados)
     with np.load(saida) as gravados:
@@ -68,7 +100,15 @@ def juntar(pasta: Path) -> None:
 
 def main(argv: list[str]) -> int:
     pasta, alvo = Path(argv[0]), argv[1]
-    juntar(pasta) if alvo == "juntar" else prever(pasta, alvo)
+    SAIDA.mkdir(exist_ok=True)
+    if alvo == "juntar":
+        juntar(pasta)
+    elif len(argv) > 2 and argv[2] == "unir":
+        unir_sementes(pasta, alvo)
+    elif len(argv) > 2:
+        prever_semente(pasta, alvo, int(argv[2]))
+    else:
+        prever(pasta, alvo)
     return 0
 
 

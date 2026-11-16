@@ -1,0 +1,35 @@
+B3: monthly Spearman IC against the 3-month target, 2012-01 to 2026-07; gate IC >= 0.02 and Newey-West t >= 2.0
+         months    IC     t share > 0 passes
+RF          175 0.119 6.195     0.760   True
+GBR         175 0.104 5.599     0.743   True
+LGBM        175 0.099 5.389     0.749   True
+Ridge       175 0.127 6.372     0.731   True
+KAN-1       175 0.111 5.942     0.720   True
+MLP         175 0.109 5.496     0.749   True
+composto    175 0.114 6.036     0.720   True
+RF - Ridge: -0.0076, t -1.24
+RF - MLP: +0.0104, t +2.08
+RF - composto: +0.0055, t +0.50
+RF by seed: seed 0 0.1187, seed 1 0.1190, seed 2 0.1193
+RF edge (passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+GBR - Ridge: -0.0226, t -2.92
+GBR - MLP: -0.0047, t -0.76
+GBR - composto: -0.0095, t -0.79
+GBR by seed: seed 0 0.1043, seed 1 0.1041, seed 2 0.1026
+GBR edge (passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+LGBM - Ridge: -0.0280, t -3.49
+LGBM - MLP: -0.0100, t -1.62
+LGBM - composto: -0.0149, t -1.23
+LGBM by seed: seed 0 0.0980, seed 1 0.0965, seed 2 0.0995
+LGBM edge (passes, and t >= 2.0 against Ridge and against the Composite): not claimed
+
+Last-month impurity / split importance, normalized (descriptive):
+                  RF   GBR  LGBM
+momentum       0.188 0.186 0.150
+baixa_vol      0.249 0.283 0.214
+dividendos     0.150 0.165 0.207
+formula_magica 0.130 0.115 0.159
+trending_value 0.178 0.148 0.125
+crescimento    0.104 0.104 0.146

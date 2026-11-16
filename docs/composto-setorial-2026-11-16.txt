@@ -1,0 +1,106 @@
+DSR N 195; arm Composite-setorial; data to 16/10/2026
+
+=== Phase 0: 09/02/2010 to 16/10/2026; Composite replay off attempt 51's saved curve by 5.5e-02 (printed, not enforced) ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
+Composite-setorial              0.196 0.190   0.537    0.739 -0.441   0.444         -0.014     -1.163      0.099          0.101      3.710 0.953
+Composite                       0.218 0.187   0.640    0.890 -0.415   0.525            NaN        NaN        NaN          0.118      4.308 0.981
+Conservadora (15, pesos iguais) 0.174 0.180   0.455    0.625 -0.407   0.428         -0.024     -1.308      0.022          0.080      3.242 0.858
+BOVA11                          0.072 0.234   0.010    0.014 -0.497   0.146         -0.119     -3.763      0.000            NaN        NaN   NaN
+Profile (turnover a year; shared = names in common with the Composite on its decision dates):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              2.972     0.000     66.000   115.409  15.000                 0.006
+Composite-setorial     3.157     0.000     66.000   115.409  12.167                 0.006
+Calendar years:
+      Composite-setorial  Composite  BOVA11   CDI
+2010               23.2%      23.2%    6.8%  8.7%
+2011                2.7%       2.6%  -18.3% 11.5%
+2012               23.6%      26.3%    6.6%  8.2%
+2013                5.4%      -1.3%  -15.8%  7.9%
+2014               10.1%       7.3%   -3.4% 10.6%
+2015                9.2%       6.4%  -13.2% 13.0%
+2016               27.7%      40.9%   38.2% 13.9%
+2017               55.3%      38.6%   26.8%  9.8%
+2018                8.7%      22.2%   14.6%  6.3%
+2019               50.5%      57.3%   31.5%  5.9%
+2020               25.4%      30.0%    3.1%  2.7%
+2021               12.7%      21.8%  -12.1%  4.3%
+2022                6.7%       4.4%    5.1% 12.3%
+2023               25.8%      36.2%   23.1% 13.0%
+2024                2.6%       5.5%  -10.1% 10.8%
+2025               37.1%      44.1%   34.7% 14.2%
+2026               10.3%      10.3%   28.0% 11.1%
+(phase 0 done in 340 s)
+
+=== Phase 21: 12/03/2010 to 16/10/2026; Composite replay off attempt 51's saved curve by 5.9e-02 (printed, not enforced) ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
+Composite-setorial              0.166 0.191   0.402    0.549 -0.469   0.354         -0.029     -2.230      0.009          0.078      2.993 0.859
+Composite                       0.203 0.187   0.577    0.800 -0.422   0.482            NaN        NaN        NaN          0.109      3.956 0.971
+Conservadora (15, pesos iguais) 0.164 0.180   0.406    0.560 -0.416   0.394         -0.022     -1.302      0.030          0.074      3.148 0.846
+BOVA11                          0.068 0.234  -0.007   -0.010 -0.497   0.137         -0.112     -3.488      0.001            NaN        NaN   NaN
+Profile (turnover a year; shared = names in common with the Composite on its decision dates):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.102     0.000     66.000   116.030  15.000                 0.006
+Composite-setorial     3.328     0.000     66.000   116.030  12.318                 0.007
+Calendar years:
+      Composite-setorial  Composite  BOVA11   CDI
+2010               17.8%      17.8%   -0.6%  7.9%
+2011                5.8%       6.2%  -18.3% 11.5%
+2012               30.7%      24.6%    6.6%  8.2%
+2013                3.5%       6.7%  -15.8%  7.9%
+2014               -2.2%       1.7%   -3.4% 10.6%
+2015                1.5%       4.9%  -13.2% 13.0%
+2016               26.0%      36.3%   38.2% 13.9%
+2017               43.7%      50.8%   26.8%  9.8%
+2018               21.5%      23.6%   14.6%  6.3%
+2019               43.3%      50.2%   31.5%  5.9%
+2020                0.7%       6.0%    3.1%  2.7%
+2021               20.8%      26.4%  -12.1%  4.3%
+2022                3.2%      10.1%    5.1% 12.3%
+2023               24.8%      32.3%   23.1% 13.0%
+2024                1.7%       8.1%  -10.1% 10.8%
+2025               29.7%      24.7%   34.7% 14.2%
+2026               12.4%      15.8%   28.0% 11.1%
+(phase 21 done in 498 s)
+
+=== Phase 42: 13/04/2010 to 16/10/2026; Composite replay off attempt 51's saved curve by 5.5e-02 (printed, not enforced) ===
+                                 CAGR   Vol  Sharpe  Sortino    MDD  Calmar  alpha vs Comp  t vs Comp  P[> Comp]  alpha vs BOVA  t vs BOVA   DSR
+Composite-setorial              0.181 0.195   0.464    0.640 -0.449   0.403         -0.007     -0.529      0.245          0.092      3.378 0.984
+Composite                       0.192 0.193   0.516    0.718 -0.428   0.449            NaN        NaN        NaN          0.101      3.602 0.990
+Conservadora (15, pesos iguais) 0.169 0.182   0.426    0.590 -0.395   0.428         -0.009     -0.547      0.119          0.079      3.244 0.968
+BOVA11                          0.067 0.234  -0.011   -0.015 -0.497   0.135         -0.101     -3.163      0.001            NaN        NaN   NaN
+Profile (turnover a year; shared = names in common with the Composite on its decision dates):
+                    turnover  refusals  decisions  eligible  shared  extra cost at 30 bps
+Composite              3.224     0.000     66.000   116.712  15.000                 0.006
+Composite-setorial     3.406     0.000     66.000   116.712  12.136                 0.007
+Calendar years:
+      Composite-setorial  Composite  BOVA11   CDI
+2010               19.4%      19.4%   -2.5%  7.2%
+2011                3.3%       3.3%  -18.3% 11.5%
+2012               25.8%      25.6%    6.6%  8.2%
+2013                2.4%      -0.7%  -15.8%  7.9%
+2014                1.4%       4.6%   -3.4% 10.6%
+2015               -3.4%      -1.3%  -13.2% 13.0%
+2016               21.7%      27.1%   38.2% 13.9%
+2017               56.7%      45.6%   26.8%  9.8%
+2018               22.3%      13.1%   14.6%  6.3%
+2019               58.6%      51.7%   31.5%  5.9%
+2020               14.6%      19.0%    3.1%  2.7%
+2021               13.3%      29.7%  -12.1%  4.3%
+2022                1.9%      10.4%    5.1% 12.3%
+2023               26.7%      31.2%   23.1% 13.0%
+2024                1.4%       4.7%  -10.1% 10.8%
+2025               34.2%      33.4%   34.7% 14.2%
+2026               13.8%      10.8%   28.0% 11.1%
+(phase 42 done in 630 s)
+
+Curves saved: composto-setorial-curvas-2026-11-16.parquet
+
+Descriptive (no gate): monthly Spearman IC of each leg against the month's total return, 2012-01 to 2026-10, Newey-West t (2 lags)
+  value raw: IC 0.0710, t 5.80, months 178
+  value sector: IC 0.0633, t 6.68, months 178
+  value sector - raw: -0.0077, t -1.37
+  growth raw: IC 0.0348, t 3.58, months 176
+  growth sector: IC 0.0367, t 4.03, months 176
+  growth sector - raw: +0.0020, t +0.44
+
+Gate (P[> Composite] >= 0.95 and DSR >= 0.95 in every phase): Composite-setorial [(0.099, 0.953), (0.009, 0.859), (0.245, 0.984)] -> fails

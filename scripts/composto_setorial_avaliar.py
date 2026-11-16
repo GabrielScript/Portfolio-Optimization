@@ -77,8 +77,7 @@ def ic_descritivo(mensal, legs) -> None:
     elegiveis = universo["security"].groupby(pd.to_datetime(universo["month"])).apply(list)
     meses = pd.date_range("2012-01-01", LAST_SESSION.to_period("M").to_timestamp(), freq="MS")
     retornos = retornos_no_universo(mensal.retornos, universo, meses)
-    print(f"
-Descriptive (no gate): monthly Spearman IC of each leg against the month's total return, "
+    print(f"\nDescriptive (no gate): monthly Spearman IC of each leg against the month's total return, "
           f"{meses[0]:%Y-%m} to {meses[-1]:%Y-%m}, Newey-West t ({NW_LAGS} lags)")
     for perna in ("value", "growth"):
         ics = {}

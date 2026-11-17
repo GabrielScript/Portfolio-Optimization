@@ -140,6 +140,37 @@ def test_a_vetoed_issuer_leaves_and_the_next_name_by_score_takes_its_place() -> 
     assert sorted(pesos.index) == ["AAAA3", "CCCC3", "DDDD3", "EEEE3", "FFFF3"]
 
 
+def test_tone_buckets_and_probability_bands_follow_the_amendment() -> None:
+    """Bad/good at P >= 0.5 split by intensity 2.0 (the veto's cell is "ruim forte"); the bands are the user's
+    thresholds: < 0.35, 0.35-0.65, 0.65-0.70, >= 0.70."""
+    from core.teste_a import faixa_de_p, faixa_do_tom
+
+    assert faixa_do_tom(0.5, 0.1, 2.0) == "ruim forte"
+    assert faixa_do_tom(0.9, 0.0, 1.99) == "ruim"
+    assert faixa_do_tom(0.1, 0.6, 2.4) == "bom forte"
+    assert faixa_do_tom(0.1, 0.6, 1.0) == "bom"
+    assert faixa_do_tom(0.49, 0.49, 3.0) == "neutro"
+    assert [faixa_de_p(p) for p in (0.0, 0.3499, 0.35, 0.6499, 0.65, 0.6999, 0.70, 1.0)] == [
+        "< 0.35", "< 0.35", "0.35-0.65", "0.35-0.65", "0.65-0.70", "0.65-0.70", ">= 0.70", ">= 0.70"]
+
+
+def test_the_excess_return_starts_at_the_close_of_the_first_session_after_delivery() -> None:
+    """Entry at the close of the first session strictly after the delivery date; excess over the month's eligible
+    names, equal weights; an event without ``horizonte`` sessions after the entry is dropped."""
+    from core.teste_a import excessos_apos_documentos
+
+    pregoes = pd.bdate_range("2020-03-02", periods=10)            # Monday 02/03 to Friday 13/03
+    precos = pd.DataFrame({"AAAA3": [10.0] * 3 + [11.0] * 7, "BBBB3": [20.0] * 10, "CCCC3": [5.0] * 10},
+                          index=pregoes)
+    elegiveis = {pd.Timestamp("2020-03-01"): ["AAAA3", "BBBB3", "CCCC3"]}
+    eventos = pd.DataFrame({"emissor": ["AAAA", "AAAA", "AAAA"],
+                            "data": pd.to_datetime(["2020-03-02", "2020-03-01", "2020-03-12"])})
+    saida = excessos_apos_documentos(precos, elegiveis, eventos, horizonte=2)
+    assert list(saida["entrada"]) == [pregoes[1], pregoes[0]]          # the 12/03 event lacks two sessions after
+    alta = 0.1 - 0.1 / 3                                               # AAAA3 +10% from the 2nd to the 4th session
+    assert saida["excesso"].tolist() == pytest.approx([alta, 0.0])
+
+
 def test_an_answer_becomes_bad_good_and_intensity_columns() -> None:
     """P(bad) and P(good) come from the tone's probabilities, the intensity from the score's expected level."""
     from core.teste_a import colunas_da_resposta

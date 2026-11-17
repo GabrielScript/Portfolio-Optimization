@@ -100,6 +100,49 @@ def estrategia_com_veto(nota, setores: Mapping[str, str], vetados_em: Callable[[
     return _estrategia
 
 
+def faixa_do_tom(p_ruim: float, p_bom: float, intensidade: float) -> str:
+    """Tone x intensity cell: bad or good at P >= 0.5, "forte" at intensity >= 2.0 (the veto's cell is "ruim forte")."""
+    forte = " forte" if intensidade >= INTENSIDADE else ""
+    if p_ruim >= P_RUIM:
+        return "ruim" + forte
+    if p_bom >= P_RUIM:
+        return "bom" + forte
+    return "neutro"
+
+
+def faixa_de_p(p: float) -> str:
+    """The user's thresholds as bands: < 0.35, 0.35-0.65, 0.65-0.70, >= 0.70."""
+    if p < 0.35:
+        return "< 0.35"
+    if p < 0.65:
+        return "0.35-0.65"
+    if p < 0.70:
+        return "0.65-0.70"
+    return ">= 0.70"
+
+
+def excessos_apos_documentos(precos: pd.DataFrame, elegiveis: Mapping[pd.Timestamp, list[str]],
+                             eventos: pd.DataFrame, horizonte: int) -> pd.DataFrame:
+    """For each event (``emissor``, ``data``): entry at the close of the first session strictly after ``data``; the
+    issuer's eligible classes' mean return over the next ``horizonte`` sessions minus the equal-weighted mean of the
+    month's eligible names. Events without ``horizonte`` sessions after the entry, or with no eligible class, are
+    dropped. Returns the events' columns plus ``entrada`` and ``excesso``, in the events' order."""
+    pregoes = precos.index
+    posicoes = pregoes.searchsorted(pd.DatetimeIndex(eventos["data"]), side="right")
+    linhas = []
+    for evento, posicao in zip(eventos.to_dict("records"), posicoes):
+        if posicao + horizonte >= len(pregoes):
+            continue
+        entrada = pregoes[posicao]
+        nomes = [papel for papel in elegiveis.get(entrada.to_period("M").to_timestamp(), []) if papel in precos.columns]
+        retorno = (precos.iloc[posicao + horizonte][nomes] / precos.iloc[posicao][nomes] - 1.0).dropna()
+        do_emissor = retorno[[papel[:4] == evento["emissor"] for papel in retorno.index]]
+        if do_emissor.empty or retorno.empty:
+            continue
+        linhas.append({**evento, "entrada": entrada, "excesso": float(do_emissor.mean() - retorno.mean())})
+    return pd.DataFrame(linhas)
+
+
 def colunas_da_resposta(respostas: Mapping) -> dict:
     """P(bad) and P(good) from the tone's probabilities, the intensity score (expected level 0-3), the filing kind."""
     tom = respostas["filing_tone"]["probabilities"]

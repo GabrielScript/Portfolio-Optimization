@@ -58,3 +58,39 @@ in the app (DECISOES 124). The text above said "nothing reaches ... the app"; th
 - Tests A and B, their rules, data and dates are unchanged; N stays until one of them runs. Watching the forward log
   cannot leak into Test A (backfilled filings) and Test B's outcome (future returns) is unknown when the screen shows
   a day's tone.
+
+## Amendment, 2026-11-17: Test A on the Composite, judged by a Liquid d1 model
+
+Written before any backfilled filing is scored (no score of a backfilled filing exists on this date). The user asked
+on 17/11 for a CVM-based probability per stock that tilts the Composite ("allocate more above 65-70%, trim below");
+step 1 agreed with the user is to run Test A first. What changes, and only this:
+
+- **Strategy.** The Composite (`core.composto.estrategia_por_nota`, attempt 51; the official strategy since the
+  Conservadora left the main stack, DECISOES 261) replaces the Conservadora. Engine, phases 0/21/42, costs and the
+  frozen export are those of `scripts/curvas_pos_idade.py` (export `docs/dados/2026-10-22/`, last session
+  16/10/2026; the Composite must reproduce 21.79 / 20.34 / 19.22% before any veto is read, DECISOES 360).
+- **Judge.** Jev is retired (DECISOES 269). The model is chosen before any backfilled score, on the 60 hand-labelled
+  filings of DECISOES 270 (same sample, labels and materiality question), run again on 17/11 with d1.1, d1.2 and
+  d1.2-ultra (d1.2 released 16/11/2026): highest accuracy@0.5 on all 60, ties broken by the lower Brier. The model id
+  returned by the API is pinned and used for every filing; a changed id stops the run.
+- **Questions and state.** `filings-v1` unchanged (`b3lake/jevscore.py`: filing_tone, filing_kind, filing_intensity),
+  state = the lake's `filing_request` (category, subject, type, species; no company name, no date). Identical states
+  are asked once and the answer is shared.
+- **Filings.** `categoria` in (Fato Relevante, Comunicado ao Mercado), `data_entrega` from 2009-12-01 to 2026-10-16,
+  of every issuer that is a Composite candidate in any month of the export (ticker to `codigo_cvm` by the lake's
+  issuer table). A filing that maps to no ticker is dropped and counted.
+- **Veto (the 23/10 rule, timing made explicit).** At each rebalance the decision date t is the training window's
+  last session (the engine trades at t's close). A chosen name is dropped when it has a filing with P(bad) >= 0.5 and
+  `filing_intensity` score >= 2.0 delivered in the 21 sessions before t (t itself excluded: a filing dated t may come
+  after the close). Its score is removed for that decision, so `carteira_da_nota` takes the next name by score under
+  the same sector cap and the same rules.
+- **Pass (unchanged).** P[with veto > without] >= 0.95 in all 3 phases and a lower MDD in at least 2 of them. N in
+  `docs/tentativas.csv` rises by one when it runs. A pass earns a forward ghost account only, never real money.
+- **Descriptive, no gate (to calibrate the user's thresholds).** Excess return over the equal-weighted eligible
+  universe for sessions 1-21 and 1-63 after each filing (entry at the close of the first session after
+  `data_entrega`), by tone x intensity bucket and by P(bad) and P(good) bands (< 0.35, 0.35-0.65, 0.65-0.70, >= 0.70),
+  with counts and t-statistics clustered by date, for 2010-2019, 2020-2025 and 2026 apart. It informs a later,
+  separately pre-registered tilt arm; it changes nothing in Test A.
+- **Known risk (unchanged, restated).** The judge may know these filings' outcomes; the state withholds names and
+  dates, which only lowers the risk. The 2026 filings are reported apart, and a pass is confirmed only if the forward
+  filings (`backfilled = false`) agree in sign at the 252-session reading.

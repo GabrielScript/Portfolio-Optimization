@@ -1,0 +1,300 @@
+{"id": "F00", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.047134479190871985, "s": 1.4108450999992783, "tokens": 92, "custo": 3.864e-06, "modelo": "d1.2-ultra"}
+{"id": "F00", "juiz": "d1.2 (Liquid direto)", "p": 0.13931922730175855, "s": 1.0524869000000763, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.2"}
+{"id": "F00", "juiz": "d1.1 (Liquid direto)", "p": 0.08407405003253489, "s": 1.4773491000014474, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F00", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.04506897168619089, "s": 1.220539900001313, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F00", "juiz": "d1.2 (OpenRouter)", "p": 0.12373487298845118, "s": 1.2106219000015699, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F01", "juiz": "d1.1 (Liquid direto)", "p": 0.3703491014497445, "s": 1.260603099999571, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F01", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.6896734984674865, "s": 1.962875500001246, "tokens": 99, "custo": 4.158e-06, "modelo": "d1.2-ultra"}
+{"id": "F01", "juiz": "d1.2 (Liquid direto)", "p": 0.545398507217497, "s": 1.181162699998822, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.2"}
+{"id": "F01", "juiz": "d1.2 (OpenRouter)", "p": 0.4321355650275209, "s": 1.211080099998071, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F01", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.7283955665416478, "s": 1.8244933999994828, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F02", "juiz": "d1.2 (Liquid direto)", "p": 0.7892138130044805, "s": 1.2530939999996917, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.2"}
+{"id": "F02", "juiz": "d1.1 (Liquid direto)", "p": 0.7003890536086564, "s": 0.974957300000824, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F02", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8504474726476388, "s": 1.1426224999995611, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F02", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8443738700013685, "s": 1.708525500001997, "tokens": 107, "custo": 4.494e-06, "modelo": "d1.2-ultra"}
+{"id": "F02", "juiz": "d1.2 (OpenRouter)", "p": 0.765598294839593, "s": 1.1778967999998713, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F03", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.1963472833247784, "s": 1.5816725000004226, "tokens": 93, "custo": 3.906e-06, "modelo": "d1.2-ultra"}
+{"id": "F03", "juiz": "d1.1 (Liquid direto)", "p": 0.05663569040331751, "s": 1.0475646000013512, "tokens": 93, "custo": 1.86e-06, "modelo": "d1.1"}
+{"id": "F03", "juiz": "d1.2 (OpenRouter)", "p": 0.1754024359708102, "s": 1.1686560999987705, "tokens": 93, "custo": 1.86e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F03", "juiz": "d1.2 (Liquid direto)", "p": 0.1960384197953345, "s": 0.9955190000000584, "tokens": 93, "custo": 1.86e-06, "modelo": "d1.2"}
+{"id": "F03", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.1963472833247784, "s": 1.1169181000004755, "tokens": 93, "custo": 3.906e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F04", "juiz": "d1.2 (Liquid direto)", "p": 0.13931921949296555, "s": 1.0991125000000466, "tokens": 96, "custo": 1.92e-06, "modelo": "d1.2"}
+{"id": "F04", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.09097169401851782, "s": 1.3693433000007644, "tokens": 96, "custo": 4.032e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F04", "juiz": "d1.2 (OpenRouter)", "p": 0.12373488122613671, "s": 1.1136196000006748, "tokens": 96, "custo": 1.92e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F04", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.08716088762762482, "s": 1.196987999999692, "tokens": 96, "custo": 4.032e-06, "modelo": "d1.2-ultra"}
+{"id": "F04", "juiz": "d1.1 (Liquid direto)", "p": 0.02923413371570089, "s": 1.1520065000004251, "tokens": 96, "custo": 1.92e-06, "modelo": "d1.1"}
+{"id": "F05", "juiz": "d1.2 (Liquid direto)", "p": 0.16891500738211448, "s": 1.2209139999977197, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.2"}
+{"id": "F05", "juiz": "d1.2 (OpenRouter)", "p": 0.20331272973104442, "s": 1.0907270000025164, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F05", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.12719185357050505, "s": 1.1527258999994956, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F05", "juiz": "d1.1 (Liquid direto)", "p": 0.10689302653078134, "s": 0.9516570000014326, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F05", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.09904547495959223, "s": 1.857105800001591, "tokens": 101, "custo": 4.242e-06, "modelo": "d1.2-ultra"}
+{"id": "F06", "juiz": "d1.2 (Liquid direto)", "p": 0.6118841281135073, "s": 1.0877375999989454, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.2"}
+{"id": "F06", "juiz": "d1.1 (Liquid direto)", "p": 0.5659533725088756, "s": 1.0246546000016679, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F06", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.5, "s": 1.1944694999983767, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F06", "juiz": "d1.2 (OpenRouter)", "p": 0.6010195533002328, "s": 1.0511889000008523, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F06", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.5, "s": 1.0226683000000776, "tokens": 117, "custo": 4.914e-06, "modelo": "d1.2-ultra"}
+{"id": "F07", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.09493177970836884, "s": 2.0216643000021577, "tokens": 108, "custo": 4.536e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F07", "juiz": "d1.1 (Liquid direto)", "p": 0.29961095701226337, "s": 0.9903387000013026, "tokens": 108, "custo": 2.16e-06, "modelo": "d1.1"}
+{"id": "F07", "juiz": "d1.2 (Liquid direto)", "p": 0.3356236292668952, "s": 1.0169048000025214, "tokens": 108, "custo": 2.16e-06, "modelo": "d1.2"}
+{"id": "F07", "juiz": "d1.2 (OpenRouter)", "p": 0.3255498150521033, "s": 1.0962661000012304, "tokens": 108, "custo": 2.16e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F07", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.14367563117708063, "s": 1.0794174000002386, "tokens": 108, "custo": 4.536e-06, "modelo": "d1.2-ultra"}
+{"id": "F08", "juiz": "d1.1 (Liquid direto)", "p": 0.08407405782755865, "s": 0.940787100000307, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F08", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.1077508697822978, "s": 1.0132655000015802, "tokens": 107, "custo": 4.494e-06, "modelo": "d1.2-ultra"}
+{"id": "F08", "juiz": "d1.2 (Liquid direto)", "p": 0.2344017051604071, "s": 1.0729739999987942, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.2"}
+{"id": "F08", "juiz": "d1.2 (OpenRouter)", "p": 0.17540243754065665, "s": 1.105055199997878, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F08", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.1077508697822978, "s": 1.1375036999997974, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F09", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.21953911819204439, "s": 1.1048293999992893, "tokens": 124, "custo": 5.208e-06, "modelo": "d1.2-ultra"}
+{"id": "F09", "juiz": "d1.2 (Liquid direto)", "p": 0.25113398330780284, "s": 1.3982517999975244, "tokens": 124, "custo": 2.48e-06, "modelo": "d1.2"}
+{"id": "F09", "juiz": "d1.2 (OpenRouter)", "p": 0.3058846343248922, "s": 1.4317053999984637, "tokens": 124, "custo": 2.48e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F09", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.21953911819204439, "s": 1.0518448000002536, "tokens": 124, "custo": 5.208e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F09", "juiz": "d1.1 (Liquid direto)", "p": 0.1174571360897926, "s": 1.1905435000007856, "tokens": 124, "custo": 2.48e-06, "modelo": "d1.1"}
+{"id": "F10", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3846728660328656, "s": 1.7123322000006738, "tokens": 110, "custo": 4.62e-06, "modelo": "d1.2-ultra"}
+{"id": "F10", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.34126431204306995, "s": 1.094903000001068, "tokens": 110, "custo": 4.62e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F10", "juiz": "d1.2 (Liquid direto)", "p": 0.6010195637109277, "s": 1.047181099998852, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.2"}
+{"id": "F10", "juiz": "d1.2 (OpenRouter)", "p": 0.47725376341457154, "s": 1.0907817999977851, "tokens": 110, "custo": 2.2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F10", "juiz": "d1.1 (Liquid direto)", "p": 0.2778211974843651, "s": 1.0546455000003334, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F11", "juiz": "d1.2 (Liquid direto)", "p": 0.12373488122613673, "s": 1.0297381000018504, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.2"}
+{"id": "F11", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.12206752972097676, "s": 1.4785582999975304, "tokens": 95, "custo": 3.99e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F11", "juiz": "d1.2 (OpenRouter)", "p": 0.21845903922120496, "s": 1.1115257999990718, "tokens": 95, "custo": 1.9e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F11", "juiz": "d1.1 (Liquid direto)", "p": 0.05953885651655059, "s": 1.0195391999986896, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F11", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.12719186103063163, "s": 1.1532372000001487, "tokens": 95, "custo": 3.99e-06, "modelo": "d1.2-ultra"}
+{"id": "F12", "juiz": "d1.1 (Liquid direto)", "p": 0.2672995687190796, "s": 1.0535471000002872, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F12", "juiz": "d1.2 (OpenRouter)", "p": 0.4433395434709857, "s": 1.0539828000000853, "tokens": 104, "custo": 2.08e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F12", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.22769404338677118, "s": 1.3267066000007617, "tokens": 104, "custo": 4.368e-06, "modelo": "d1.2-ultra"}
+{"id": "F12", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.22769404338677118, "s": 1.1034560000007332, "tokens": 104, "custo": 4.368e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F12", "juiz": "d1.2 (Liquid direto)", "p": 0.35621951726417117, "s": 1.1151099999988219, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.2"}
+{"id": "F13", "juiz": "d1.2 (OpenRouter)", "p": 0.35621951726417117, "s": 1.1182996000025014, "tokens": 107, "custo": 2.14e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F13", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.35190204140829484, "s": 1.707902300000569, "tokens": 107, "custo": 4.494e-06, "modelo": "d1.2-ultra"}
+{"id": "F13", "juiz": "d1.2 (Liquid direto)", "p": 0.27767941409069796, "s": 0.9437017999989621, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.2"}
+{"id": "F13", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.3204690137673468, "s": 1.4874081999987538, "tokens": 107, "custo": 4.494e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F13", "juiz": "d1.1 (Liquid direto)", "p": 0.31086484280139615, "s": 0.9812148000019079, "tokens": 107, "custo": 2.14e-06, "modelo": "d1.1"}
+{"id": "F14", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.4299986975156595, "s": 1.5367151999998896, "tokens": 104, "custo": 4.368e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F14", "juiz": "d1.2 (Liquid direto)", "p": 0.24266987055059205, "s": 1.2884144999989076, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.2"}
+{"id": "F14", "juiz": "d1.2 (OpenRouter)", "p": 0.2511339914726699, "s": 1.1078517999994801, "tokens": 104, "custo": 2.08e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F14", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3846728660328656, "s": 1.211856899997656, "tokens": 104, "custo": 4.368e-06, "modelo": "d1.2-ultra"}
+{"id": "F14", "juiz": "d1.1 (Liquid direto)", "p": 0.2570345622486207, "s": 0.9002546000010625, "tokens": 104, "custo": 2.08e-06, "modelo": "d1.1"}
+{"id": "F15", "juiz": "d1.2 (Liquid direto)", "p": 0.35621951726417117, "s": 0.9673900999987382, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.2"}
+{"id": "F15", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.3626887948076105, "s": 2.180693100002827, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F15", "juiz": "d1.2 (OpenRouter)", "p": 0.31563471840083795, "s": 1.3557446000013442, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F15", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3846728660328656, "s": 1.201267000000371, "tokens": 99, "custo": 4.158e-06, "modelo": "d1.2-ultra"}
+{"id": "F15", "juiz": "d1.1 (Liquid direto)", "p": 0.14787394713809487, "s": 1.1066268000031414, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F16", "juiz": "d1.2 (OpenRouter)", "p": 0.23440171684712324, "s": 2.2810676000008243, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F16", "juiz": "d1.1 (Liquid direto)", "p": 0.046304693305343356, "s": 0.9216516000014963, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F16", "juiz": "d1.2 (Liquid direto)", "p": 0.1626202073395828, "s": 1.1164394000006723, "tokens": 100, "custo": 2e-06, "modelo": "d1.2"}
+{"id": "F16", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.10331708688891235, "s": 1.0925065000010363, "tokens": 100, "custo": 4.2e-06, "modelo": "d1.2-ultra"}
+{"id": "F16", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.10331708688891235, "s": 1.2806036000001768, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F17", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3307840062856558, "s": 1.019271999997727, "tokens": 109, "custo": 4.578e-06, "modelo": "d1.2-ultra"}
+{"id": "F17", "juiz": "d1.1 (Liquid direto)", "p": 0.3954223773188123, "s": 1.3992242999993323, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F17", "juiz": "d1.2 (Liquid direto)", "p": 0.46591004863003793, "s": 0.9427197000004526, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.2"}
+{"id": "F17", "juiz": "d1.2 (OpenRouter)", "p": 0.39898043628907237, "s": 1.0470950000017183, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F17", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.4531616554027129, "s": 1.5681168000010075, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F18", "juiz": "d1.2 (OpenRouter)", "p": 0.47725376341457154, "s": 1.1500938999997743, "tokens": 115, "custo": 2.3e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F18", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.3003631023835905, "s": 1.2875645000021905, "tokens": 115, "custo": 4.83e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F18", "juiz": "d1.1 (Liquid direto)", "p": 0.15468712893515615, "s": 1.0316324999985227, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F18", "juiz": "d1.2 (Liquid direto)", "p": 0.36672634086896316, "s": 0.9927697999992233, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.2"}
+{"id": "F18", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3204690137673468, "s": 1.1213023999989673, "tokens": 115, "custo": 4.83e-06, "modelo": "d1.2-ultra"}
+{"id": "F19", "juiz": "d1.2 (OpenRouter)", "p": 0.18896265192781864, "s": 1.1508931999997003, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F19", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.3307840261199913, "s": 1.152604099999735, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F19", "juiz": "d1.2 (Liquid direto)", "p": 0.31563471840083795, "s": 1.2798953999990772, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.2"}
+{"id": "F19", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3307840261199913, "s": 0.999941599999147, "tokens": 109, "custo": 4.578e-06, "modelo": "d1.2-ultra"}
+{"id": "F19", "juiz": "d1.1 (Liquid direto)", "p": 0.20968939980604684, "s": 1.129192200001853, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F20", "juiz": "d1.2 (OpenRouter)", "p": 0.2426698585823091, "s": 1.145548399999825, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F20", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3103265015325135, "s": 1.500601600000664, "tokens": 117, "custo": 4.914e-06, "modelo": "d1.2-ultra"}
+{"id": "F20", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.23606022624885545, "s": 1.0924371000000974, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F20", "juiz": "d1.2 (Liquid direto)", "p": 0.25979205366911523, "s": 0.9925260999989405, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.2"}
+{"id": "F20", "juiz": "d1.1 (Liquid direto)", "p": 0.24703088115794944, "s": 1.0893644999996468, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F21", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.07658114042625895, "s": 1.186642100001336, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F21", "juiz": "d1.2 (Liquid direto)", "p": 0.22633107112824868, "s": 1.102184600000328, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.2"}
+{"id": "F21", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.07658114042625895, "s": 1.1512480999990657, "tokens": 106, "custo": 4.452e-06, "modelo": "d1.2-ultra"}
+{"id": "F21", "juiz": "d1.2 (OpenRouter)", "p": 0.23440170905597912, "s": 1.1899499999999534, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F21", "juiz": "d1.1 (Liquid direto)", "p": 0.14131070757821315, "s": 1.050292800002353, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F22", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.12206752972097674, "s": 1.002020599997195, "tokens": 116, "custo": 4.872e-06, "modelo": "d1.2-ultra"}
+{"id": "F22", "juiz": "d1.2 (OpenRouter)", "p": 0.27767940538280317, "s": 1.4161615999983042, "tokens": 116, "custo": 2.32e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F22", "juiz": "d1.1 (Liquid direto)", "p": 0.1174571360897926, "s": 1.1393634999985807, "tokens": 116, "custo": 2.32e-06, "modelo": "d1.1"}
+{"id": "F22", "juiz": "d1.2 (Liquid direto)", "p": 0.34584931951515174, "s": 1.1340187999994669, "tokens": 116, "custo": 2.32e-06, "modelo": "d1.2"}
+{"id": "F22", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.12206752972097674, "s": 1.1391385999995691, "tokens": 116, "custo": 4.872e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F23", "juiz": "d1.1 (Liquid direto)", "p": 0.22782124655077746, "s": 1.0178244999988237, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F23", "juiz": "d1.2 (OpenRouter)", "p": 0.3356236292668952, "s": 1.589939299999969, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F23", "juiz": "d1.2 (Liquid direto)", "p": 0.2597920661921729, "s": 1.1396502000025066, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.2"}
+{"id": "F23", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.33078402611999136, "s": 0.9789909000028274, "tokens": 109, "custo": 4.578e-06, "modelo": "d1.2-ultra"}
+{"id": "F23", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.33078402611999136, "s": 1.1542794999986654, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F24", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.045068979880558815, "s": 1.1043795000005048, "tokens": 112, "custo": 4.704e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F24", "juiz": "d1.2 (OpenRouter)", "p": 0.0788344047995808, "s": 1.0686115999997128, "tokens": 112, "custo": 2.24e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F24", "juiz": "d1.2 (Liquid direto)", "p": 0.08570496374696336, "s": 1.189895700001216, "tokens": 112, "custo": 2.24e-06, "modelo": "d1.2"}
+{"id": "F24", "juiz": "d1.1 (Liquid direto)", "p": 0.022574341527252392, "s": 1.1218324000001303, "tokens": 112, "custo": 2.24e-06, "modelo": "d1.1"}
+{"id": "F24", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.045068979880558815, "s": 0.9588582999967912, "tokens": 112, "custo": 4.704e-06, "modelo": "d1.2-ultra"}
+{"id": "F25", "juiz": "d1.2 (Liquid direto)", "p": 0.22633109013372943, "s": 1.0424658000010822, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.2"}
+{"id": "F25", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.34126431204306995, "s": 1.0646737999995821, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F25", "juiz": "d1.1 (Liquid direto)", "p": 0.2096894081936793, "s": 1.3790698000011616, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F25", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.34126431204306995, "s": 0.9609717999992426, "tokens": 106, "custo": 4.452e-06, "modelo": "d1.2-ultra"}
+{"id": "F25", "juiz": "d1.2 (OpenRouter)", "p": 0.2344016895781196, "s": 1.107455100001971, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F26", "juiz": "d1.2 (Liquid direto)", "p": 0.21845902439632273, "s": 0.9900271000005887, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.2"}
+{"id": "F26", "juiz": "d1.2 (OpenRouter)", "p": 0.1960384232165939, "s": 1.1315736999968067, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F26", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.14367565322452602, "s": 1.0737265999996453, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F26", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.14367565322452602, "s": 1.6230522000005294, "tokens": 102, "custo": 4.284e-06, "modelo": "d1.2-ultra"}
+{"id": "F26", "juiz": "d1.1 (Liquid direto)", "p": 0.06258096475674631, "s": 0.9414168000002974, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F27", "juiz": "d1.1 (Liquid direto)", "p": 0.43404662749112455, "s": 0.9940525999991223, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F27", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.5351738625499749, "s": 1.0875973999973212, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F27", "juiz": "d1.2 (OpenRouter)", "p": 0.654150670662751, "s": 1.1790904000008595, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F27", "juiz": "d1.2 (Liquid direto)", "p": 0.6226385869145169, "s": 1.125697700001183, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.2"}
+{"id": "F27", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.5351738625499749, "s": 1.4496142999996664, "tokens": 102, "custo": 4.284e-06, "modelo": "d1.2-ultra"}
+{"id": "F28", "juiz": "d1.2 (Liquid direto)", "p": 0.15059934327123425, "s": 1.2826188999970327, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.2"}
+{"id": "F28", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.07658114201030358, "s": 1.4359894000008353, "tokens": 95, "custo": 3.99e-06, "modelo": "d1.2-ultra"}
+{"id": "F28", "juiz": "d1.2 (OpenRouter)", "p": 0.11419642241872174, "s": 1.1047705999990285, "tokens": 95, "custo": 1.9e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F28", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.07658114201030358, "s": 1.0711231000022963, "tokens": 95, "custo": 3.99e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F28", "juiz": "d1.1 (Liquid direto)", "p": 0.032401745348621065, "s": 1.0287344999997003, "tokens": 95, "custo": 1.9e-06, "modelo": "d1.1"}
+{"id": "F29", "juiz": "d1.2 (Liquid direto)", "p": 0.6941153518483585, "s": 0.9605025999990175, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.2"}
+{"id": "F29", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.856324357799197, "s": 1.591576899998472, "tokens": 94, "custo": 3.948e-06, "modelo": "d1.2-ultra"}
+{"id": "F29", "juiz": "d1.2 (OpenRouter)", "p": 0.6643763804137924, "s": 1.0657747000004747, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F29", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.856324357799197, "s": 1.083948599996802, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F29", "juiz": "d1.1 (Liquid direto)", "p": 0.7327004511062213, "s": 1.0173180000019784, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F30", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.856324357799197, "s": 1.0089217000022472, "tokens": 94, "custo": 3.948e-06, "modelo": "d1.2-ultra"}
+{"id": "F30", "juiz": "d1.2 (OpenRouter)", "p": 0.7402079379821797, "s": 1.144255900002463, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F30", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.856324357799197, "s": 1.1200473999997484, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F30", "juiz": "d1.1 (Liquid direto)", "p": 0.5789420041805765, "s": 1.0325276000003214, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F30", "juiz": "d1.2 (Liquid direto)", "p": 0.765598290944021, "s": 1.3861399000015808, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.2"}
+{"id": "F31", "juiz": "d1.2 (Liquid direto)", "p": 0.27767940973675054, "s": 0.943885799999407, "tokens": 113, "custo": 2.26e-06, "modelo": "d1.2"}
+{"id": "F31", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.3307840261199913, "s": 1.0788393999973778, "tokens": 113, "custo": 4.746e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F31", "juiz": "d1.2 (OpenRouter)", "p": 0.2869020568443316, "s": 1.1699741000011272, "tokens": 113, "custo": 2.26e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F31", "juiz": "d1.1 (Liquid direto)", "p": 0.19264061289380763, "s": 1.5007162999972934, "tokens": 113, "custo": 2.26e-06, "modelo": "d1.1"}
+{"id": "F31", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3307840261199913, "s": 1.1253715000020748, "tokens": 113, "custo": 4.746e-06, "modelo": "d1.2-ultra"}
+{"id": "F32", "juiz": "d1.2 (OpenRouter)", "p": 0.694115356457275, "s": 1.1447661000020162, "tokens": 98, "custo": 1.96e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F32", "juiz": "d1.1 (Liquid direto)", "p": 0.5918222439742138, "s": 0.9330778999974427, "tokens": 98, "custo": 1.96e-06, "modelo": "d1.1"}
+{"id": "F32", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.877932475080094, "s": 0.9771137999996427, "tokens": 98, "custo": 4.116e-06, "modelo": "d1.2-ultra"}
+{"id": "F32", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.877932475080094, "s": 1.0657167000026675, "tokens": 98, "custo": 4.116e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F32", "juiz": "d1.2 (Liquid direto)", "p": 0.6226385971152885, "s": 1.2544802999982494, "tokens": 98, "custo": 1.96e-06, "modelo": "d1.2"}
+{"id": "F33", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8876488837402042, "s": 1.0945680000004359, "tokens": 114, "custo": 4.788e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F33", "juiz": "d1.1 (Liquid direto)", "p": 0.8233318649110404, "s": 0.9654925999966508, "tokens": 114, "custo": 2.28e-06, "modelo": "d1.1"}
+{"id": "F33", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8876488837402042, "s": 1.5247922999988077, "tokens": 114, "custo": 4.788e-06, "modelo": "d1.2-ultra"}
+{"id": "F33", "juiz": "d1.2 (Liquid direto)", "p": 0.6541506804848483, "s": 1.0898761999997078, "tokens": 114, "custo": 2.28e-06, "modelo": "d1.2"}
+{"id": "F33", "juiz": "d1.2 (OpenRouter)", "p": 0.7223205815553545, "s": 1.1282056999989436, "tokens": 114, "custo": 2.28e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F34", "juiz": "d1.2 (Liquid direto)", "p": 0.1505993349408234, "s": 1.0369356000010157, "tokens": 100, "custo": 2e-06, "modelo": "d1.2"}
+{"id": "F34", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.049289764239462415, "s": 1.3241870000019844, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F34", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.049289764239462415, "s": 0.9214323999985936, "tokens": 100, "custo": 4.2e-06, "modelo": "d1.2-ultra"}
+{"id": "F34", "juiz": "d1.2 (OpenRouter)", "p": 0.08934012904220208, "s": 1.2892373000031512, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F34", "juiz": "d1.1 (Liquid direto)", "p": 0.14131070450745079, "s": 1.0358837000021595, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F35", "juiz": "d1.2 (Liquid direto)", "p": 0.3881158821967641, "s": 0.9727385000005597, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.2"}
+{"id": "F35", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.2534209165163799, "s": 1.0384195999977237, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F35", "juiz": "d1.2 (OpenRouter)", "p": 0.25979205784346776, "s": 1.103737600002205, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F35", "juiz": "d1.1 (Liquid direto)", "p": 0.5265110869328326, "s": 0.9968291000004683, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F35", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.2534209165163799, "s": 1.0498475999993389, "tokens": 117, "custo": 4.914e-06, "modelo": "d1.2-ultra"}
+{"id": "F36", "juiz": "d1.2 (OpenRouter)", "p": 0.6226385971152885, "s": 1.0624506000021938, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F36", "juiz": "d1.1 (Liquid direto)", "p": 0.7003890536086564, "s": 1.083715899996605, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F36", "juiz": "d1.2 (Liquid direto)", "p": 0.6118841074929644, "s": 0.9937002999977267, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.2"}
+{"id": "F36", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8316248184542661, "s": 1.0718390000001818, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F36", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8316248184542661, "s": 1.1985695000003034, "tokens": 92, "custo": 3.864e-06, "modelo": "d1.2-ultra"}
+{"id": "F37", "juiz": "d1.2 (Liquid direto)", "p": 0.24266985060345403, "s": 1.0356104999991658, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.2"}
+{"id": "F37", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.05388353265287881, "s": 1.0949599999985367, "tokens": 92, "custo": 3.864e-06, "modelo": "d1.2-ultra"}
+{"id": "F37", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.05388353265287881, "s": 2.221734300001117, "tokens": 92, "custo": 3.864e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F37", "juiz": "d1.2 (OpenRouter)", "p": 0.11419642022288813, "s": 1.0645691000027, "tokens": 92, "custo": 1.84e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F37", "juiz": "d1.1 (Liquid direto)", "p": 0.08825213366934624, "s": 1.1194771000009496, "tokens": 92, "custo": 1.84e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "d1.1 (Liquid direto)", "p": 0.7327004411935709, "s": 1.0261008000015863, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F38", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8966829131110877, "s": 0.9708239000028698, "tokens": 97, "custo": 4.074e-06, "modelo": "d1.2-ultra"}
+{"id": "F38", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8966829131110877, "s": 1.06418610000037, "tokens": 97, "custo": 4.074e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F38", "juiz": "d1.2 (Liquid direto)", "p": 0.6226385767137452, "s": 1.0409891000017524, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.2"}
+{"id": "F38", "juiz": "d1.2 (OpenRouter)", "p": 0.5566604458146516, "s": 1.1393943000002764, "tokens": 97, "custo": 1.94e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F39", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.1436756477126644, "s": 1.1332056999999622, "tokens": 102, "custo": 4.284e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F39", "juiz": "d1.1 (Liquid direto)", "p": 0.04630469554045781, "s": 1.083761300000333, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.1"}
+{"id": "F39", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.1436756477126644, "s": 0.9739638999999443, "tokens": 102, "custo": 4.284e-06, "modelo": "d1.2-ultra"}
+{"id": "F39", "juiz": "d1.2 (Liquid direto)", "p": 0.19603843690163178, "s": 0.9718828000004578, "tokens": 102, "custo": 2.04e-06, "modelo": "d1.2"}
+{"id": "F39", "juiz": "d1.2 (OpenRouter)", "p": 0.18208443002163047, "s": 1.4295630999986315, "tokens": 102, "custo": 2.04e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F40", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.6795309667206368, "s": 1.5005300999982865, "tokens": 105, "custo": 4.41e-06, "modelo": "d1.2-ultra"}
+{"id": "F40", "juiz": "d1.2 (OpenRouter)", "p": 0.48862099125815583, "s": 1.1712488000011945, "tokens": 105, "custo": 2.1e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F40", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.69963691644536, "s": 1.1163355999997293, "tokens": 105, "custo": 4.41e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F40", "juiz": "d1.2 (Liquid direto)", "p": 0.3667263408689631, "s": 1.0723517000005813, "tokens": 105, "custo": 2.1e-06, "modelo": "d1.2"}
+{"id": "F40", "juiz": "d1.1 (Liquid direto)", "p": 0.267299558806429, "s": 0.9449635999990278, "tokens": 105, "custo": 2.1e-06, "modelo": "d1.1"}
+{"id": "F41", "juiz": "d1.2 (OpenRouter)", "p": 0.7573301414176908, "s": 1.1001168000002508, "tokens": 115, "custo": 2.3e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F41", "juiz": "d1.2 (Liquid direto)", "p": 0.8110373247845993, "s": 0.9903618999996979, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.2"}
+{"id": "F41", "juiz": "d1.1 (Liquid direto)", "p": 0.807359367426429, "s": 1.1018223999999464, "tokens": 115, "custo": 2.3e-06, "modelo": "d1.1"}
+{"id": "F41", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.6263844387516974, "s": 1.4317570999992313, "tokens": 115, "custo": 4.83e-06, "modelo": "d1.2-ultra"}
+{"id": "F41", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.6263844387516974, "s": 1.35882870000205, "tokens": 115, "custo": 4.83e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F42", "juiz": "d1.2 (OpenRouter)", "p": 0.27767940538280317, "s": 1.1213412999968568, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F42", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.37361558221706304, "s": 0.9453367999994953, "tokens": 100, "custo": 4.2e-06, "modelo": "d1.2-ultra"}
+{"id": "F42", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.37361558221706304, "s": 1.1171418000012636, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F42", "juiz": "d1.1 (Liquid direto)", "p": 0.21861997001639716, "s": 1.0914021999997203, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F42", "juiz": "d1.2 (Liquid direto)", "p": 0.36672634086896316, "s": 0.9575708000011218, "tokens": 100, "custo": 2e-06, "modelo": "d1.2"}
+{"id": "F43", "juiz": "d1.1 (Liquid direto)", "p": 0.11206635277125214, "s": 0.9666419999994105, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F43", "juiz": "d1.2 (Liquid direto)", "p": 0.27767941409069796, "s": 1.0326339999992342, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.2"}
+{"id": "F43", "juiz": "d1.2 (OpenRouter)", "p": 0.21078618338436284, "s": 1.1038227000026382, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F43", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.26241119023060766, "s": 2.277340100001311, "tokens": 101, "custo": 4.242e-06, "modelo": "d1.2-ultra"}
+{"id": "F43", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.2360602424068994, "s": 1.045472099998733, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F44", "juiz": "d1.2 (Liquid direto)", "p": 0.20331272973104447, "s": 0.9983551999976044, "tokens": 103, "custo": 2.06e-06, "modelo": "d1.2"}
+{"id": "F44", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.11235111179197815, "s": 1.0560033999972802, "tokens": 103, "custo": 4.326e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F44", "juiz": "d1.1 (Liquid direto)", "p": 0.056635698515842006, "s": 1.1447711999971943, "tokens": 103, "custo": 2.06e-06, "modelo": "d1.1"}
+{"id": "F44", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.11235111179197815, "s": 0.9804374000013922, "tokens": 103, "custo": 4.326e-06, "modelo": "d1.2-ultra"}
+{"id": "F44", "juiz": "d1.2 (OpenRouter)", "p": 0.1448681190152194, "s": 1.151847999997699, "tokens": 103, "custo": 2.06e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F45", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.9009545290381459, "s": 0.9263011999973969, "tokens": 101, "custo": 4.242e-06, "modelo": "d1.2-ultra"}
+{"id": "F45", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.9009545290381459, "s": 1.0702893999987282, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F45", "juiz": "d1.2 (Liquid direto)", "p": 0.8310849819521394, "s": 1.0087533999976586, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.2"}
+{"id": "F45", "juiz": "d1.1 (Liquid direto)", "p": 0.7114061421208372, "s": 0.950279300002876, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F45", "juiz": "d1.2 (OpenRouter)", "p": 0.8039615665196277, "s": 1.0873162999996566, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F46", "juiz": "d1.2 (Liquid direto)", "p": 0.21078619421783304, "s": 0.992716400000063, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.2"}
+{"id": "F46", "juiz": "d1.2 (OpenRouter)", "p": 0.2033127367632565, "s": 1.1639123000022664, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F46", "juiz": "d1.1 (Liquid direto)", "p": 0.06910461439304591, "s": 1.005576999999903, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F46", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.07658113329805843, "s": 0.9441953000023204, "tokens": 101, "custo": 4.242e-06, "modelo": "d1.2-ultra"}
+{"id": "F46", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.07658113329805843, "s": 1.073376600001211, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F47", "juiz": "d1.1 (Liquid direto)", "p": 0.28859386827046074, "s": 0.9456603000035102, "tokens": 123, "custo": 2.46e-06, "modelo": "d1.1"}
+{"id": "F47", "juiz": "d1.2 (Liquid direto)", "p": 0.3989804466997672, "s": 0.964500300000509, "tokens": 123, "custo": 2.46e-06, "modelo": "d1.2"}
+{"id": "F47", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.5234707766656265, "s": 1.2087692000022798, "tokens": 123, "custo": 5.166e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F47", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.5234707766656265, "s": 1.3443546000016795, "tokens": 123, "custo": 5.166e-06, "modelo": "d1.2-ultra"}
+{"id": "F47", "juiz": "d1.2 (OpenRouter)", "p": 0.3881158821967641, "s": 1.0399490999989212, "tokens": 123, "custo": 2.46e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F48", "juiz": "d1.1 (Liquid direto)", "p": 0.19264060895785512, "s": 0.93559859999732, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.1"}
+{"id": "F48", "juiz": "d1.2 (OpenRouter)", "p": 0.3356236292668952, "s": 1.197684399998252, "tokens": 109, "custo": 2.18e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F48", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.7804608511036055, "s": 1.1311663999986195, "tokens": 109, "custo": 4.578e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F48", "juiz": "d1.2 (Liquid direto)", "p": 0.3773614130854831, "s": 1.2010455999989063, "tokens": 109, "custo": 2.18e-06, "modelo": "d1.2"}
+{"id": "F48", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.7804608511036055, "s": 0.9979741999995895, "tokens": 109, "custo": 4.578e-06, "modelo": "d1.2-ultra"}
+{"id": "F49", "juiz": "d1.2 (Liquid direto)", "p": 0.21845904663364638, "s": 0.9451355000019248, "tokens": 100, "custo": 2e-06, "modelo": "d1.2"}
+{"id": "F49", "juiz": "d1.1 (Liquid direto)", "p": 0.0625809588183238, "s": 0.9484482999978354, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F49", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.16837518781883618, "s": 0.9508415999989666, "tokens": 100, "custo": 4.2e-06, "modelo": "d1.2-ultra"}
+{"id": "F49", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.16837518781883618, "s": 1.0450887999977567, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F49", "juiz": "d1.2 (OpenRouter)", "p": 0.18896265525461595, "s": 1.0983312999996997, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F50", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.6896734984674865, "s": 1.1639130000003206, "tokens": 101, "custo": 4.242e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F50", "juiz": "d1.2 (OpenRouter)", "p": 0.6118841178032359, "s": 1.192358399999648, "tokens": 101, "custo": 2.02e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F50", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.6896734984674865, "s": 1.2046521000011126, "tokens": 101, "custo": 4.242e-06, "modelo": "d1.2-ultra"}
+{"id": "F50", "juiz": "d1.2 (Liquid direto)", "p": 0.6226385767137451, "s": 1.0315219000003708, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.2"}
+{"id": "F50", "juiz": "d1.1 (Liquid direto)", "p": 0.7721787579011407, "s": 0.9995592999985092, "tokens": 101, "custo": 2.02e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.3204689942553311, "s": 1.055760300001566, "tokens": 106, "custo": 4.452e-06, "modelo": "d1.2-ultra"}
+{"id": "F51", "juiz": "d1.2 (OpenRouter)", "p": 0.21845903551498438, "s": 1.1508540000031644, "tokens": 106, "custo": 2.12e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F51", "juiz": "d1.1 (Liquid direto)", "p": 0.14787396627104263, "s": 1.3798733000003267, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.1"}
+{"id": "F51", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.34126431204306995, "s": 1.1212625000007392, "tokens": 106, "custo": 4.452e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F51", "juiz": "d1.2 (Liquid direto)", "p": 0.20331274379546874, "s": 1.0276239000013447, "tokens": 106, "custo": 2.12e-06, "modelo": "d1.2"}
+{"id": "F52", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8443738700013685, "s": 0.9741209999992861, "tokens": 97, "custo": 4.074e-06, "modelo": "d1.2-ultra"}
+{"id": "F52", "juiz": "d1.2 (Liquid direto)", "p": 0.30588464815164157, "s": 1.1359760999985156, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.2"}
+{"id": "F52", "juiz": "d1.1 (Liquid direto)", "p": 0.3580606590236548, "s": 0.9288754999979574, "tokens": 97, "custo": 1.94e-06, "modelo": "d1.1"}
+{"id": "F52", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8443738700013684, "s": 2.198598899998615, "tokens": 97, "custo": 4.074e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F52", "juiz": "d1.2 (OpenRouter)", "p": 0.36672634086896316, "s": 1.0688706999972055, "tokens": 97, "custo": 1.94e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F53", "juiz": "d1.2 (Liquid direto)", "p": 0.3058846343248922, "s": 1.064444799998455, "tokens": 100, "custo": 2e-06, "modelo": "d1.2"}
+{"id": "F53", "juiz": "d1.1 (Liquid direto)", "p": 0.3108648428013962, "s": 1.0271866000002774, "tokens": 100, "custo": 2e-06, "modelo": "d1.1"}
+{"id": "F53", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.6692159540456726, "s": 1.031848100003117, "tokens": 100, "custo": 4.2e-06, "modelo": "d1.2-ultra"}
+{"id": "F53", "juiz": "d1.2 (OpenRouter)", "p": 0.3255498150521033, "s": 1.138255099998787, "tokens": 100, "custo": 2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F53", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.6692159540456726, "s": 1.1330646999995224, "tokens": 100, "custo": 4.2e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F54", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.8109597272866063, "s": 1.0366178000003856, "tokens": 99, "custo": 4.158e-06, "modelo": "d1.2-ultra"}
+{"id": "F54", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.8109597272866063, "s": 1.5114468000028864, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F54", "juiz": "d1.1 (Liquid direto)", "p": 0.4471264721755042, "s": 0.9027516999994987, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F54", "juiz": "d1.2 (OpenRouter)", "p": 0.43213557568131217, "s": 1.1862500999995973, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F54", "juiz": "d1.2 (Liquid direto)", "p": 0.37736140288471154, "s": 0.9795205000009446, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.2"}
+{"id": "F55", "juiz": "d1.1 (Liquid direto)", "p": 0.20102980038242965, "s": 1.072620499999175, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.1"}
+{"id": "F55", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.5, "s": 1.2160813000009512, "tokens": 94, "custo": 3.948e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F55", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.4531616554027129, "s": 1.170101199997589, "tokens": 94, "custo": 3.948e-06, "modelo": "d1.2-ultra"}
+{"id": "F55", "juiz": "d1.2 (OpenRouter)", "p": 0.4210005897590659, "s": 1.1066941999997653, "tokens": 94, "custo": 1.88e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F55", "juiz": "d1.2 (Liquid direto)", "p": 0.4210005897590658, "s": 1.0312678999980562, "tokens": 94, "custo": 1.88e-06, "modelo": "d1.2"}
+{"id": "F56", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.9050682106686462, "s": 1.1217810999987705, "tokens": 117, "custo": 4.914e-06, "modelo": "d1.2-ultra"}
+{"id": "F56", "juiz": "d1.2 (Liquid direto)", "p": 0.6843652722211185, "s": 0.9526153000006161, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.2"}
+{"id": "F56", "juiz": "d1.2 (OpenRouter)", "p": 0.6226385869145169, "s": 1.0636933000023419, "tokens": 117, "custo": 2.34e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F56", "juiz": "d1.1 (Liquid direto)", "p": 0.8233318722730815, "s": 1.0290788000020257, "tokens": 117, "custo": 2.34e-06, "modelo": "d1.1"}
+{"id": "F56", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.9050682106686462, "s": 1.1556915000001027, "tokens": 117, "custo": 4.914e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F57", "juiz": "d1.2 (OpenRouter)", "p": 0.18208444941896532, "s": 1.1512879999972938, "tokens": 99, "custo": 1.98e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F57", "juiz": "d1.1 (Liquid direto)", "p": 0.05386597196023599, "s": 1.470477299997583, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.1"}
+{"id": "F57", "juiz": "d1.2 (Liquid direto)", "p": 0.21078619421783304, "s": 1.0189958999981172, "tokens": 99, "custo": 1.98e-06, "modelo": "d1.2"}
+{"id": "F57", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.09097169772328172, "s": 1.7309263999995892, "tokens": 99, "custo": 4.158e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F57", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.09097169772328172, "s": 1.0924663999976474, "tokens": 99, "custo": 4.158e-06, "modelo": "d1.2-ultra"}
+{"id": "F58", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.08349506540985557, "s": 1.0741785000027448, "tokens": 118, "custo": 4.956e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F58", "juiz": "d1.1 (Liquid direto)", "p": 0.051224368909518286, "s": 1.0217171999975108, "tokens": 118, "custo": 2.36e-06, "modelo": "d1.1"}
+{"id": "F58", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.08349506540985557, "s": 1.635493999998289, "tokens": 118, "custo": 4.956e-06, "modelo": "d1.2-ultra"}
+{"id": "F58", "juiz": "d1.2 (Liquid direto)", "p": 0.17540244068034963, "s": 1.0035038999994867, "tokens": 118, "custo": 2.36e-06, "modelo": "d1.2"}
+{"id": "F58", "juiz": "d1.2 (OpenRouter)", "p": 0.18208445588474395, "s": 1.172898000000714, "tokens": 118, "custo": 2.36e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F59", "juiz": "d1.2 (OpenRouter)", "p": 0.20331274379546874, "s": 1.127491100000043, "tokens": 110, "custo": 2.2e-06, "modelo": "liquid/d1.2-20261116"}
+{"id": "F59", "juiz": "d1.2-ultra (Liquid direto)", "p": 0.1123511073241607, "s": 1.0781562000011036, "tokens": 110, "custo": 4.62e-06, "modelo": "d1.2-ultra"}
+{"id": "F59", "juiz": "d1.2-ultra (OpenRouter)", "p": 0.1123511073241607, "s": 1.4777044000002206, "tokens": 110, "custo": 4.62e-06, "modelo": "liquid/d1.2-ultra-20261116"}
+{"id": "F59", "juiz": "d1.1 (Liquid direto)", "p": 0.0926168530579438, "s": 0.9574257000022044, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.1"}
+{"id": "F59", "juiz": "d1.2 (Liquid direto)", "p": 0.2107861869955195, "s": 1.0593321999986074, "tokens": 110, "custo": 2.2e-06, "modelo": "d1.2"}

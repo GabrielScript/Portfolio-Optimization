@@ -25,6 +25,7 @@ Streamlit app and the paper guards never import PennyLane or Torch.
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, replace
 from typing import Protocol
@@ -294,9 +295,30 @@ class QMLPredictor:
             raise ValueError(f"{ano}: only {int(mascara.sum())} samples with realized labels before the year")
         return np.flatnonzero(mascara)
 
+    @staticmethod
+    def block_of(ano: int) -> int:
+        """The first year of the two-year block that serves ``ano``: one circuit per block keeps the labels causal."""
+        return ano - ano % 2
+
+    def training_fingerprint(self, ano: int) -> str:
+        """SHA-256 of the samples and labels the block of ``ano`` trains on: a revised past return changes it."""
+        linhas = self._training_rows(self.block_of(ano))
+        resumo = hashlib.sha256()
+        resumo.update(np.ascontiguousarray(self.panel.x[linhas], dtype=np.float64).tobytes())
+        resumo.update(np.ascontiguousarray(self.panel.y[linhas], dtype=np.float64).tobytes())
+        return resumo.hexdigest()
+
+    def new_model(self) -> QuantumDirectionalModel:
+        """An untrained circuit of this predictor's configuration, to load saved weights into."""
+        return QuantumDirectionalModel(self.config)
+
+    def install_model(self, ano: int, modelo: QuantumDirectionalModel) -> None:
+        """Serve the block of ``ano`` with ``modelo`` (e.g. one loaded from disk) instead of training it."""
+        self._models[self.block_of(ano)] = modelo
+
     def model_for(self, ano: int) -> QuantumDirectionalModel:
         """Train (once) the model that serves ``ano`` and the next year; labels realized before the block's 1 January."""
-        chave = ano - ano % 2                     # one circuit per two-year block: the labels stay causal for both years
+        chave = self.block_of(ano)
         if chave not in self._models:
             linhas = self._training_rows(chave)
             if self.config.init_seed is not None:

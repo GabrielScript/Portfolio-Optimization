@@ -61,6 +61,49 @@ def test_training_boundary_uses_only_realized_labels() -> None:
     assert (predictor.panel.label_dates[linhas] < pd.Timestamp("2021-01-01")).all()
 
 
+def test_training_fingerprint_moves_only_with_the_block_training_data() -> None:
+    """The holdout's frozen-model check: a revised return inside the block's training window changes the
+    fingerprint; one after the cut does not; the two years of a block share it."""
+    config = QMLConfig(epochs=2, sample_every=63, horizon=21, seed=0)
+    ret = _retornos(n=1_500)
+    base = QMLPredictor(ret, config).training_fingerprint(2022)
+    assert QMLPredictor(ret.copy(), config).training_fingerprint(2023) == base
+    assert QMLPredictor.block_of(2023) == QMLPredictor.block_of(2022) == 2022
+
+    depois = ret.copy()
+    depois.loc["2023-03-01":] *= -5.0
+    assert QMLPredictor(depois, config).training_fingerprint(2022) == base
+
+    revisto = ret.copy()
+    revisto.loc["2019-06-03"] *= 2.0
+    assert QMLPredictor(revisto, config).training_fingerprint(2022) != base
+
+
+def test_an_installed_model_serves_its_block_without_training() -> None:
+    """A model loaded from disk replaces the training for both years of its block."""
+    from core.qml import QuantumDirectionalModel
+
+    config = QMLConfig(epochs=2, sample_every=63, horizon=21, seed=0)
+    predictor = QMLPredictor(_retornos(n=1_500), config)
+    modelo = QuantumDirectionalModel(config)
+    predictor.install_model(2023, modelo)
+    assert predictor.model_for(2022) is modelo
+    assert predictor.model_for(2023) is modelo
+
+
+def test_new_model_is_an_untrained_circuit_of_the_predictor_configuration() -> None:
+    """Saved weights are loaded into ``new_model()``; it must match the configuration the block trains with."""
+    from core.qml import QuantumDirectionalModel
+
+    config = QMLConfig(epochs=2, sample_every=63, horizon=21, seed=0, n_layers=3)
+    predictor = QMLPredictor(_retornos(n=1_500), config)
+    modelo = predictor.new_model()
+    assert isinstance(modelo, QuantumDirectionalModel)
+    assert modelo.config is config
+    treinado = predictor.model_for(2022)
+    modelo.load_state_dict(treinado.state_dict())
+
+
 def test_quantum_model_learns_a_simple_directional_signal() -> None:
     torch.manual_seed(0)
     rng = np.random.default_rng(0)

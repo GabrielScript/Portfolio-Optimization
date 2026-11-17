@@ -61,6 +61,15 @@ def test_rebalancing_charges_only_on_the_turnover() -> None:
     assert valorizar(novas, precos) == pytest.approx(1_000.0 * (1 - 10 / 10_000))
 
 
+def test_rebalancing_charges_the_sale_of_a_name_that_leaves_the_target() -> None:
+    """Review F1: a name sold in full is turnover too. Half in each name, then all in one: turnover 1.0, not 0.5."""
+    precos = pd.Series({"AAAA3": 10.0, "BBBB3": 20.0})
+    cotas = comprar(pd.Series({"AAAA3": 0.5, "BBBB3": 0.5}), precos, 1_000.0, custo_bps=0.0)
+    novas, giro = rebalancear(cotas, pd.Series({"AAAA3": 1.0}), precos, custo_bps=10.0)
+    assert giro == pytest.approx(1.0)
+    assert valorizar(novas, precos) == pytest.approx(1_000.0 * (1 - 10 / 10_000))
+
+
 def test_holdings_between_rebalances_do_not_depend_on_how_often_the_ledger_runs() -> None:
     """Shares come from the last rebalance; rebuilding them at the latest mark would rebalance for free."""
     from scripts.qml_holdout import cotas_em_carteira
@@ -160,6 +169,232 @@ def test_each_account_writes_its_own_ledger(tmp_path, monkeypatch) -> None:
         assert caminho.parent == tmp_path / "conta"
     ordens = pd.read_csv(conta.ordens)
     assert list(ordens.columns) == ["data", "ticker", "peso"]
+
+
+def _conta_aberta(tmp_path, monkeypatch, precos, pesos_fn, passo):
+    """An account opened on the first session at 50/50, then run with ``pesos_fn`` and a ``passo``-session step."""
+    import json
+
+    from scripts import qml_holdout
+
+    abertura = {"pesos": lambda dia: pd.Series({"AAAA3": 0.5, "BBBB3": 0.5})}
+
+    def fake_contexto(lago, conta=qml_holdout.CONTA_FIXA):
+        return qml_holdout.Contexto(precos, None, None, lambda dia: abertura["pesos"](dia), None, 1260)
+
+    monkeypatch.setattr(qml_holdout, "montar_contexto", fake_contexto)
+    conta = qml_holdout.Conta(tmp_path / "conta", "test account", inicio=precos.index[0])
+    qml_holdout.iniciar(None, conta=conta)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    estado["passo"] = passo
+    conta.estado.write_text(json.dumps(estado), encoding="utf-8")
+    abertura["pesos"] = pesos_fn
+    return conta
+
+
+def test_a_refused_rebalance_keeps_the_book_as_the_engine_does(tmp_path, monkeypatch) -> None:
+    """Review F2: a refused or failed target must not stop the ledger; the engine keeps the current book."""
+    import json
+
+    from core.backtest import CarteiraRecusada
+    from scripts import qml_holdout
+
+    datas = pd.bdate_range("2026-11-09", periods=3)
+    precos = pd.DataFrame({"AAAA3": [10.0, 20.0, 20.0], "BBBB3": [10.0, 10.0, 5.0]}, index=datas)
+
+    def recusa(dia):
+        raise CarteiraRecusada([])
+
+    conta = _conta_aberta(tmp_path, monkeypatch, precos, recusa, passo=1)
+    qml_holdout.rodar(None, conta=conta)
+
+    marcas = pd.read_csv(conta.marcas, parse_dates=["data"]).set_index("data")["valor"]
+    investido = 10_000.0 * (1 - 10 / 10_000)                   # the opening buy paid 10 bps
+    assert marcas.loc[datas[1]] == pytest.approx(investido * 1.5)   # held, no cost on a kept book
+    assert marcas.loc[datas[2]] == pytest.approx(investido * 1.25)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    assert estado["ultimo_rebalanceio"] == str(datas[2].date())    # the step moves on, as in the engine
+    assert len(estado["falhas"]) == 2
+
+
+def _conta_com_lago_movel(tmp_path, monkeypatch, precos):
+    """An account opened 50/50 on the first session; ``lago['ate']`` sets how many sessions the lake shows,
+    ``lago['alvo']`` the target by date. Returns (conta, lago)."""
+    from scripts import qml_holdout
+
+    lago = {"ate": 1, "alvo": {}}
+
+    def fake_contexto(lago_, conta=qml_holdout.CONTA_FIXA):
+        return qml_holdout.Contexto(precos.iloc[:lago["ate"]], None, None,
+                                    lambda dia: lago["alvo"].get(dia, pd.Series({"AAAA3": 0.5, "BBBB3": 0.5})),
+                                    None, 1260)
+
+    monkeypatch.setattr(qml_holdout, "montar_contexto", fake_contexto)
+    conta = qml_holdout.Conta(tmp_path / "conta", "test account", inicio=precos.index[0])
+    qml_holdout.iniciar(None, conta=conta)
+    return conta, lago
+
+
+def test_a_stale_estado_does_not_rebalance_twice(tmp_path, monkeypatch) -> None:
+    """Review F8: a crash after a rebalance row left ``ultimo_rebalanceio`` behind; the next run must take the last
+    rebalance from the orders, not rebalance again (with cost) the following day."""
+    import json
+
+    from scripts import qml_holdout
+
+    datas = pd.bdate_range("2026-11-09", periods=3)
+    precos = pd.DataFrame({"AAAA3": [10.0, 10.0, 10.0], "BBBB3": [10.0, 10.0, 10.0]}, index=datas)
+    conta, lago = _conta_com_lago_movel(tmp_path, monkeypatch, precos)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    estado["passo"] = 1
+    conta.estado.write_text(json.dumps(estado), encoding="utf-8")
+    lago["alvo"] = {datas[1]: pd.Series({"AAAA3": 1.0}), datas[2]: pd.Series({"BBBB3": 1.0})}
+    lago["ate"] = 2
+    qml_holdout.rodar(None, conta=conta)                      # rebalances on datas[1]
+
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    estado["ultimo_rebalanceio"] = str(datas[0].date())       # what the crash left behind
+    estado["passo"] = 2
+    conta.estado.write_text(json.dumps(estado), encoding="utf-8")
+    lago["ate"] = 3
+    qml_holdout.rodar(None, conta=conta)                      # datas[2] is 1 session after datas[1]: not due
+
+    ordens = pd.read_csv(conta.ordens, parse_dates=["data"])
+    assert ordens["data"].max() == datas[1]
+
+
+def test_a_crash_inside_a_run_leaves_the_ledger_as_it_was(tmp_path, monkeypatch) -> None:
+    """Review F8: a run lands whole or not at all; half a run (an order without its mark) breaks every later run."""
+    import json
+
+    from scripts import qml_holdout
+
+    datas = pd.bdate_range("2026-11-09", periods=3)
+    precos = pd.DataFrame({"AAAA3": [10.0, 10.0, 10.0], "BBBB3": [10.0, 10.0, 10.0]}, index=datas)
+    conta, lago = _conta_com_lago_movel(tmp_path, monkeypatch, precos)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    estado["passo"] = 1
+    conta.estado.write_text(json.dumps(estado), encoding="utf-8")
+
+    class Quebra(dict):
+        def get(self, dia, padrao=None):
+            if dia == datas[2]:
+                raise RuntimeError("the process died here")
+            return pd.Series({"AAAA3": 1.0})
+
+    lago["alvo"] = Quebra()
+    lago["ate"] = 3
+    antes = {caminho: caminho.read_bytes() for caminho in (conta.estado, conta.ordens, conta.marcas)}
+    with pytest.raises(RuntimeError):
+        qml_holdout.rodar(None, conta=conta)
+    assert {caminho: caminho.read_bytes() for caminho in antes} == antes
+
+
+class _PredictorDeTeste:
+    """Stands in for QMLPredictor: counts trainings and records the installed model."""
+
+    def __init__(self, impressao: str) -> None:
+        import torch
+
+        self.config = None
+        self.impressao = impressao
+        self.treinos = 0
+        self.instalado = None
+        self.new_model = lambda: torch.nn.Linear(2, 1, dtype=torch.float64)
+
+    block_of = staticmethod(lambda ano: ano - ano % 2)
+
+    def training_fingerprint(self, ano):
+        return self.impressao
+
+    def model_for(self, ano):
+        self.treinos += 1
+        self.instalado = self.new_model()
+        return self.instalado
+
+    def install_model(self, ano, modelo):
+        self.instalado = modelo
+
+
+def test_a_block_model_is_trained_once_then_loaded_from_the_ledger(tmp_path) -> None:
+    """Review F4: the frozen model is a file. The first rebalance of a block trains and saves it; every later
+    run loads that file instead of retraining on whatever the lake holds then."""
+    import torch
+
+    from scripts.qml_holdout import congelar_bloco
+
+    primeiro = _PredictorDeTeste("abc")
+    assert congelar_bloco(primeiro, 2027, tmp_path) is None
+    assert primeiro.treinos == 1
+    assert (tmp_path / "modelo_2026.pt").exists() and (tmp_path / "modelo_2026.json").exists()
+
+    depois = _PredictorDeTeste("abc")
+    assert congelar_bloco(depois, 2026, tmp_path) is None
+    assert depois.treinos == 0
+    for nome, valor in primeiro.instalado.state_dict().items():
+        assert torch.equal(depois.instalado.state_dict()[nome], valor)
+
+
+def test_a_revised_lake_is_reported_and_the_saved_model_still_serves(tmp_path) -> None:
+    """Review F4: drift in the training data is visible, and it does not swap the frozen model."""
+    from scripts.qml_holdout import congelar_bloco
+
+    primeiro = _PredictorDeTeste("abc")
+    congelar_bloco(primeiro, 2026, tmp_path)
+    revisto = _PredictorDeTeste("xyz")
+    aviso = congelar_bloco(revisto, 2027, tmp_path)
+    assert aviso is not None and "block 2026" in aviso
+    assert revisto.treinos == 0 and revisto.instalado is not None
+
+
+def test_the_strategy_source_freezes_the_block_of_the_prediction_date(tmp_path) -> None:
+    """Review F4: the adapter the strategy calls freezes the block of the date it predicts (once per block) and
+    passes drift warnings on."""
+    from scripts.qml_holdout import _FonteDoPredictor, congelar_bloco
+
+    primeiro = _PredictorDeTeste("abc")
+    congelar_bloco(primeiro, 2026, tmp_path)
+
+    revisto = _PredictorDeTeste("xyz")
+    revisto.predict = lambda data: pd.Series({"AAAA3": 0.6})
+    avisos: list[str] = []
+    fonte = _FonteDoPredictor(revisto, tmp_path, avisos)
+    fonte.predict(pd.Timestamp("2026-12-30"))
+    fonte.predict(pd.Timestamp("2027-02-10"))
+    assert revisto.treinos == 0 and revisto.instalado is not None
+    assert len(avisos) == 1 and "block 2026" in avisos[0]
+
+
+def test_the_rebalance_records_the_model_warnings_in_the_estado(tmp_path, monkeypatch) -> None:
+    """Review F4: a warning raised while the target is computed lands in estado.json, not in a lost stdout."""
+    import json
+
+    from scripts import qml_holdout
+
+    datas = pd.bdate_range("2026-11-09", periods=2)
+    precos = pd.DataFrame({"AAAA3": [10.0, 10.0], "BBBB3": [10.0, 10.0]}, index=datas)
+    conta, lago = _conta_com_lago_movel(tmp_path, monkeypatch, precos)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    estado["passo"] = 1
+    conta.estado.write_text(json.dumps(estado), encoding="utf-8")
+    contexto = qml_holdout.montar_contexto
+
+    def com_aviso(lago_, conta=qml_holdout.CONTA_FIXA):
+        ctx = contexto(lago_, conta)
+        pesos = ctx.pesos
+
+        def pesos_com_aviso(dia):
+            ctx.avisos.append("block 2026: drift")
+            return pesos(dia)
+
+        ctx.pesos = pesos_com_aviso
+        return ctx
+
+    monkeypatch.setattr(qml_holdout, "montar_contexto", com_aviso)
+    lago["ate"] = 2
+    qml_holdout.rodar(None, conta=conta)
+    estado = json.loads(conta.estado.read_text(encoding="utf-8"))
+    assert estado["avisos"] == ["2026-11-10: block 2026: drift"]
 
 
 def _main_block():

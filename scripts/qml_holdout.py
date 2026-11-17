@@ -24,6 +24,7 @@ The harness is strategy-agnostic: ``Contexto.pesos`` is the only piece tied to t
 from __future__ import annotations
 
 import json
+import os
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -143,12 +144,51 @@ def pesos_do_rebalanceio(cotas: pd.Series, precos: pd.Series) -> pd.Series:
 
 def rebalancear(cotas: pd.Series, alvo: pd.Series, precos: pd.Series,
                 custo_bps: float = CUSTO_BPS) -> tuple[pd.Series, float]:
-    """Trade to ``alvo``, charging ``custo_bps`` per side on the turnover only. Returns (shares, turnover)."""
+    """Trade to ``alvo``, charging ``custo_bps`` per side on the turnover only. Returns (shares, turnover).
+
+    The turnover runs over the held names and the target names together: a name sold in full is traded too.
+    """
     valor = valorizar(cotas, precos)
-    atual = pesos_do_rebalanceio(cotas, precos).reindex(alvo.index).fillna(0.0)
-    giro = float((alvo - atual).abs().sum())
+    atual = pesos_do_rebalanceio(cotas, precos)
+    nomes = atual.index.union(alvo.index)
+    giro = float((alvo.reindex(nomes, fill_value=0.0) - atual.reindex(nomes, fill_value=0.0)).abs().sum())
     liquido = valor * (1.0 - custo_bps / 10_000.0 * giro)
     return comprar(alvo, precos, liquido, 0.0), giro
+
+
+def congelar_bloco(predictor, ano: int, pasta: Path) -> str | None:
+    """
+    Make the model block that serves ``ano`` a file in the ledger folder (review F4).
+
+    The first call trains the block and saves its weights with the fingerprint of its training data; every
+    later call loads those weights, so the model stays the registered one whatever the lake holds later. Returns
+    a warning when the lake's training data no longer matches the saved fingerprint (a revised past price);
+    the saved model is still the one used.
+    """
+    import torch  # noqa: PLC0415
+
+    chave = predictor.block_of(ano)
+    arquivo = pasta / f"modelo_{chave}.pt"
+    meta = pasta / f"modelo_{chave}.json"
+    impressao = predictor.training_fingerprint(ano)
+    if arquivo.exists():
+        modelo = predictor.new_model()
+        modelo.load_state_dict(torch.load(arquivo, weights_only=True))
+        predictor.install_model(ano, modelo)
+        salva = json.loads(meta.read_text(encoding="utf-8"))["impressao"]
+        if salva != impressao:
+            return (f"block {chave}: the lake's training data changed since the model was saved "
+                    f"({salva[:12]} -> {impressao[:12]}); the saved model is used")
+        return None
+    modelo = predictor.model_for(ano)
+    pasta.mkdir(parents=True, exist_ok=True)
+    # Metadata first: a stop before the weights land leaves no .pt, so the next run trains and saves again.
+    _gravar(meta, json.dumps({"bloco": chave, "impressao": impressao,
+                              "salvo_em": str(pd.Timestamp.now().date())}, indent=2))
+    temporario = arquivo.with_name(arquivo.name + ".tmp")
+    torch.save(modelo.state_dict(), temporario)
+    os.replace(temporario, arquivo)
+    return None
 
 
 # --- the arm's weights (the only strategy-specific piece) ----------------------------------------------
@@ -158,13 +198,14 @@ class Contexto:
     """Frozen lake, the return matrix the strategy expects, and the arm's weight function."""
 
     def __init__(self, precos: pd.DataFrame, retornos: pd.DataFrame, elegiveis: dict, pesos_fn,
-                 cdi: pd.Series, janela: int) -> None:
+                 cdi: pd.Series, janela: int, avisos: list[str] | None = None) -> None:
         self.precos = precos
         self.retornos = retornos
         self.elegiveis = elegiveis
         self.pesos = pesos_fn
         self.cdi = cdi
         self.janela = janela
+        self.avisos = avisos if avisos is not None else []   # model warnings raised while a target is computed
 
 
 def montar_contexto(lago: Path, conta: Conta = CONTA_FIXA) -> Contexto:
@@ -193,6 +234,8 @@ def montar_contexto(lago: Path, conta: Conta = CONTA_FIXA) -> Contexto:
     predictor = QMLPredictor(retornos, QMLConfig(init_seed=conta.init_seed), log=print)
     seletor = seletor_do_composite(nota, setores)
     janela = CFG_BT.janela_treino
+    avisos: list[str] = []
+    fonte = _FonteDoPredictor(predictor, conta.pasta, avisos)
 
     def pesos(data: pd.Timestamp) -> pd.Series:
         posicao = int(retornos.index.get_loc(data))
@@ -203,20 +246,32 @@ def montar_contexto(lago: Path, conta: Conta = CONTA_FIXA) -> Contexto:
         treino = retornos.iloc[posicao - janela:posicao][nomes].dropna(axis=1)
         if treino.empty:
             raise ValueError(f"{data:%d/%m/%Y}: no eligible name with a full training window")
-        estrategia = qml_strategy(_FonteDoPredictor(predictor), CFG_KELLY, setores, cdi,
+        estrategia = qml_strategy(fonte, CFG_KELLY, setores, cdi,
                                   selector=seletor, tilt=1.0, covariance=conta.covariance)
         return estrategia(treino)
 
-    return Contexto(dados.precos, retornos, elegiveis, pesos, cdi, janela)
+    return Contexto(dados.precos, retornos, elegiveis, pesos, cdi, janela, avisos)
 
 
 class _FonteDoPredictor:
-    """Adapter: the strategy asks ``predict(date)``; the predictor trains causally and answers."""
+    """
+    Adapter: the strategy asks ``predict(date)``; the predictor answers. With a ledger folder, the block that
+    serves ``date`` is frozen as a file there first (:func:`congelar_bloco`), and its warnings go to ``avisos``.
+    """
 
-    def __init__(self, predictor) -> None:
+    def __init__(self, predictor, pasta: Path | None = None, avisos: list[str] | None = None) -> None:
         self._predictor = predictor
+        self._pasta = pasta
+        self._avisos = avisos if avisos is not None else []
+        self._congelados: set[int] = set()
 
     def predict(self, data: pd.Timestamp) -> pd.Series:
+        bloco = self._predictor.block_of(data.year) if self._pasta is not None else None
+        if bloco is not None and bloco not in self._congelados:
+            aviso = congelar_bloco(self._predictor, data.year, self._pasta)
+            if aviso is not None:
+                self._avisos.append(aviso)
+            self._congelados.add(bloco)
         return self._predictor.predict(data)
 
 
@@ -226,6 +281,20 @@ class _FonteDoPredictor:
 def _append(caminho: Path, quadro: pd.DataFrame) -> None:
     quadro.to_csv(caminho, mode="a" if caminho.exists() else "w", header=not caminho.exists(),
                   index=False, encoding="utf-8", lineterminator="\n")
+
+
+def _com_linhas(caminho: Path, quadro: pd.DataFrame) -> str:
+    """The file's current text with ``quadro``'s rows appended; the existing bytes are kept as they are."""
+    antigo = caminho.read_text(encoding="utf-8") if caminho.exists() else ""
+    return antigo + quadro.to_csv(header=not antigo, index=False, lineterminator="\n")
+
+
+def _gravar(caminho: Path, texto: str) -> None:
+    """Write through a temporary file beside the target, then swap it in with an atomic replace."""
+    temporario = caminho.with_name(caminho.name + ".tmp")
+    with temporario.open("w", encoding="utf-8", newline="") as arquivo:
+        arquivo.write(texto)
+    os.replace(temporario, caminho)
 
 
 def iniciar(lago: Path, capital: float = CAPITAL, conta: Conta = CONTA_FIXA) -> dict:
@@ -246,7 +315,12 @@ def iniciar(lago: Path, capital: float = CAPITAL, conta: Conta = CONTA_FIXA) -> 
 
 
 def rodar(lago: Path, conta: Conta = CONTA_FIXA) -> dict:
-    """Mark to market at every new session and rebalance when the 63-session step is due."""
+    """Mark to market at every new session and rebalance when the 63-session step is due.
+
+    A rebalance whose target fails or is refused by the rules keeps the current book, as the engine does.
+    """
+    from core.backtest import _FALHAS_ESPERADAS as FALHAS_DO_MOTOR  # noqa: PLC0415 - the engine's own list
+
     if not conta.estado.exists():
         raise FileNotFoundError("the holdout was not started: run `iniciar` first")
     estado = json.loads(conta.estado.read_text(encoding="utf-8"))
@@ -259,18 +333,36 @@ def rodar(lago: Path, conta: Conta = CONTA_FIXA) -> dict:
         return estado
     precos = ctx.precos.ffill()               # a session without a trade keeps the last close
     cotas = cotas_em_carteira(ordens, marcas, precos)
-    ultimo_reb = pd.Timestamp(estado["ultimo_rebalanceio"])
+    ultimo_reb = pd.Timestamp(ordens["data"].max())  # the orders are the record; estado.json can lag after a crash
+    novas_ordens: list[pd.DataFrame] = []
+    novas_marcas: list[pd.DataFrame] = []
     for dia in novas:
         preco = precos.loc[dia]
         if rebalanceio_devido(ctx.precos.index, dia, ultimo_reb, int(estado["passo"])):
-            alvo = ctx.pesos(dia)
+            vistos = len(ctx.avisos)
+            try:
+                alvo = ctx.pesos(dia)
+            except FALHAS_DO_MOTOR as erro:
+                # The engine (core.backtest) keeps the current book on these failures and moves on.
+                alvo = pesos_do_rebalanceio(cotas, preco)
+                estado.setdefault("falhas", []).append(f"{dia:%Y-%m-%d}: {erro}")
+                print(f"{conta.estrategia}: rebalance on {dia:%d/%m/%Y} failed ({erro}); book kept")
+            for aviso in ctx.avisos[vistos:]:
+                estado.setdefault("avisos", []).append(f"{dia:%Y-%m-%d}: {aviso}")
             cotas, giro = rebalancear(cotas, alvo, preco)
-            _append(conta.ordens, pd.DataFrame({"data": dia, "ticker": alvo.index, "peso": alvo.to_numpy()}))
+            novas_ordens.append(pd.DataFrame({"data": dia, "ticker": alvo.index, "peso": alvo.to_numpy()}))
             estado["ultimo_rebalanceio"] = str(dia.date())
             estado["ultimo_giro"] = round(giro, 4)
             ultimo_reb = dia
-        _append(conta.marcas, pd.DataFrame({"data": [dia], "valor": [valorizar(cotas, preco)]}))
-    conta.estado.write_text(json.dumps(estado, indent=2), encoding="utf-8")
+        novas_marcas.append(pd.DataFrame({"data": [dia], "valor": [valorizar(cotas, preco)]}))
+    # The run lands whole: every file's new text is built first, then each one is swapped in. Marks go before
+    # orders, so a stop between two swaps never leaves an order without its session's mark.
+    textos = {conta.marcas: _com_linhas(conta.marcas, pd.concat(novas_marcas))}
+    if novas_ordens:
+        textos[conta.ordens] = _com_linhas(conta.ordens, pd.concat(novas_ordens))
+    textos[conta.estado] = json.dumps(estado, indent=2)
+    for caminho, texto in textos.items():
+        _gravar(caminho, texto)
     return estado
 
 

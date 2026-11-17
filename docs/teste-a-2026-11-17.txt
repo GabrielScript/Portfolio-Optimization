@@ -1,0 +1,87 @@
+Test A reading, 2026-11-17 (amendment of 17/11 in docs/preregistro-sentimento-2026-10-23.md). Judge d1.1 direct (60-filing check), filings-v1, 65,956 distinct states, 114,115 filings of 376 candidate issuers, 0 errors, US$ 0.52.
+Frozen export 2026-10-22, last session 16/10/2026, phases 0/21/42, Composite anchors held.
+
+phase 0: Composite 0.2179 (anchor ok), + veto 0.2191; P[veto > base] 0.646 (log 0.640); MDD -0.415 -> -0.415; rebalances changed 3 of 66, names dropped 4; window 2010-02-09..2026-10-16
+phase 21: Composite 0.2034 (anchor ok), + veto 0.2047; P[veto > base] 0.955 (log 0.953); MDD -0.422 -> -0.422; rebalances changed 1 of 66, names dropped 1; window 2010-03-12..2026-10-16
+phase 42: Composite 0.1922 (anchor ok), + veto 0.1922; P[veto > base] 0.182 (log 0.185); MDD -0.428 -> -0.428; rebalances changed 1 of 66, names dropped 1; window 2010-04-13..2026-10-16
+
+GATE: P >= 0.95 in all 3 phases and lower MDD in 2 -> FAIL (P 0.646 / 0.955 / 0.182; MDD unchanged). The veto fired at 3 / 1 / 1 of 66 rebalances.
+
+Event study (descriptive): see eventos.parquet; printed table:
+ horizonte   periodo       eixo      faixa  documentos  datas  excesso       t
+        21 2010-2019  faixa_tom        bom        2723   1537  -0.0044 -1.1606
+        21 2010-2019  faixa_tom  bom forte          32     28  -0.0348 -1.2711
+        21 2010-2019  faixa_tom     neutro       35838   2471  -0.0007 -0.2027
+        21 2010-2019  faixa_tom       ruim         241    230  -0.0007 -0.1447
+        21 2010-2019  faixa_tom ruim forte          64     60   0.0297  0.7350
+        21 2010-2019 faixa_ruim  0.35-0.65         460    405  -0.0059 -0.3426
+        21 2010-2019 faixa_ruim  0.65-0.70          37     37  -0.0026 -0.0995
+        21 2010-2019 faixa_ruim     < 0.35       38287   2472  -0.0010 -0.5974
+        21 2010-2019 faixa_ruim    >= 0.70         114    110   0.0432  1.7322
+        21 2010-2019  faixa_bom  0.35-0.65        3267   1650  -0.0006 -0.0984
+        21 2010-2019  faixa_bom  0.65-0.70         345    321  -0.0057 -1.4539
+        21 2010-2019  faixa_bom     < 0.35       34277   2470  -0.0006 -0.1728
+        21 2010-2019  faixa_bom    >= 0.70        1009    788  -0.0100 -2.3403
+        21 2020-2025  faixa_tom        bom        1961   1021   0.0035  0.9075
+        21 2020-2025  faixa_tom  bom forte          28     27   0.0006 -0.0818
+        21 2020-2025  faixa_tom     neutro       36852   1495  -0.0010 -2.1702
+        21 2020-2025  faixa_tom       ruim         259    213  -0.0034 -0.4634
+        21 2020-2025  faixa_tom ruim forte          56     51   0.0349  0.7919
+        21 2020-2025 faixa_ruim  0.35-0.65         436    351  -0.0178 -1.4770
+        21 2020-2025 faixa_ruim  0.65-0.70          42     40  -0.0052 -0.0217
+        21 2020-2025 faixa_ruim     < 0.35       38560   1495  -0.0007 -1.6935
+        21 2020-2025 faixa_ruim    >= 0.70         118    111   0.0245  1.1316
+        21 2020-2025  faixa_bom  0.35-0.65        2528   1142  -0.0009 -0.2711
+        21 2020-2025  faixa_bom  0.65-0.70         257    228   0.0130  1.0345
+        21 2020-2025  faixa_bom     < 0.35       35734   1495  -0.0010 -2.1034
+        21 2020-2025  faixa_bom    >= 0.70         637    482   0.0048  1.7003
+        21      2026  faixa_tom        bom         186    113  -0.0024  0.0736
+        21      2026  faixa_tom     neutro        3532    180   0.0000 -0.2568
+        21      2026  faixa_tom       ruim          25     25  -0.0132 -0.7084
+        21      2026  faixa_tom ruim forte          14     12   0.0911  0.9175
+        21      2026 faixa_ruim  0.35-0.65          53     44   0.0221  0.7253
+        21      2026 faixa_ruim  0.65-0.70           7      7   0.1647  0.8972
+        21      2026 faixa_ruim     < 0.35        3686    180  -0.0006 -0.3861
+        21      2026 faixa_ruim    >= 0.70          11      9   0.0265  0.5109
+        21      2026  faixa_bom  0.35-0.65         221    126   0.0099  1.1055
+        21      2026  faixa_bom  0.65-0.70          21     19  -0.0287 -0.7101
+        21      2026  faixa_bom     < 0.35        3451    180  -0.0004 -0.5361
+        21      2026  faixa_bom    >= 0.70          64     53   0.0035  0.3152
+        63 2010-2019  faixa_tom        bom        2706   1530  -0.0110 -2.1904
+        63 2010-2019  faixa_tom  bom forte          32     28  -0.0859 -2.5656
+        63 2010-2019  faixa_tom     neutro       35583   2471  -0.0027 -1.3657
+        63 2010-2019  faixa_tom       ruim         240    229  -0.0120 -0.6746
+        63 2010-2019  faixa_tom ruim forte          64     60   0.0143  0.4063
+        63 2010-2019 faixa_ruim  0.35-0.65         458    403  -0.0246 -2.0690
+        63 2010-2019 faixa_ruim  0.65-0.70          37     37  -0.0261 -0.6409
+        63 2010-2019 faixa_ruim     < 0.35       38016   2472  -0.0033 -1.6700
+        63 2010-2019 faixa_ruim    >= 0.70         114    110   0.0512  1.5183
+        63 2010-2019  faixa_bom  0.35-0.65        3248   1647  -0.0074 -1.5272
+        63 2010-2019  faixa_bom  0.65-0.70         342    319  -0.0081 -1.3338
+        63 2010-2019  faixa_bom     < 0.35       34033   2470  -0.0024 -1.2317
+        63 2010-2019  faixa_bom    >= 0.70        1002    782  -0.0228 -2.6033
+        63 2020-2025  faixa_tom        bom        1952   1018   0.0122  1.8962
+        63 2020-2025  faixa_tom  bom forte          27     26  -0.0152 -0.3951
+        63 2020-2025  faixa_tom     neutro       36514   1495  -0.0006 -1.4430
+        63 2020-2025  faixa_tom       ruim         259    213  -0.0351 -2.1538
+        63 2020-2025  faixa_tom ruim forte          54     49  -0.0796 -2.1469
+        63 2020-2025 faixa_ruim  0.35-0.65         434    349  -0.0576 -3.9451
+        63 2020-2025 faixa_ruim  0.65-0.70          40     38  -0.0208 -0.4461
+        63 2020-2025 faixa_ruim     < 0.35       38214   1495   0.0004 -0.7103
+        63 2020-2025 faixa_ruim    >= 0.70         118    111  -0.0044 -0.5228
+        63 2020-2025  faixa_bom  0.35-0.65        2507   1140  -0.0053 -0.8880
+        63 2020-2025  faixa_bom  0.65-0.70         253    225   0.0382  1.5945
+        63 2020-2025  faixa_bom     < 0.35       35409   1495  -0.0005 -1.3942
+        63 2020-2025  faixa_bom    >= 0.70         637    482   0.0154  1.8663
+        63      2026  faixa_tom        bom         134     82   0.0252  0.7963
+        63      2026  faixa_tom     neutro        2720    138  -0.0026 -0.8803
+        63      2026  faixa_tom       ruim          21     21   0.0434  1.3173
+        63      2026  faixa_tom ruim forte          10      9  -0.1131 -1.4621
+        63      2026 faixa_ruim  0.35-0.65          46     38  -0.0243 -0.4839
+        63      2026 faixa_ruim  0.65-0.70           6      6  -0.0449 -0.5066
+        63      2026 faixa_ruim     < 0.35        2825    138  -0.0007 -0.4060
+        63      2026 faixa_ruim    >= 0.70           8      7  -0.0407 -0.5129
+        63      2026  faixa_bom  0.35-0.65         160     92   0.0415  2.2581
+        63      2026  faixa_bom  0.65-0.70          15     14   0.0289  1.1204
+        63      2026  faixa_bom     < 0.35        2667    138  -0.0045 -1.2959
+        63      2026  faixa_bom    >= 0.70          43     35   0.0255  0.5977

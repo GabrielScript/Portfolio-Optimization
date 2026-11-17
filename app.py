@@ -32,6 +32,7 @@ from ativos_tela import info_curada, info_da_tela  # noqa: E402
 from core import assessor, precos_do_app  # noqa: E402
 from ui import alepha, aparencia, comparacao, cotacoes, destaques, graficos, painel, parecer, servicos  # noqa: E402
 from ui import assessor as ui_assessor  # noqa: E402
+from ui import conta_mt5 as ui_conta_mt5  # noqa: E402
 from ui import eua as ui_eua  # noqa: E402
 from ui import simulador as ui_simulador  # noqa: E402
 from ui import formulas as ui_formulas  # noqa: E402
@@ -56,7 +57,7 @@ comparação e de base.
 Banco Central e da B3.
 
 Abaixo: as ações da Composite e seus pesos por setor, o resultado de cada estratégia no passado, a conta simulada que \
-segue as carteiras desde 03/11/2026, o painel do mercado e o parecer do assessor DeepSeek. Informação para decidir, não \
+segue as carteiras desde 03/11/2026, a conta demo no MetaTrader 5, o painel do mercado e o parecer do assessor DeepSeek. Informação para decidir, não \
 promessa: passado não garante futuro."""
 
 
@@ -100,8 +101,13 @@ def main() -> None:
     with aparencia.painel("formulas"):
         ui_formulas.secao(servicos.carregar_formulas())
     with aparencia.painel("simulador"):
-        ui_simulador.secao(servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados()))
+        simulado = servicos.carregar_simulador(date.today(), precos_do_app.versao_dos_dados())
+        ui_simulador.secao(simulado)
         ui_simulador.parecer_do_deepseek(servicos.carregar_parecer_deepseek())
+    with aparencia.painel("mt5"):       # the MT5 demo book next to the simulator (the user, 2026-11-17)
+        composto = (simulado.curvas[ui_simulador.CARTEIRA_PRINCIPAL]
+                    if simulado is not None and ui_simulador.CARTEIRA_PRINCIPAL in simulado.curvas else None)
+        ui_conta_mt5.secao(servicos.carregar_conta_mt5(servicos.assinatura_mt5()), composto)
     with aparencia.painel("opcoes"):
         ui_opcoes.secao(servicos.carregar_opcoes(date.today(), precos_do_app.versao_dos_dados()))
         ui_opcoes.secao_deep(servicos.carregar_opcoes_deep(date.today(), precos_do_app.versao_dos_dados()))

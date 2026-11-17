@@ -231,6 +231,23 @@ def carregar_opcoes_deep(dia: date, versao_dados: int, pasta: Path = PASTA_SIMUL
     return _painel_de_opcoes(dia, pasta, simulador_opcoes.DEEP, "opcoes_deep")
 
 
+PASTA_MT5 = Path(__file__).resolve().parents[1] / "paper-mt5"    # the MT5 demo book's published value and fills
+
+
+def assinatura_mt5(pasta: Path = PASTA_MT5) -> int:
+    """The cache key of the MT5 book: its files' modification times (0 without them), so a new day shows at once."""
+    return sum(arquivo.stat().st_mtime_ns for arquivo in (pasta / "patrimonio.csv", pasta / "fills.csv")
+               if arquivo.exists())
+
+
+@st.cache_data(ttl=3600, show_spinner=False)
+def carregar_conta_mt5(assinatura: int, pasta: Path = PASTA_MT5):
+    """The MT5 demo book (``core.conta_mt5``, spec ``2026-11-17-conta-mt5-no-app-design.md``); None before its first
+    published value. ``assinatura``: ``assinatura_mt5``, the cache key only."""
+    from core import conta_mt5
+    return conta_mt5.ler(pasta)
+
+
 ARQUIVO_FORMULAS = Path(__file__).resolve().parents[1] / "docs" / "dados" / "formulas-testadas-b3.parquet"
 
 

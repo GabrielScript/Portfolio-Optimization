@@ -71,6 +71,8 @@ ARQUIVO_OPCOES = Path("simulador/opcoes.csv")            # the fictitious option
 ARQUIVO_MARCAS_OPCOES = Path("simulador/opcoes_marcas.csv")   # its options' daily unit values
 ARQUIVOS_OPCOES = (ARQUIVO_OPCOES, ARQUIVO_MARCAS_OPCOES)
 ARQUIVOS_DEEP = (Path("simulador/opcoes_deep.csv"), Path("simulador/opcoes_deep_marcas.csv"))   # the deep OTM account
+# the MT5 demo book's published files (spec 2026-11-17-conta-mt5-no-app-design.md); the rest of paper-mt5/ is ignored
+ARQUIVOS_MT5 = (Path("paper-mt5/patrimonio.csv"), Path("paper-mt5/fills.csv"))
 ARQUIVO_CADEIA = Path("data/b3lake/option_chain_recent.parquet")   # the lake's recent option chains (outside git)
 PASTA_DEEPSEEK = Path("deepseek")                         # the DeepSeek portfolio's record and opinions (DECISOES 240)
 ARQUIVO_DEEPSEEK = PASTA_DEEPSEEK / "carteira.csv"
@@ -571,6 +573,20 @@ def atualizar_composto_80_20(raiz: Path, git: Git, hoje: pd.Timestamp) -> str:
     return f"Composto 80/20: registro de {data}"
 
 
+def atualizar_conta_mt5(raiz: Path, git: Git) -> str:
+    """Commits the MT5 demo book's value and fills (written by the 21:00 report) when they differ from HEAD, so the
+    app on Streamlit Cloud shows the book; the stop file, orders and targets stay local (``.gitignore``)."""
+    patrimonio = raiz / ARQUIVOS_MT5[0]
+    if not patrimonio.exists():
+        return "conta MT5: sem leitura ainda"
+    mudados = pendentes(git, [caminho.as_posix() for caminho in ARQUIVOS_MT5 if (raiz / caminho).exists()])
+    if not mudados:
+        return "conta MT5: em dia"
+    fim = f"{pd.to_datetime(pd.read_csv(patrimonio)['data']).max():%d/%m/%Y}"
+    commitar(git, mudados, f"data: conta demo MT5 até {fim} (manutenção)")
+    return f"conta MT5: até {fim}"
+
+
 def atualizar_deepseek(raiz: Path, git: Git, gerar: Callable[[], str]) -> str:
     """Runs the DeepSeek portfolio's opinion when due (``gerar``: ``scripts/carteira_deepseek.py``, DECISOES 240) and
     commits its folder when it wrote files."""
@@ -592,7 +608,7 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
              mista: Callable[[pd.Timestamp], pd.Series] | None = None,
              opcoes_deep: Callable[[pd.DataFrame, pd.DataFrame], tuple[pd.DataFrame, pd.DataFrame]] | None = None,
              fermionica: Callable[[pd.Timestamp], pd.Series] | None = None,
-             composto_80_20: bool = False) -> Resultado:
+             composto_80_20: bool = False, conta_mt5: bool = False) -> Resultado:
     """One run: the due readings, the liquidity snapshot and the push, each on its own (a failure in one does not
     stop the others); ``ler_leitura`` runs ``paper_v2.py --leitura`` and returns its output; ``pasta_do_log``: the
     lake's news log (None: the panel step does nothing); ``manchetes``: the arguments of ``atualizar_manchetes`` but
@@ -601,7 +617,7 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     due for its ledger (None: no simulator step); ``top5``: the Top-5 weights of a Composite record's close (None: no
     Top-5 record step); ``mista`` / ``fermionica``: the same for the 12/3 and the Fermiônica accounts; ``opcoes`` /
     ``opcoes_deep``: the two options accounts' due rows (None: no such step); ``composto_80_20``: the Composto 80/20
-    record step (it needs only the Composite's record and the day)."""
+    record step (it needs only the Composite's record and the day); ``conta_mt5``: the MT5 demo book's publish step."""
     if trava_do_lago.exists():
         return Resultado("lago rodando", "", [])
     try:
@@ -637,6 +653,8 @@ def executar(raiz: Path, git: Git, trava_do_lago: Path, agora: datetime, ler_lei
     if opcoes_deep is not None:
         passos.append(("opções deep OTM",
                        lambda: atualizar_opcoes(raiz, git, opcoes_deep, ARQUIVOS_DEEP, "opções deep OTM")))
+    if conta_mt5:
+        passos.append(("conta MT5", lambda: atualizar_conta_mt5(raiz, git)))
     if gerar_curvas is not None:
         passos.append(("curvas ao vivo", lambda: atualizar_curvas(raiz, git, gerar_curvas)))
     if manchetes is not None:
@@ -795,7 +813,7 @@ def main() -> int:
                          opcoes_deep=lambda livro, marcas: opcoes_devidas(RAIZ, agora.date(), livro, marcas,
                                                                           _conta_deep()),
                          top5=_pesos_do_top5, mista=_pesos_da_mista, fermionica=_pesos_da_fermionica,
-                         composto_80_20=True)
+                         composto_80_20=True, conta_mt5=True)
     resultado = notificar(resultado, lambda titulo, corpo: avisar(RAIZ, titulo, corpo))
     anotar(PASTA_ESTADO, agora, resultado)
     print(f"{resultado.desfecho}: {resultado.nota}".strip())

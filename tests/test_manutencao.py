@@ -976,3 +976,33 @@ def test_a_failed_query_of_the_running_tasks_counts_as_still_running_not_as_a_cr
     def falha(nomes):
         raise TimeoutError("powershell timed out")
     assert manutencao.rotinas_antes_rodando(falha) is True
+
+
+def test_the_mt5_step_commits_exactly_the_value_and_fills_files_and_then_is_up_to_date(app):
+    from scripts.manutencao import ARQUIVOS_MT5, atualizar_conta_mt5, git_em
+    git = git_em(app)
+    pasta = app / "paper-mt5"
+    pasta.mkdir()
+    (pasta / "patrimonio.csv").write_text("data,patrimonio\n2026-11-13,97719.38\n2026-11-16,96828.81\n",
+                                          encoding="utf-8")
+    (pasta / "fills.csv").write_text("name,symbol,side,volume,price,commission,time,order\n", encoding="utf-8")
+    (pasta / "ordens.csv").write_text("fica local\n", encoding="utf-8")
+    (pasta / "PARAR").write_text("", encoding="utf-8")
+    assert atualizar_conta_mt5(app, git) == "conta MT5: até 16/11/2026"
+    assert _rodar_git("-C", str(app), "log", "-1", "--format=%s") == "data: conta demo MT5 até 16/11/2026 (manutenção)"
+    assert sorted(_rodar_git("-C", str(app), "show", "--name-only", "--format=", "HEAD").splitlines()) == \
+        sorted(caminho.as_posix() for caminho in ARQUIVOS_MT5)
+    assert atualizar_conta_mt5(app, git) == "conta MT5: em dia"
+
+
+def test_the_mt5_step_without_the_folder_says_so(app):
+    from scripts.manutencao import atualizar_conta_mt5, git_em
+    assert atualizar_conta_mt5(app, git_em(app)) == "conta MT5: sem leitura ainda"
+
+
+@pytest.mark.parametrize(("caminho", "ignorado"), [("paper-mt5/PARAR", True), ("paper-mt5/ordens.csv", True),
+                                                    ("paper-mt5/alvos.csv", True), ("paper-mt5/execucoes.csv", True),
+                                                    ("paper-mt5/patrimonio.csv", False), ("paper-mt5/fills.csv", False)])
+def test_the_gitignore_publishes_only_the_mt5_value_and_fills(caminho, ignorado):
+    feito = subprocess.run(["git", "-C", str(RAIZ), "check-ignore", "-q", "--no-index", caminho])
+    assert (feito.returncode == 0) is ignorado

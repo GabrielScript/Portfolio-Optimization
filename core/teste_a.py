@@ -37,8 +37,13 @@ def perguntas_do_lago(fonte: Path) -> tuple[dict, str]:
 
 def estado_do_documento(linha: Mapping) -> dict:
     """The lake's ``filing_request`` state: what the CVM form says the filing is, without the company's name or date."""
-    return {"filing": {"category": linha["categoria"] or "", "subject": linha["assunto"] or "",
-                       "type": linha["tipo"] or "", "species": linha["especie"] or ""}}
+    return {"filing": {"category": _texto(linha["categoria"]), "subject": _texto(linha["assunto"]),
+                       "type": _texto(linha["tipo"]), "species": _texto(linha["especie"])}}
+
+
+def _texto(valor) -> str:
+    """A CVM field as text: None (the lake's polars null), NaN or pd.NA (pandas) become ""."""
+    return "" if valor is None or pd.isna(valor) else str(valor)
 
 
 def documentos_do_universo(ipe: pd.DataFrame, setores: pd.DataFrame, universo: pd.DataFrame,
@@ -71,6 +76,28 @@ def emissores_vetados(documentos: pd.DataFrame, pregoes: pd.DatetimeIndex, t: pd
     na_janela = documentos[(documentos["data"] >= inicio) & (documentos["data"] < t)]
     fortes = na_janela[(na_janela["p_ruim"] >= P_RUIM) & (na_janela["intensidade"] >= INTENSIDADE)]
     return set(fortes["emissor"])
+
+
+def estrategia_com_veto(nota, setores: Mapping[str, str], vetados_em: Callable[[pd.Timestamp], set[str]],
+                        nomes: int | None = None, por_setor: int | None = None, limites=None):
+    """``core.composto.estrategia_por_nota`` with the veto: at the decision (the training window's last session t),
+    the names whose issuer prefix is in ``vetados_em(t)`` lose their score, so the next names by score take their
+    places under the same sector cap and rules."""
+    from core.composto import estrategia_por_nota  # noqa: PLC0415
+    from core.risco import LIMITES  # noqa: PLC0415
+    from core.sinais import NOMES, POR_SETOR  # noqa: PLC0415
+
+    def _estrategia(treino: pd.DataFrame) -> pd.Series:
+        vetados = vetados_em(treino.index[-1])
+
+        def nota_sem_vetados(mes, candidatos):
+            notas = nota(mes, candidatos)
+            return notas[[papel[:4] not in vetados for papel in notas.index]]
+
+        return estrategia_por_nota(nota_sem_vetados, setores, NOMES if nomes is None else nomes,
+                                   POR_SETOR if por_setor is None else por_setor,
+                                   LIMITES if limites is None else limites)(treino)
+    return _estrategia
 
 
 def colunas_da_resposta(respostas: Mapping) -> dict:

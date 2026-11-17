@@ -38,6 +38,18 @@ def test_the_state_is_the_lake_filing_request_without_name_or_date() -> None:
     assert chave_do_estado(estado_do_documento(dict(linha, assunto="Venda"))) != chave_do_estado(estado)
 
 
+def test_a_missing_pandas_field_becomes_an_empty_string_as_in_the_lake() -> None:
+    """pandas reads an empty CVM field as NaN, the lake (polars) as None: both must give "" (NaN broke the JSON)."""
+    import json
+
+    from core.teste_a import estado_do_documento
+
+    estado = estado_do_documento({"categoria": "Fato Relevante", "assunto": "X", "tipo": float("nan"),
+                                  "especie": pd.NA})
+    assert estado["filing"]["type"] == "" and estado["filing"]["species"] == ""
+    json.dumps(estado, allow_nan=False)
+
+
 def test_only_material_filings_of_candidate_issuers_inside_the_window_are_kept() -> None:
     """Material categories only, delivered inside [inicio, fim], of an issuer that is a candidate in some month; a
     CVM code shared by two candidate prefixes (a renamed company) counts for both."""
@@ -79,6 +91,53 @@ def test_the_veto_window_is_the_21_sessions_before_the_decision() -> None:
         ("LIMI", pregoes[38], 0.5, 2.0),                        # exactly on both thresholds: included
     ], columns=["emissor", "data", "p_ruim", "intensidade"])
     assert emissores_vetados(docs, pregoes, t) == {"D21A", "FDSM", "LIMI"}
+
+
+NOMES = ["AAAA3", "BBBB3", "CCCC3", "DDDD3", "EEEE3", "FFFF3", "GGGG3"]
+NOTAS = dict(zip(NOMES, [6.0, 1.0, 5.0, 4.0, 3.0, 2.0, 9.0]))
+
+
+def _treino(fim: str = "2021-02-26", pregoes: int = 300) -> pd.DataFrame:
+    import numpy as np
+
+    gerador = np.random.default_rng(0)
+    datas = pd.bdate_range(end=fim, periods=pregoes)
+    return pd.DataFrame(gerador.normal(0.0, 0.01, (pregoes, len(NOMES))), index=datas, columns=NOMES)
+
+
+def test_without_a_veto_the_composite_picks_are_unchanged() -> None:
+    from core.composto import estrategia_por_nota
+    from core.teste_a import estrategia_com_veto
+
+    def nota(mes, candidatos):
+        return pd.Series(NOTAS).reindex(list(candidatos))
+
+    setores = {nome: f"S{i}" for i, nome in enumerate(NOMES)}
+    treino = _treino()
+    base = estrategia_por_nota(nota, setores, nomes=5, por_setor=1)(treino)
+    com = estrategia_com_veto(nota, setores, lambda t: set(), nomes=5, por_setor=1)(treino)
+    pd.testing.assert_series_equal(com, base)
+
+
+def test_a_vetoed_issuer_leaves_and_the_next_name_by_score_takes_its_place() -> None:
+    """GGGG (top score) is vetoed at the decision: the five picks are the next five by score; the veto is asked at the
+    training window's last session, by issuer prefix."""
+    from core.teste_a import estrategia_com_veto
+
+    def nota(mes, candidatos):
+        return pd.Series(NOTAS).reindex(list(candidatos))
+
+    pedidos = []
+
+    def vetados_em(t):
+        pedidos.append(t)
+        return {"GGGG"}
+
+    setores = {nome: f"S{i}" for i, nome in enumerate(NOMES)}
+    treino = _treino()
+    pesos = estrategia_com_veto(nota, setores, vetados_em, nomes=5, por_setor=1)(treino)
+    assert pedidos == [treino.index[-1]]
+    assert sorted(pesos.index) == ["AAAA3", "CCCC3", "DDDD3", "EEEE3", "FFFF3"]
 
 
 def test_an_answer_becomes_bad_good_and_intensity_columns() -> None:

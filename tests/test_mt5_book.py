@@ -72,6 +72,33 @@ def test_buys_never_exceed_the_book_cash_plus_its_sells() -> None:
     assert "cash" in mb.check_cash(ordens, cotacoes, cash=1_000.0)
 
 
+def test_a_negative_cash_is_covered_by_selling_the_most_overweight_name_share_by_share() -> None:
+    cotacoes = pd.Series({"AAAA3": 10.0, "BBBB3": 10.0})
+    pesos = pd.Series({"AAAA3": 0.5, "BBBB3": 0.5})
+    detidas = pd.Series({"AAAA3": 100, "BBBB3": 50})
+    alvo = pd.Series({"AAAA3": 100, "BBBB3": 60})    # 10 BBBB3 to buy at 10.05 with -50 of cash: 150.50 short
+    aparado = mb.trim_for_cash(alvo, detidas, pesos, cotacoes, cash=-50.0)
+    # AAAA3 is the overweight name: 16 shares sold at 9.95 = 159.20 >= 150.50; 15 would give 149.25
+    assert aparado.to_dict() == {"AAAA3": 84, "BBBB3": 60}
+    assert mb.check_cash(mb.orders_for(aparado, detidas), cotacoes, -50.0) is None
+
+
+def test_a_target_that_already_fits_the_cash_is_not_trimmed() -> None:
+    cotacoes = pd.Series({"AAAA3": 10.0, "BBBB3": 10.0})
+    alvo = pd.Series({"AAAA3": 100, "BBBB3": 60})
+    aparado = mb.trim_for_cash(alvo, pd.Series({"AAAA3": 100, "BBBB3": 50}), pd.Series({"AAAA3": 0.5, "BBBB3": 0.5}),
+                               cotacoes, cash=200.0)
+    assert aparado.to_dict() == alvo.to_dict()
+
+
+def test_a_held_name_outside_the_target_is_sold_and_trimming_stops_at_zero_shares() -> None:
+    cotacoes = pd.Series({"AAAA3": 10.0, "BBBB3": 10.0})
+    aparado = mb.trim_for_cash(pd.Series({"AAAA3": 5}), pd.Series({"BBBB3": 1}), pd.Series({"AAAA3": 1.0}),
+                               cotacoes, cash=-1_000.0)
+    assert aparado.to_dict() == {"AAAA3": 0, "BBBB3": 0}       # nothing left to cut: check_cash still refuses
+    assert "cash" in mb.check_cash(mb.orders_for(aparado, pd.Series({"BBBB3": 1})), cotacoes, -1_000.0)
+
+
 def test_a_quote_must_be_live() -> None:
     agora = pd.Timestamp("2026-11-13 17:55")
     assert mb.check_quote("PETR4", 44.6, 44.7, agora - pd.Timedelta(seconds=30), agora) is None

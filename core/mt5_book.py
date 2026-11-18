@@ -100,6 +100,23 @@ def check_cash(orders: Sequence[Order], quotes: pd.Series, cash: float, band: fl
     return None
 
 
+def trim_for_cash(target: pd.Series, held: pd.Series, weights: pd.Series, quotes: pd.Series, cash: float,
+                  band: float = BAND, unit_lot: Collection[str] = ()) -> pd.Series:
+    """``target`` (shares by name) with whole shares taken off, one at a time from the name furthest above its weight
+    (target value share minus ``weights``, 0 for a name outside them), until ``check_cash`` passes on the orders from
+    ``held``. A book whose cash went negative (the 13/11 first buy, filled at the limit) then sells what a resend needs
+    instead of being refused every session. Unchanged when the orders already fit; once nothing is left to cut the
+    target is returned as it is and ``check_cash`` still refuses it. Index: the names of ``target`` and ``held``."""
+    alvo = target.reindex(sorted(set(target.index) | set(held.index)), fill_value=0).astype(int)
+    pesos = weights.reindex(alvo.index, fill_value=0.0)
+    precos = quotes.reindex(alvo.index).astype(float)
+    while check_cash(orders_for(alvo, held, unit_lot), quotes, cash, band) and (alvo > 0).any():
+        valor = alvo * precos
+        acima = (valor / valor.sum() - pesos)[alvo > 0]
+        alvo[acima.idxmax()] -= 1
+    return alvo
+
+
 def check_quote(symbol: str, bid: float, ask: float, quote_time: pd.Timestamp, now: pd.Timestamp,
                 max_age: pd.Timedelta = MAX_QUOTE_AGE) -> str | None:
     if not (bid > 0 and ask > 0):

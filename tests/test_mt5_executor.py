@@ -233,3 +233,30 @@ def test_the_first_buy_fits_the_books_money_at_the_limit_prices_it_pays(pastas) 
     terminal = Terminal(NA_CHAMADA)
     rodar(pastas, terminal)
     assert sum(_limite(p) for p in terminal.sent) <= ex.INICIAL
+
+
+# ---------------------------------------------------------------- the negative cash (2026-11-18)
+def test_a_resend_on_a_negative_cash_sells_what_it_needs_instead_of_being_refused(pastas) -> None:
+    rodar(pastas, Terminal(NA_CHAMADA))
+    alvos = pd.read_csv(pastas.livro / "alvos.csv").set_index("nome")["acoes"]
+    detidas = {n: int(q) - (10 if n == "EEEE3" else 0) for n, q in alvos.items()}     # 10 EEEE3 did not fill
+    cheio = [NS(symbol=n, volume=float(q), type=0, magic=MAGIC) for n, q in detidas.items()]
+    deals = [NS(symbol=n, type=0, volume=float(q), price=PRECOS[n] * 1.03, commission=0.0,    # paid 3% over: cash < 0
+                time=int(pd.Timestamp(NA_CHAMADA).timestamp()), order=1, magic=MAGIC) for n, q in detidas.items()]
+    amanha = NA_CHAMADA.replace(day=16)
+    terminal = Terminal(amanha, positions=cheio, deals=deals)
+    r = rodar(pastas, terminal, agora=amanha)
+    caixa = ex.caixa(pd.read_csv(pastas.livro / "fills.csv"))
+    assert caixa < -1_000
+    assert r.desfecho == "enviado" and "trimmed" in r.nota
+    vendas = sum(_limite(p) for p in terminal.sent if p["type"] == Terminal.ORDER_TYPE_SELL_LIMIT)
+    compras = sum(_limite(p) for p in terminal.sent if p["type"] == Terminal.ORDER_TYPE_BUY_LIMIT)
+    assert vendas > 0 and compras <= caixa + vendas + 1e-6
+    ultimo = pd.read_csv(pastas.livro / "alvos.csv").drop_duplicates("nome", keep="last").set_index("nome")["acoes"]
+    enviado = {n: 0 for n in PRECOS}
+    for p in terminal.sent:
+        enviado[p["symbol"].removesuffix("F")] += int(p["volume"]) * (1 if p["type"] == Terminal.ORDER_TYPE_BUY_LIMIT
+                                                                        else -1)
+    assert {n: detidas.get(n, 0) + enviado[n] for n in PRECOS} == ultimo.reindex(list(PRECOS), fill_value=0).to_dict()
+    depois = NA_CHAMADA.replace(day=17)
+    assert rodar(pastas, Terminal(depois, positions=cheio, deals=deals), agora=depois).desfecho == "nada"

@@ -40,6 +40,7 @@ from core.mt5_book import (
     limit_price,
     orders_for,
     target_shares,
+    trim_for_cash,
 )
 from core.mt5_corretora import Corretora, Cotacao, Terminal
 
@@ -203,19 +204,26 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
         if alvo is None:     # held shares at the sell limit, bought ones at the buy limit: the cash never goes negative
             valor = dinheiro + float((detidas.reindex(nomes, fill_value=0) * ultimos).sum()) * (1 - BAND)
             alvo = target_shares(pesos, ultimos.reindex(pesos.index) * (1 + BAND), valor)
+        # a negative cash (the 13/11 first buy, filled at the limit) sells from the overweight names what the orders
+        # need instead of refusing every session; check_cash below stays the guard (2026-11-18)
+        aparado = trim_for_cash(alvo, detidas, pesos, ultimos, dinheiro)
+        cortado = bool((aparado != alvo.reindex(aparado.index, fill_value=0)).any())
+        alvo = aparado
         ordens = orders_for(alvo, detidas)
         motivo = check_names(ordens, nomes) or check_cash(ordens, ultimos, dinheiro)
         if motivo:
             return Resultado("recusado", registro, nota=motivo)
+        aparo = f", trimmed for cash {dinheiro:,.2f}" if cortado else ""
         if simular:
             for o in ordens:
                 print(f"{o.side:4} {o.volume:>6} {o.symbol:<8} ~R$ {o.volume * ultimos[o.name]:>10,.2f}")
-            return Resultado("simulado", registro, len(ordens), f"cash {dinheiro:,.2f}, held {detidas.to_dict()}")
+            return Resultado("simulado", registro, len(ordens),
+                             f"cash {dinheiro:,.2f}{aparo}, held {detidas.to_dict()}")
 
         quando = momento.isoformat(timespec="seconds")
-        if tipo == "novo" and gravado.empty:
+        if (tipo == "novo" and gravado.empty) or cortado:      # the target read back last-wins is what was sent
             _anexar(pastas.livro / "alvos.csv", [{"registro": registro, "nome": n, "acoes": int(q)}
-                                                 for n, q in alvo.items() if q > 0])
+                                                 for n, q in alvo.items() if q > 0 or cortado])
         linhas, enviadas, parou = [], 0, False
         for o in ordens:
             if _parado(pastas):
@@ -242,7 +250,7 @@ def rodar(terminal: Terminal, pastas: Pastas, agora: Callable[[], datetime], esp
                                                   "caixa": round(dinheiro, 2)}])
         if parou:
             return Resultado("parado", registro, enviadas, f"paper-mt5/PARAR after {enviadas} of {len(ordens)} orders")
-        return Resultado("enviado", registro, enviadas, f"{tipo}: {enviadas} of {len(ordens)} orders sent")
+        return Resultado("enviado", registro, enviadas, f"{tipo}: {enviadas} of {len(ordens)} orders sent{aparo}")
 
 
 def leitura(terminal: Terminal, pastas: Pastas) -> None:

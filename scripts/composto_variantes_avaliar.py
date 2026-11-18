@@ -30,7 +30,7 @@ from core.composto import estrategia_por_nota  # noqa: E402
 from core.composto_variantes import neutral_composite_score  # noqa: E402
 from core.config import ConfigBacktest  # noqa: E402
 from core.crescimento_lucro import nota_de_crescimento  # noqa: E402
-from core.metrics import comparar_benchmark  # noqa: E402
+from core.metrics import cagr, comparar_benchmark  # noqa: E402
 from core.risco import LIMITES, Limites  # noqa: E402
 from core.sinais import NOMES, POR_SETOR, conservadora, estrategia_conservadora  # noqa: E402
 from core.valor import NotaDoMes  # noqa: E402
@@ -144,12 +144,11 @@ def main(argv: list[str]) -> int:
         indice = replay.valores.index
         if baseline is not None:
             composite = replay.valores
-            anos = (indice[-1] - indice[0]).days / 365.25
-            cagr = float((composite.iloc[-1] / composite.iloc[0]) ** (1.0 / anos) - 1.0)
-            if not abs(cagr - baseline[fase]) <= BASELINE_TOL:
-                raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay CAGR {cagr:.2%} is not the "
+            taxa = cagr(composite)                       # the house's 252-session annualization, as the baseline
+            if not abs(taxa - baseline[fase]) <= BASELINE_TOL:
+                raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay CAGR {taxa:.2%} is not the "
                                  f"baseline {baseline[fase]:.1%}")
-            ancora = f"Composite replay CAGR {cagr:.2%} (baseline {baseline[fase]:.1%})"
+            ancora = f"Composite replay CAGR {taxa:.2%} (baseline {baseline[fase]:.1%})"
         else:
             composite = publicadas.loc[publicadas["fase"] == fase].set_index("date")["Composto"].reindex(indice)
             desvio = float((replay.valores / composite - 1.0).abs().max())

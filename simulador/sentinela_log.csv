@@ -324,3 +324,4 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-18T18:20:12,BBSE3,varredura,sem_evento,,,,cvm-50d548d71ba5,,"O único item novo é um comunicado ao mercado sobre mudança na composição do comitê de auditoria estatutário, alteração de rotina sem impacto material no valor da companhia. A queda recente de preço não é explicada pelos itens divulgados.","[{""id"": ""cvm-50d548d71ba5"", ""trecho"": ""Mudança na composição do comitê de auditoria estatutário""}]",772,384.0,219.0,0.00019075,
 2026-11-18T18:20:12,BBSE3,juiz:d1.1,,,,0.03410758582511997,cvm-50d548d71ba5,,p_nova=0.8382,,174,,,3.48e-06,
 2026-11-18T18:20:12,BBSE3,juiz:d1-ultra,,,,0.06502831875454329,cvm-50d548d71ba5,,p_nova=0.8427,,174,,,7.308e-06,
+2026-11-18T19:20:11,,resumo,,,,,,,,,,,,,

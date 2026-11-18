@@ -5,6 +5,8 @@ The one reading of three design choices of the Composite found in the code revie
     ../Portfolio-Optimization/.venv/Scripts/python -X utf8 scripts/composto_variantes_avaliar.py > docs/composto-variantes-2026-11-11.txt
     ... scripts/composto_variantes_avaliar.py setor > docs/composto-sem-teto-2026-11-11.txt
     (``docs/superpowers/specs/2026-11-11-composite-sector-cap-design.md``: the Composite without the sector cap)
+    ... scripts/composto_variantes_avaliar.py setor2 > docs/composto-2-por-setor-2026-11-18.txt
+    (``docs/superpowers/specs/2026-11-18-composite-two-per-sector-design.md``: 2 a sector; the uncapped arm re-read)
 
 Per phase: the anchor (the Composite's replay is attempt 51's published curve), then the four arms next to the
 Composite, the Conservadora, BOVA11 and the CDI.
@@ -69,8 +71,17 @@ ARMS = {"Composite-21": Arm(replace(CFG_BT, janela_teste=MONTHLY)),
         "Composite-neutral": Arm(CFG_BT, neutral=True),
         "Composite-all": Arm(replace(CFG_BT, janela_teste=MONTHLY, janela_treino=THREE_YEARS), neutral=True)}
 SECTOR_ARMS = {"Composite-sem-teto": Arm(CFG_BT, por_setor=NOMES)}
+# 2026-11-18 (docs/superpowers/specs/2026-11-18-composite-two-per-sector-design.md): 2 a sector, and 347's uncapped arm
+# re-read on today's code
+SECTOR2_ARMS = {"Composite-2-por-setor": Arm(CFG_BT, por_setor=2), "Composite-sem-teto": Arm(CFG_BT, por_setor=NOMES)}
 FAMILIES = {"variantes": (ARMS, CURVES_FILE),
-            "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet")}
+            "setor": (SECTOR_ARMS, CURVAS_51.parent / "composto-sem-teto-curvas-2026-11-11.parquet"),
+            "setor2": (SECTOR2_ARMS, CURVAS_51.parent / "composto-2-por-setor-curvas-2026-11-18.parquet")}
+NEW_ROWS = {"setor2": 1}                         # the uncapped arm is 347's, re-read: not a new row of the ledger
+RUNNING_N = {"setor2": 201}                      # DECISOES' running count (384); main's ledger lacks unmerged branches
+# attempt 51's saved curve predates DECISOES 349 and 360: these families anchor on the replay's CAGR instead
+BASELINE_CAGR = {"setor2": {0: 0.218, 21: 0.203, 42: 0.192}}
+BASELINE_TOL = 0.0015                            # the baseline is quoted to 0.1 point
 
 
 def neutral_score(mensal) -> NotaDoMes:
@@ -97,11 +108,17 @@ def profile(registro: dict, do_composite: dict, resultado: ResultadoBacktest) ->
     giro = resultado.turnover_anual_medio
     return {"turnover": giro, "refusals": float(len(resultado.recusas)), "decisions": float(len(registro)),
             "eligible": float(np.mean([n for n, _ in registro.values()])),
+            "held": float(np.mean([len(nomes) for _, nomes in registro.values()])),
+            "held min": float(min(len(nomes) for _, nomes in registro.values())),
+            "changed": float(np.mean([nomes != do_composite[data][1] for data, (_, nomes) in registro.items()
+                                      if data in do_composite])),
             "shared": float(np.mean(comuns)) if comuns else float("nan"), "extra cost at 30 bps": EXTRA_COST * giro}
 
 
 def main(argv: list[str]) -> int:
-    arms, curves_file = FAMILIES[argv[0] if argv else "variantes"]
+    familia = argv[0] if argv else "variantes"
+    arms, curves_file = FAMILIES[familia]
+    baseline = BASELINE_CAGR.get(familia)
     inicio = time.perf_counter()
     avaliar_robustez.PASTA_PRECOS = avaliar_robustez.PASTA_UNIVERSO = FOLDER
     dados = avaliar_robustez.carregar()
@@ -111,8 +128,9 @@ def main(argv: list[str]) -> int:
     cdi = with_retries(lambda: market_data.baixar_cdi_diario(ANOS_DE_CDI, hoje=RUN_DATE))
     publicadas = pd.read_parquet(CURVAS_51)
     precos = dados.precos.loc[:LAST_SESSION]
-    n = contar_tentativas() + len(arms)
-    print(f"DSR N {n} (with these {len(arms)} rows); arms {list(arms)}; data to {LAST_SESSION:%d/%m/%Y}")
+    novas = NEW_ROWS.get(familia, len(arms))
+    n = max(contar_tentativas(), RUNNING_N.get(familia, 0)) + novas
+    print(f"DSR N {n} (with these {novas} new rows); arms {list(arms)}; data to {LAST_SESSION:%d/%m/%Y}")
 
     gate: dict[str, list[tuple[float, float]]] = {nome: [] for nome in arms}
     salvas = []
@@ -124,12 +142,21 @@ def main(argv: list[str]) -> int:
         do_composite: dict = {}
         replay = rodar(recording(estrategia_por_nota(notas[False], dados.setores), do_composite), COMPOSITE)
         indice = replay.valores.index
-        composite = publicadas.loc[publicadas["fase"] == fase].set_index("date")["Composto"].reindex(indice)
-        desvio = float((replay.valores / composite - 1.0).abs().max())
-        if not desvio < ANCHOR_TOL:
-            raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay is {desvio:.2e} off its curve")
-        print(f"\n=== Phase {fase}: {indice[0]:%d/%m/%Y} to {indice[-1]:%d/%m/%Y}; anchor: Composite replay off by "
-              f"{desvio:.1e} ===", flush=True)
+        if baseline is not None:
+            composite = replay.valores
+            anos = (indice[-1] - indice[0]).days / 365.25
+            cagr = float((composite.iloc[-1] / composite.iloc[0]) ** (1.0 / anos) - 1.0)
+            if not abs(cagr - baseline[fase]) <= BASELINE_TOL:
+                raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay CAGR {cagr:.2%} is not the "
+                                 f"baseline {baseline[fase]:.1%}")
+            ancora = f"Composite replay CAGR {cagr:.2%} (baseline {baseline[fase]:.1%})"
+        else:
+            composite = publicadas.loc[publicadas["fase"] == fase].set_index("date")["Composto"].reindex(indice)
+            desvio = float((replay.valores / composite - 1.0).abs().max())
+            if not desvio < ANCHOR_TOL:
+                raise SystemExit(f"phase {fase}: anchor failed, the Composite's replay is {desvio:.2e} off its curve")
+            ancora = f"Composite replay off by {desvio:.1e}"
+        print(f"\n=== Phase {fase}: {indice[0]:%d/%m/%Y} to {indice[-1]:%d/%m/%Y}; anchor: {ancora} ===", flush=True)
 
         curvas, perfis = {}, {COMPOSITE: profile(do_composite, do_composite, replay)}
         for nome, arm in arms.items():

@@ -129,7 +129,7 @@ class Corretora:
         self.t.symbol_select(symbol, True)
         barras = self.t.copy_rates_from_pos(symbol, self.t.TIMEFRAME_D1, 0, sessoes)
         if barras is None or len(barras) == 0:
-            return pd.Series(dtype=float)
+            return pd.Series(dtype=float, index=pd.DatetimeIndex([]))     # still compares with a session date
         return pd.Series([float(b["close"]) for b in barras],
                          index=[_wall_clock(int(b["time"])).normalize() for b in barras])
 

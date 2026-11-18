@@ -17,9 +17,11 @@ import argparse
 import csv
 import os
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime, time
 from pathlib import Path
+from time import sleep
 
 import pandas as pd
 
@@ -34,6 +36,7 @@ from core.mt5_corretora import Corretora, Terminal  # noqa: E402
 CARTEIRA = "Composto"
 SESSOES = 10                                   # daily bars read per symbol: the last session and today among them
 DEPOIS_DO_FECHAMENTO = time(18, 15)            # B3's closing call ends at 18:00
+TENTATIVAS, INTERVALO_S = 6, 120.0             # up to 10 minutes for the session to show (task limit 20 min)
 PACOTE_MT5 = RAIZ / ".venv-mt5"
 ARQUIVO_ORDENS = RAIZ / "simulador" / "ordens.csv"
 ARQUIVO_CALENDARIO = RAIZ / "lago" / "precos_diarios.parquet"
@@ -62,8 +65,23 @@ def _fechamento_de_hoje(c: Corretora, papel: str, fechamentos: pd.Series, hoje: 
     return None
 
 
-def linha_do_simulador(c: Corretora, hoje: pd.Timestamp, notas: list[str]) -> tuple[rd.Linha, float]:
-    """The Composite account's preview for ``hoje`` and BOVA11's change on the day."""
+def _ler_b3(papel: str) -> tuple[float, pd.Timestamp] | None:
+    """B3's quote service's last print of ``papel`` (``core.cotacao_b3``); None when the service fails."""
+    import requests
+
+    from core.cotacao_b3 import _baixar, ler_historico_do_dia
+    try:
+        return ler_historico_do_dia(_baixar(papel))
+    except (OSError, requests.RequestException):
+        return None
+
+
+def linha_do_simulador(c: Corretora, hoje: pd.Timestamp, notas: list[str],
+                       ler_b3: Callable[[str], tuple[float, pd.Timestamp] | None] | None = None
+                       ) -> tuple[rd.Linha, float]:
+    """The Composite account's preview for ``hoje`` and BOVA11's change on the day: today's price is B3's official
+    close; MT5's daily bars fill a name only when B3 has none (DECISOES 383)."""
+    ler_b3 = ler_b3 or _ler_b3
     ordens = simulador.ler_ordens(ARQUIVO_ORDENS)
     ordens = ordens[ordens["carteira"] == CARTEIRA]
     papeis = sorted({*ordens["ticker"], *simulador.REFERENCIAS})
@@ -71,21 +89,24 @@ def linha_do_simulador(c: Corretora, hoje: pd.Timestamp, notas: list[str]) -> tu
                                            (hoje - pd.Timedelta(days=1)).date(), ARQUIVO_CALENDARIO, ARQUIVO_RECENTES)
     precos = precos.rename(columns=lambda papel: papel.removesuffix(".SA"))
     ultimo = precos.index[-1]
-    base, fechamento = {}, {}
+    oficiais = {papel: rd.fechamento_oficial(ler_b3(papel), hoje) for papel in papeis}
+    mt5_base, mt5_hoje = {}, {}
     for papel in papeis:
+        if oficiais[papel] is not None:
+            continue
         fechamentos = c.fechamentos(papel, SESSOES)
         if ultimo not in fechamentos.index:
-            notas.append(f"{papel}: sem o fechamento de {ultimo:%d/%m/%Y} no MT5, preço mantido")
             continue
-        base[papel] = float(fechamentos[ultimo])
+        mt5_base[papel] = float(fechamentos[ultimo])
         hoje_px = _fechamento_de_hoje(c, papel, fechamentos, hoje, notas)
         if hoje_px is not None:
-            fechamento[papel] = hoje_px
+            mt5_hoje[papel] = hoje_px
     anteriores = c.fechamentos("BOVA11", SESSOES).index
     anteriores = anteriores[anteriores < hoje]
     if len(anteriores) and anteriores[-1] != ultimo:
         notas.append(f"o simulador parou em {ultimo:%d/%m/%Y}: a variação do dia vai desde esse fechamento")
-    estendidos = rd.com_fechamento_de_hoje(precos, pd.Series(base), pd.Series(fechamento), hoje)
+    base, fechamento = rd.fechamentos_de_hoje(precos.ffill().iloc[-1], oficiais, mt5_base, mt5_hoje, notas)
+    estendidos = rd.com_fechamento_de_hoje(precos, base, fechamento, hoje)
     cdi = cdi_lago.daily_selic(hoje.year - simulador.INICIO.year + 1, hoje.date())
     curvas = simulador.curvas(ordens, estendidos, cdi)
     bova = curvas["BOVA11"]
@@ -123,15 +144,23 @@ def linha_do_livro(c: Corretora, hoje: pd.Timestamp, agora: datetime, notas: lis
     return rd.linha(rd.serie_do_historico(historico), ex.INICIAL), ""
 
 
-def rodar(terminal: Terminal, agora: datetime, simular: bool = False) -> Resultado:
+def rodar(terminal: Terminal, agora: datetime, simular: bool = False,
+          ler_b3: Callable[[str], tuple[float, pd.Timestamp] | None] | None = None,
+          esperar: Callable[[float], None] = sleep) -> Resultado:
     hoje = pd.Timestamp(agora.date())
+    ler_b3 = ler_b3 or _ler_b3
     if not simular and agora.time() < DEPOIS_DO_FECHAMENTO:
         return Resultado("antes do fechamento", f"{agora:%H:%M} is before {DEPOIS_DO_FECHAMENTO}")
     with Corretora(terminal).conectar() as c:
-        if hoje not in c.fechamentos("BOVA11", SESSOES).index:
-            return Resultado("sem pregão", f"BOVA11 has no daily bar for {hoje:%d/%m/%Y}")
+        def houve_pregao() -> bool:
+            return (hoje in c.fechamentos("BOVA11", SESSOES).index
+                    or rd.fechamento_oficial(ler_b3("BOVA11"), hoje) is not None)
+
+        if not rd.aguardar_pregao(houve_pregao, esperar, TENTATIVAS, INTERVALO_S):
+            return Resultado("sem pregão", f"BOVA11 has no close for {hoje:%d/%m/%Y} on B3 or MT5 after "
+                                           f"{TENTATIVAS} tries")
         notas: list[str] = []
-        sim, bova_dia = linha_do_simulador(c, hoje, notas)
+        sim, bova_dia = linha_do_simulador(c, hoje, notas, ler_b3)
         try:
             livro, sem_livro = linha_do_livro(c, hoje, agora, notas, gravar=not simular)
         except Exception as erro:          # noqa: BLE001 - the simulator's half still goes out

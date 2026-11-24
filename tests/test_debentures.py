@@ -115,3 +115,59 @@ def test_unknown_kind_is_refused():
     from core.debentures import credit_score
     with pytest.raises(ValueError):
         credit_score(_measure({("2020-01-01", "11111111"): 99.0}), ROOTS, "spread")
+
+
+def _ics(n, valor, inicio="2012-01-01"):
+    return pd.Series(valor, index=pd.date_range(inicio, periods=n, freq="MS"))
+
+
+def test_earned_weight_is_zero_before_36_months_and_clipped():
+    from core.debentures import earned_weight
+    depois = pd.Timestamp("2030-01-01")
+    assert earned_weight(_ics(35, 0.01), _ics(35, 0.02), depois) == 0.0
+    assert earned_weight(_ics(40, 0.01), _ics(40, 0.02), depois) == 0.5
+    assert earned_weight(_ics(40, 0.05), _ics(40, 0.02), depois) == 1.0
+    assert earned_weight(_ics(40, -0.01), _ics(40, 0.02), depois) == 0.0
+    assert earned_weight(_ics(40, 0.01), _ics(40, 0.02), pd.Timestamp("2014-12-01")) == 0.0   # 35 months before it
+
+
+BASE5 = pd.Series([0.9, 0.1, 0.5, 0.7, 0.3], index=["AAAA3", "BBBB3", "CCCC3", "DDDD3", "EEEE3"])
+EXTRA4 = pd.Series([4.0, 1.0, 3.0, 2.0], index=["AAAA3", "BBBB3", "CCCC3", "DDDD3"])
+
+
+def test_weighted_score_adds_nothing_for_a_name_without_extra():
+    from core.debentures import weighted_score
+    from core.views import escore_normal
+    base = lambda mes, candidatos: BASE5.reindex(list(candidatos))      # noqa: E731
+    extra = lambda mes, candidatos: EXTRA4.reindex(list(candidatos))    # noqa: E731
+    mes, nomes = pd.Timestamp("2020-01-01"), list(BASE5.index)
+    z_base, z_extra = escore_normal(BASE5), escore_normal(EXTRA4)
+    nota = weighted_score(base, extra, lambda _: 0.5)(mes, nomes)
+    assert nota["EEEE3"] == z_base["EEEE3"]
+    assert nota["AAAA3"] == z_base["AAAA3"] + 0.5 * z_extra["AAAA3"]
+    pd.testing.assert_series_equal(weighted_score(base, extra, lambda _: 0.0)(mes, nomes), z_base)
+
+
+def test_veto_threshold_ties_and_minimum():
+    from core.debentures import vetoed_names
+    nomes = [f"N{i:02d}3" for i in range(1, 24)]
+    m21, m19, m20 = pd.Timestamp("2020-01-01"), pd.Timestamp("2020-02-01"), pd.Timestamp("2020-03-01")
+    painel = pd.DataFrame(index=[m21, m19, m20], columns=nomes, dtype=float)
+    painel.loc[m21, nomes[:21]] = range(1, 22)                    # linear 10th percentile = 3.0, two NaN names
+    painel.loc[m19, nomes[:19]] = range(1, 20)
+    painel.loc[m20, nomes[:20]] = range(1, 21)                    # 10th percentile = 2.9
+    vetados = vetoed_names(painel)
+    assert vetados[m21] == frozenset(nomes[:3])
+    assert vetados[m19] == frozenset()
+    assert vetados[m20] == frozenset(nomes[:2])
+
+
+def test_veto_score_drops_only_vetoed_candidates():
+    from core.debentures import veto_score
+    base = lambda mes, candidatos: BASE5.reindex(list(candidatos))      # noqa: E731
+    jan, fev, mar = pd.Timestamp("2020-01-01"), pd.Timestamp("2020-02-01"), pd.Timestamp("2020-03-01")
+    nota = veto_score(base, {jan: frozenset({"BBBB3", "ZZZZ3"}), fev: frozenset()})
+    nomes = list(BASE5.index)
+    pd.testing.assert_series_equal(nota(jan, nomes), BASE5.drop("BBBB3"))
+    pd.testing.assert_series_equal(nota(fev, nomes), BASE5)
+    pd.testing.assert_series_equal(nota(mar, nomes), BASE5)                  # a month without a veto map

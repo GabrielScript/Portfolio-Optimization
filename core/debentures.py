@@ -10,13 +10,14 @@ from __future__ import annotations
 
 import hashlib
 import io
-from collections.abc import Sequence
+from collections.abc import Callable, Mapping, Sequence
 from pathlib import Path
 
 import pandas as pd
 
 from core.risco import emissor
 from core.valor import NotaDoMes
+from core.views import escore_normal
 
 RAIZ = Path(__file__).resolve().parents[1]
 RAW = Path("D:/b3-datalake/raw/snd")
@@ -26,6 +27,8 @@ HEADER_PREFIX = "Codigo do Ativo"
 DI = "DI"
 LAG_CHANGE = 3                  # CRD-V: M - 1 minus M - 4
 KINDS = ("level", "change")
+VETO_QUANTILE, VETO_MIN_NAMES = 0.10, 20
+MIN_MONTHS = 36                 # months of IC before a score earns any weight (DECISOES 354)
 BOUNDS = (50.0, 150.0)          # "% PU da Curva" outside: misprints and defaulted papers trading on recovery
 COLUMNS = {"Codigo do Ativo": "cod_ativo", "indice": "indice", "CNPJ": "cnpj"}
 
@@ -103,4 +106,51 @@ def credit_score(measure: pd.Series, roots: pd.Series, kind: str) -> NotaDoMes:
             valores = valores.sub(_of_month(measure, anterior - pd.DateOffset(months=LAG_CHANGE))).dropna()
         raiz = pd.Series({papel: roots.get(emissor(papel)) for papel in candidatos}, dtype=object).dropna()
         return raiz.map(valores).dropna().astype(float)
+    return _nota
+
+
+# earned_weight and weighted_score: unchanged from ``core/informados.py`` on ``feat/informados`` (DECISOES 354's rule)
+def earned_weight(ic_extra: pd.Series, ic_base: pd.Series, month: pd.Timestamp, min_months: int = MIN_MONTHS) -> float:
+    """clip(mean IC of the extra score / mean IC of the base score, 0, 1) over the months before ``month`` that have
+    both ICs (a month's IC is known when the month ends); 0 with fewer than ``min_months`` of them or a base that
+    has not earned anything."""
+    juntos = pd.DataFrame({"extra": ic_extra, "base": ic_base}).dropna()
+    passado = juntos[juntos.index < month]
+    if len(passado) < min_months or passado["base"].mean() <= 0:
+        return 0.0
+    return float(min(max(passado["extra"].mean() / passado["base"].mean(), 0.0), 1.0))
+
+
+def weighted_score(base: NotaDoMes, extra: NotaDoMes, weight_of_month: Callable[[pd.Timestamp], float]) -> NotaDoMes:
+    """z(base) + weight x z(extra) over the names with a base score, z the house normal score among them; a name
+    without the extra score adds nothing."""
+    def _nota(mes: pd.Timestamp, candidatos: Sequence[str]) -> pd.Series:
+        principal = escore_normal(base(mes, candidatos).dropna())
+        peso = weight_of_month(mes)
+        if peso == 0.0 or principal.empty:
+            return principal
+        adicional = escore_normal(extra(mes, list(principal.index)).reindex(principal.index).dropna())
+        return principal.add(peso * adicional.reindex(principal.index).fillna(0.0))
+    return _nota
+
+
+def vetoed_names(panel: pd.DataFrame, quantile: float = VETO_QUANTILE,
+                 min_names: int = VETO_MIN_NAMES) -> dict[pd.Timestamp, frozenset[str]]:
+    """Per month (row of ``panel``: the score over the month's universe names), the names at or below the score's
+    ``quantile`` (pandas, linear) among those scored; none in a month with fewer than ``min_names`` scored."""
+    vetados = {}
+    for mes, linha in panel.iterrows():
+        notas = linha.dropna()
+        if len(notas) < min_names:
+            vetados[mes] = frozenset()
+        else:
+            vetados[mes] = frozenset(notas.index[notas <= notas.quantile(quantile)])
+    return vetados
+
+
+def veto_score(base: NotaDoMes, vetoed: Mapping[pd.Timestamp, frozenset[str]]) -> NotaDoMes:
+    """``base`` without the candidates vetoed in the month (a month absent from ``vetoed`` vetoes nothing)."""
+    def _nota(mes: pd.Timestamp, candidatos: Sequence[str]) -> pd.Series:
+        fora = vetoed.get(mes, frozenset())
+        return base(mes, [papel for papel in candidatos if papel not in fora])
     return _nota

@@ -171,3 +171,21 @@ def test_veto_score_drops_only_vetoed_candidates():
     pd.testing.assert_series_equal(nota(jan, nomes), BASE5.drop("BBBB3"))
     pd.testing.assert_series_equal(nota(fev, nomes), BASE5)
     pd.testing.assert_series_equal(nota(mar, nomes), BASE5)                  # a month without a veto map
+
+
+def test_gated_ics_drops_thin_months():
+    from core.debentures import gated_ics
+    meses = pd.date_range("2012-01-01", periods=4, freq="MS")
+    ics = pd.Series([0.1, 0.2, float("nan"), 0.4], index=meses)
+    cobertura = pd.Series([19, 20, 25, 30], index=meses)
+    pd.testing.assert_series_equal(gated_ics(ics, cobertura), ics.iloc[[1, 3]], check_freq=False)
+
+
+def test_debenture_scores_are_the_spec_pair_in_order():
+    from core.debentures import debenture_scores
+    medida = _measure({("2020-01-01", "11111111"): 99.0, ("2020-04-01", "11111111"): 103.0})
+    notas = debenture_scores(medida, ROOTS)
+    assert list(notas) == ["CRD-N", "CRD-V"]
+    mes = pd.Timestamp("2020-05-01")
+    assert notas["CRD-N"](mes, ["AAAA3"]).to_dict() == {"AAAA3": 103.0}
+    assert notas["CRD-V"](mes, ["AAAA3"]).to_dict() == {"AAAA3": 4.0}

@@ -22,12 +22,16 @@ from core.views import escore_normal
 RAIZ = Path(__file__).resolve().parents[1]
 RAW = Path("D:/b3-datalake/raw/snd")
 SUMS = RAIZ / "docs" / "dados" / "2026-11-24-snd" / "SHA256SUMS"
+ROOTS_FOLDER = RAIZ / "docs" / "dados" / "2026-11-24-debentures"
+ROOTS_FILE = "issuer_roots.parquet"
 TRADES, CHARACTERISTICS = "snd_trades.parquet", "caracteristicas/caracteristicas.txt"
 HEADER_PREFIX = "Codigo do Ativo"
 DI = "DI"
 LAG_CHANGE = 3                  # CRD-V: M - 1 minus M - 4
 KINDS = ("level", "change")
+SCORES = {"CRD-N": "level", "CRD-V": "change"}   # the spec's two scores, in its order
 VETO_QUANTILE, VETO_MIN_NAMES = 0.10, 20
+MIN_NAMES = 20                  # stage 1: a month with fewer scored names is dropped before the gate
 MIN_MONTHS = 36                 # months of IC before a score earns any weight (DECISOES 354)
 BOUNDS = (50.0, 150.0)          # "% PU da Curva" outside: misprints and defaulted papers trading on recovery
 COLUMNS = {"Codigo do Ativo": "cod_ativo", "indice": "indice", "CNPJ": "cnpj"}
@@ -154,3 +158,24 @@ def veto_score(base: NotaDoMes, vetoed: Mapping[pd.Timestamp, frozenset[str]]) -
         fora = vetoed.get(mes, frozenset())
         return base(mes, [papel for papel in candidatos if papel not in fora])
     return _nota
+
+
+def gated_ics(ics: pd.Series, cobertura: pd.Series, min_names: int = MIN_NAMES) -> pd.Series:
+    """The monthly ICs the stage 1 gate (and the earned weight) sees: months with ``min_names`` or more scored
+    names and an IC."""
+    return ics[cobertura.reindex(ics.index).fillna(0) >= min_names].dropna()
+
+
+def debenture_scores(measure: pd.Series, roots: pd.Series) -> dict[str, NotaDoMes]:
+    """``CRD-N`` and ``CRD-V`` of the spec, in its order."""
+    return {nome: credit_score(measure, roots, kind) for nome, kind in SCORES.items()}
+
+
+def load_inputs(sectors_file: Path) -> tuple[pd.Series, pd.Series, dict[str, str]]:
+    """The monthly measure, issuer -> CNPJ root (``sectors_file``: the frozen export's ``sectors.parquet``) and the
+    sha256 of every file read (SND checked against the pre-registration, the roots against their folder)."""
+    from scripts.avaliar_robustez import conferir_hashes   # heavy module: imported only when the data is loaded
+    trades, caracteristicas, sha256 = load_snd()
+    sha256 = sha256 | conferir_hashes(ROOTS_FOLDER, [ROOTS_FILE])
+    roots = issuer_roots(pd.read_parquet(ROOTS_FOLDER / ROOTS_FILE), pd.read_parquet(sectors_file))
+    return monthly_measure(trades, caracteristicas), roots, sha256

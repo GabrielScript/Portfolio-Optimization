@@ -59,3 +59,59 @@ def test_issuer_roots_maps_cvm_code_to_issuer():
     code_roots = pd.DataFrame({"code_cvm": [10, 20, 30], "cnpj_root": ["11111111", "22222222", "33333333"]})
     sectors = pd.DataFrame({"issuer": ["AAAA", "BBBB", "CCCC"], "code_cvm": [10.0, 20.0, None]})
     assert issuer_roots(code_roots, sectors).to_dict() == {"AAAA": "11111111", "BBBB": "22222222"}
+
+
+CHARS = pd.DataFrame({"cod_ativo": ["AAAA11", "AAAA21", "BBBB11"], "cnpj_root": ["11111111", "11111111", "22222222"],
+                      "indice": ["DI", "IPCA", "DI"]})
+
+
+def _trades(rows):
+    return pd.DataFrame(rows, columns=["data", "cod_ativo", "quantidade", "pu_med", "pct_pu_curva"]).assign(
+        data=lambda t: pd.to_datetime(t["data"]))
+
+
+def test_measure_is_volume_weighted_di_only_within_bounds():
+    from core.debentures import monthly_measure
+    trades = _trades([("2020-03-02", "AAAA11", 1, 100.0, 98.0), ("2020-03-10", "AAAA11  ", 3, 100.0, 102.0),
+                      ("2020-03-11", "AAAA11", 1, 100.0, 160.0), ("2020-03-12", "AAAA11", 1, 100.0, None),
+                      ("2020-03-13", "AAAA21", 5, 100.0, 80.0)])
+    medida = monthly_measure(trades, CHARS)
+    assert medida.to_dict() == {(pd.Timestamp("2020-03-01"), "11111111"): 101.0}
+
+
+def test_measure_skips_a_month_with_no_weight():
+    from core.debentures import monthly_measure
+    trades = _trades([("2020-03-02", "AAAA11", 0, 100.0, 98.0), ("2020-03-03", "AAAA11", None, 100.0, 99.0),
+                      ("2020-04-02", "AAAA11", 2, 100.0, 97.0)])
+    medida = monthly_measure(trades, CHARS)
+    assert medida.to_dict() == {(pd.Timestamp("2020-04-01"), "11111111"): 97.0}
+
+
+ROOTS = pd.Series({"AAAA": "11111111", "BBBB": "22222222"})
+
+
+def _measure(values):
+    return pd.Series({(pd.Timestamp(mes), raiz): valor for (mes, raiz), valor in values.items()})
+
+
+def test_level_score_uses_the_previous_month():
+    from core.debentures import credit_score
+    nota = credit_score(_measure({("2020-03-01", "11111111"): 101.0}), ROOTS, "level")
+    em_abril = nota(pd.Timestamp("2020-04-01"), ["AAAA3", "AAAA4", "ZZZZ3"])
+    assert em_abril.to_dict() == {"AAAA3": 101.0, "AAAA4": 101.0}
+    assert nota(pd.Timestamp("2020-03-01"), ["AAAA3"]).empty
+
+
+def test_change_score_needs_both_months():
+    from core.debentures import credit_score
+    medida = _measure({("2020-01-01", "11111111"): 99.0, ("2020-04-01", "11111111"): 103.0,
+                       ("2020-04-01", "22222222"): 100.0})
+    nota = credit_score(medida, ROOTS, "change")
+    assert nota(pd.Timestamp("2020-05-01"), ["AAAA3", "BBBB3"]).to_dict() == {"AAAA3": 4.0}
+
+
+def test_unknown_kind_is_refused():
+    import pytest
+    from core.debentures import credit_score
+    with pytest.raises(ValueError):
+        credit_score(_measure({("2020-01-01", "11111111"): 99.0}), ROOTS, "spread")

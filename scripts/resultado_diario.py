@@ -31,12 +31,13 @@ sys.path.insert(0, str(RAIZ))
 from core import alerta_email, cdi_lago, precos_do_app, simulador  # noqa: E402
 from core import resultado_diario as rd  # noqa: E402
 from core.mt5_book import check_account  # noqa: E402
-from core.mt5_corretora import Corretora, Terminal  # noqa: E402
+from core.mt5_corretora import Corretora, Terminal, TerminalError  # noqa: E402
 
 CARTEIRA = "Composto"
 SESSOES = 10                                   # daily bars read per symbol: the last session and today among them
 DEPOIS_DO_FECHAMENTO = time(18, 15)            # B3's closing call ends at 18:00
 TENTATIVAS, INTERVALO_S = 6, 120.0             # up to 10 minutes for the session to show (task limit 20 min)
+LIVRO_TENTATIVAS, LIVRO_PAUSA_S = 3, 30.0     # the book on a new connection when the terminal's link fails
 PACOTE_MT5 = RAIZ / ".venv-mt5"
 ARQUIVO_ORDENS = RAIZ / "simulador" / "ordens.csv"
 ARQUIVO_CALENDARIO = RAIZ / "lago" / "precos_diarios.parquet"
@@ -144,6 +145,22 @@ def linha_do_livro(c: Corretora, hoje: pd.Timestamp, agora: datetime, notas: lis
     return rd.linha(rd.serie_do_historico(historico), ex.INICIAL), ""
 
 
+def _tentar_livro(c: Corretora, hoje: pd.Timestamp, agora: datetime, notas: list[str],
+                  gravar: bool) -> tuple[rd.Linha | None, str, bool]:
+    """The book's line, or why there is none; the flag says a new connection may still read it (the terminal's link
+    failed: on 23/11 and 24/11 a terminal opened by the report itself answered the account read with
+    (-10001, 'IPC send failed')). Notes reach ``notas`` only from the attempt that worked."""
+    proprias: list[str] = []
+    try:
+        livro, motivo = linha_do_livro(c, hoje, agora, proprias, gravar)
+    except TerminalError as erro:
+        return None, f"TerminalError: {erro}", True
+    except Exception as erro:          # noqa: BLE001 - the simulator's half still goes out
+        return None, f"{type(erro).__name__}: {erro}", False
+    notas.extend(proprias)
+    return livro, motivo, False
+
+
 def rodar(terminal: Terminal, agora: datetime, simular: bool = False,
           ler_b3: Callable[[str], tuple[float, pd.Timestamp] | None] | None = None,
           esperar: Callable[[float], None] = sleep) -> Resultado:
@@ -161,10 +178,16 @@ def rodar(terminal: Terminal, agora: datetime, simular: bool = False,
                                            f"{TENTATIVAS} tries")
         notas: list[str] = []
         sim, bova_dia = linha_do_simulador(c, hoje, notas, ler_b3)
+        livro, sem_livro, de_novo = _tentar_livro(c, hoje, agora, notas, gravar=not simular)
+    for _ in range(LIVRO_TENTATIVAS - 1):
+        if not de_novo:
+            break
+        esperar(LIVRO_PAUSA_S)
         try:
-            livro, sem_livro = linha_do_livro(c, hoje, agora, notas, gravar=not simular)
-        except Exception as erro:          # noqa: BLE001 - the simulator's half still goes out
-            livro, sem_livro = None, f"{type(erro).__name__}: {erro}"
+            with Corretora(terminal).conectar() as c:
+                livro, sem_livro, de_novo = _tentar_livro(c, hoje, agora, notas, gravar=not simular)
+        except TerminalError as erro:
+            livro, sem_livro, de_novo = None, f"TerminalError: {erro}", True
     assunto, corpo = rd.mensagem(hoje, sim, bova_dia, livro, notas, sem_livro, simulador.CAPITAL_ACOES)
     if simular:
         return Resultado("simulado", "", assunto, corpo)
@@ -172,7 +195,8 @@ def rodar(terminal: Terminal, agora: datetime, simular: bool = False,
     if credenciais is None:
         return Resultado("sem credenciais", "GMAIL_USER / GMAIL_PASSWORD_APP missing", assunto, corpo)
     alerta_email.enviar(assunto, corpo, credenciais)
-    return Resultado("enviado", assunto, assunto, corpo)
+    return Resultado("enviado", assunto if livro is not None else f"{assunto}; MT5 sem leitura: {sem_livro}",
+                     assunto, corpo)
 
 
 def _anotar(resultado: Resultado, inicio: datetime) -> None:

@@ -193,3 +193,50 @@ def test_a_held_name_without_a_trade_today_keeps_its_previous_close_in_the_books
     patrimonio = pd.read_csv(tmp_path / "patrimonio.csv")["patrimonio"].iloc[-1]
     assert patrimonio == pytest.approx(100_000 - 1_000 + 100 * 11.0)
     assert any("mantido o fechamento anterior" in nota for nota in notas)
+
+
+class _TerminalQueCaiNoComeco(_TerminalSemBarraDeHoje):
+    """The 23/11 and 24/11 runs: the terminal was closed, the report opened it at 21:00 and the account read failed
+    with (-10001, 'IPC send failed'); ``falhas`` connections fail before one works."""
+
+    def __init__(self, falhas: int):
+        self.falhas, self.conexoes = falhas, 0
+
+    def initialize(self, path=None, timeout=None):
+        self.conexoes += 1
+        return True
+
+    def account_info(self):
+        return None if self.conexoes <= self.falhas else super().account_info()
+
+    def last_error(self):
+        return (1, "ok") if self.conexoes > self.falhas else (-10001, "IPC send failed")
+
+
+def _rodar_o_livro(monkeypatch, tmp_path, terminal, simular=True):
+    from datetime import datetime
+    from scripts import resultado_diario as script
+    monkeypatch.setattr(script, "PASTA_MT5", tmp_path)
+    monkeypatch.setattr(script, "linha_do_simulador", lambda c, hoje, notas, ler_b3=None: (
+        rd.Linha(10_606.92, 0.0, 0.0, 0.06, pd.Timestamp("2026-11-03")), 0.0))
+    monkeypatch.setattr(script.alerta_email, "credenciais", lambda: object())
+    monkeypatch.setattr(script.alerta_email, "enviar", lambda assunto, corpo, credenciais: None)
+    esperas: list[float] = []
+    resultado = script.rodar(terminal, datetime(2026, 11, 13, 21, 0), simular=simular,
+                             ler_b3=lambda papel: (130.5, pd.Timestamp("2026-11-13 18:05")), esperar=esperas.append)
+    return resultado, esperas
+
+
+def test_a_terminal_link_that_fails_on_the_account_read_is_retried_on_a_new_connection(monkeypatch, tmp_path):
+    from scripts import resultado_diario as script
+    resultado, esperas = _rodar_o_livro(monkeypatch, tmp_path, _TerminalQueCaiNoComeco(falhas=1))
+    assert ", MT5 R$ 100.100,00" in resultado.assunto
+    assert esperas == [script.LIVRO_PAUSA_S]
+
+
+def test_when_the_book_cannot_be_read_the_run_line_says_why(monkeypatch, tmp_path):
+    from scripts import resultado_diario as script
+    resultado, esperas = _rodar_o_livro(monkeypatch, tmp_path, _TerminalQueCaiNoComeco(falhas=99), simular=False)
+    assert resultado.desfecho == "enviado" and "MT5" not in resultado.assunto
+    assert "IPC send failed" in resultado.nota
+    assert esperas == [script.LIVRO_PAUSA_S] * (script.LIVRO_TENTATIVAS - 1)

@@ -410,3 +410,4 @@ hora,ticker,etapa,veredito,acao,confianca,p,itens,descarte,texto,citacoes,entrad
 2026-11-25T09:20:10,LOGG3,varredura,atencao,,,,mercado-36d65991d97b,,"O saldo de ações emprestadas da LOGG3 subiu a 6.736.093, 6,2 vezes a mediana dos 21 pregões anteriores, sinal de forte pressão vendedora que ajuda a explicar a queda recente. Não há item novo sobre fraude, inadimplência ou perda de contrato: o caso é de movimento de mercado, não de destruição de valor.","[{""id"": ""mercado-36d65991d97b"", ""trecho"": ""LOGG3: saldo de ações emprestadas de 6.736.093 em 23/11/2026 (BDI da B3), 6,2 vezes a mediana dos 21 pregões anteriores (1.082.440)""}]",780,384.0,527.0,0.00037675,
 2026-11-25T09:20:10,LOGG3,juiz:d1.1,,,,0.3954223652190063,mercado-36d65991d97b,,p_nova=0.7814,,184,,,3.68e-06,
 2026-11-25T09:20:10,LOGG3,juiz:d1-ultra,,,,0.3790348222438061,mercado-36d65991d97b,,p_nova=0.7993,,184,,,7.728e-06,
+2026-11-25T19:21:01,,resumo,,,,,,,,,,,,,
